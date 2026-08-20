@@ -73,7 +73,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::HT_PHASOR`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn HT_PHASOR_Internal(
+    pub(crate) fn HT_PHASOR_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -84,13 +84,13 @@ impl Core {
         outQuadrature: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, HT_PHASOR_Internal_fma, HT_PHASOR_Internal_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
+        return ta_lib_dispatch::dispatch_fma!(self, HT_PHASOR_Impl_fma, HT_PHASOR_Impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
         #[cfg(not(target_arch = "x86_64"))]
-        self.HT_PHASOR_Internal_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.HT_PHASOR_Impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn HT_PHASOR_Internal_fma(
+    fn HT_PHASOR_Impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -100,10 +100,10 @@ impl Core {
         outInPhase: &mut [f64],
         outQuadrature: &mut [f64],
     ) -> RetCode {
-        self.HT_PHASOR_Internal_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.HT_PHASOR_Impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[inline(always)]
-    fn HT_PHASOR_Internal_impl(
+    fn HT_PHASOR_Impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -529,7 +529,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.HT_PHASOR_Internal(
+        let retCode = self.HT_PHASOR_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -846,7 +846,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::HT_PHASOR_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::HT_PHASOR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn HT_PHASOR_OpenCore(
+    pub(crate) fn HT_PHASOR_OpenPass(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64], outStride: usize,
     ) -> Result<HT_PHASOR_Stream, RetCode> {
         if inReal.is_empty() {
@@ -935,7 +935,7 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         (*outBegIdx) = startIdx;
         // Initialize the price smoother, which is simply a weighted
@@ -1257,7 +1257,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outInPhase = [0.0_f64; 1];
         let mut sink_outQuadrature = [0.0_f64; 1];
-        let handle = self.HT_PHASOR_OpenCore(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInPhase, &mut sink_outQuadrature, 0)?;
+        let handle = self.HT_PHASOR_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInPhase, &mut sink_outQuadrature, 0)?;
         Ok((handle, (sink_outInPhase[0], sink_outQuadrature[0])))
     }
 
@@ -1266,8 +1266,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -1298,7 +1300,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.HT_PHASOR_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outInPhase, outQuadrature, 1)?;
+        let handle = self.HT_PHASOR_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outInPhase, outQuadrature, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1307,7 +1309,7 @@ impl Core {
     pub(crate) fn HT_PHASOR_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64],
     ) -> Result<HT_PHASOR_Stream, RetCode> {
-        self.HT_PHASOR_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
+        self.HT_PHASOR_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
     }
 
 }

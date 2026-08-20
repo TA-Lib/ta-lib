@@ -89,16 +89,16 @@ public partial class Core
       return optInTimePeriod ;
 
    }
-   internal RetCode MFI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inHigh,
-                         ReadOnlySpan<double> inLow,
-                         ReadOnlySpan<double> inClose,
-                         ReadOnlySpan<double> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode MFI_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
+                              ReadOnlySpan<double> inClose,
+                              ReadOnlySpan<double> inVolume,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -232,16 +232,16 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MFI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inHigh,
-                         ReadOnlySpan<float> inLow,
-                         ReadOnlySpan<float> inClose,
-                         ReadOnlySpan<float> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode MFI_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
+                              ReadOnlySpan<float> inClose,
+                              ReadOnlySpan<float> inVolume,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -413,7 +413,7 @@ public partial class Core
       RequireLength("MFI", "inClose", inClose.Length, guardInLen);
       RequireLength("MFI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("MFI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MFI(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MFI_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MFI", retCode);
       }
@@ -488,7 +488,7 @@ public partial class Core
       RequireLength("MFI", "inClose", inClose.Length, guardInLen);
       RequireLength("MFI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("MFI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MFI(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MFI_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MFI", retCode);
       }
@@ -692,7 +692,7 @@ public partial class Core
       }
    }
 
-   private RetCode MFI_OpenCore( MFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MFI_OpenPass( MFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -738,7 +738,7 @@ public partial class Core
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -844,32 +844,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MFI_OpenBody( MFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
+   private RetCode MFI_OpenImpl( MFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return MFI_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return MFI_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MFI_OpenAndFillBody( MFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MFI_OpenAndFillImpl( MFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
-      return MFI_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return MFI_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MFI_OpenAndFillInternalBody( MFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MFI_OpenAndFillInternalImpl( MFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return MFI_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return MFI_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MFI_Stream MFI_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MFI_Stream sp = new MFI_Stream(this);
-      RetCode retCode = MFI_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = MFI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -880,7 +880,7 @@ public partial class Core
    internal MFI_Stream MFI_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       MFI_Stream sp = new MFI_Stream(this);
-      RetCode retCode = MFI_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
+      RetCode retCode = MFI_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -909,10 +909,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public MFI_Stream MFI_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return MFI_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
 
@@ -945,12 +945,12 @@ public partial class Core
    /// output.</exception>
    public MFI_Stream MFI_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       MFI_Stream sp = new MFI_Stream(this);
-      RetCode retCode = MFI_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MFI_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

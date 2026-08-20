@@ -560,7 +560,7 @@ static void TA_RSI_StepInternal( struct TA_RSI_Stream *sp, double inReal, double
    }
 }
 
-static TA_RetCode TA_RSI_OpenCore( struct TA_RSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_RSI_OpenPass( struct TA_RSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_RSI_Stream *sp;
    int endIdx;
@@ -584,7 +584,7 @@ static TA_RetCode TA_RSI_OpenCore( struct TA_RSI_Stream **stream, const double i
 
    if( optInTimePeriod == 1 )
    {
-      if( historyLen < TA_RSI_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      if( historyLen < TA_RSI_Lookback( optInTimePeriod ) + 1 ) return TA_INSUFFICIENT_HISTORY;
       sp = (struct TA_RSI_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
@@ -646,7 +646,7 @@ static TA_RetCode TA_RSI_OpenCore( struct TA_RSI_Stream **stream, const double i
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -711,7 +711,7 @@ static TA_RetCode TA_RSI_OpenCore( struct TA_RSI_Stream **stream, const double i
          {
             *outBegIdx= startIdx;
             *outNBElement= outIdx;
-            return TA_BAD_PARAM;
+            return TA_INSUFFICIENT_HISTORY;
          }
          /* Start over for the next price bar. */
          today = today - (int)optInTimePeriod;
@@ -843,7 +843,7 @@ TA_RetCode TA_RSI_OpenInternal( struct TA_RSI_Stream **stream, const double inRe
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_RSI_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_RSI_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -870,13 +870,13 @@ TA_LIB_API TA_RetCode TA_RSI_OpenAndFill( TA_RSI_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   return TA_RSI_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_RSI_OpenPass( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_RSI_OpenAndFillInternal( struct TA_RSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_RSI_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_RSI_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_RSI_Update( TA_RSI_Stream *stream, double inReal, double *outReal )

@@ -85,13 +85,13 @@ public partial class Core
       return retValue ;
 
    }
-   internal RetCode RSI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode RSI_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -270,13 +270,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode RSI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode RSI_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -461,7 +461,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("RSI", "inReal", inReal.Length, guardInLen);
       RequireLength("RSI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = RSI(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("RSI", retCode);
       }
@@ -540,7 +540,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("RSI", "inReal", inReal.Length, guardInLen);
       RequireLength("RSI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = RSI(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("RSI", retCode);
       }
@@ -689,7 +689,7 @@ public partial class Core
       }
    }
 
-   private RetCode RSI_OpenCore( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode RSI_OpenPass( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -719,7 +719,7 @@ public partial class Core
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < RSI_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevGain = 0.0;
@@ -760,7 +760,7 @@ public partial class Core
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -877,32 +877,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode RSI_OpenBody( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode RSI_OpenImpl( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return RSI_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return RSI_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode RSI_OpenAndFillBody( RSI_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode RSI_OpenAndFillImpl( RSI_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return RSI_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return RSI_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode RSI_OpenAndFillInternalBody( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode RSI_OpenAndFillInternalImpl( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return RSI_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return RSI_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* RSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal RSI_Stream RSI_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = RSI_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -913,7 +913,7 @@ public partial class Core
    internal RSI_Stream RSI_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -939,7 +939,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public RSI_Stream RSI_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return RSI_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -969,9 +969,9 @@ public partial class Core
    /// output.</exception>
    public RSI_Stream RSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = RSI_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

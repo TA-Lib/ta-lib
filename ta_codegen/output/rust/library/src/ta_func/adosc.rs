@@ -99,7 +99,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::ADOSC`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn ADOSC_Internal(
+    pub(crate) fn ADOSC_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -114,13 +114,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ADOSC_Internal_fma, ADOSC_Internal_impl, (startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, ADOSC_Impl_fma, ADOSC_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ADOSC_Internal_impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal)
+        self.ADOSC_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn ADOSC_Internal_fma(
+    fn ADOSC_Impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -134,10 +134,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.ADOSC_Internal_impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal)
+        self.ADOSC_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn ADOSC_Internal_impl(
+    fn ADOSC_Impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -386,7 +386,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.ADOSC_Internal(
+        let retCode = self.ADOSC_Impl(
             startIdx,
             endIdx,
             inHigh,
@@ -486,7 +486,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::ADOSC_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::ADOSC_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn ADOSC_OpenCore(
+    pub(crate) fn ADOSC_OpenPass(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<ADOSC_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
@@ -563,7 +563,7 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         (*outBegIdx) = startIdx;
         today = startIdx - lookbackTotal;
@@ -643,7 +643,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.ADOSC_OpenCore(inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ADOSC_OpenPass(inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -652,8 +652,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -687,7 +689,7 @@ impl Core {
     ) -> Result<(ADOSC_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.ADOSC_OpenCore(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.ADOSC_OpenPass(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -696,7 +698,7 @@ impl Core {
     pub(crate) fn ADOSC_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ADOSC_Stream, RetCode> {
-        self.ADOSC_OpenCore(inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
+        self.ADOSC_OpenPass(inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

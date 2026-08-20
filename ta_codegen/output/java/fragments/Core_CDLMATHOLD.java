@@ -40,16 +40,16 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 4 ;
 
    }
-   RetCode CDLMATHOLD_Internal( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                double optInPenetration,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode CDLMATHOLD_Impl( int startIdx,
+                            int endIdx,
+                            double inOpen[],
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            double optInPenetration,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -167,16 +167,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLMATHOLD_Internal( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                double optInPenetration,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode CDLMATHOLD_Impl( int startIdx,
+                            int endIdx,
+                            float inOpen[],
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            double optInPenetration,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -306,6 +306,7 @@
                                double optInPenetration,
                                int outInteger[] )
    {
+      requireIndexRange("CDLMATHOLD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLMATHOLD_Lookback(optInPenetration));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -316,7 +317,7 @@
       requireLength("CDLMATHOLD", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMATHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLMATHOLD", retCode);
       }
@@ -381,6 +382,7 @@
                                double optInPenetration,
                                int outInteger[] )
    {
+      requireIndexRange("CDLMATHOLD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLMATHOLD_Lookback(optInPenetration));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -391,7 +393,7 @@
       requireLength("CDLMATHOLD", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMATHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLMATHOLD", retCode);
       }
@@ -603,7 +605,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLMATHOLD update: BadParam");
+            throw new TaLibArgumentException("CDLMATHOLD update: BadParam", RetCode.BadParam);
          core.CDLMATHOLD_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -619,7 +621,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLMATHOLD peek: BadParam");
+            throw new TaLibArgumentException("CDLMATHOLD peek: BadParam", RetCode.BadParam);
          CDLMATHOLD_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLMATHOLD_Stream(this);
@@ -719,7 +721,7 @@
          sp.winPos_totIdx = 0;
       }
    }
-   private RetCode CDLMATHOLD_OpenCore( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLMATHOLD_OpenPass( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -761,7 +763,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -912,55 +914,55 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLMATHOLD_OpenBody( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
+   private RetCode CDLMATHOLD_OpenImpl( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      return CDLMATHOLD_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
+      return CDLMATHOLD_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
-   private RetCode CDLMATHOLD_OpenAndFillBody( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLMATHOLD_OpenAndFillImpl( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      return CDLMATHOLD_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
+      return CDLMATHOLD_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
    }
-   private RetCode CDLMATHOLD_OpenAndFillInternalBody( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLMATHOLD_OpenAndFillInternalImpl( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      return CDLMATHOLD_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
+      return CDLMATHOLD_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
    }
    /* CDLMATHOLD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLMATHOLD_Stream CDLMATHOLD_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
-      RetCode retCode = CDLMATHOLD_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMATHOLD_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLMATHOLD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLMATHOLD openAndFill: internal error");
+         throw new TaLibStateException("CDLMATHOLD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLMATHOLD openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLMATHOLD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLMATHOLD_Open (composition seam). */
    CDLMATHOLD_Stream CDLMATHOLD_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
-      RetCode retCode = CDLMATHOLD_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      RetCode retCode = CDLMATHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLMATHOLD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLMATHOLD open: internal error");
+         throw new TaLibStateException("CDLMATHOLD open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLMATHOLD open: " + retCode);
+      throw new TaLibArgumentException("CDLMATHOLD open: " + retCode, retCode);
    }
    /**
     * Open a live CDLMATHOLD stream over the warm-up history; the handle's
@@ -990,16 +992,16 @@
       CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATHOLD_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMATHOLD_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLMATHOLD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLMATHOLD openAndFill: internal error");
+         throw new TaLibStateException("CDLMATHOLD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLMATHOLD openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLMATHOLD openAndFill: " + retCode, retCode);
    }

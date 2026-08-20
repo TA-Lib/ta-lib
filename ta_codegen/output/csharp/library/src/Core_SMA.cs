@@ -78,13 +78,13 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode SMA( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode SMA_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -154,13 +154,13 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode SMA( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode SMA_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -267,7 +267,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("SMA", "inReal", inReal.Length, guardInLen);
       RequireLength("SMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = SMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SMA", retCode);
       }
@@ -333,7 +333,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("SMA", "inReal", inReal.Length, guardInLen);
       RequireLength("SMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = SMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SMA", retCode);
       }
@@ -480,7 +480,7 @@ public partial class Core
       }
    }
 
-   private RetCode SMA_OpenCore( SMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode SMA_OpenPass( SMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -517,7 +517,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the MA calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -565,32 +565,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode SMA_OpenBody( SMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode SMA_OpenImpl( SMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return SMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return SMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode SMA_OpenAndFillBody( SMA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode SMA_OpenAndFillImpl( SMA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return SMA_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return SMA_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode SMA_OpenAndFillInternalBody( SMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode SMA_OpenAndFillInternalImpl( SMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return SMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return SMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* SMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal SMA_Stream SMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       SMA_Stream sp = new SMA_Stream(this);
-      RetCode retCode = SMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = SMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -601,7 +601,7 @@ public partial class Core
    internal SMA_Stream SMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       SMA_Stream sp = new SMA_Stream(this);
-      RetCode retCode = SMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = SMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -627,7 +627,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public SMA_Stream SMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return SMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -657,9 +657,9 @@ public partial class Core
    /// output.</exception>
    public SMA_Stream SMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       SMA_Stream sp = new SMA_Stream(this);
-      RetCode retCode = SMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

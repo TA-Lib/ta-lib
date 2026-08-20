@@ -136,7 +136,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::MA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn MA_Internal(
+    pub(crate) fn MA_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -189,36 +189,36 @@ impl Core {
         // Simply forward the job to the corresponding TA function.
         match optInMAType {
             MAType::SMA => {
-                retCode = self.SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.SMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::EMA => {
-                retCode = self.EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.EMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::WMA => {
-                retCode = self.WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.WMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::DEMA => {
-                retCode = self.DEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.DEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::TEMA => {
-                retCode = self.TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.TEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::TRIMA => {
-                retCode = self.TRIMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.TRIMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::KAMA => {
-                retCode = self.KAMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.KAMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::MAMA => {
                 // The optInTimePeriod is ignored. FAMA is a nullable output
                 // (issue #125): pass NULL to compute only the MAMA line into outReal.
-                retCode = self.MAMA_Internal(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
+                retCode = self.MAMA_Impl(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
             }
             MAType::T3 => {
-                retCode = self.T3_Internal(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+                retCode = self.T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
             }
             MAType::HMA => {
-                retCode = self.HMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.HMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             _ => {
                 retCode = RetCode::BadParam;
@@ -312,7 +312,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MA_Internal(
+        let retCode = self.MA_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -483,7 +483,7 @@ impl Core {
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
             return Ok((MA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
@@ -540,8 +540,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::{Core, MAType};
@@ -583,7 +585,7 @@ impl Core {
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
             let mut fillIdx: usize = 0;
@@ -663,12 +665,12 @@ impl Core {
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;

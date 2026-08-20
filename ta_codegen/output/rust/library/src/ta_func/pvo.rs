@@ -97,7 +97,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::PVO`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn PVO_Internal(
+    pub(crate) fn PVO_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -168,12 +168,12 @@ impl Core {
             optInFastPeriod = (tempInteger) as i32;
         }
         // Calculate the fast MA into the tempBuffer.
-        retCode = self.MA_Internal(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.MA_Impl(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
         // Calculate the slow MA into the output.
-        retCode = self.MA_Internal(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+        retCode = self.MA_Impl(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -295,7 +295,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.PVO_Internal(
+        let retCode = self.PVO_Impl(
             startIdx,
             endIdx,
             inVolume,
@@ -387,7 +387,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::PVO_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::PVO_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn PVO_OpenCore(
+    pub(crate) fn PVO_OpenPass(
         &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<PVO_Stream, RetCode> {
         if inVolume.is_empty() {
@@ -440,7 +440,7 @@ impl Core {
         if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType) > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         // Allocate an intermediate buffer.
         tempBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
@@ -487,7 +487,7 @@ impl Core {
 
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         let state = PVO_StreamState {
             optInFastPeriod,
@@ -510,7 +510,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.PVO_OpenCore(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.PVO_OpenPass(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -519,8 +519,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::{Core, MAType};
@@ -549,7 +551,7 @@ impl Core {
     ) -> Result<(PVO_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.PVO_OpenCore(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.PVO_OpenPass(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -558,7 +560,7 @@ impl Core {
     pub(crate) fn PVO_OpenAndFillInternal(
         &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PVO_Stream, RetCode> {
-        self.PVO_OpenCore(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
+        self.PVO_OpenPass(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

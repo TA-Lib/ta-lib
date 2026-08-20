@@ -33,16 +33,16 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode CMF_Internal( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         double inClose[],
-                         double inVolume[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode CMF_Impl( int startIdx,
+                     int endIdx,
+                     double inHigh[],
+                     double inLow[],
+                     double inClose[],
+                     double inVolume[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -166,16 +166,16 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode CMF_Internal( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         float inClose[],
-                         float inVolume[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode CMF_Impl( int startIdx,
+                     int endIdx,
+                     float inHigh[],
+                     float inLow[],
+                     float inClose[],
+                     float inVolume[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -351,6 +351,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("CMF", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CMF_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -361,7 +362,7 @@
       requireLength("CMF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMF_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMF_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMF", retCode);
       }
@@ -448,6 +449,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("CMF", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CMF_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -458,7 +460,7 @@
       requireLength("CMF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMF_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMF_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMF", retCode);
       }
@@ -572,7 +574,7 @@
        */
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("CMF update: BadParam");
+            throw new TaLibArgumentException("CMF update: BadParam", RetCode.BadParam);
          core.CMF_StreamStep(this, inHigh, inLow, inClose, inVolume);
          return this.cur_outReal;
       }
@@ -588,7 +590,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("CMF peek: BadParam");
+            throw new TaLibArgumentException("CMF peek: BadParam", RetCode.BadParam);
          CMF_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CMF_Stream(this);
@@ -644,7 +646,7 @@
          sp.mfv_Idx = 0;
       }
    }
-   private RetCode CMF_OpenCore( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CMF_OpenPass( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -694,7 +696,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
@@ -789,55 +791,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CMF_OpenBody( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   private RetCode CMF_OpenImpl( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return CMF_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return CMF_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode CMF_OpenAndFillBody( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode CMF_OpenAndFillImpl( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      return CMF_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return CMF_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode CMF_OpenAndFillInternalBody( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode CMF_OpenAndFillInternalImpl( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return CMF_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return CMF_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* CMF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CMF_Stream CMF_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CMF_Stream sp = new CMF_Stream(this);
-      RetCode retCode = CMF_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMF_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CMF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CMF openAndFill: internal error");
+         throw new TaLibStateException("CMF openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CMF openAndFill: " + retCode);
+      throw new TaLibArgumentException("CMF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CMF_Open (composition seam). */
    CMF_Stream CMF_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       CMF_Stream sp = new CMF_Stream(this);
-      RetCode retCode = CMF_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
+      RetCode retCode = CMF_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CMF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CMF open: internal error");
+         throw new TaLibStateException("CMF open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CMF open: " + retCode);
+      throw new TaLibArgumentException("CMF open: " + retCode, retCode);
    }
    /**
     * Open a live CMF stream over the warm-up history; the handle's
@@ -867,16 +869,16 @@
       CMF_Stream sp = new CMF_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMF_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMF_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CMF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CMF openAndFill: internal error");
+         throw new TaLibStateException("CMF openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CMF openAndFill: " + retCode);
+      throw new TaLibArgumentException("CMF openAndFill: " + retCode, retCode);
    }

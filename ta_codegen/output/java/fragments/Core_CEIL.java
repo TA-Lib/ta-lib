@@ -25,12 +25,12 @@
       return 0 ;
 
    }
-   RetCode CEIL_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode CEIL_Impl( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CEIL_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode CEIL_Impl( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -109,6 +109,7 @@
                          double inReal[],
                          double outReal[] )
    {
+      requireIndexRange("CEIL", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CEIL_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -116,7 +117,7 @@
       requireLength("CEIL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CEIL_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CEIL", retCode);
       }
@@ -165,6 +166,7 @@
                          float inReal[],
                          double outReal[] )
    {
+      requireIndexRange("CEIL", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CEIL_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -172,7 +174,7 @@
       requireLength("CEIL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CEIL_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CEIL", retCode);
       }
@@ -236,7 +238,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("CEIL update: BadParam");
+            throw new TaLibArgumentException("CEIL update: BadParam", RetCode.BadParam);
          core.CEIL_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -250,7 +252,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("CEIL peek: BadParam");
+            throw new TaLibArgumentException("CEIL peek: BadParam", RetCode.BadParam);
          CEIL_Stream scratch = new CEIL_Stream(this);
          core.CEIL_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -277,7 +279,7 @@
    {
       sp.cur_outReal = Math.ceil(inReal);
    }
-   private RetCode CEIL_OpenCore( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CEIL_OpenPass( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -298,55 +300,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CEIL_OpenBody( CEIL_Stream sp, double inReal[], int startIdx )
+   private RetCode CEIL_OpenImpl( CEIL_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return CEIL_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return CEIL_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode CEIL_OpenAndFillBody( CEIL_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode CEIL_OpenAndFillImpl( CEIL_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return CEIL_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return CEIL_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode CEIL_OpenAndFillInternalBody( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode CEIL_OpenAndFillInternalImpl( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return CEIL_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return CEIL_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* CEIL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CEIL_Stream CEIL_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CEIL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CEIL openAndFill: internal error");
+         throw new TaLibStateException("CEIL openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CEIL openAndFill: " + retCode);
+      throw new TaLibArgumentException("CEIL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CEIL_Open (composition seam). */
    CEIL_Stream CEIL_OpenInternal( double inReal[], int startIdx )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = CEIL_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CEIL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CEIL open: internal error");
+         throw new TaLibStateException("CEIL open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CEIL open: " + retCode);
+      throw new TaLibArgumentException("CEIL open: " + retCode, retCode);
    }
    /**
     * Open a live CEIL stream over the warm-up history; the handle's
@@ -376,16 +378,16 @@
       CEIL_Stream sp = new CEIL_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CEIL_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CEIL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CEIL openAndFill: internal error");
+         throw new TaLibStateException("CEIL openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CEIL openAndFill: " + retCode);
+      throw new TaLibArgumentException("CEIL openAndFill: " + retCode, retCode);
    }

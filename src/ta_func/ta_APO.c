@@ -305,7 +305,7 @@ static TA_RetCode TA_APO_StepInternal( struct TA_APO_Stream *sp, double inReal, 
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_APO_OpenCore( struct TA_APO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_APO_OpenPass( struct TA_APO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_APO_Stream *sp;
    int endIdx;
@@ -375,7 +375,7 @@ static TA_RetCode TA_APO_OpenCore( struct TA_APO_Stream **stream, const double i
          dummyBegIdx = 0;
          dummyNBElement = 0;
          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Allocate an intermediate buffer. */
       tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
@@ -445,7 +445,7 @@ static TA_RetCode TA_APO_OpenCore( struct TA_APO_Stream **stream, const double i
       free(tempBuffer);
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal ); return TA_BAD_PARAM; }
+      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_APO_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
@@ -470,7 +470,7 @@ TA_RetCode TA_APO_OpenInternal( struct TA_APO_Stream **stream, const double inRe
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_APO_OpenCore( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_APO_OpenPass( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -497,13 +497,13 @@ TA_LIB_API TA_RetCode TA_APO_OpenAndFill( TA_APO_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   return TA_APO_OpenCore( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
+   return TA_APO_OpenPass( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_APO_OpenAndFillInternal( struct TA_APO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_APO_OpenCore( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
+   return TA_APO_OpenPass( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_APO_Update( TA_APO_Stream *stream, double inReal, double *outReal )

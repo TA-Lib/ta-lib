@@ -46,15 +46,15 @@
       }
 
    }
-   RetCode MINUS_DI_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MINUS_DI_Impl( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -371,15 +371,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MINUS_DI_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MINUS_DI_Impl( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -623,6 +623,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("MINUS_DI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MINUS_DI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -632,7 +633,7 @@
       requireLength("MINUS_DI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MINUS_DI", retCode);
       }
@@ -699,6 +700,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("MINUS_DI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MINUS_DI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -708,7 +710,7 @@
       requireLength("MINUS_DI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MINUS_DI", retCode);
       }
@@ -799,7 +801,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("MINUS_DI update: BadParam");
+            throw new TaLibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
          core.MINUS_DI_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -813,7 +815,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("MINUS_DI peek: BadParam");
+            throw new TaLibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
          MINUS_DI_Stream scratch = new MINUS_DI_Stream(this);
          core.MINUS_DI_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -910,7 +912,7 @@
          }
       }
    }
-   private RetCode MINUS_DI_OpenCore( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MINUS_DI_OpenPass( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -1044,7 +1046,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1228,7 +1230,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1377,55 +1379,55 @@
          return RetCode.Success;
       }
    }
-   private RetCode MINUS_DI_OpenBody( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode MINUS_DI_OpenImpl( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return MINUS_DI_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return MINUS_DI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode MINUS_DI_OpenAndFillBody( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MINUS_DI_OpenAndFillImpl( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      return MINUS_DI_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return MINUS_DI_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode MINUS_DI_OpenAndFillInternalBody( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MINUS_DI_OpenAndFillInternalImpl( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return MINUS_DI_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return MINUS_DI_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* MINUS_DI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MINUS_DI_Stream MINUS_DI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
-      RetCode retCode = MINUS_DI_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MINUS_DI openAndFill: internal error");
+         throw new TaLibStateException("MINUS_DI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MINUS_DI openAndFill: " + retCode);
+      throw new TaLibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MINUS_DI_Open (composition seam). */
    MINUS_DI_Stream MINUS_DI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
-      RetCode retCode = MINUS_DI_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      RetCode retCode = MINUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MINUS_DI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MINUS_DI open: internal error");
+         throw new TaLibStateException("MINUS_DI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MINUS_DI open: " + retCode);
+      throw new TaLibArgumentException("MINUS_DI open: " + retCode, retCode);
    }
    /**
     * Open a live MINUS_DI stream over the warm-up history; the handle's
@@ -1455,16 +1457,16 @@
       MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DI_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DI_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MINUS_DI openAndFill: internal error");
+         throw new TaLibStateException("MINUS_DI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MINUS_DI openAndFill: " + retCode);
+      throw new TaLibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
    }

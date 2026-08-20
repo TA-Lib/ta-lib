@@ -253,7 +253,7 @@ static void TA_TRANGE_StepInternal( struct TA_TRANGE_Stream *sp, double inHigh, 
    sp->lag1_inClose = inClose;
 }
 
-static TA_RetCode TA_TRANGE_OpenCore( struct TA_TRANGE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_TRANGE_OpenPass( struct TA_TRANGE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_TRANGE_Stream *sp;
    int endIdx;
@@ -305,7 +305,7 @@ static TA_RetCode TA_TRANGE_OpenCore( struct TA_TRANGE_Stream **stream, const do
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       outIdx = 0;
       today = startIdx;
@@ -351,7 +351,7 @@ TA_RetCode TA_TRANGE_OpenInternal( struct TA_TRANGE_Stream **stream, const doubl
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_TRANGE_OpenCore( stream, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_TRANGE_OpenPass( stream, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -378,13 +378,13 @@ TA_LIB_API TA_RetCode TA_TRANGE_OpenAndFill( TA_TRANGE_Stream **stream, const do
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
-   return TA_TRANGE_OpenCore( stream, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_TRANGE_OpenPass( stream, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_TRANGE_OpenAndFillInternal( struct TA_TRANGE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_TRANGE_OpenCore( stream, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_TRANGE_OpenPass( stream, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_TRANGE_Update( TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

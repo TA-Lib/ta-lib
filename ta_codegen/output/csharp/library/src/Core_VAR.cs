@@ -88,14 +88,14 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode VAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         double optInNbDev,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode VAR_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              int optInTimePeriod,
+                              double optInNbDev,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -250,14 +250,14 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode VAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         double optInNbDev,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode VAR_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              int optInTimePeriod,
+                              double optInNbDev,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -419,7 +419,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("VAR", "inReal", inReal.Length, guardInLen);
       RequireLength("VAR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = VAR_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VAR", retCode);
       }
@@ -490,7 +490,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("VAR", "inReal", inReal.Length, guardInLen);
       RequireLength("VAR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = VAR_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VAR", retCode);
       }
@@ -738,7 +738,7 @@ public partial class Core
       sp.i += 1;
    }
 
-   private RetCode VAR_OpenCore( VAR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode VAR_OpenPass( VAR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -786,7 +786,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       invPeriod = 1.0 / (double)optInTimePeriod;
       /* Measure deviations against a shift near the window: the running sums
@@ -923,32 +923,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode VAR_OpenBody( VAR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
+   private RetCode VAR_OpenImpl( VAR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
    {
       double[] sink_outReal = new double[1];
-      return VAR_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInNbDev, out _, out _, sink_outReal, 0 );
+      return VAR_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInNbDev, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode VAR_OpenAndFillBody( VAR_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode VAR_OpenAndFillImpl( VAR_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return VAR_OpenCore( sp, inReal, 0, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1 );
+      return VAR_OpenPass( sp, inReal, 0, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode VAR_OpenAndFillInternalBody( VAR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode VAR_OpenAndFillInternalImpl( VAR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return VAR_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
+      return VAR_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* VAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal VAR_Stream VAR_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       VAR_Stream sp = new VAR_Stream(this);
-      RetCode retCode = VAR_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = VAR_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -959,7 +959,7 @@ public partial class Core
    internal VAR_Stream VAR_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
    {
       VAR_Stream sp = new VAR_Stream(this);
-      RetCode retCode = VAR_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      RetCode retCode = VAR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -987,7 +987,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public VAR_Stream VAR_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
 
@@ -1019,9 +1019,9 @@ public partial class Core
    /// output.</exception>
    public VAR_Stream VAR_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       VAR_Stream sp = new VAR_Stream(this);
-      RetCode retCode = VAR_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = VAR_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

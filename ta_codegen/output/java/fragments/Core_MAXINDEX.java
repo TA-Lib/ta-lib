@@ -33,13 +33,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MAXINDEX_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode MAXINDEX_Impl( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          int outInteger[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -114,13 +114,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MAXINDEX_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode MAXINDEX_Impl( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          int outInteger[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -232,6 +232,7 @@
                              int optInTimePeriod,
                              int outInteger[] )
    {
+      requireIndexRange("MAXINDEX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MAXINDEX_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -239,7 +240,7 @@
       requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("MAXINDEX", retCode);
       }
@@ -300,6 +301,7 @@
                              int optInTimePeriod,
                              int outInteger[] )
    {
+      requireIndexRange("MAXINDEX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MAXINDEX_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -307,7 +309,7 @@
       requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("MAXINDEX", retCode);
       }
@@ -399,7 +401,7 @@
        */
       public int update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MAXINDEX update: BadParam");
+            throw new TaLibArgumentException("MAXINDEX update: BadParam", RetCode.BadParam);
          core.MAXINDEX_StreamStep(this, inReal);
          return this.cur_outInteger;
       }
@@ -413,7 +415,7 @@
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MAXINDEX peek: BadParam");
+            throw new TaLibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
          MAXINDEX_Stream scratch = new MAXINDEX_Stream(this);
          core.MAXINDEX_StreamStep(scratch, inReal);
          return scratch.cur_outInteger;
@@ -467,7 +469,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MAXINDEX_OpenCore( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode MAXINDEX_OpenPass( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double highest = 0;
       double tmp = 0;
@@ -505,7 +507,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * (The integer output can never share the real input's buffer —
@@ -566,55 +568,55 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MAXINDEX_OpenBody( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      return MAXINDEX_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0 );
+      return MAXINDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
-   private RetCode MAXINDEX_OpenAndFillBody( MAXINDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode MAXINDEX_OpenAndFillImpl( MAXINDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       if( (Object)outInteger == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return MAXINDEX_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1 );
+      return MAXINDEX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1 );
    }
-   private RetCode MAXINDEX_OpenAndFillInternalBody( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode MAXINDEX_OpenAndFillInternalImpl( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      return MAXINDEX_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
+      return MAXINDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
    }
    /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MAXINDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MAXINDEX openAndFill: internal error");
+         throw new TaLibStateException("MAXINDEX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MAXINDEX openAndFill: " + retCode);
+      throw new TaLibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MAXINDEX_Open (composition seam). */
    MAXINDEX_Stream MAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MAXINDEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MAXINDEX open: internal error");
+         throw new TaLibStateException("MAXINDEX open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MAXINDEX open: " + retCode);
+      throw new TaLibArgumentException("MAXINDEX open: " + retCode, retCode);
    }
    /**
     * Open a live MAXINDEX stream over the warm-up history; the handle's
@@ -644,16 +646,16 @@
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MAXINDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MAXINDEX openAndFill: internal error");
+         throw new TaLibStateException("MAXINDEX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MAXINDEX openAndFill: " + retCode);
+      throw new TaLibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
    }

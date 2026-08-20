@@ -52,6 +52,18 @@ See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
 
 No hand-coded string literals for type definitions or scaffolding in the codegen.
 
+The managed backends have **two** batch tiers: `public OutRange <N>(...)`, which
+validates array lengths and throws on a rejection, and `<N>_Impl` — the
+transcribed numerics, package-private in Java and `internal` in C#, keeping C's
+`RetCode` + out-param shape. There is no third, catch-and-convert tier; #236
+step 5 deleted it.
+
+A cross-call inside a body calls the callee's *public* tier and lets its
+rejection throw, so the callers that need a code back convert it themselves:
+the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`. That conversion is
+live only while cross-calls go through the public tier — the same fact that
+withholds ten cores from `NoPhantomIoTest`'s sweep — so the two move together.
+
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source
 lives under `output/` too (the Java shared types, `pom.xml`, `Core.java` outside
@@ -98,7 +110,20 @@ cargo test                                       # ta_codegen's own test suite
 `ta_regtest` is the **universal test runner** for all languages. Instead of
 linking against each language's compiled code, it drives one generated JSON-RPC
 server per language over stdin/stdout and compares every call against the C
-reference. Flags, tolerances and the individual gates are specified in
+reference.
+
+A **correctness** request goes through each language's PUBLIC API, and the
+server turns the exception back into the `retCode` / `outBegIdx` /
+`outNBElement` wire shape — normalisation is the server's job, not the
+library's. In **Java and C#** a request that declares itself timed
+(`"timed":1`, which only `ta_bench` sends) calls the BODY — the numerics and
+nothing else — inside the timed loop, because these servers are also the
+cross-language
+benchmark and nothing measured may quietly acquire the public tier's argument
+checks. Rust has no such split and never did: `tools` is a separate crate, so
+the public entry point is the only one it can reach, and `ta_bench
+--language=rust` has always measured it. Flags, tolerances and the individual
+gates are specified in
 `src/tools/ta_regtest/CLAUDE.md`.
 
 A new ta_regtest source file must be registered in BOTH `CMakeLists.txt` and the
@@ -118,7 +143,7 @@ Indicators are methods on a `Core` struct, one file per indicator.
   bounds-assert preamble (the LLVM proof that elides per-access bounds checks);
   it is skipped when the lookback clamp means the call computes nothing, so a
   call that returns `Success` with zero elements cannot panic.
-- **Cross-indicator calls target `<N>_Internal`**, the crate-private guarded entry point that keeps C's `RetCode` + out-param shape. The public batch API is `pub fn <N>(...) -> Result<OutRange, RetCode>`.
+- **Cross-indicator calls target `<N>_Impl`**, the crate-private entry point that keeps C's `RetCode` + out-param shape. (It validates parameters and the index range; array bounds are the `assert!` preamble above, not a length check — say which, because "guarded" once contrasted with a retired `Unguarded` tier and now has no anchor.) The public batch API is `pub fn <N>(...) -> Result<OutRange, RetCode>`. **Rust alone.** Java and C# route a cross-call to the callee's PUBLIC entry point (#236 step 3), which is what C has always done; Rust did not follow because its public tier is a thin `Result` adapter that adds no checks the body's asserts do not already make, so the move would buy nothing and would still owe the in-place `mem::swap` shim.
 - Rustdoc, including a runnable doctest per function, is generated from each
   function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
   (warning-free) and `cargo test --doc` in the crate.

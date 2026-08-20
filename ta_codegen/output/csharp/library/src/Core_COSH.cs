@@ -69,12 +69,12 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode COSH( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode COSH_Impl( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -96,12 +96,12 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode COSH( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode COSH_Impl( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -168,7 +168,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("COSH", "inReal", inReal.Length, guardInLen);
       RequireLength("COSH", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = COSH(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = COSH_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("COSH", retCode);
       }
@@ -228,7 +228,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("COSH", "inReal", inReal.Length, guardInLen);
       RequireLength("COSH", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = COSH(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = COSH_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("COSH", retCode);
       }
@@ -342,7 +342,7 @@ public partial class Core
       sp.cur_outReal = Math.Cosh(inReal);
    }
 
-   private RetCode COSH_OpenCore( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode COSH_OpenPass( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -366,32 +366,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode COSH_OpenBody( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode COSH_OpenImpl( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return COSH_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+      return COSH_OpenPass( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode COSH_OpenAndFillBody( COSH_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode COSH_OpenAndFillImpl( COSH_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return COSH_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return COSH_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode COSH_OpenAndFillInternalBody( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode COSH_OpenAndFillInternalImpl( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return COSH_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return COSH_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* COSH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal COSH_Stream COSH_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = COSH_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -402,7 +402,7 @@ public partial class Core
    internal COSH_Stream COSH_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -426,7 +426,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public COSH_Stream COSH_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return COSH_OpenInternal(inReal, 0);
    }
 
@@ -454,9 +454,9 @@ public partial class Core
    /// output.</exception>
    public COSH_Stream COSH_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = COSH_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

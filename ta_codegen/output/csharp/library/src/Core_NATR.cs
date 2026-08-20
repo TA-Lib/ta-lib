@@ -92,15 +92,15 @@ public partial class Core
       return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.NATR] ;
 
    }
-   internal RetCode NATR( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inHigh,
-                          ReadOnlySpan<double> inLow,
-                          ReadOnlySpan<double> inClose,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode NATR_Impl( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inHigh,
+                               ReadOnlySpan<double> inLow,
+                               ReadOnlySpan<double> inClose,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -305,15 +305,15 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode NATR( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inHigh,
-                          ReadOnlySpan<float> inLow,
-                          ReadOnlySpan<float> inClose,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode NATR_Impl( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inHigh,
+                               ReadOnlySpan<float> inLow,
+                               ReadOnlySpan<float> inClose,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -496,7 +496,7 @@ public partial class Core
       RequireLength("NATR", "inLow", inLow.Length, guardInLen);
       RequireLength("NATR", "inClose", inClose.Length, guardInLen);
       RequireLength("NATR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = NATR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("NATR", retCode);
       }
@@ -568,7 +568,7 @@ public partial class Core
       RequireLength("NATR", "inLow", inLow.Length, guardInLen);
       RequireLength("NATR", "inClose", inClose.Length, guardInLen);
       RequireLength("NATR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = NATR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("NATR", retCode);
       }
@@ -734,7 +734,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode NATR_OpenCore( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode NATR_OpenPass( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -799,7 +799,7 @@ public partial class Core
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Period 1 needs no smoothing: the Wilder recursion below degenerates
        * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
@@ -946,32 +946,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode NATR_OpenBody( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
+   private RetCode NATR_OpenImpl( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return NATR_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return NATR_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode NATR_OpenAndFillBody( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode NATR_OpenAndFillImpl( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
-      return NATR_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return NATR_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode NATR_OpenAndFillInternalBody( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode NATR_OpenAndFillInternalImpl( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return NATR_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return NATR_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* NATR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal NATR_Stream NATR_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       NATR_Stream sp = new NATR_Stream(this);
-      RetCode retCode = NATR_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = NATR_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -982,7 +982,7 @@ public partial class Core
    internal NATR_Stream NATR_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       NATR_Stream sp = new NATR_Stream(this);
-      RetCode retCode = NATR_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      RetCode retCode = NATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1010,9 +1010,9 @@ public partial class Core
    /// span cannot be null.</exception>
    public NATR_Stream NATR_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return NATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
@@ -1044,11 +1044,11 @@ public partial class Core
    /// output.</exception>
    public NATR_Stream NATR_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       NATR_Stream sp = new NATR_Stream(this);
-      RetCode retCode = NATR_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = NATR_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

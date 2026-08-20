@@ -94,15 +94,15 @@ public partial class Core
       return MA_Lookback(Math.Max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
    }
-   internal RetCode PVO( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inVolume,
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode PVO_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inVolume,
+                              int optInFastPeriod,
+                              int optInSlowPeriod,
+                              MAType optInMAType,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -167,12 +167,18 @@ public partial class Core
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      retCode = MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      OutRange _xr0 = MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, tempBuffer);
+      fastBeg = _xr0.BegIdx;
+      fastNb = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
       /* Calculate the slow MA into the output. */
-      retCode = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      OutRange _xr1 = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal);
+      outBegIdx = _xr1.BegIdx;
+      outNBElement = _xr1.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -192,15 +198,15 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode PVO( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inVolume,
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode PVO_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inVolume,
+                              int optInFastPeriod,
+                              int optInSlowPeriod,
+                              MAType optInMAType,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -244,11 +250,17 @@ public partial class Core
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      OutRange _xr0 = MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, tempBuffer);
+      fastBeg = _xr0.BegIdx;
+      fastNb = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      OutRange _xr1 = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal);
+      outBegIdx = _xr1.BegIdx;
+      outNBElement = _xr1.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -331,7 +343,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("PVO", "inVolume", inVolume.Length, guardInLen);
       RequireLength("PVO", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PVO_Impl(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVO", retCode);
       }
@@ -411,7 +423,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("PVO", "inVolume", inVolume.Length, guardInLen);
       RequireLength("PVO", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PVO_Impl(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVO", retCode);
       }
@@ -570,7 +582,7 @@ public partial class Core
       sp.cur_outReal = cur_outReal;
    }
 
-   private RetCode PVO_OpenCore( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode PVO_OpenPass( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -606,7 +618,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Nothing to produce: the range is shorter than the lookback. Return before
@@ -624,7 +636,7 @@ public partial class Core
       if( MA_Lookback(Math.Max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -669,7 +681,7 @@ public partial class Core
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInSlowPeriod = optInSlowPeriod;
@@ -680,32 +692,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode PVO_OpenBody( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   private RetCode PVO_OpenImpl( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       double[] sink_outReal = new double[1];
-      return PVO_OpenCore( sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, sink_outReal, 0 );
+      return PVO_OpenPass( sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode PVO_OpenAndFillBody( PVO_Stream sp, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode PVO_OpenAndFillImpl( PVO_Stream sp, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
-      return PVO_OpenCore( sp, inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1 );
+      return PVO_OpenPass( sp, inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode PVO_OpenAndFillInternalBody( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode PVO_OpenAndFillInternalImpl( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return PVO_OpenCore(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
+      return PVO_OpenPass(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* PVO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal PVO_Stream PVO_OpenAndFillInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       PVO_Stream sp = new PVO_Stream(this);
-      RetCode retCode = PVO_OpenAndFillInternalBody(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = PVO_OpenAndFillInternalImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -716,7 +728,7 @@ public partial class Core
    internal PVO_Stream PVO_OpenInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       PVO_Stream sp = new PVO_Stream(this);
-      RetCode retCode = PVO_OpenBody(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType);
+      RetCode retCode = PVO_OpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -746,7 +758,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public PVO_Stream PVO_Open( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
 
@@ -780,9 +792,9 @@ public partial class Core
    /// output.</exception>
    public PVO_Stream PVO_OpenAndFill( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       PVO_Stream sp = new PVO_Stream(this);
-      RetCode retCode = PVO_OpenAndFillBody(sp, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PVO_OpenAndFillImpl(sp, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -1837,6 +1837,7 @@ fn render_return_expr(
         return match name.as_str() {
             "SUCCESS" => "TA_SUCCESS".to_string(),
             "BadParam" => "TA_BAD_PARAM".to_string(),
+            "INSUFFICIENT_HISTORY" => "TA_INSUFFICIENT_HISTORY".to_string(),
             "OutOfRangeEndIndex" => "TA_OUT_OF_RANGE_END_INDEX".to_string(),
             "OutOfRangeStartIndex" => "TA_OUT_OF_RANGE_START_INDEX".to_string(),
             "ALLOC_ERR" => "TA_ALLOC_ERR".to_string(),
@@ -1864,6 +1865,7 @@ impl ExprEmitter for CExpr<'_> {
             "METASTOCK" => "TA_COMPATIBILITY_METASTOCK".to_string(),
             "DEFAULT" => "TA_COMPATIBILITY_DEFAULT".to_string(),
             "BAD_PARAM" => "TA_BAD_PARAM".to_string(),
+            "INSUFFICIENT_HISTORY" => "TA_INSUFFICIENT_HISTORY".to_string(),
             "SUCCESS" => "TA_SUCCESS".to_string(),
             "ALLOC_ERR" => "TA_ALLOC_ERR".to_string(),
             "INTERNAL_ERROR" => "TA_INTERNAL_ERROR".to_string(),

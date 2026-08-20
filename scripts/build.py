@@ -123,6 +123,10 @@ def show_help():
                         committed. Cargo + Python only — no JDK, no .NET SDK.
                         Only drift this run introduces fails it, so it is
                         usable on a dirty working tree.
+    check-stream-retcodes
+                        Verify every short-history arm, in all four backends,
+                        answers TA_INSUFFICIENT_HISTORY (rule S-6). Pure text;
+                        also run as part of regen-check.
     check-source-lists  Verify the CMake and autotools ta_regtest source
                         lists agree (no build; pure text check)
     check-mcdc          Verify each MC/DC builder's pb_conditions(N) matches the
@@ -438,6 +442,18 @@ def _surviving_probes(root_dir: str, was_dirty: set) -> list:
             subprocess.run(['git', 'checkout', '--', rel], cwd=root_dir, check=False)
     return survivors
 
+def check_stream_retcodes(root_dir: str) -> bool:
+    """Rule S-6 answers the same code in all four backends (#236).
+
+    A separate script because it reads the GENERATED output rather than the
+    input, and because it is the only check here that is cross-backend by
+    construction. See its docstring for why it is structural and not a probe.
+    """
+    return subprocess.run(
+        [sys.executable, os.path.join(root_dir, 'scripts', 'check_stream_retcodes.py')]
+    ).returncode == 0
+
+
 def regen_check(root_dir: str) -> int:
     """Verify the committed generated output matches ta_codegen/input/.
 
@@ -447,6 +463,10 @@ def regen_check(root_dir: str) -> int:
     checks out clean, where the baseline is empty and every path is gated).
     """
     if not check_regtest_source_lists(root_dir):
+        return 1
+
+    print("\n=== Short-history return code (rule S-6) ===")
+    if not check_stream_retcodes(root_dir):
         return 1
 
     print("\n=== ta_codegen/input formatting ===")
@@ -614,6 +634,9 @@ def main():
     # Pure text check — no build prerequisites.
     if args.target == 'check-source-lists':
         sys.exit(0 if check_regtest_source_lists(root_dir) else 1)
+
+    if args.target == 'check-stream-retcodes':
+        sys.exit(0 if check_stream_retcodes(root_dir) else 1)
 
     if args.target == 'check-mcdc':
         sys.exit(subprocess.call(

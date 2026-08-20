@@ -76,15 +76,15 @@ public partial class Core
       return Math.Max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
-   internal RetCode CDLUNIQUE3RIVER( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<double> inOpen,
-                                     ReadOnlySpan<double> inHigh,
-                                     ReadOnlySpan<double> inLow,
-                                     ReadOnlySpan<double> inClose,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<int> outInteger )
+   internal RetCode CDLUNIQUE3RIVER_Impl( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<double> inOpen,
+                                          ReadOnlySpan<double> inHigh,
+                                          ReadOnlySpan<double> inLow,
+                                          ReadOnlySpan<double> inClose,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -180,15 +180,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLUNIQUE3RIVER( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<float> inOpen,
-                                     ReadOnlySpan<float> inHigh,
-                                     ReadOnlySpan<float> inLow,
-                                     ReadOnlySpan<float> inClose,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<int> outInteger )
+   internal RetCode CDLUNIQUE3RIVER_Impl( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<float> inOpen,
+                                          ReadOnlySpan<float> inHigh,
+                                          ReadOnlySpan<float> inLow,
+                                          ReadOnlySpan<float> inClose,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -311,7 +311,7 @@ public partial class Core
       RequireLength("CDLUNIQUE3RIVER", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLUNIQUE3RIVER", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLUNIQUE3RIVER", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLUNIQUE3RIVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLUNIQUE3RIVER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLUNIQUE3RIVER", retCode);
       }
@@ -382,7 +382,7 @@ public partial class Core
       RequireLength("CDLUNIQUE3RIVER", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLUNIQUE3RIVER", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLUNIQUE3RIVER", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLUNIQUE3RIVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLUNIQUE3RIVER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLUNIQUE3RIVER", retCode);
       }
@@ -634,7 +634,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLUNIQUE3RIVER_OpenCore( CDLUNIQUE3RIVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLUNIQUE3RIVER_OpenPass( CDLUNIQUE3RIVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -673,7 +673,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -775,29 +775,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLUNIQUE3RIVER_OpenBody( CDLUNIQUE3RIVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLUNIQUE3RIVER_OpenImpl( CDLUNIQUE3RIVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLUNIQUE3RIVER_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLUNIQUE3RIVER_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLUNIQUE3RIVER_OpenAndFillBody( CDLUNIQUE3RIVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLUNIQUE3RIVER_OpenAndFillImpl( CDLUNIQUE3RIVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLUNIQUE3RIVER_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLUNIQUE3RIVER_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLUNIQUE3RIVER_OpenAndFillInternalBody( CDLUNIQUE3RIVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLUNIQUE3RIVER_OpenAndFillInternalImpl( CDLUNIQUE3RIVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLUNIQUE3RIVER_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLUNIQUE3RIVER_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLUNIQUE3RIVER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
-      RetCode retCode = CDLUNIQUE3RIVER_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLUNIQUE3RIVER_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -808,7 +808,7 @@ public partial class Core
    internal CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
-      RetCode retCode = CDLUNIQUE3RIVER_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLUNIQUE3RIVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -837,10 +837,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLUNIQUE3RIVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -874,12 +874,12 @@ public partial class Core
    /// output.</exception>
    public CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
-      RetCode retCode = CDLUNIQUE3RIVER_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLUNIQUE3RIVER_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

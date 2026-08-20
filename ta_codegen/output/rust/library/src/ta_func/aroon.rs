@@ -86,7 +86,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::AROON`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn AROON_Internal(
+    pub(crate) fn AROON_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -292,7 +292,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.AROON_Internal(
+        let retCode = self.AROON_Impl(
             startIdx,
             endIdx,
             inHigh,
@@ -433,7 +433,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::AROON_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::AROON_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn AROON_OpenCore(
+    pub(crate) fn AROON_OpenPass(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outAroonDown: &mut [f64], outAroonUp: &mut [f64], outStride: usize,
     ) -> Result<AROON_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
@@ -476,7 +476,7 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         // Proceed with the calculation for the requested range.
         // Note that this algorithm allows the input and
@@ -581,7 +581,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outAroonDown = [0.0_f64; 1];
         let mut sink_outAroonUp = [0.0_f64; 1];
-        let handle = self.AROON_OpenCore(inHigh, inLow, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outAroonDown, &mut sink_outAroonUp, 0)?;
+        let handle = self.AROON_OpenPass(inHigh, inLow, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outAroonDown, &mut sink_outAroonUp, 0)?;
         Ok((handle, (sink_outAroonDown[0], sink_outAroonUp[0])))
     }
 
@@ -590,8 +590,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -623,7 +625,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.AROON_OpenCore(inHigh, inLow, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outAroonDown, outAroonUp, 1)?;
+        let handle = self.AROON_OpenPass(inHigh, inLow, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outAroonDown, outAroonUp, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -632,7 +634,7 @@ impl Core {
     pub(crate) fn AROON_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
     ) -> Result<AROON_Stream, RetCode> {
-        self.AROON_OpenCore(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1)
+        self.AROON_OpenPass(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1)
     }
 
 }

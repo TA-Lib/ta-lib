@@ -81,13 +81,13 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MIDPOINT( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode MIDPOINT_Impl( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<double> inReal,
+                                   int optInTimePeriod,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -274,13 +274,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MIDPOINT( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode MIDPOINT_Impl( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<float> inReal,
+                                   int optInTimePeriod,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -468,7 +468,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MIDPOINT", "inReal", inReal.Length, guardInLen);
       RequireLength("MIDPOINT", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPOINT", retCode);
       }
@@ -532,7 +532,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MIDPOINT", "inReal", inReal.Length, guardInLen);
       RequireLength("MIDPOINT", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPOINT", retCode);
       }
@@ -732,7 +732,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MIDPOINT_OpenCore( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MIDPOINT_OpenPass( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -782,7 +782,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -883,32 +883,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MIDPOINT_OpenBody( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode MIDPOINT_OpenImpl( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return MIDPOINT_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return MIDPOINT_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MIDPOINT_OpenAndFillBody( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MIDPOINT_OpenAndFillImpl( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return MIDPOINT_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return MIDPOINT_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MIDPOINT_OpenAndFillInternalBody( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MIDPOINT_OpenAndFillInternalImpl( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return MIDPOINT_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return MIDPOINT_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MIDPOINT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MIDPOINT_Stream MIDPOINT_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
-      RetCode retCode = MIDPOINT_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = MIDPOINT_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -919,7 +919,7 @@ public partial class Core
    internal MIDPOINT_Stream MIDPOINT_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
-      RetCode retCode = MIDPOINT_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = MIDPOINT_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -947,7 +947,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public MIDPOINT_Stream MIDPOINT_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return MIDPOINT_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -978,9 +978,9 @@ public partial class Core
    /// output.</exception>
    public MIDPOINT_Stream MIDPOINT_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
-      RetCode retCode = MIDPOINT_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIDPOINT_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

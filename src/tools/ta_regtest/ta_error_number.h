@@ -426,6 +426,12 @@ typedef enum
   TA_STREAM_FINITE_SETUP_FAILED      = 1594,
   TA_STREAM_FINITE_VACUOUS           = 1595,
 
+  /* Streaming short-history rejection (rule S-6 / TA_INSUFFICIENT_HISTORY). */
+  TA_STREAM_SHORT_HISTORY_WRONG_CODE = 1596,
+  TA_STREAM_SHORT_HISTORY_ACCEPTED   = 1597,
+  TA_STREAM_SHORT_HISTORY_CONTROL    = 1598,
+  TA_STREAM_SHORT_HISTORY_VACUOUS    = 1599,
+
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,

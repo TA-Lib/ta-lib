@@ -80,14 +80,14 @@ public partial class Core
       return optInTimePeriod ;
 
    }
-   internal RetCode AROONOSC( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode AROONOSC_Impl( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<double> inHigh,
+                                   ReadOnlySpan<double> inLow,
+                                   int optInTimePeriod,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -211,14 +211,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode AROONOSC( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode AROONOSC_Impl( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<float> inHigh,
+                                   ReadOnlySpan<float> inLow,
+                                   int optInTimePeriod,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -363,7 +363,7 @@ public partial class Core
       RequireLength("AROONOSC", "inHigh", inHigh.Length, guardInLen);
       RequireLength("AROONOSC", "inLow", inLow.Length, guardInLen);
       RequireLength("AROONOSC", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AROONOSC_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AROONOSC", retCode);
       }
@@ -435,7 +435,7 @@ public partial class Core
       RequireLength("AROONOSC", "inHigh", inHigh.Length, guardInLen);
       RequireLength("AROONOSC", "inLow", inLow.Length, guardInLen);
       RequireLength("AROONOSC", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AROONOSC_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AROONOSC", retCode);
       }
@@ -667,7 +667,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode AROONOSC_OpenCore( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AROONOSC_OpenPass( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -717,7 +717,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -820,32 +820,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AROONOSC_OpenBody( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
+   private RetCode AROONOSC_OpenImpl( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return AROONOSC_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return AROONOSC_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode AROONOSC_OpenAndFillBody( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode AROONOSC_OpenAndFillImpl( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
-      return AROONOSC_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return AROONOSC_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode AROONOSC_OpenAndFillInternalBody( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode AROONOSC_OpenAndFillInternalImpl( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return AROONOSC_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return AROONOSC_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* AROONOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal AROONOSC_Stream AROONOSC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AROONOSC_Stream sp = new AROONOSC_Stream(this);
-      RetCode retCode = AROONOSC_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = AROONOSC_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -856,7 +856,7 @@ public partial class Core
    internal AROONOSC_Stream AROONOSC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       AROONOSC_Stream sp = new AROONOSC_Stream(this);
-      RetCode retCode = AROONOSC_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      RetCode retCode = AROONOSC_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -884,8 +884,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public AROONOSC_Stream AROONOSC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       return AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
@@ -916,10 +916,10 @@ public partial class Core
    /// output.</exception>
    public AROONOSC_Stream AROONOSC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       AROONOSC_Stream sp = new AROONOSC_Stream(this);
-      RetCode retCode = AROONOSC_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AROONOSC_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

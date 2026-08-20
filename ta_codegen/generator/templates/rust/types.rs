@@ -21,6 +21,12 @@ pub enum RetCode {
     AllocErr,
     /// Internal error occurred.
     InternalError,
+    /// The history given to a stream opener is shorter than `lookback + 1` bars.
+    ///
+    /// The library's one **recoverable** condition: accumulate more bars and
+    /// retry, rather than fix the call. Streaming only — the batch tier answers
+    /// a range shorter than its lookback with `Ok` and a zero count.
+    InsufficientHistory,
 }
 
 /// Where a successful call's output starts and how many values it wrote.
@@ -65,6 +71,7 @@ impl RetCode {
             RetCode::AllocErr => 3,
             RetCode::OutOfRangeStartIndex => 12,
             RetCode::OutOfRangeEndIndex => 13,
+            RetCode::InsufficientHistory => 17,
             RetCode::InternalError => 5000,
         }
     }
@@ -79,6 +86,7 @@ impl std::fmt::Display for RetCode {
             RetCode::OutOfRangeEndIndex => "end index out of range",
             RetCode::AllocErr => "allocation error",
             RetCode::InternalError => "internal error",
+            RetCode::InsufficientHistory => "history shorter than the lookback",
         };
         f.write_str(s)
     }
@@ -621,6 +629,41 @@ impl Default for CoreBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A stream opened on too little history answers
+    /// [`RetCode::InsufficientHistory`], not the catch-all.
+    ///
+    /// The distinction is the whole point of the member: a short history means
+    /// "send more bars" and is recoverable, while `BadParam` always means the
+    /// call itself is wrong. Before it existed, both answered `BadParam` and a
+    /// caller could not tell them apart (docs/error-handling-spec.md, rule S-6).
+    ///
+    /// Three arms, because the first alone would pass against a body that
+    /// answered `InsufficientHistory` for everything: the second shows one more
+    /// bar is all it wanted, the third that a genuinely bad parameter still
+    /// reports the catch-all.
+    #[test]
+    fn a_short_history_open_reports_insufficient_history() {
+        let core = Core::new();
+        let lookback = core.SMA_Lookback(30);
+        assert!(lookback > 0, "the probe needs a function that consumes bars");
+
+        let one_short = vec![1.0_f64; lookback];
+        assert_eq!(
+            core.SMA_Open(&one_short, 30).err(),
+            Some(RetCode::InsufficientHistory),
+        );
+
+        let just_enough = vec![1.0_f64; lookback + 1];
+        assert!(core.SMA_Open(&just_enough, 30).is_ok());
+
+        assert_eq!(core.SMA_Open(&just_enough, 0).err(), Some(RetCode::BadParam));
+
+        // The number C puts on the wire for the same condition. Pinned here
+        // because nothing else in this crate compares the two vocabularies, and
+        // the cross-language harness reads exactly this integer.
+        assert_eq!(RetCode::InsufficientHistory.as_c_int(), 17);
+    }
 
     #[test]
     fn new_default_and_empty_builder_are_all_defaults() {

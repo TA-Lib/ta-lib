@@ -76,15 +76,15 @@ public partial class Core
       return Math.Max(ShadowVeryShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   internal RetCode CDLKICKING( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<double> inOpen,
-                                ReadOnlySpan<double> inHigh,
-                                ReadOnlySpan<double> inLow,
-                                ReadOnlySpan<double> inClose,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<int> outInteger )
+   internal RetCode CDLKICKING_Impl( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<double> inOpen,
+                                     ReadOnlySpan<double> inHigh,
+                                     ReadOnlySpan<double> inLow,
+                                     ReadOnlySpan<double> inClose,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -184,15 +184,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLKICKING( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<float> inOpen,
-                                ReadOnlySpan<float> inHigh,
-                                ReadOnlySpan<float> inLow,
-                                ReadOnlySpan<float> inClose,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<int> outInteger )
+   internal RetCode CDLKICKING_Impl( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<float> inOpen,
+                                     ReadOnlySpan<float> inHigh,
+                                     ReadOnlySpan<float> inLow,
+                                     ReadOnlySpan<float> inClose,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -321,7 +321,7 @@ public partial class Core
       RequireLength("CDLKICKING", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLKICKING", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLKICKING", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLKICKING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLKICKING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLKICKING", retCode);
       }
@@ -391,7 +391,7 @@ public partial class Core
       RequireLength("CDLKICKING", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLKICKING", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLKICKING", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLKICKING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLKICKING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLKICKING", retCode);
       }
@@ -681,7 +681,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLKICKING_OpenCore( CDLKICKING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLKICKING_OpenPass( CDLKICKING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -721,7 +721,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -845,29 +845,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLKICKING_OpenBody( CDLKICKING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLKICKING_OpenImpl( CDLKICKING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLKICKING_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLKICKING_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLKICKING_OpenAndFillBody( CDLKICKING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLKICKING_OpenAndFillImpl( CDLKICKING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLKICKING_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLKICKING_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLKICKING_OpenAndFillInternalBody( CDLKICKING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLKICKING_OpenAndFillInternalImpl( CDLKICKING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLKICKING_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLKICKING_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLKICKING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLKICKING_Stream CDLKICKING_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLKICKING_Stream sp = new CDLKICKING_Stream(this);
-      RetCode retCode = CDLKICKING_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLKICKING_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -878,7 +878,7 @@ public partial class Core
    internal CDLKICKING_Stream CDLKICKING_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLKICKING_Stream sp = new CDLKICKING_Stream(this);
-      RetCode retCode = CDLKICKING_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLKICKING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -906,10 +906,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLKICKING_Stream CDLKICKING_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLKICKING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -942,12 +942,12 @@ public partial class Core
    /// output.</exception>
    public CDLKICKING_Stream CDLKICKING_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLKICKING_Stream sp = new CDLKICKING_Stream(this);
-      RetCode retCode = CDLKICKING_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLKICKING_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

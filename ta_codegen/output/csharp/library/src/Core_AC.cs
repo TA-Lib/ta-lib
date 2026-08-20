@@ -99,16 +99,16 @@ public partial class Core
       return AO_Lookback(optInFastPeriod, optInSlowPeriod) + SMA_Lookback(optInSignalPeriod) ;
 
    }
-   internal RetCode AC( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inHigh,
-                        ReadOnlySpan<double> inLow,
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode AC_Impl( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             int optInFastPeriod,
+                             int optInSlowPeriod,
+                             int optInSignalPeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -292,16 +292,16 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode AC( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inHigh,
-                        ReadOnlySpan<float> inLow,
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode AC_Impl( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             int optInFastPeriod,
+                             int optInSlowPeriod,
+                             int optInSignalPeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -487,7 +487,7 @@ public partial class Core
       RequireLength("AC", "inHigh", inHigh.Length, guardInLen);
       RequireLength("AC", "inLow", inLow.Length, guardInLen);
       RequireLength("AC", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AC(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AC", retCode);
       }
@@ -576,7 +576,7 @@ public partial class Core
       RequireLength("AC", "inHigh", inHigh.Length, guardInLen);
       RequireLength("AC", "inLow", inLow.Length, guardInLen);
       RequireLength("AC", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AC(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AC", retCode);
       }
@@ -814,7 +814,7 @@ public partial class Core
       }
    }
 
-   private RetCode AC_OpenCore( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AC_OpenPass( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -896,7 +896,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Allocate a circular buffer equal to the requested signal period. */
       if( optInSignalPeriod < 1 ) return RetCode.InternalError;
@@ -1040,32 +1040,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AC_OpenBody( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   private RetCode AC_OpenImpl( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       double[] sink_outReal = new double[1];
-      return AC_OpenCore( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, sink_outReal, 0 );
+      return AC_OpenPass( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode AC_OpenAndFillBody( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode AC_OpenAndFillImpl( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
-      return AC_OpenCore( sp, inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return AC_OpenPass( sp, inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode AC_OpenAndFillInternalBody( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode AC_OpenAndFillInternalImpl( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return AC_OpenCore(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return AC_OpenPass(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* AC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal AC_Stream AC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = AC_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1076,7 +1076,7 @@ public partial class Core
    internal AC_Stream AC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenBody(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1107,8 +1107,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public AC_Stream AC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       return AC_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
 
@@ -1143,10 +1143,10 @@ public partial class Core
    /// output.</exception>
    public AC_Stream AC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenAndFillBody(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AC_OpenAndFillImpl(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

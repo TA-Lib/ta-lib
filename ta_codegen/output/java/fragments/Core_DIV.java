@@ -25,13 +25,13 @@
       return 0 ;
 
    }
-   RetCode DIV_Internal( int startIdx,
-                         int endIdx,
-                         double inReal0[],
-                         double inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode DIV_Impl( int startIdx,
+                     int endIdx,
+                     double inReal0[],
+                     double inReal1[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -48,13 +48,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode DIV_Internal( int startIdx,
-                         int endIdx,
-                         float inReal0[],
-                         float inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode DIV_Impl( int startIdx,
+                     int endIdx,
+                     float inReal0[],
+                     float inReal1[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -119,6 +119,7 @@
                         double inReal1[],
                         double outReal[] )
    {
+      requireIndexRange("DIV", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, DIV_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -127,7 +128,7 @@
       requireLength("DIV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DIV_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DIV_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DIV", retCode);
       }
@@ -184,6 +185,7 @@
                         float inReal1[],
                         double outReal[] )
    {
+      requireIndexRange("DIV", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, DIV_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -192,7 +194,7 @@
       requireLength("DIV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DIV_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DIV_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DIV", retCode);
       }
@@ -256,7 +258,7 @@
        */
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new IllegalArgumentException("DIV update: BadParam");
+            throw new TaLibArgumentException("DIV update: BadParam", RetCode.BadParam);
          core.DIV_StreamStep(this, inReal0, inReal1);
          return this.cur_outReal;
       }
@@ -270,7 +272,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new IllegalArgumentException("DIV peek: BadParam");
+            throw new TaLibArgumentException("DIV peek: BadParam", RetCode.BadParam);
          DIV_Stream scratch = new DIV_Stream(this);
          core.DIV_StreamStep(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
@@ -297,7 +299,7 @@
    {
       sp.cur_outReal = inReal0 / inReal1;
    }
-   private RetCode DIV_OpenCore( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode DIV_OpenPass( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -318,55 +320,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode DIV_OpenBody( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx )
+   private RetCode DIV_OpenImpl( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return DIV_OpenCore( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return DIV_OpenPass( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode DIV_OpenAndFillBody( DIV_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode DIV_OpenAndFillImpl( DIV_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          return RetCode.BadParam;
       }
-      return DIV_OpenCore( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
+      return DIV_OpenPass( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode DIV_OpenAndFillInternalBody( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode DIV_OpenAndFillInternalImpl( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return DIV_OpenCore(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return DIV_OpenPass(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* DIV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    DIV_Stream DIV_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DIV_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("DIV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("DIV openAndFill: internal error");
+         throw new TaLibStateException("DIV openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("DIV openAndFill: " + retCode);
+      throw new TaLibArgumentException("DIV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind DIV_Open (composition seam). */
    DIV_Stream DIV_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
       DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenBody(sp, inReal0, inReal1, startIdx);
+      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("DIV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("DIV open: internal error");
+         throw new TaLibStateException("DIV open: internal error", retCode);
       }
-      throw new IllegalArgumentException("DIV open: " + retCode);
+      throw new TaLibArgumentException("DIV open: " + retCode, retCode);
    }
    /**
     * Open a live DIV stream over the warm-up history; the handle's
@@ -396,16 +398,16 @@
       DIV_Stream sp = new DIV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DIV_OpenAndFillBody(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DIV_OpenAndFillImpl(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("DIV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("DIV openAndFill: internal error");
+         throw new TaLibStateException("DIV openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("DIV openAndFill: " + retCode);
+      throw new TaLibArgumentException("DIV openAndFill: " + retCode, retCode);
    }

@@ -28,13 +28,13 @@
       return 0 ;
 
    }
-   RetCode PVI_Internal( int startIdx,
-                         int endIdx,
-                         double inClose[],
-                         double inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode PVI_Impl( int startIdx,
+                     int endIdx,
+                     double inClose[],
+                     double inVolume[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -90,13 +90,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode PVI_Internal( int startIdx,
-                         int endIdx,
-                         float inClose[],
-                         float inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode PVI_Impl( int startIdx,
+                     int endIdx,
+                     float inClose[],
+                     float inVolume[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -187,6 +187,7 @@
                         double inVolume[],
                         double outReal[] )
    {
+      requireIndexRange("PVI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, PVI_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -195,7 +196,7 @@
       requireLength("PVI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("PVI", retCode);
       }
@@ -257,6 +258,7 @@
                         float inVolume[],
                         double outReal[] )
    {
+      requireIndexRange("PVI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, PVI_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -265,7 +267,7 @@
       requireLength("PVI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("PVI", retCode);
       }
@@ -341,7 +343,7 @@
        */
       public double update( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("PVI update: BadParam");
+            throw new TaLibArgumentException("PVI update: BadParam", RetCode.BadParam);
          core.PVI_StreamStep(this, inClose, inVolume);
          return this.cur_outReal;
       }
@@ -355,7 +357,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("PVI peek: BadParam");
+            throw new TaLibArgumentException("PVI peek: BadParam", RetCode.BadParam);
          PVI_Stream scratch = new PVI_Stream(this);
          core.PVI_StreamStep(scratch, inClose, inVolume);
          return scratch.cur_outReal;
@@ -410,7 +412,7 @@
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode PVI_OpenCore( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode PVI_OpenPass( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -474,55 +476,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode PVI_OpenBody( PVI_Stream sp, double inClose[], double inVolume[], int startIdx )
+   private RetCode PVI_OpenImpl( PVI_Stream sp, double inClose[], double inVolume[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return PVI_OpenCore( sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return PVI_OpenPass( sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode PVI_OpenAndFillBody( PVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode PVI_OpenAndFillImpl( PVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      return PVI_OpenCore( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
+      return PVI_OpenPass( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode PVI_OpenAndFillInternalBody( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode PVI_OpenAndFillInternalImpl( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return PVI_OpenCore(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return PVI_OpenPass(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* PVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PVI_Stream PVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       PVI_Stream sp = new PVI_Stream(this);
-      RetCode retCode = PVI_OpenAndFillInternalBody(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("PVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("PVI openAndFill: internal error");
+         throw new TaLibStateException("PVI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("PVI openAndFill: " + retCode);
+      throw new TaLibArgumentException("PVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind PVI_Open (composition seam). */
    PVI_Stream PVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {
       PVI_Stream sp = new PVI_Stream(this);
-      RetCode retCode = PVI_OpenBody(sp, inClose, inVolume, startIdx);
+      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("PVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("PVI open: internal error");
+         throw new TaLibStateException("PVI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("PVI open: " + retCode);
+      throw new TaLibArgumentException("PVI open: " + retCode, retCode);
    }
    /**
     * Open a live PVI stream over the warm-up history; the handle's
@@ -552,16 +554,16 @@
       PVI_Stream sp = new PVI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PVI_OpenAndFillBody(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVI_OpenAndFillImpl(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("PVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("PVI openAndFill: internal error");
+         throw new TaLibStateException("PVI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("PVI openAndFill: " + retCode);
+      throw new TaLibArgumentException("PVI openAndFill: " + retCode, retCode);
    }

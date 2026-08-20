@@ -32,14 +32,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MINMAXINDEX_Internal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outMinIdx[],
-                                 int outMaxIdx[] )
+   RetCode MINMAXINDEX_Impl( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outMinIdx[],
+                             int outMaxIdx[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -140,14 +140,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MINMAXINDEX_Internal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outMinIdx[],
-                                 int outMaxIdx[] )
+   RetCode MINMAXINDEX_Impl( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outMinIdx[],
+                             int outMaxIdx[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -287,6 +287,7 @@
                                 int outMinIdx[],
                                 int outMaxIdx[] )
    {
+      requireIndexRange("MINMAXINDEX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MINMAXINDEX_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -295,7 +296,7 @@
       requireLength("MINMAXINDEX", "outMaxIdx", outMaxIdx, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINMAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      RetCode retCode = MINMAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
       if( retCode != RetCode.Success ) {
          throw failure("MINMAXINDEX", retCode);
       }
@@ -358,6 +359,7 @@
                                 int outMinIdx[],
                                 int outMaxIdx[] )
    {
+      requireIndexRange("MINMAXINDEX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MINMAXINDEX_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -366,7 +368,7 @@
       requireLength("MINMAXINDEX", "outMaxIdx", outMaxIdx, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINMAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      RetCode retCode = MINMAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
       if( retCode != RetCode.Success ) {
          throw failure("MINMAXINDEX", retCode);
       }
@@ -489,7 +491,7 @@
        */
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MINMAXINDEX update: BadParam");
+            throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
          core.MINMAXINDEX_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
          return this.cachedValue;
@@ -504,7 +506,7 @@
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MINMAXINDEX peek: BadParam");
+            throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
          MINMAXINDEX_Stream scratch = new MINMAXINDEX_Stream(this);
          core.MINMAXINDEX_StreamStep(scratch, inReal);
          return new Value(scratch.cur_outMinIdx, scratch.cur_outMaxIdx);
@@ -575,7 +577,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MINMAXINDEX_OpenCore( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
+   private RetCode MINMAXINDEX_OpenPass( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
    {
       double highest = 0;
       double lowest = 0;
@@ -616,7 +618,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * (The integer outputs can never share the real input's buffer —
@@ -703,56 +705,56 @@
       sp.cachedValue = new MINMAXINDEX_Stream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
       return RetCode.Success;
    }
-   private RetCode MINMAXINDEX_OpenBody( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MINMAXINDEX_OpenImpl( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outMinIdx = new int[1];
       int[] sink_outMaxIdx = new int[1];
-      return MINMAXINDEX_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0 );
+      return MINMAXINDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0 );
    }
-   private RetCode MINMAXINDEX_OpenAndFillBody( MINMAXINDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
+   private RetCode MINMAXINDEX_OpenAndFillImpl( MINMAXINDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
    {
       if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
          return RetCode.BadParam;
       }
-      return MINMAXINDEX_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1 );
+      return MINMAXINDEX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1 );
    }
-   private RetCode MINMAXINDEX_OpenAndFillInternalBody( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
+   private RetCode MINMAXINDEX_OpenAndFillInternalImpl( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
    {
-      return MINMAXINDEX_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
+      return MINMAXINDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
    }
    /* MINMAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MINMAXINDEX_Stream MINMAXINDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
    {
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      RetCode retCode = MINMAXINDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MINMAXINDEX openAndFill: internal error");
+         throw new TaLibStateException("MINMAXINDEX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MINMAXINDEX openAndFill: " + retCode);
+      throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MINMAXINDEX_Open (composition seam). */
    MINMAXINDEX_Stream MINMAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MINMAXINDEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MINMAXINDEX open: internal error");
+         throw new TaLibStateException("MINMAXINDEX open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MINMAXINDEX open: " + retCode);
+      throw new TaLibArgumentException("MINMAXINDEX open: " + retCode, retCode);
    }
    /**
     * Open a live MINMAXINDEX stream over the warm-up history; the handle's
@@ -782,16 +784,16 @@
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINMAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      RetCode retCode = MINMAXINDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MINMAXINDEX openAndFill: internal error");
+         throw new TaLibStateException("MINMAXINDEX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MINMAXINDEX openAndFill: " + retCode);
+      throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
    }

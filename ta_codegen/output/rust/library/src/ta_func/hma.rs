@@ -91,7 +91,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::HMA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn HMA_Internal(
+    pub(crate) fn HMA_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -439,7 +439,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.HMA_Internal(
+        let retCode = self.HMA_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -625,7 +625,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::HMA_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::HMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn HMA_OpenCore(
+    pub(crate) fn HMA_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<HMA_Stream, RetCode> {
         if inReal.is_empty() {
@@ -646,7 +646,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             if historyLen < self.HMA_Lookback(optInTimePeriod) + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             let state = HMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
@@ -754,7 +754,7 @@ impl Core {
             if startIdx > endIdx {
                 (*outBegIdx) = 0;
                 (*outNBElement) = 0;
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             // The two price WMAs are anchored where the first de-lagged value is
             // needed: lookbackSqrt bars before the first requested output.
@@ -901,7 +901,7 @@ impl Core {
             if startIdx > endIdx {
                 (*outBegIdx) = 0;
                 (*outNBElement) = 0;
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             // The two price WMAs are anchored where the first de-lagged value is
             // needed: lookbackSqrt bars before the first requested output.
@@ -1076,7 +1076,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.HMA_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.HMA_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -1085,8 +1085,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -1113,7 +1115,7 @@ impl Core {
     ) -> Result<(HMA_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.HMA_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.HMA_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1122,7 +1124,7 @@ impl Core {
     pub(crate) fn HMA_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<HMA_Stream, RetCode> {
-        self.HMA_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.HMA_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

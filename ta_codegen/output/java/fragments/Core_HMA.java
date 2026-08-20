@@ -40,13 +40,13 @@
       return WMA_Lookback(optInTimePeriod) + WMA_Lookback(sqrtPeriod) ;
 
    }
-   RetCode HMA_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode HMA_Impl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int lookbackTotal = 0;
       int lookbackSqrt = 0;
@@ -276,13 +276,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode HMA_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode HMA_Impl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int lookbackTotal = 0;
       int lookbackSqrt = 0;
@@ -514,6 +514,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("HMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -521,7 +522,7 @@
       requireLength("HMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HMA", retCode);
       }
@@ -594,6 +595,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("HMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -601,7 +603,7 @@
       requireLength("HMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HMA", retCode);
       }
@@ -764,7 +766,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HMA update: BadParam");
+            throw new TaLibArgumentException("HMA update: BadParam", RetCode.BadParam);
          core.HMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -780,7 +782,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HMA peek: BadParam");
+            throw new TaLibArgumentException("HMA peek: BadParam", RetCode.BadParam);
          HMA_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new HMA_Stream(this);
@@ -878,7 +880,7 @@
          }
       }
    }
-   private RetCode HMA_OpenCore( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HMA_OpenPass( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
@@ -895,7 +897,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < HMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.dividerFull = 0.0;
@@ -1003,7 +1005,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* The two price WMAs are anchored where the first de-lagged value is
           * needed: lookbackSqrt bars before the first requested output.
@@ -1150,7 +1152,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* The two price WMAs are anchored where the first de-lagged value is
           * needed: lookbackSqrt bars before the first requested output.
@@ -1316,55 +1318,55 @@
          return RetCode.Success;
       }
    }
-   private RetCode HMA_OpenBody( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode HMA_OpenImpl( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return HMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return HMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode HMA_OpenAndFillBody( HMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HMA_OpenAndFillImpl( HMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return HMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return HMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode HMA_OpenAndFillInternalBody( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HMA_OpenAndFillInternalImpl( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return HMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return HMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* HMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HMA_Stream HMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HMA_Stream sp = new HMA_Stream(this);
-      RetCode retCode = HMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HMA openAndFill: internal error");
+         throw new TaLibStateException("HMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("HMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind HMA_Open (composition seam). */
    HMA_Stream HMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       HMA_Stream sp = new HMA_Stream(this);
-      RetCode retCode = HMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = HMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HMA open: internal error");
+         throw new TaLibStateException("HMA open: internal error", retCode);
       }
-      throw new IllegalArgumentException("HMA open: " + retCode);
+      throw new TaLibArgumentException("HMA open: " + retCode, retCode);
    }
    /**
     * Open a live HMA stream over the warm-up history; the handle's
@@ -1394,16 +1396,16 @@
       HMA_Stream sp = new HMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HMA_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HMA openAndFill: internal error");
+         throw new TaLibStateException("HMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("HMA openAndFill: " + retCode, retCode);
    }

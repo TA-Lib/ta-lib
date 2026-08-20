@@ -877,7 +877,7 @@ fn emit_call_arm(
         args.push(format!("&mut *o{k}"));
     }
 
-    let _ = writeln!(o, "                let rc = self.core.{snake}_Internal({});", args.join(", "));
+    let _ = writeln!(o, "                let rc = self.core.{snake}_Impl({});", args.join(", "));
     for (k, out) in f.outputs.iter().enumerate() {
         let arr = match out.kind {
             OutputKind::Integer => "int_out",

@@ -81,13 +81,13 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode LINEARREG( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<double> inReal,
-                               int optInTimePeriod,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outReal )
+   internal RetCode LINEARREG_Impl( int startIdx,
+                                    int endIdx,
+                                    ReadOnlySpan<double> inReal,
+                                    int optInTimePeriod,
+                                    out int outBegIdx,
+                                    out int outNBElement,
+                                    Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -192,13 +192,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode LINEARREG( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<float> inReal,
-                               int optInTimePeriod,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outReal )
+   internal RetCode LINEARREG_Impl( int startIdx,
+                                    int endIdx,
+                                    ReadOnlySpan<float> inReal,
+                                    int optInTimePeriod,
+                                    out int outBegIdx,
+                                    out int outNBElement,
+                                    Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -315,7 +315,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LINEARREG", "inReal", inReal.Length, guardInLen);
       RequireLength("LINEARREG", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LINEARREG(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG", retCode);
       }
@@ -375,7 +375,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LINEARREG", "inReal", inReal.Length, guardInLen);
       RequireLength("LINEARREG", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LINEARREG(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG", retCode);
       }
@@ -536,7 +536,7 @@ public partial class Core
       }
    }
 
-   private RetCode LINEARREG_OpenCore( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode LINEARREG_OpenPass( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -592,7 +592,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -659,32 +659,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode LINEARREG_OpenBody( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode LINEARREG_OpenImpl( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return LINEARREG_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return LINEARREG_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode LINEARREG_OpenAndFillBody( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode LINEARREG_OpenAndFillImpl( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return LINEARREG_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return LINEARREG_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode LINEARREG_OpenAndFillInternalBody( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode LINEARREG_OpenAndFillInternalImpl( LINEARREG_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return LINEARREG_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return LINEARREG_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* LINEARREG_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal LINEARREG_Stream LINEARREG_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       LINEARREG_Stream sp = new LINEARREG_Stream(this);
-      RetCode retCode = LINEARREG_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = LINEARREG_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -695,7 +695,7 @@ public partial class Core
    internal LINEARREG_Stream LINEARREG_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       LINEARREG_Stream sp = new LINEARREG_Stream(this);
-      RetCode retCode = LINEARREG_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = LINEARREG_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -722,7 +722,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public LINEARREG_Stream LINEARREG_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return LINEARREG_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -753,9 +753,9 @@ public partial class Core
    /// output.</exception>
    public LINEARREG_Stream LINEARREG_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       LINEARREG_Stream sp = new LINEARREG_Stream(this);
-      RetCode retCode = LINEARREG_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

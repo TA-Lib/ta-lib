@@ -418,7 +418,7 @@ static void TA_AROON_StepInternal( struct TA_AROON_Stream *sp, double inHigh, do
    sp->today += 1;
 }
 
-static TA_RetCode TA_AROON_OpenCore( struct TA_AROON_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outAroonDown[], double outAroonUp[], int outStride )
+static TA_RetCode TA_AROON_OpenPass( struct TA_AROON_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outAroonDown[], double outAroonUp[], int outStride )
 {
    struct TA_AROON_Stream *sp;
    int endIdx;
@@ -469,7 +469,7 @@ static TA_RetCode TA_AROON_OpenCore( struct TA_AROON_Stream **stream, const doub
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -590,7 +590,7 @@ TA_RetCode TA_AROON_OpenInternal( struct TA_AROON_Stream **stream, const double 
    int dummyNBElement = 0;
    double sink_outAroonDown = 0.0;
    double sink_outAroonUp = 0.0;
-   retCode = TA_AROON_OpenCore( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outAroonDown, &sink_outAroonUp, 0 );
+   retCode = TA_AROON_OpenPass( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outAroonDown, &sink_outAroonUp, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outAroonDown = sink_outAroonDown;
@@ -618,13 +618,13 @@ TA_LIB_API TA_RetCode TA_AROON_OpenAndFill( TA_AROON_Stream **stream, const doub
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outAroonDown == (const void *)inHigh || (const void *)outAroonDown == (const void *)inLow || (const void *)outAroonUp == (const void *)inHigh || (const void *)outAroonUp == (const void *)inLow || (const void *)outAroonDown == (const void *)outAroonUp ) return TA_BAD_PARAM;
-   return TA_AROON_OpenCore( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1 );
+   return TA_AROON_OpenPass( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_AROON_OpenAndFillInternal( struct TA_AROON_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outAroonDown[], double outAroonUp[] )
 {
-   return TA_AROON_OpenCore( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1 );
+   return TA_AROON_OpenPass( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_AROON_Update( TA_AROON_Stream *stream, double inHigh, double inLow, double *outAroonDown, double *outAroonUp )

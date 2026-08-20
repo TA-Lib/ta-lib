@@ -47,11 +47,15 @@ package io.github.talib;
  * catch separately (accumulate more bars and retry). Every other open
  * rejection (out-of-range parameter, aliased output arrays) surfaces as a
  * plain {@link IllegalArgumentException}.
+ *
+ * <p>Still an {@link IllegalArgumentException} by inheritance, so an existing
+ * {@code catch} keeps working, and it reports
+ * {@link RetCode#InsufficientHistory} through {@link TaLibFailure#retCode()}.
  */
-public class InsufficientHistoryException extends IllegalArgumentException {
+public class InsufficientHistoryException extends TaLibArgumentException {
     private static final long serialVersionUID = 1L;
 
     public InsufficientHistoryException(String message) {
-        super(message);
+        super(message, RetCode.InsufficientHistory);
     }
 }

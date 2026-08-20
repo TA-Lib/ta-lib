@@ -70,7 +70,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::TAN`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn TAN_Internal(
+    pub(crate) fn TAN_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -169,7 +169,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.TAN_Internal(
+        let retCode = self.TAN_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -233,7 +233,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::TAN_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::TAN_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn TAN_OpenCore(
+    pub(crate) fn TAN_OpenPass(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TAN_Stream, RetCode> {
         if inReal.is_empty() {
@@ -273,7 +273,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.TAN_OpenCore(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.TAN_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -282,8 +282,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -310,7 +312,7 @@ impl Core {
     ) -> Result<(TAN_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.TAN_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.TAN_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -319,7 +321,7 @@ impl Core {
     pub(crate) fn TAN_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TAN_Stream, RetCode> {
-        self.TAN_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.TAN_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

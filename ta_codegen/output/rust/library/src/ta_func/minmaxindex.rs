@@ -83,7 +83,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::MINMAXINDEX`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn MINMAXINDEX_Internal(
+    pub(crate) fn MINMAXINDEX_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -275,7 +275,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MINMAXINDEX_Internal(
+        let retCode = self.MINMAXINDEX_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -409,7 +409,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MINMAXINDEX_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MINMAXINDEX_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MINMAXINDEX_OpenCore(
+    pub(crate) fn MINMAXINDEX_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMinIdx: &mut [i32], outMaxIdx: &mut [i32], outStride: usize,
     ) -> Result<MINMAXINDEX_Stream, RetCode> {
         if inReal.is_empty() {
@@ -452,7 +452,7 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         // Proceed with the calculation for the requested range.
         // (The integer outputs can never share the real input's buffer —
@@ -550,7 +550,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outMinIdx = [0_i32; 1];
         let mut sink_outMaxIdx = [0_i32; 1];
-        let handle = self.MINMAXINDEX_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMinIdx, &mut sink_outMaxIdx, 0)?;
+        let handle = self.MINMAXINDEX_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMinIdx, &mut sink_outMaxIdx, 0)?;
         Ok((handle, (sink_outMinIdx[0], sink_outMaxIdx[0])))
     }
 
@@ -559,8 +559,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -591,7 +593,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MINMAXINDEX_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outMinIdx, outMaxIdx, 1)?;
+        let handle = self.MINMAXINDEX_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outMinIdx, outMaxIdx, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -600,7 +602,7 @@ impl Core {
     pub(crate) fn MINMAXINDEX_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMinIdx: &mut [i32], outMaxIdx: &mut [i32],
     ) -> Result<MINMAXINDEX_Stream, RetCode> {
-        self.MINMAXINDEX_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1)
+        self.MINMAXINDEX_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1)
     }
 
 }

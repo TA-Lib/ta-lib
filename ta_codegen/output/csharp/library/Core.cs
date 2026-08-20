@@ -224,16 +224,17 @@ public partial class Core
     {
         if (actual < required)
         {
-            throw new ArgumentException(
+            throw new TaLibArgumentException(
                 "TA_" + funcName + ": " + argName + " has length " + actual
                     + ", needs " + required,
-                argName);
+                argName, RetCode.BadParam);
         }
     }
 
     /* The RetCode -> exception mapping for the STREAMING tier. Deliberately not
-     * a reuse of Failure(): a stream signals insufficient history in band as
-     * OutOfRangeEndIndex, which Failure() renders as
+     * a reuse of Failure(): the two tiers spell the same code differently. A
+     * stream CAN still report OutOfRangeEndIndex (a history longer than
+     * MAX_INDEX + 1), and Failure() would render that as
      * ArgumentOutOfRangeException("endIdx") — meaningless to a caller whose
      * method has no endIdx parameter.
      *
@@ -247,34 +248,45 @@ public partial class Core
         string where = funcName + " " + what + ": ";
         return retCode switch
         {
-            RetCode.OutOfRangeEndIndex => new InsufficientHistoryException(
+            RetCode.InsufficientHistory => new InsufficientHistoryException(
                 where + "history shorter than lookback + 1"),
-            RetCode.InternalError => new InvalidOperationException(where + "internal error"),
-            RetCode.AllocErr => new InvalidOperationException(where + "allocation failed"),
-            _ => new ArgumentException(where + retCode),
+            RetCode.InternalError => new TaLibInvalidOperationException(where + "internal error", retCode),
+            RetCode.AllocErr => new TaLibInvalidOperationException(where + "allocation failed", retCode),
+            _ => new TaLibArgumentException(where + retCode, retCode),
         };
     }
 
     /* The RetCode -> exception mapping the generated guarded wrappers throw
      * through. Returns (rather than throws) so the call sites read
-     * `throw Failure(...)` and the compiler knows the path ends. */
+     * `throw Failure(...)` and the compiler knows the path ends.
+     *
+     * Every type returned here implements ITaLibFailure, so the code is
+     * recoverable from the thrown object. The exception types are coarser than
+     * the codes -- one InvalidOperationException serves both AllocErr and
+     * InternalError -- and a caller that cannot tell them apart cannot respond
+     * to either. */
     internal static Exception Failure(string funcName, RetCode retCode)
     {
         string where = "TA_" + funcName + ": ";
         switch (retCode)
         {
             case RetCode.OutOfRangeStartIndex:
-                return new ArgumentOutOfRangeException("startIdx", where + "startIdx out of range");
+                return new TaLibArgumentOutOfRangeException("startIdx", where + "startIdx out of range", retCode);
             case RetCode.OutOfRangeEndIndex:
-                return new ArgumentOutOfRangeException("endIdx", where + "endIdx out of range");
+                return new TaLibArgumentOutOfRangeException("endIdx", where + "endIdx out of range", retCode);
             case RetCode.BadParam:
-                return new ArgumentException(where + "bad parameter");
+                return new TaLibArgumentException(where + "bad parameter", retCode);
             case RetCode.AllocErr:
-                return new InvalidOperationException(where + "allocation failed");
+                return new TaLibInvalidOperationException(where + "allocation failed", retCode);
             case RetCode.InternalError:
-                return new InvalidOperationException(where + "internal error");
+                return new TaLibInvalidOperationException(where + "internal error", retCode);
+            case RetCode.InsufficientHistory:
+                /* Streaming-only in practice: a batch range shorter than the
+                 * lookback is Success with a zero count, never this. Mapped
+                 * anyway so the code -> exception function stays total. */
+                return new InsufficientHistoryException(where + "history shorter than the lookback");
             default:
-                return new InvalidOperationException(where + retCode);
+                return new TaLibInvalidOperationException(where + retCode, retCode);
         }
     }
 }

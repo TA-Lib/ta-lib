@@ -40,16 +40,16 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
-   RetCode CDLEVENINGSTAR_Internal( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    double optInPenetration,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode CDLEVENINGSTAR_Impl( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                double optInPenetration,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -153,16 +153,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLEVENINGSTAR_Internal( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    double optInPenetration,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode CDLEVENINGSTAR_Impl( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                double optInPenetration,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -288,6 +288,7 @@
                                    double optInPenetration,
                                    int outInteger[] )
    {
+      requireIndexRange("CDLEVENINGSTAR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -298,7 +299,7 @@
       requireLength("CDLEVENINGSTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLEVENINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLEVENINGSTAR", retCode);
       }
@@ -362,6 +363,7 @@
                                    double optInPenetration,
                                    int outInteger[] )
    {
+      requireIndexRange("CDLEVENINGSTAR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -372,7 +374,7 @@
       requireLength("CDLEVENINGSTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLEVENINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLEVENINGSTAR", retCode);
       }
@@ -522,7 +524,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLEVENINGSTAR update: BadParam");
+            throw new TaLibArgumentException("CDLEVENINGSTAR update: BadParam", RetCode.BadParam);
          core.CDLEVENINGSTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -538,7 +540,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLEVENINGSTAR peek: BadParam");
+            throw new TaLibArgumentException("CDLEVENINGSTAR peek: BadParam", RetCode.BadParam);
          CDLEVENINGSTAR_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLEVENINGSTAR_Stream(this);
@@ -615,7 +617,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLEVENINGSTAR_OpenCore( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLEVENINGSTAR_OpenPass( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -658,7 +660,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -767,55 +769,55 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLEVENINGSTAR_OpenBody( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
+   private RetCode CDLEVENINGSTAR_OpenImpl( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      return CDLEVENINGSTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
+      return CDLEVENINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
-   private RetCode CDLEVENINGSTAR_OpenAndFillBody( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLEVENINGSTAR_OpenAndFillImpl( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      return CDLEVENINGSTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
+      return CDLEVENINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
    }
-   private RetCode CDLEVENINGSTAR_OpenAndFillInternalBody( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLEVENINGSTAR_OpenAndFillInternalImpl( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      return CDLEVENINGSTAR_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
+      return CDLEVENINGSTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
    }
    /* CDLEVENINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
-      RetCode retCode = CDLEVENINGSTAR_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLEVENINGSTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLEVENINGSTAR openAndFill: internal error");
+         throw new TaLibStateException("CDLEVENINGSTAR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLEVENINGSTAR openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLEVENINGSTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLEVENINGSTAR_Open (composition seam). */
    CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
-      RetCode retCode = CDLEVENINGSTAR_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      RetCode retCode = CDLEVENINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLEVENINGSTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLEVENINGSTAR open: internal error");
+         throw new TaLibStateException("CDLEVENINGSTAR open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLEVENINGSTAR open: " + retCode);
+      throw new TaLibArgumentException("CDLEVENINGSTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLEVENINGSTAR stream over the warm-up history; the handle's
@@ -845,16 +847,16 @@
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLEVENINGSTAR_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLEVENINGSTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLEVENINGSTAR openAndFill: internal error");
+         throw new TaLibStateException("CDLEVENINGSTAR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLEVENINGSTAR openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLEVENINGSTAR openAndFill: " + retCode, retCode);
    }

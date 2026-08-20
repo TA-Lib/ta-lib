@@ -106,16 +106,16 @@ public partial class Core
       return MA_Lookback(optInMaxPeriod, optInMAType) ;
 
    }
-   internal RetCode MAVP( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          ReadOnlySpan<double> inPeriods,
-                          int optInMinPeriod,
-                          int optInMaxPeriod,
-                          MAType optInMAType,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode MAVP_Impl( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               ReadOnlySpan<double> inPeriods,
+                               int optInMinPeriod,
+                               int optInMaxPeriod,
+                               MAType optInMAType,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -311,7 +311,10 @@ public partial class Core
          /* Single distinct period: one MA pass, written straight into the
           * destination buffer. Nothing to group or copy.
           */
-         retCode = MA(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
+         OutRange _xr0 = MA(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+         localBegIdx = _xr0.BegIdx;
+         localNbElement = _xr0.Count;
+         retCode = RetCode.Success;
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -363,7 +366,10 @@ public partial class Core
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
                /* Calculation of the MA required. */
-               retCode = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
+               OutRange _xr1 = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+               localBegIdx = _xr1.BegIdx;
+               localNbElement = _xr1.Count;
+               retCode = RetCode.Success;
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -398,16 +404,16 @@ public partial class Core
       outNBElement = outputSize;
       return RetCode.Success ;
    }
-   internal RetCode MAVP( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          ReadOnlySpan<float> inPeriods,
-                          int optInMinPeriod,
-                          int optInMaxPeriod,
-                          MAType optInMAType,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode MAVP_Impl( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               ReadOnlySpan<float> inPeriods,
+                               int optInMinPeriod,
+                               int optInMaxPeriod,
+                               MAType optInMAType,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -522,7 +528,10 @@ public partial class Core
       }
       bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
-         retCode = MA(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
+         OutRange _xr0 = MA(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+         localBegIdx = _xr0.BegIdx;
+         localNbElement = _xr0.Count;
+         retCode = RetCode.Success;
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -552,7 +561,10 @@ public partial class Core
             if( bucketEnd > bucketStart ) {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
-               retCode = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
+               OutRange _xr1 = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+               localBegIdx = _xr1.BegIdx;
+               localNbElement = _xr1.Count;
+               retCode = RetCode.Success;
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -648,7 +660,7 @@ public partial class Core
       RequireLength("MAVP", "inReal", inReal.Length, guardInLen);
       RequireLength("MAVP", "inPeriods", inPeriods.Length, guardInLen);
       RequireLength("MAVP", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MAVP(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAVP_Impl(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
       }
@@ -727,7 +739,7 @@ public partial class Core
       RequireLength("MAVP", "inReal", inReal.Length, guardInLen);
       RequireLength("MAVP", "inPeriods", inPeriods.Length, guardInLen);
       RequireLength("MAVP", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MAVP(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAVP_Impl(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
       }
@@ -890,7 +902,7 @@ public partial class Core
       }
    }
 
-   private RetCode MAVP_OpenBody( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   private RetCode MAVP_OpenImpl( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
       if( historyLen < 1 || inPeriods.Length != inReal.Length ) {
@@ -919,7 +931,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       /* Seed EVERY sub at the SHARED max-period lookback, exactly as batch
        * does: it clamps startIdx up to lookback(maxPeriod) and calls the callee
@@ -947,7 +959,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MAVP_OpenAndFillBody( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MAVP_OpenAndFillImpl( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -982,7 +994,7 @@ public partial class Core
       }
       int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       if( historyLen < lookbackTotal + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
@@ -1029,7 +1041,7 @@ public partial class Core
    internal MAVP_Stream MAVP_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       MAVP_Stream sp = new MAVP_Stream(this);
-      RetCode retCode = MAVP_OpenBody(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
+      RetCode retCode = MAVP_OpenImpl(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1060,8 +1072,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public MAVP_Stream MAVP_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
+      if( inPeriods.IsEmpty ) throw new TaLibArgumentException("inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
 
@@ -1096,10 +1108,10 @@ public partial class Core
    /// output.</exception>
    public MAVP_Stream MAVP_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
+      if( inPeriods.IsEmpty ) throw new TaLibArgumentException("inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
       MAVP_Stream sp = new MAVP_Stream(this);
-      RetCode retCode = MAVP_OpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAVP_OpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

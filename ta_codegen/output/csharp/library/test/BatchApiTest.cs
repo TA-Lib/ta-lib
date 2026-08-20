@@ -49,6 +49,7 @@
 /* Hand-written test; ta_codegen never opens this file. */
 
 using System;
+using System.Collections.Generic;
 using TALib;
 
 namespace TALib.Test;
@@ -735,6 +736,119 @@ public static class BatchApiTest
         Check(rb.Count > 0, "disjoint outputs still produce values");
     }
 
+    /// <summary>Every failure carries the code C would have returned, and the
+    /// mapping back is TOTAL and LOSSLESS.</summary>
+    /// <remarks>
+    /// <para>Total: every exception the public API raises implements
+    /// <see cref="ITaLibFailure"/>, including the condition C cannot detect (a
+    /// span too short). Anything not covered leaves a caller with a thrown
+    /// object it cannot classify, which is the state this replaced.</para>
+    /// <para>Lossless: no two codes share one thrown representation. That is the
+    /// half the exception TYPES cannot carry — one
+    /// <see cref="InvalidOperationException"/> serves both library-side codes,
+    /// and the two index codes are told apart only by a ParamName string — so a
+    /// check on the type alone would pass with the arms of <c>Failure()</c>
+    /// swapped.</para>
+    /// </remarks>
+    private static void EveryFailureCarriesItsCode()
+    {
+        var core = new Core();
+        double[] input = Closes(200);
+        double[] output = new double[200];
+
+        // Lossless, the pair the type cannot separate.
+        CheckCode(RetCode.OutOfRangeStartIndex,
+            () => core.SMA(-1, 50, input, 10, output), "negative startIdx carries OutOfRangeStartIndex");
+        CheckCode(RetCode.OutOfRangeEndIndex,
+            () => core.SMA(50, 10, input, 10, output), "endIdx < startIdx carries OutOfRangeEndIndex");
+
+        // The rest of the batch tier's vocabulary.
+        CheckCode(RetCode.BadParam,
+            () => core.SMA(0, 50, input, 0, output), "an out-of-range period carries BadParam");
+        CheckCode(RetCode.BadParam,
+            () => core.MACD(0, 199, input, 12, 26, 9, output, output, new double[200]),
+            "two outputs sharing one buffer carries BadParam");
+
+        // The condition C has no code for. It reports the code C answers for an
+        // absent argument it CAN detect, so the mapping stays total.
+        CheckCode(RetCode.BadParam,
+            () => core.SMA(0, 199, input, 10, new double[3]), "a short output carries BadParam");
+
+        // Streaming's one recoverable condition, which is why it has a code.
+        int lookback = core.SMA_Lookback(30);
+        CheckCode(RetCode.InsufficientHistory,
+            () => core.SMA_Open(new double[lookback], 30), "a short history carries InsufficientHistory");
+        CheckThrows<InsufficientHistoryException>(
+            () => core.SMA_Open(new double[lookback], 30), "a short history is still typed");
+
+        // ...and the REST of the streaming tier, which is a separate reject
+        // ladder from the batch one. Totality is a property of every failure the
+        // library raises, not of the tier someone happened to convert first.
+        CheckCode(RetCode.BadParam,
+            () => core.SMA_Open(ReadOnlySpan<double>.Empty, 30),
+            "an empty history carries BadParam");
+        CheckCode(RetCode.BadParam,
+            () => core.SMA_Open(input, 0),
+            "an out-of-range period on a stream open carries BadParam");
+
+        // The numbers the cross-language harness compares. Hardcoded, because
+        // asking the enum for its own value would prove nothing.
+        Check((int)RetCode.Success == 0, "Success is 0");
+        Check((int)RetCode.BadParam == 2, "BadParam is 2");
+        Check((int)RetCode.AllocErr == 3, "AllocErr is 3");
+        Check((int)RetCode.OutOfRangeStartIndex == 12, "OutOfRangeStartIndex is 12");
+        Check((int)RetCode.OutOfRangeEndIndex == 13, "OutOfRangeEndIndex is 13");
+        Check((int)RetCode.InsufficientHistory == 17, "InsufficientHistory is 17");
+        Check((int)RetCode.InternalError == 5000, "InternalError is 5000");
+
+        // Non-vacuity: the cases above have to REACH every code the batch and
+        // streaming tiers can produce, or a member could stop being emitted
+        // anywhere and nothing here would move. AllocErr and InternalError are
+        // the two exceptions — one is unreachable here (#178) and the other
+        // needs a corrupted CIRCBUF size — so they are named rather than
+        // silently excluded.
+        var expected = new HashSet<RetCode>
+        {
+            RetCode.OutOfRangeStartIndex, RetCode.OutOfRangeEndIndex,
+            RetCode.BadParam, RetCode.InsufficientHistory,
+        };
+        Check(_seenCodes.SetEquals(expected),
+            "the probes reached exactly " + string.Join(",", expected)
+                + " (got " + string.Join(",", _seenCodes) + ")");
+    }
+
+    private static readonly HashSet<RetCode> _seenCodes = new();
+
+    /// <summary>The call must throw, the throw must carry a code, and it must be
+    /// this one.</summary>
+    private static void CheckCode(RetCode expected, Action body, string what)
+    {
+        _checks++;
+        try
+        {
+            body();
+            _failures++;
+            Console.WriteLine("  FAIL: " + what + " (no exception thrown)");
+        }
+        catch (Exception e)
+        {
+            if (e is not ITaLibFailure f)
+            {
+                _failures++;
+                Console.WriteLine("  FAIL: " + what + " (" + e.GetType().FullName
+                    + " carries no RetCode)");
+                return;
+            }
+            if (f.RetCode != expected)
+            {
+                _failures++;
+                Console.WriteLine("  FAIL: " + what + " (carried " + f.RetCode + ")");
+                return;
+            }
+            _seenCodes.Add(f.RetCode);
+        }
+    }
+
     public static int Run()
     {
         MaxWithKnownOutputs();
@@ -758,6 +872,7 @@ public static class BatchApiTest
         FloatOverloadHasTheSameShape();
         OutRangeValueSemantics();
         IntegerSentinelSelectsTheDocumentedDefault();
+        EveryFailureCarriesItsCode();
 
         if (_failures == 0)
         {

@@ -73,15 +73,15 @@ public partial class Core
       return Near_avgPeriod + 3 ;
 
    }
-   internal RetCode CDL3LINESTRIKE( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<double> inOpen,
-                                    ReadOnlySpan<double> inHigh,
-                                    ReadOnlySpan<double> inLow,
-                                    ReadOnlySpan<double> inClose,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
+   internal RetCode CDL3LINESTRIKE_Impl( int startIdx,
+                                         int endIdx,
+                                         ReadOnlySpan<double> inOpen,
+                                         ReadOnlySpan<double> inHigh,
+                                         ReadOnlySpan<double> inLow,
+                                         ReadOnlySpan<double> inClose,
+                                         out int outBegIdx,
+                                         out int outNBElement,
+                                         Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -168,15 +168,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDL3LINESTRIKE( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<float> inOpen,
-                                    ReadOnlySpan<float> inHigh,
-                                    ReadOnlySpan<float> inLow,
-                                    ReadOnlySpan<float> inClose,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
+   internal RetCode CDL3LINESTRIKE_Impl( int startIdx,
+                                         int endIdx,
+                                         ReadOnlySpan<float> inOpen,
+                                         ReadOnlySpan<float> inHigh,
+                                         ReadOnlySpan<float> inLow,
+                                         ReadOnlySpan<float> inClose,
+                                         out int outBegIdx,
+                                         out int outNBElement,
+                                         Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -294,7 +294,7 @@ public partial class Core
       RequireLength("CDL3LINESTRIKE", "inLow", inLow.Length, guardInLen);
       RequireLength("CDL3LINESTRIKE", "inClose", inClose.Length, guardInLen);
       RequireLength("CDL3LINESTRIKE", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDL3LINESTRIKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDL3LINESTRIKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDL3LINESTRIKE", retCode);
       }
@@ -369,7 +369,7 @@ public partial class Core
       RequireLength("CDL3LINESTRIKE", "inLow", inLow.Length, guardInLen);
       RequireLength("CDL3LINESTRIKE", "inClose", inClose.Length, guardInLen);
       RequireLength("CDL3LINESTRIKE", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDL3LINESTRIKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDL3LINESTRIKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDL3LINESTRIKE", retCode);
       }
@@ -650,7 +650,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDL3LINESTRIKE_OpenCore( CDL3LINESTRIKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDL3LINESTRIKE_OpenPass( CDL3LINESTRIKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -685,7 +685,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -791,29 +791,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDL3LINESTRIKE_OpenBody( CDL3LINESTRIKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDL3LINESTRIKE_OpenImpl( CDL3LINESTRIKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDL3LINESTRIKE_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDL3LINESTRIKE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDL3LINESTRIKE_OpenAndFillBody( CDL3LINESTRIKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDL3LINESTRIKE_OpenAndFillImpl( CDL3LINESTRIKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDL3LINESTRIKE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDL3LINESTRIKE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDL3LINESTRIKE_OpenAndFillInternalBody( CDL3LINESTRIKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDL3LINESTRIKE_OpenAndFillInternalImpl( CDL3LINESTRIKE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDL3LINESTRIKE_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDL3LINESTRIKE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDL3LINESTRIKE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
-      RetCode retCode = CDL3LINESTRIKE_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDL3LINESTRIKE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -824,7 +824,7 @@ public partial class Core
    internal CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
-      RetCode retCode = CDL3LINESTRIKE_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDL3LINESTRIKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -852,10 +852,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDL3LINESTRIKE_Stream CDL3LINESTRIKE_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -889,12 +889,12 @@ public partial class Core
    /// output.</exception>
    public CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
-      RetCode retCode = CDL3LINESTRIKE_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDL3LINESTRIKE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

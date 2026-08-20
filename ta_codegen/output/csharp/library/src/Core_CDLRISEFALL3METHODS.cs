@@ -76,15 +76,15 @@ public partial class Core
       return Math.Max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 4 ;
 
    }
-   internal RetCode CDLRISEFALL3METHODS( int startIdx,
-                                         int endIdx,
-                                         ReadOnlySpan<double> inOpen,
-                                         ReadOnlySpan<double> inHigh,
-                                         ReadOnlySpan<double> inLow,
-                                         ReadOnlySpan<double> inClose,
-                                         out int outBegIdx,
-                                         out int outNBElement,
-                                         Span<int> outInteger )
+   internal RetCode CDLRISEFALL3METHODS_Impl( int startIdx,
+                                              int endIdx,
+                                              ReadOnlySpan<double> inOpen,
+                                              ReadOnlySpan<double> inHigh,
+                                              ReadOnlySpan<double> inLow,
+                                              ReadOnlySpan<double> inClose,
+                                              out int outBegIdx,
+                                              out int outNBElement,
+                                              Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -200,15 +200,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLRISEFALL3METHODS( int startIdx,
-                                         int endIdx,
-                                         ReadOnlySpan<float> inOpen,
-                                         ReadOnlySpan<float> inHigh,
-                                         ReadOnlySpan<float> inLow,
-                                         ReadOnlySpan<float> inClose,
-                                         out int outBegIdx,
-                                         out int outNBElement,
-                                         Span<int> outInteger )
+   internal RetCode CDLRISEFALL3METHODS_Impl( int startIdx,
+                                              int endIdx,
+                                              ReadOnlySpan<float> inOpen,
+                                              ReadOnlySpan<float> inHigh,
+                                              ReadOnlySpan<float> inLow,
+                                              ReadOnlySpan<float> inClose,
+                                              out int outBegIdx,
+                                              out int outNBElement,
+                                              Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -344,7 +344,7 @@ public partial class Core
       RequireLength("CDLRISEFALL3METHODS", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLRISEFALL3METHODS", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLRISEFALL3METHODS", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLRISEFALL3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLRISEFALL3METHODS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLRISEFALL3METHODS", retCode);
       }
@@ -419,7 +419,7 @@ public partial class Core
       RequireLength("CDLRISEFALL3METHODS", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLRISEFALL3METHODS", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLRISEFALL3METHODS", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLRISEFALL3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLRISEFALL3METHODS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLRISEFALL3METHODS", retCode);
       }
@@ -762,7 +762,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLRISEFALL3METHODS_OpenCore( CDLRISEFALL3METHODS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLRISEFALL3METHODS_OpenPass( CDLRISEFALL3METHODS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -801,7 +801,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -953,29 +953,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLRISEFALL3METHODS_OpenBody( CDLRISEFALL3METHODS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLRISEFALL3METHODS_OpenImpl( CDLRISEFALL3METHODS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLRISEFALL3METHODS_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLRISEFALL3METHODS_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLRISEFALL3METHODS_OpenAndFillBody( CDLRISEFALL3METHODS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLRISEFALL3METHODS_OpenAndFillImpl( CDLRISEFALL3METHODS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLRISEFALL3METHODS_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLRISEFALL3METHODS_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLRISEFALL3METHODS_OpenAndFillInternalBody( CDLRISEFALL3METHODS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLRISEFALL3METHODS_OpenAndFillInternalImpl( CDLRISEFALL3METHODS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLRISEFALL3METHODS_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLRISEFALL3METHODS_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLRISEFALL3METHODS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
-      RetCode retCode = CDLRISEFALL3METHODS_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLRISEFALL3METHODS_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -986,7 +986,7 @@ public partial class Core
    internal CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
-      RetCode retCode = CDLRISEFALL3METHODS_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLRISEFALL3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1016,10 +1016,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLRISEFALL3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -1055,12 +1055,12 @@ public partial class Core
    /// output.</exception>
    public CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
-      RetCode retCode = CDLRISEFALL3METHODS_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLRISEFALL3METHODS_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

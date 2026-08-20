@@ -74,15 +74,15 @@ public partial class Core
       return BodyDoji_avgPeriod + 2 ;
 
    }
-   internal RetCode CDLTRISTAR( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<double> inOpen,
-                                ReadOnlySpan<double> inHigh,
-                                ReadOnlySpan<double> inLow,
-                                ReadOnlySpan<double> inClose,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<int> outInteger )
+   internal RetCode CDLTRISTAR_Impl( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<double> inOpen,
+                                     ReadOnlySpan<double> inHigh,
+                                     ReadOnlySpan<double> inLow,
+                                     ReadOnlySpan<double> inClose,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -167,15 +167,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLTRISTAR( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<float> inOpen,
-                                ReadOnlySpan<float> inHigh,
-                                ReadOnlySpan<float> inLow,
-                                ReadOnlySpan<float> inClose,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<int> outInteger )
+   internal RetCode CDLTRISTAR_Impl( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<float> inOpen,
+                                     ReadOnlySpan<float> inHigh,
+                                     ReadOnlySpan<float> inLow,
+                                     ReadOnlySpan<float> inClose,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -291,7 +291,7 @@ public partial class Core
       RequireLength("CDLTRISTAR", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLTRISTAR", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLTRISTAR", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLTRISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTRISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLTRISTAR", retCode);
       }
@@ -362,7 +362,7 @@ public partial class Core
       RequireLength("CDLTRISTAR", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLTRISTAR", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLTRISTAR", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLTRISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTRISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLTRISTAR", retCode);
       }
@@ -573,7 +573,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLTRISTAR_OpenCore( CDLTRISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLTRISTAR_OpenPass( CDLTRISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -607,7 +607,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -687,29 +687,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLTRISTAR_OpenBody( CDLTRISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLTRISTAR_OpenImpl( CDLTRISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLTRISTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLTRISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLTRISTAR_OpenAndFillBody( CDLTRISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLTRISTAR_OpenAndFillImpl( CDLTRISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLTRISTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLTRISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLTRISTAR_OpenAndFillInternalBody( CDLTRISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLTRISTAR_OpenAndFillInternalImpl( CDLTRISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLTRISTAR_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLTRISTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLTRISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLTRISTAR_Stream CDLTRISTAR_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
-      RetCode retCode = CDLTRISTAR_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLTRISTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -720,7 +720,7 @@ public partial class Core
    internal CDLTRISTAR_Stream CDLTRISTAR_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
-      RetCode retCode = CDLTRISTAR_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLTRISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -748,10 +748,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLTRISTAR_Stream CDLTRISTAR_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLTRISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -784,12 +784,12 @@ public partial class Core
    /// output.</exception>
    public CDLTRISTAR_Stream CDLTRISTAR_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
-      RetCode retCode = CDLTRISTAR_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTRISTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

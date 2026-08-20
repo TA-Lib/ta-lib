@@ -151,7 +151,7 @@ fn out_params_sig(func: &FuncDef) -> String {
         .join(", ")
 }
 
-/// `Open` and `OpenAndFill` are ONE emission: `TA_<N>_OpenCore`, whose per-bar
+/// `Open` and `OpenAndFill` are ONE emission: `TA_<N>_OpenPass`, whose per-bar
 /// output writes are subscripted `out[(<idx>) * outStride]`.
 ///
 /// `OpenAndFill` passes stride 1 and the caller's array, so the array is
@@ -258,7 +258,7 @@ fn open_core_signature(func: &FuncDef) -> String {
         let _ = write!(history, "const double {a}[], ");
     }
     format!(
-        "static TA_RetCode TA_{n}_OpenCore( struct TA_{n}_Stream **stream, {}int startIdx, int historyLen, {}int *outBegIdx, int *outNBElement, {}, int {OUT_STRIDE} )",
+        "static TA_RetCode TA_{n}_OpenPass( struct TA_{n}_Stream **stream, {}int startIdx, int historyLen, {}int *outBegIdx, int *outNBElement, {}, int {OUT_STRIDE} )",
         history,
         opt_params_sig(func),
         out_fill_arrays_sig(func)
@@ -456,7 +456,7 @@ fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef) {
         .collect();
     let _ = writeln!(
         o,
-        "   retCode = TA_{n}_OpenCore( {}&dummyBegIdx, &dummyNBElement, {}, 0 );",
+        "   retCode = TA_{n}_OpenPass( {}&dummyBegIdx, &dummyNBElement, {}, 0 );",
         open_core_call_head(func, "startIdx"),
         sinks.join(", ")
     );
@@ -514,7 +514,7 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
     }
     let _ = writeln!(
         o,
-        "   return TA_{n}_OpenCore( {}outBegIdx, outNBElement, {}, 1 );",
+        "   return TA_{n}_OpenPass( {}outBegIdx, outNBElement, {}, 1 );",
         open_core_call_head(func, "0"),
         outs.join(", ")
     );
@@ -530,7 +530,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_and_fill_internal_signature(func));
     let _ = writeln!(
         o,
-        "   return TA_{n}_OpenCore( {}outBegIdx, outNBElement, {}, 1 );",
+        "   return TA_{n}_OpenPass( {}outBegIdx, outNBElement, {}, 1 );",
         open_core_call_head(func, "startIdx"),
         outs.join(", ")
     );
@@ -1489,7 +1489,7 @@ fn emit_composed_open(
     let _ = writeln!(o, "\n      /* Capture the live producer state + sub handles. */");
     let _ = writeln!(
         o,
-        "      if( dummyNBElement < 1 ) {{ {epilogue_cleanup}; return TA_BAD_PARAM; }}"
+        "      if( dummyNBElement < 1 ) {{ {epilogue_cleanup}; return TA_INSUFFICIENT_HISTORY; }}"
     );
     if let Some(model) = &cp.producer {
         o.push_str(&alloc_and_capture(
@@ -1781,7 +1781,7 @@ fn build_composed_open_bodies(
             Statement::Return { value } => {
                 let mapped = match value {
                     Some(Expr::Var(v)) if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS") => {
-                        Some(Expr::Var("BAD_PARAM".into()))
+                        Some(Expr::Var("INSUFFICIENT_HISTORY".into()))
                     }
                     other => other,
                 };
@@ -1994,7 +1994,7 @@ fn emit_dispatch_open(
         let _ = writeln!(o, "\n   if( {cond} )\n   {{");
         let _ = writeln!(
             o,
-            "      if( historyLen < {lb_call} + 1 ) {{ TA_Free( sp ); return TA_BAD_PARAM; }}"
+            "      if( historyLen < {lb_call} + 1 ) {{ TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }}"
         );
         if mode.fills() {
             let _ = writeln!(o, "      {{");
@@ -2007,7 +2007,7 @@ fn emit_dispatch_open(
                 let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
                 let _ = writeln!(
                     o,
-                    "         if( historyLen < fillLb + 1 ) {{ TA_Free( sp ); return TA_BAD_PARAM; }}"
+                    "         if( historyLen < fillLb + 1 ) {{ TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }}"
                 );
             }
             let _ = writeln!(o, "         *outBegIdx = fillLb;");
@@ -3147,7 +3147,7 @@ fn emit_period_bank(
         "   lookbackTotal = {pre}_Lookback( {max}, {matype} );",
         matype = plan.matype_param
     );
-    let _ = writeln!(o, "   if( historyLen < lookbackTotal + 1 ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   if( historyLen < lookbackTotal + 1 ) return TA_INSUFFICIENT_HISTORY;");
     let _ = writeln!(o, "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
     let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");
     let _ = writeln!(o, "   memset( sp, 0, sizeof(*sp) );");
@@ -3691,7 +3691,7 @@ fn emit_identity_fast_path(
             func.optional_inputs.iter().map(|p| p.name.clone()).collect();
         let lb_call = format!("TA_{n}_Lookback( {} )", lookback_args.join(", "));
         let _ = writeln!(o, "\n   if( {cond} )\n   {{");
-        let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) return TA_BAD_PARAM;");
+        let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) return TA_INSUFFICIENT_HISTORY;");
         o.push_str(&alloc_and_capture(
             func, model, "      ", /*with_state=*/ false, "", registry, helpers, counter,
         ));
@@ -3904,14 +3904,14 @@ fn build_open_body_from(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
             }),
             Statement::Return { value } => {
                 let mapped = match value {
-                    // Any early success return maps to BAD_PARAM. This is
-                    // not just the no-data guard: a mid-body seed return
-                    // (RSI/CMO under Metastock) exits with state the batch
-                    // would REWIND and rebuild before continuing, so no
+                    // Any early success return maps to INSUFFICIENT_HISTORY.
+                    // This is not just the no-data guard: a mid-body seed
+                    // return (RSI/CMO under Metastock) exits with state the
+                    // batch would REWIND and rebuild before continuing, so no
                     // bit-exact continuation exists — the stream honestly
                     // asks for one more bar instead (strict min-history).
                     Some(Expr::Var(v)) if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS") => {
-                        Some(Expr::Var("BAD_PARAM".into()))
+                        Some(Expr::Var("INSUFFICIENT_HISTORY".into()))
                     }
                     other => other, // error-code propagation, verbatim
                 };

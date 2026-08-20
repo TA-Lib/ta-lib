@@ -25,12 +25,12 @@
       return 0 ;
 
    }
-   RetCode SQRT_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode SQRT_Impl( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode SQRT_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode SQRT_Impl( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -111,6 +111,7 @@
                          double inReal[],
                          double outReal[] )
    {
+      requireIndexRange("SQRT", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SQRT_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -118,7 +119,7 @@
       requireLength("SQRT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SQRT_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SQRT_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SQRT", retCode);
       }
@@ -169,6 +170,7 @@
                          float inReal[],
                          double outReal[] )
    {
+      requireIndexRange("SQRT", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SQRT_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -176,7 +178,7 @@
       requireLength("SQRT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SQRT_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SQRT_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SQRT", retCode);
       }
@@ -240,7 +242,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SQRT update: BadParam");
+            throw new TaLibArgumentException("SQRT update: BadParam", RetCode.BadParam);
          core.SQRT_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -254,7 +256,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SQRT peek: BadParam");
+            throw new TaLibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
          SQRT_Stream scratch = new SQRT_Stream(this);
          core.SQRT_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -281,7 +283,7 @@
    {
       sp.cur_outReal = Math.sqrt(inReal);
    }
-   private RetCode SQRT_OpenCore( SQRT_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SQRT_OpenPass( SQRT_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -302,55 +304,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SQRT_OpenBody( SQRT_Stream sp, double inReal[], int startIdx )
+   private RetCode SQRT_OpenImpl( SQRT_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return SQRT_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return SQRT_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode SQRT_OpenAndFillBody( SQRT_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode SQRT_OpenAndFillImpl( SQRT_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return SQRT_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return SQRT_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode SQRT_OpenAndFillInternalBody( SQRT_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode SQRT_OpenAndFillInternalImpl( SQRT_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return SQRT_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return SQRT_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* SQRT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SQRT_Stream SQRT_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SQRT_Stream sp = new SQRT_Stream(this);
-      RetCode retCode = SQRT_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SQRT_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SQRT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SQRT openAndFill: internal error");
+         throw new TaLibStateException("SQRT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SQRT openAndFill: " + retCode);
+      throw new TaLibArgumentException("SQRT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind SQRT_Open (composition seam). */
    SQRT_Stream SQRT_OpenInternal( double inReal[], int startIdx )
    {
       SQRT_Stream sp = new SQRT_Stream(this);
-      RetCode retCode = SQRT_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = SQRT_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SQRT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SQRT open: internal error");
+         throw new TaLibStateException("SQRT open: internal error", retCode);
       }
-      throw new IllegalArgumentException("SQRT open: " + retCode);
+      throw new TaLibArgumentException("SQRT open: " + retCode, retCode);
    }
    /**
     * Open a live SQRT stream over the warm-up history; the handle's
@@ -380,16 +382,16 @@
       SQRT_Stream sp = new SQRT_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SQRT_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SQRT_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SQRT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SQRT openAndFill: internal error");
+         throw new TaLibStateException("SQRT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SQRT openAndFill: " + retCode);
+      throw new TaLibArgumentException("SQRT openAndFill: " + retCode, retCode);
    }

@@ -97,7 +97,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::AO`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn AO_Internal(
+    pub(crate) fn AO_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -337,7 +337,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.AO_Internal(
+        let retCode = self.AO_Impl(
             startIdx,
             endIdx,
             inHigh,
@@ -456,7 +456,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::AO_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::AO_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn AO_OpenCore(
+    pub(crate) fn AO_OpenPass(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<AO_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
@@ -527,7 +527,7 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         sumFast = 0.0;
         sumSlow = 0.0;
@@ -629,7 +629,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.AO_OpenCore(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.AO_OpenPass(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -638,8 +638,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -667,7 +669,7 @@ impl Core {
     ) -> Result<(AO_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.AO_OpenCore(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.AO_OpenPass(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -676,7 +678,7 @@ impl Core {
     pub(crate) fn AO_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AO_Stream, RetCode> {
-        self.AO_OpenCore(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
+        self.AO_OpenPass(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

@@ -36,13 +36,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MIN_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode MIN_Impl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double[] sufLowest;
       int sufLowest_Idx = 0;
@@ -183,13 +183,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MIN_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode MIN_Impl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double[] sufLowest;
       int sufLowest_Idx = 0;
@@ -335,6 +335,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("MIN", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MIN_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -342,7 +343,7 @@
       requireLength("MIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIN_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIN_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIN", retCode);
       }
@@ -395,6 +396,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("MIN", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MIN_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -402,7 +404,7 @@
       requireLength("MIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIN_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIN_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIN", retCode);
       }
@@ -496,7 +498,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MIN update: BadParam");
+            throw new TaLibArgumentException("MIN update: BadParam", RetCode.BadParam);
          core.MIN_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -510,7 +512,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MIN peek: BadParam");
+            throw new TaLibArgumentException("MIN peek: BadParam", RetCode.BadParam);
          MIN_Stream scratch = new MIN_Stream(this);
          core.MIN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -564,7 +566,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MIN_OpenCore( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MIN_OpenPass( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double tmp = 0;
@@ -602,7 +604,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -671,55 +673,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MIN_OpenBody( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MIN_OpenImpl( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return MIN_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return MIN_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode MIN_OpenAndFillBody( MIN_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MIN_OpenAndFillImpl( MIN_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return MIN_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return MIN_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode MIN_OpenAndFillInternalBody( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MIN_OpenAndFillInternalImpl( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return MIN_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return MIN_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* MIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MIN_Stream MIN_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MIN_Stream sp = new MIN_Stream(this);
-      RetCode retCode = MIN_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIN_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MIN openAndFill: internal error");
+         throw new TaLibStateException("MIN openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MIN openAndFill: " + retCode);
+      throw new TaLibArgumentException("MIN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MIN_Open (composition seam). */
    MIN_Stream MIN_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MIN_Stream sp = new MIN_Stream(this);
-      RetCode retCode = MIN_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = MIN_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MIN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MIN open: internal error");
+         throw new TaLibStateException("MIN open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MIN open: " + retCode);
+      throw new TaLibArgumentException("MIN open: " + retCode, retCode);
    }
    /**
     * Open a live MIN stream over the warm-up history; the handle's
@@ -749,16 +751,16 @@
       MIN_Stream sp = new MIN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIN_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIN_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MIN openAndFill: internal error");
+         throw new TaLibStateException("MIN openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MIN openAndFill: " + retCode);
+      throw new TaLibArgumentException("MIN openAndFill: " + retCode, retCode);
    }

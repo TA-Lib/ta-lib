@@ -695,8 +695,19 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
             OutputKind::Integer => format!("c.IntOut({k})"),
         });
     }
+    // The BODY. This bound the C-shaped overload until #236 step 5 deleted that
+    // tier, and the body is what that overload called -- so the binder reaches
+    // the same code, UNGUARDED, exactly as before. Deliberately not the public
+    // overload: `NoPhantomIoTest` drives functions through this binder, and the
+    // public tier's length checks would reject its undersized arrays before the
+    // body could touch them, which is the one thing that probe must not measure.
+    //
+    // What the deleted shim did still has to happen: since step 3 a cross-call
+    // inside the body calls the PUBLIC callee and a rejection arrives as a
+    // throw. `FunctionCall.TryInvoke` -- whose contract is a code, not an
+    // exception -- converts it in that one place rather than in 174 thunks.
     s.push_str("        invoke: static (core, c, startIdx, endIdx) =>\n        {\n");
-    let _ = writeln!(s, "            RetCode rc = core.{method}(");
+    let _ = writeln!(s, "            RetCode rc = core.{method}_Impl(");
     let _ = writeln!(s, "                {});", call_args.join(", "));
     s.push_str("            return new CallOutcome(rc, b, n);\n");
     s.push_str("        });\n\n");
@@ -1767,7 +1778,31 @@ public sealed class FunctionCall
             return bound;
         }
 
-        CallOutcome outcome = _info.Invoke(_core, this, startIdx, endIdx);
+        CallOutcome outcome;
+        try
+        {
+            outcome = _info.Invoke(_core, this, startIdx, endIdx);
+        }
+        catch (Exception _e) when (_e is ITaLibFailure)
+        {
+            // Reachable only through a COMPOSED function. The thunk calls the
+            // body, which answers a code and does not throw; but a composed
+            // body cross-calls its callee's PUBLIC tier -- `OutRange _xr0 =
+            // MA(startIdx, endIdx, ...)` in APO -- and that throws. This
+            // method's contract is a code, so it converts here, once, rather
+            // than in every thunk. Only the library's own failure is
+            // converted; anything else is not ours to relabel.
+            //
+            // So this catch is coupled to the #236 step 3 debt: it is live
+            // only while composed bodies call the public callee, which is the
+            // same mechanism that put ten cores in NoPhantomIoTest's
+            // CROSS_CALL_GUARDED list. If that debt is ever paid down by
+            // routing cross-calls to `_Impl`, this goes dead and TryInvoke
+            // silently stops converting anything -- delete it in that change,
+            // do not leave it standing as reassurance.
+            range = new OutRange(0, 0);
+            return ((ITaLibFailure)_e).RetCode;
+        }
         range = new OutRange(outcome.BegIdx, outcome.Count);
         return outcome.Code;
     }

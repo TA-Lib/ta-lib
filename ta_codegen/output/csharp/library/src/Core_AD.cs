@@ -73,15 +73,15 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode AD( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inHigh,
-                        ReadOnlySpan<double> inLow,
-                        ReadOnlySpan<double> inClose,
-                        ReadOnlySpan<double> inVolume,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode AD_Impl( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             ReadOnlySpan<double> inClose,
+                             ReadOnlySpan<double> inVolume,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -137,15 +137,15 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode AD( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inHigh,
-                        ReadOnlySpan<float> inLow,
-                        ReadOnlySpan<float> inClose,
-                        ReadOnlySpan<float> inVolume,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode AD_Impl( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             ReadOnlySpan<float> inClose,
+                             ReadOnlySpan<float> inVolume,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -242,7 +242,7 @@ public partial class Core
       RequireLength("AD", "inClose", inClose.Length, guardInLen);
       RequireLength("AD", "inVolume", inVolume.Length, guardInLen);
       RequireLength("AD", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AD_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AD", retCode);
       }
@@ -313,7 +313,7 @@ public partial class Core
       RequireLength("AD", "inClose", inClose.Length, guardInLen);
       RequireLength("AD", "inVolume", inVolume.Length, guardInLen);
       RequireLength("AD", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AD_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AD", retCode);
       }
@@ -447,7 +447,7 @@ public partial class Core
       sp.cur_outReal = sp.ad;
    }
 
-   private RetCode AD_OpenCore( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AD_OpenPass( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -506,32 +506,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AD_OpenBody( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
+   private RetCode AD_OpenImpl( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return AD_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, out _, out _, sink_outReal, 0 );
+      return AD_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode AD_OpenAndFillBody( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode AD_OpenAndFillImpl( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
-      return AD_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return AD_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode AD_OpenAndFillInternalBody( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode AD_OpenAndFillInternalImpl( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return AD_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return AD_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* AD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal AD_Stream AD_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AD_Stream sp = new AD_Stream(this);
-      RetCode retCode = AD_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = AD_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -542,7 +542,7 @@ public partial class Core
    internal AD_Stream AD_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
       AD_Stream sp = new AD_Stream(this);
-      RetCode retCode = AD_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx);
+      RetCode retCode = AD_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -569,10 +569,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public AD_Stream AD_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
 
@@ -603,12 +603,12 @@ public partial class Core
    /// output.</exception>
    public AD_Stream AD_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       AD_Stream sp = new AD_Stream(this);
-      RetCode retCode = AD_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AD_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

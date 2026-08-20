@@ -545,7 +545,7 @@ fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[S
     }
     let _ = writeln!(
         o,
-        "        let handle = self.{sn}_OpenCore({args}, &mut dummyBegIdx, &mut dummyNBElement, {}, 0)?;",
+        "        let handle = self.{sn}_OpenPass({args}, &mut dummyBegIdx, &mut dummyNBElement, {}, 0)?;",
         sinks.join(", ")
     );
     let vals: Vec<String> = outputs.iter().map(|o2| format!("sink_{o2}[0]")).collect();
@@ -593,7 +593,7 @@ fn emit_open_and_fill_wrapper(
     );
     let _ = writeln!(
         o,
-        "        let handle = self.{sn}_OpenCore({args}, &mut outBegIdx, &mut outNBElement, {}, 1)?;",
+        "        let handle = self.{sn}_OpenPass({args}, &mut outBegIdx, &mut outNBElement, {}, 1)?;",
         outs.join(", ")
     );
     let _ = writeln!(
@@ -619,7 +619,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     }
     let _ = writeln!(
         o,
-        "        self.{sn}_OpenCore({args}, outBegIdx, outNBElement, {}, 1)",
+        "        self.{sn}_OpenPass({args}, outBegIdx, outNBElement, {}, 1)",
         outs.join(", ")
     );
     let _ = writeln!(o, "    }}\n");
@@ -1166,14 +1166,14 @@ fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
 // ---------------------------------------------------------------------------
 
 /// Map a batch return-code expression to the stream tier's `Result` shape.
-/// Any early SUCCESS return maps to `Err(BadParam)` (strict min-history — the
-/// no-data guard AND the Metastock seed-boundary return); error codes map to
-/// their `Err(...)` equivalents.
+/// Any early SUCCESS return maps to `Err(InsufficientHistory)` (strict
+/// min-history — the no-data guard AND the Metastock seed-boundary return, which
+/// exits with state the batch would rewind, so the stream honestly asks for one
+/// more bar); error codes map to their `Err(...)` equivalents.
 fn map_return_code(v: &str) -> String {
     match v {
-        "SUCCESS" | "TA_SUCCESS" | "BAD_PARAM" | "TA_BAD_PARAM" => {
-            "Err(RetCode::BadParam)".to_string()
-        }
+        "SUCCESS" | "TA_SUCCESS" => "Err(RetCode::InsufficientHistory)".to_string(),
+        "BAD_PARAM" | "TA_BAD_PARAM" => "Err(RetCode::BadParam)".to_string(),
         "ALLOC_ERR" | "TA_ALLOC_ERR" => "Err(RetCode::AllocErr)".to_string(),
         "INTERNAL_ERROR" | "TA_INTERNAL_ERROR" => "Err(RetCode::InternalError)".to_string(),
         "OUT_OF_RANGE_START_INDEX" | "TA_OUT_OF_RANGE_START_INDEX" => {
@@ -1341,7 +1341,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             );
             let _ = writeln!(
                 o,
-                "    pub(crate) fn {sn}_OpenCore(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs}, outStride: usize,\n    ) -> Result<{handle}, RetCode> {{"
+                "    pub(crate) fn {sn}_OpenPass(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs}, outStride: usize,\n    ) -> Result<{handle}, RetCode> {{"
             );
         }
         // Batch parameter order: inputs, optional params, then one slice per
@@ -1646,7 +1646,7 @@ fn emit_identity_fast_path(
     let _ = writeln!(o, "        if {cond} {{");
     let _ = writeln!(
         o,
-        "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
+        "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
     );
     // Identity state: params captured, everything else deterministic defaults
     // (1-slot buffers keep the transition's cap-0 guard well-defined).
@@ -2014,7 +2014,7 @@ fn stream_open_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String 
     );
     let _ = writeln!(
         d,
-        "    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or\n    /// input lengths differ, or the history is shorter than `lookback + 1` bars."
+        "    ///\n    /// # Errors\n    ///\n    /// [`RetCode::InsufficientHistory`] when the history holds fewer than\n    /// `lookback + 1` bars — the one failure here worth retrying, since another\n    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an\n    /// input is empty, or input lengths differ."
     );
     if let Some(doctest) = stream_doctest(func, &sn, enums) {
         let _ = writeln!(d, "    ///");
@@ -2732,7 +2732,7 @@ fn emit_dispatch(
             let _ = writeln!(o, "        if {cond} {{");
             let _ = writeln!(
                 o,
-                "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
+                "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
             );
             if mode != OutMode::Scalar {
                 let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
@@ -2742,7 +2742,7 @@ fn emit_dispatch(
                     let _ = writeln!(o, "            let fillLb = if startIdx > fillLb {{ startIdx }} else {{ fillLb }};");
                     let _ = writeln!(
                         o,
-                        "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
+                        "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
                     );
                 }
                 if mode == OutMode::FillInternal {
@@ -3082,7 +3082,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_Lookback({lb_args});");
     let _ = writeln!(
         o,
-        "        if historyLen < lookbackTotal + 1 {{\n            return Err(RetCode::BadParam);\n        }}"
+        "        if historyLen < lookbackTotal + 1 {{\n            return Err(RetCode::InsufficientHistory);\n        }}"
     );
     let _ = writeln!(o, "        let nBank: usize = ({max} - {min} + 1) as usize;");
     let _ = writeln!(o, "        // Seed each sub-MA at the first output bar (lookbackTotal), NOT the last.");
@@ -3716,7 +3716,7 @@ fn emit_composed_open(
     let _ = writeln!(o, "\n        // Capture the live producer state + sub handles.");
     let _ = writeln!(
         o,
-        "        if *outNBElement < 1 {{\n            return Err(RetCode::BadParam);\n        }}"
+        "        if *outNBElement < 1 {{\n            return Err(RetCode::InsufficientHistory);\n        }}"
     );
     // Lag rings: seed from the tail of the still-live intermediate Vec (its
     // batch `free()` renders as a no-op in Rust, so no withheld-free dance).

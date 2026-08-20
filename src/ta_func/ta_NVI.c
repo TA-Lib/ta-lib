@@ -237,7 +237,7 @@ static void TA_NVI_StepInternal( struct TA_NVI_Stream *sp, double inClose, doubl
    sp->prevVolume = tempVolume;
 }
 
-static TA_RetCode TA_NVI_OpenCore( struct TA_NVI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_NVI_OpenPass( struct TA_NVI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_NVI_Stream *sp;
    int endIdx;
@@ -326,7 +326,7 @@ TA_RetCode TA_NVI_OpenInternal( struct TA_NVI_Stream **stream, const double inCl
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_NVI_OpenCore( stream, inClose, inVolume, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_NVI_OpenPass( stream, inClose, inVolume, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -353,13 +353,13 @@ TA_LIB_API TA_RetCode TA_NVI_OpenAndFill( TA_NVI_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
-   return TA_NVI_OpenCore( stream, inClose, inVolume, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_NVI_OpenPass( stream, inClose, inVolume, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_NVI_OpenAndFillInternal( struct TA_NVI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_NVI_OpenCore( stream, inClose, inVolume, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_NVI_OpenPass( stream, inClose, inVolume, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_NVI_Update( TA_NVI_Stream *stream, double inClose, double inVolume, double *outReal )

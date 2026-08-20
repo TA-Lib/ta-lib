@@ -67,6 +67,11 @@ public enum RetCode
     /// <summary><c>endIdx</c> is negative or precedes <c>startIdx</c>
     /// (<c>TA_OUT_OF_RANGE_END_INDEX</c> = 13).</summary>
     OutOfRangeEndIndex = 13,
+    /// <summary>A stream opener was given fewer than <c>lookback + 1</c> bars
+    /// (<c>TA_INSUFFICIENT_HISTORY</c> = 17) — the library's one recoverable
+    /// condition. Streaming only: a batch range shorter than the lookback is
+    /// <see cref="Success"/> with a zero count.</summary>
+    InsufficientHistory = 17,
     /// <summary>An unexpected internal error (<c>TA_INTERNAL_ERROR</c> =
     /// 5000).</summary>
     InternalError = 5000,

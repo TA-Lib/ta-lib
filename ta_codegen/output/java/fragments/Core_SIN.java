@@ -25,12 +25,12 @@
       return 0 ;
 
    }
-   RetCode SIN_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode SIN_Impl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode SIN_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode SIN_Impl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -111,6 +111,7 @@
                         double inReal[],
                         double outReal[] )
    {
+      requireIndexRange("SIN", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SIN_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -118,7 +119,7 @@
       requireLength("SIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SIN", retCode);
       }
@@ -169,6 +170,7 @@
                         float inReal[],
                         double outReal[] )
    {
+      requireIndexRange("SIN", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SIN_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -176,7 +178,7 @@
       requireLength("SIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SIN", retCode);
       }
@@ -240,7 +242,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SIN update: BadParam");
+            throw new TaLibArgumentException("SIN update: BadParam", RetCode.BadParam);
          core.SIN_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -254,7 +256,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SIN peek: BadParam");
+            throw new TaLibArgumentException("SIN peek: BadParam", RetCode.BadParam);
          SIN_Stream scratch = new SIN_Stream(this);
          core.SIN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -281,7 +283,7 @@
    {
       sp.cur_outReal = Math.sin(inReal);
    }
-   private RetCode SIN_OpenCore( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SIN_OpenPass( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -302,55 +304,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SIN_OpenBody( SIN_Stream sp, double inReal[], int startIdx )
+   private RetCode SIN_OpenImpl( SIN_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return SIN_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return SIN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode SIN_OpenAndFillBody( SIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode SIN_OpenAndFillImpl( SIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return SIN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return SIN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode SIN_OpenAndFillInternalBody( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode SIN_OpenAndFillInternalImpl( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return SIN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return SIN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* SIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SIN_Stream SIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SIN_Stream sp = new SIN_Stream(this);
-      RetCode retCode = SIN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SIN openAndFill: internal error");
+         throw new TaLibStateException("SIN openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SIN openAndFill: " + retCode);
+      throw new TaLibArgumentException("SIN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind SIN_Open (composition seam). */
    SIN_Stream SIN_OpenInternal( double inReal[], int startIdx )
    {
       SIN_Stream sp = new SIN_Stream(this);
-      RetCode retCode = SIN_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SIN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SIN open: internal error");
+         throw new TaLibStateException("SIN open: internal error", retCode);
       }
-      throw new IllegalArgumentException("SIN open: " + retCode);
+      throw new TaLibArgumentException("SIN open: " + retCode, retCode);
    }
    /**
     * Open a live SIN stream over the warm-up history; the handle's
@@ -380,16 +382,16 @@
       SIN_Stream sp = new SIN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SIN_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SIN openAndFill: internal error");
+         throw new TaLibStateException("SIN openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SIN openAndFill: " + retCode);
+      throw new TaLibArgumentException("SIN openAndFill: " + retCode, retCode);
    }

@@ -37,13 +37,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode TSF_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TSF_Impl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -143,13 +143,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode TSF_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TSF_Impl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -263,6 +263,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("TSF", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TSF_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -270,7 +271,7 @@
       requireLength("TSF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSF_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TSF_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TSF", retCode);
       }
@@ -326,6 +327,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("TSF", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TSF_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -333,7 +335,7 @@
       requireLength("TSF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSF_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TSF_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TSF", retCode);
       }
@@ -428,7 +430,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("TSF update: BadParam");
+            throw new TaLibArgumentException("TSF update: BadParam", RetCode.BadParam);
          core.TSF_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -442,7 +444,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("TSF peek: BadParam");
+            throw new TaLibArgumentException("TSF peek: BadParam", RetCode.BadParam);
          TSF_Stream scratch = new TSF_Stream(this);
          core.TSF_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -484,7 +486,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode TSF_OpenCore( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TSF_OpenPass( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -538,7 +540,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -604,55 +606,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TSF_OpenBody( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode TSF_OpenImpl( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return TSF_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return TSF_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode TSF_OpenAndFillBody( TSF_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TSF_OpenAndFillImpl( TSF_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return TSF_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return TSF_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode TSF_OpenAndFillInternalBody( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TSF_OpenAndFillInternalImpl( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return TSF_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return TSF_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* TSF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TSF_Stream TSF_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TSF_Stream sp = new TSF_Stream(this);
-      RetCode retCode = TSF_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TSF_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TSF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TSF openAndFill: internal error");
+         throw new TaLibStateException("TSF openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TSF openAndFill: " + retCode);
+      throw new TaLibArgumentException("TSF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind TSF_Open (composition seam). */
    TSF_Stream TSF_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       TSF_Stream sp = new TSF_Stream(this);
-      RetCode retCode = TSF_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = TSF_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TSF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TSF open: internal error");
+         throw new TaLibStateException("TSF open: internal error", retCode);
       }
-      throw new IllegalArgumentException("TSF open: " + retCode);
+      throw new TaLibArgumentException("TSF open: " + retCode, retCode);
    }
    /**
     * Open a live TSF stream over the warm-up history; the handle's
@@ -682,16 +684,16 @@
       TSF_Stream sp = new TSF_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSF_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TSF_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TSF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TSF openAndFill: internal error");
+         throw new TaLibStateException("TSF openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TSF openAndFill: " + retCode);
+      throw new TaLibArgumentException("TSF openAndFill: " + retCode, retCode);
    }

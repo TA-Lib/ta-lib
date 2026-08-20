@@ -69,13 +69,13 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode DIV( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal0,
-                         ReadOnlySpan<double> inReal1,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode DIV_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal0,
+                              ReadOnlySpan<double> inReal1,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -97,13 +97,13 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode DIV( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal0,
-                         ReadOnlySpan<float> inReal1,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode DIV_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal0,
+                              ReadOnlySpan<float> inReal1,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -176,7 +176,7 @@ public partial class Core
       RequireLength("DIV", "inReal0", inReal0.Length, guardInLen);
       RequireLength("DIV", "inReal1", inReal1.Length, guardInLen);
       RequireLength("DIV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = DIV(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = DIV_Impl(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("DIV", retCode);
       }
@@ -242,7 +242,7 @@ public partial class Core
       RequireLength("DIV", "inReal0", inReal0.Length, guardInLen);
       RequireLength("DIV", "inReal1", inReal1.Length, guardInLen);
       RequireLength("DIV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = DIV(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = DIV_Impl(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("DIV", retCode);
       }
@@ -358,7 +358,7 @@ public partial class Core
       sp.cur_outReal = inReal0 / inReal1;
    }
 
-   private RetCode DIV_OpenCore( DIV_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode DIV_OpenPass( DIV_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -382,32 +382,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode DIV_OpenBody( DIV_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
+   private RetCode DIV_OpenImpl( DIV_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return DIV_OpenCore( sp, inReal0, inReal1, startIdx, out _, out _, sink_outReal, 0 );
+      return DIV_OpenPass( sp, inReal0, inReal1, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode DIV_OpenAndFillBody( DIV_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode DIV_OpenAndFillImpl( DIV_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          return RetCode.BadParam;
       }
-      return DIV_OpenCore( sp, inReal0, inReal1, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return DIV_OpenPass( sp, inReal0, inReal1, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode DIV_OpenAndFillInternalBody( DIV_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode DIV_OpenAndFillInternalImpl( DIV_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return DIV_OpenCore(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return DIV_OpenPass(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* DIV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal DIV_Stream DIV_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = DIV_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -418,7 +418,7 @@ public partial class Core
    internal DIV_Stream DIV_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
       DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenBody(sp, inReal0, inReal1, startIdx);
+      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -443,8 +443,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public DIV_Stream DIV_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
-      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
-      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
+      if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
+      if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       return DIV_OpenInternal(inReal0, inReal1, 0);
    }
 
@@ -473,10 +473,10 @@ public partial class Core
    /// output.</exception>
    public DIV_Stream DIV_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
-      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
+      if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
+      if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenAndFillBody(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = DIV_OpenAndFillImpl(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

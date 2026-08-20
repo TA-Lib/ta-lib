@@ -106,18 +106,18 @@ public partial class Core
       return retValue ;
 
    }
-   internal RetCode STOCHF( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inHigh,
-                            ReadOnlySpan<double> inLow,
-                            ReadOnlySpan<double> inClose,
-                            int optInFastK_Period,
-                            int optInFastD_Period,
-                            MAType optInFastD_MAType,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outFastK,
-                            Span<double> outFastD )
+   internal RetCode STOCHF_Impl( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inHigh,
+                                 ReadOnlySpan<double> inLow,
+                                 ReadOnlySpan<double> inClose,
+                                 int optInFastK_Period,
+                                 int optInFastD_Period,
+                                 MAType optInFastD_MAType,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outFastK,
+                                 Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -307,7 +307,10 @@ public partial class Core
       /* Fast-K calculation completed. This K calculation is returned
        * to the caller. It is smoothed to become Fast-D.
        */
-      retCode = MA(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
+      OutRange _xr0 = MA(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+      outBegIdx = _xr0.BegIdx;
+      outNBElement = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -340,18 +343,18 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode STOCHF( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inHigh,
-                            ReadOnlySpan<float> inLow,
-                            ReadOnlySpan<float> inClose,
-                            int optInFastK_Period,
-                            int optInFastD_Period,
-                            MAType optInFastD_MAType,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outFastK,
-                            Span<double> outFastD )
+   internal RetCode STOCHF_Impl( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inHigh,
+                                 ReadOnlySpan<float> inLow,
+                                 ReadOnlySpan<float> inClose,
+                                 int optInFastK_Period,
+                                 int optInFastD_Period,
+                                 MAType optInFastD_MAType,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outFastK,
+                                 Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -462,7 +465,10 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      retCode = MA(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastD);
+      OutRange _xr0 = MA(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+      outBegIdx = _xr0.BegIdx;
+      outNBElement = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -556,7 +562,7 @@ public partial class Core
       RequireLength("STOCHF", "inClose", inClose.Length, guardInLen);
       RequireLength("STOCHF", "outFastK", outFastK.Length, guardOutLen);
       RequireLength("STOCHF", "outFastD", outFastD.Length, guardOutLen);
-      RetCode retCode = STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHF_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHF", retCode);
       }
@@ -643,7 +649,7 @@ public partial class Core
       RequireLength("STOCHF", "inClose", inClose.Length, guardInLen);
       RequireLength("STOCHF", "outFastK", outFastK.Length, guardOutLen);
       RequireLength("STOCHF", "outFastD", outFastD.Length, guardOutLen);
-      RetCode retCode = STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHF_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHF", retCode);
       }
@@ -917,7 +923,7 @@ public partial class Core
       sp.cur_outFastD = cur_outFastD;
    }
 
-   private RetCode STOCHF_OpenCore( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD, int outStride )
+   private RetCode STOCHF_OpenPass( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -961,7 +967,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       Span<double> sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
       Span<double> sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
@@ -1010,7 +1016,7 @@ public partial class Core
          /* Succeed... but no data in the output. */
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the K calculation:
        *
@@ -1147,7 +1153,7 @@ public partial class Core
       outBegIdx = startIdx;
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       /* Capture the live batch state into the handle. */
       int capX = today - trailingIdx + 1;
@@ -1187,33 +1193,33 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode STOCHF_OpenBody( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   private RetCode STOCHF_OpenImpl( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       double[] sink_outFastK = new double[1];
       double[] sink_outFastD = new double[1];
-      return STOCHF_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, sink_outFastK, sink_outFastD, 0 );
+      return STOCHF_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, sink_outFastK, sink_outFastD, 0 );
    }
 
-   private RetCode STOCHF_OpenAndFillBody( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
+   private RetCode STOCHF_OpenAndFillImpl( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outFastK.Overlaps(inHigh) || outFastK.Overlaps(inLow) || outFastK.Overlaps(inClose) || outFastD.Overlaps(inHigh) || outFastD.Overlaps(inLow) || outFastD.Overlaps(inClose) || outFastK.Overlaps(outFastD) ) {
          return RetCode.BadParam;
       }
-      return STOCHF_OpenCore( sp, inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1 );
+      return STOCHF_OpenPass( sp, inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1 );
    }
 
-   private RetCode STOCHF_OpenAndFillInternalBody( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
+   private RetCode STOCHF_OpenAndFillInternalImpl( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
-      return STOCHF_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1);
+      return STOCHF_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1);
    }
 
    /* STOCHF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal STOCHF_Stream STOCHF_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
       STOCHF_Stream sp = new STOCHF_Stream(this);
-      RetCode retCode = STOCHF_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHF_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1224,7 +1230,7 @@ public partial class Core
    internal STOCHF_Stream STOCHF_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       STOCHF_Stream sp = new STOCHF_Stream(this);
-      RetCode retCode = STOCHF_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      RetCode retCode = STOCHF_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1256,9 +1262,9 @@ public partial class Core
    /// span cannot be null.</exception>
    public STOCHF_Stream STOCHF_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
 
@@ -1296,11 +1302,11 @@ public partial class Core
    /// output.</exception>
    public STOCHF_Stream STOCHF_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       STOCHF_Stream sp = new STOCHF_Stream(this);
-      RetCode retCode = STOCHF_OpenAndFillBody(sp, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHF_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -35,13 +35,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode ROCR_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ROCR_Impl( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -119,13 +119,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode ROCR_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ROCR_Impl( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -214,6 +214,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("ROCR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ROCR_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -221,7 +222,7 @@
       requireLength("ROCR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROCR_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCR_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ROCR", retCode);
       }
@@ -278,6 +279,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("ROCR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ROCR_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -285,7 +287,7 @@
       requireLength("ROCR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROCR_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCR_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ROCR", retCode);
       }
@@ -365,7 +367,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("ROCR update: BadParam");
+            throw new TaLibArgumentException("ROCR update: BadParam", RetCode.BadParam);
          core.ROCR_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -379,7 +381,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("ROCR peek: BadParam");
+            throw new TaLibArgumentException("ROCR peek: BadParam", RetCode.BadParam);
          ROCR_Stream scratch = new ROCR_Stream(this);
          core.ROCR_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -420,7 +422,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ROCR_OpenCore( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ROCR_OpenPass( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -480,7 +482,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Calculate Rate of change Ratio: (price / prevPrice) */
       outIdx = 0;
@@ -513,55 +515,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ROCR_OpenBody( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode ROCR_OpenImpl( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return ROCR_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return ROCR_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode ROCR_OpenAndFillBody( ROCR_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ROCR_OpenAndFillImpl( ROCR_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return ROCR_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return ROCR_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode ROCR_OpenAndFillInternalBody( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ROCR_OpenAndFillInternalImpl( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return ROCR_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return ROCR_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* ROCR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ROCR_Stream ROCR_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ROCR_Stream sp = new ROCR_Stream(this);
-      RetCode retCode = ROCR_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCR_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ROCR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ROCR openAndFill: internal error");
+         throw new TaLibStateException("ROCR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ROCR openAndFill: " + retCode);
+      throw new TaLibArgumentException("ROCR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ROCR_Open (composition seam). */
    ROCR_Stream ROCR_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       ROCR_Stream sp = new ROCR_Stream(this);
-      RetCode retCode = ROCR_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = ROCR_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ROCR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ROCR open: internal error");
+         throw new TaLibStateException("ROCR open: internal error", retCode);
       }
-      throw new IllegalArgumentException("ROCR open: " + retCode);
+      throw new TaLibArgumentException("ROCR open: " + retCode, retCode);
    }
    /**
     * Open a live ROCR stream over the warm-up history; the handle's
@@ -591,16 +593,16 @@
       ROCR_Stream sp = new ROCR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROCR_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCR_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ROCR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ROCR openAndFill: internal error");
+         throw new TaLibStateException("ROCR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ROCR openAndFill: " + retCode);
+      throw new TaLibArgumentException("ROCR openAndFill: " + retCode, retCode);
    }

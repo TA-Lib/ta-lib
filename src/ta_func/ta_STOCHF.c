@@ -660,7 +660,7 @@ static TA_RetCode TA_STOCHF_StepInternal( struct TA_STOCHF_Stream *sp, double in
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_STOCHF_OpenCore( struct TA_STOCHF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[], int outStride )
+static TA_RetCode TA_STOCHF_OpenPass( struct TA_STOCHF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[], int outStride )
 {
    struct TA_STOCHF_Stream *sp;
    int endIdx;
@@ -775,7 +775,7 @@ static TA_RetCode TA_STOCHF_OpenCore( struct TA_STOCHF_Stream **stream, const do
          dummyBegIdx = 0;
          dummyNBElement = 0;
          TA_MA_Close( sub0 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD );
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Do the K calculation:
        *
@@ -946,7 +946,7 @@ static TA_RetCode TA_STOCHF_OpenCore( struct TA_STOCHF_Stream **stream, const do
       dummyBegIdx = startIdx;
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD ); return TA_BAD_PARAM; }
+      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_STOCHF_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { TA_MA_Close( sub0 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
@@ -1006,7 +1006,7 @@ TA_RetCode TA_STOCHF_OpenInternal( struct TA_STOCHF_Stream **stream, const doubl
    int dummyNBElement = 0;
    double sink_outFastK = 0.0;
    double sink_outFastD = 0.0;
-   retCode = TA_STOCHF_OpenCore( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &dummyBegIdx, &dummyNBElement, &sink_outFastK, &sink_outFastD, 0 );
+   retCode = TA_STOCHF_OpenPass( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &dummyBegIdx, &dummyNBElement, &sink_outFastK, &sink_outFastD, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outFastK = sink_outFastK;
@@ -1034,13 +1034,13 @@ TA_LIB_API TA_RetCode TA_STOCHF_OpenAndFill( TA_STOCHF_Stream **stream, const do
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outFastK == (const void *)inHigh || (const void *)outFastK == (const void *)inLow || (const void *)outFastK == (const void *)inClose || (const void *)outFastD == (const void *)inHigh || (const void *)outFastD == (const void *)inLow || (const void *)outFastD == (const void *)inClose || (const void *)outFastK == (const void *)outFastD ) return TA_BAD_PARAM;
-   return TA_STOCHF_OpenCore( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
+   return TA_STOCHF_OpenPass( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_STOCHF_OpenAndFillInternal( struct TA_STOCHF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[] )
 {
-   return TA_STOCHF_OpenCore( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
+   return TA_STOCHF_OpenPass( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHF_Update( TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )

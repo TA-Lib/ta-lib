@@ -69,12 +69,12 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode ASIN( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode ASIN_Impl( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -96,12 +96,12 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode ASIN( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode ASIN_Impl( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -171,7 +171,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ASIN", "inReal", inReal.Length, guardInLen);
       RequireLength("ASIN", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ASIN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ASIN_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ASIN", retCode);
       }
@@ -234,7 +234,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ASIN", "inReal", inReal.Length, guardInLen);
       RequireLength("ASIN", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ASIN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ASIN_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ASIN", retCode);
       }
@@ -348,7 +348,7 @@ public partial class Core
       sp.cur_outReal = Math.Asin(inReal);
    }
 
-   private RetCode ASIN_OpenCore( ASIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode ASIN_OpenPass( ASIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -372,32 +372,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ASIN_OpenBody( ASIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode ASIN_OpenImpl( ASIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return ASIN_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+      return ASIN_OpenPass( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode ASIN_OpenAndFillBody( ASIN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode ASIN_OpenAndFillImpl( ASIN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return ASIN_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return ASIN_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode ASIN_OpenAndFillInternalBody( ASIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode ASIN_OpenAndFillInternalImpl( ASIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return ASIN_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return ASIN_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* ASIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal ASIN_Stream ASIN_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = ASIN_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -408,7 +408,7 @@ public partial class Core
    internal ASIN_Stream ASIN_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -433,7 +433,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public ASIN_Stream ASIN_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return ASIN_OpenInternal(inReal, 0);
    }
 
@@ -462,9 +462,9 @@ public partial class Core
    /// output.</exception>
    public ASIN_Stream ASIN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ASIN_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

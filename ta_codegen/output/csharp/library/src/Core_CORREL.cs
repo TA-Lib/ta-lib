@@ -79,14 +79,14 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode CORREL( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inReal0,
-                            ReadOnlySpan<double> inReal1,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode CORREL_Impl( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inReal0,
+                                 ReadOnlySpan<double> inReal1,
+                                 int optInTimePeriod,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -193,14 +193,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode CORREL( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inReal0,
-                            ReadOnlySpan<float> inReal1,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode CORREL_Impl( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inReal0,
+                                 ReadOnlySpan<float> inReal1,
+                                 int optInTimePeriod,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -347,7 +347,7 @@ public partial class Core
       RequireLength("CORREL", "inReal0", inReal0.Length, guardInLen);
       RequireLength("CORREL", "inReal1", inReal1.Length, guardInLen);
       RequireLength("CORREL", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CORREL_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CORREL", retCode);
       }
@@ -418,7 +418,7 @@ public partial class Core
       RequireLength("CORREL", "inReal0", inReal0.Length, guardInLen);
       RequireLength("CORREL", "inReal1", inReal1.Length, guardInLen);
       RequireLength("CORREL", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CORREL_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CORREL", retCode);
       }
@@ -632,7 +632,7 @@ public partial class Core
       }
    }
 
-   private RetCode CORREL_OpenCore( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode CORREL_OpenPass( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -674,7 +674,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       trailingIdx = startIdx - lookbackTotal;
@@ -765,32 +765,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CORREL_OpenBody( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod )
+   private RetCode CORREL_OpenImpl( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return CORREL_OpenCore( sp, inReal0, inReal1, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return CORREL_OpenPass( sp, inReal0, inReal1, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode CORREL_OpenAndFillBody( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode CORREL_OpenAndFillImpl( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          return RetCode.BadParam;
       }
-      return CORREL_OpenCore( sp, inReal0, inReal1, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return CORREL_OpenPass( sp, inReal0, inReal1, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode CORREL_OpenAndFillInternalBody( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode CORREL_OpenAndFillInternalImpl( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return CORREL_OpenCore(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return CORREL_OpenPass(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* CORREL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CORREL_Stream CORREL_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       CORREL_Stream sp = new CORREL_Stream(this);
-      RetCode retCode = CORREL_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = CORREL_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -801,7 +801,7 @@ public partial class Core
    internal CORREL_Stream CORREL_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod )
    {
       CORREL_Stream sp = new CORREL_Stream(this);
-      RetCode retCode = CORREL_OpenBody(sp, inReal0, inReal1, startIdx, optInTimePeriod);
+      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -828,8 +828,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public CORREL_Stream CORREL_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod )
    {
-      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
-      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
+      if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
+      if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       return CORREL_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
 
@@ -860,10 +860,10 @@ public partial class Core
    /// output.</exception>
    public CORREL_Stream CORREL_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
-      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
+      if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
+      if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       CORREL_Stream sp = new CORREL_Stream(this);
-      RetCode retCode = CORREL_OpenAndFillBody(sp, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CORREL_OpenAndFillImpl(sp, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

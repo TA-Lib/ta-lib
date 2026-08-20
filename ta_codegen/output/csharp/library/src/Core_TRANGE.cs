@@ -71,14 +71,14 @@ public partial class Core
       return 1 ;
 
    }
-   internal RetCode TRANGE( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inHigh,
-                            ReadOnlySpan<double> inLow,
-                            ReadOnlySpan<double> inClose,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode TRANGE_Impl( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inHigh,
+                                 ReadOnlySpan<double> inLow,
+                                 ReadOnlySpan<double> inClose,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -148,14 +148,14 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode TRANGE( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inHigh,
-                            ReadOnlySpan<float> inLow,
-                            ReadOnlySpan<float> inClose,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode TRANGE_Impl( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inHigh,
+                                 ReadOnlySpan<float> inLow,
+                                 ReadOnlySpan<float> inClose,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -262,7 +262,7 @@ public partial class Core
       RequireLength("TRANGE", "inLow", inLow.Length, guardInLen);
       RequireLength("TRANGE", "inClose", inClose.Length, guardInLen);
       RequireLength("TRANGE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TRANGE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRANGE_Impl(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRANGE", retCode);
       }
@@ -333,7 +333,7 @@ public partial class Core
       RequireLength("TRANGE", "inLow", inLow.Length, guardInLen);
       RequireLength("TRANGE", "inClose", inClose.Length, guardInLen);
       RequireLength("TRANGE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TRANGE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRANGE_Impl(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRANGE", retCode);
       }
@@ -478,7 +478,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode TRANGE_OpenCore( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TRANGE_OpenPass( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -521,7 +521,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       today = startIdx;
@@ -552,32 +552,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode TRANGE_OpenBody( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode TRANGE_OpenImpl( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return TRANGE_OpenCore( sp, inHigh, inLow, inClose, startIdx, out _, out _, sink_outReal, 0 );
+      return TRANGE_OpenPass( sp, inHigh, inLow, inClose, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode TRANGE_OpenAndFillBody( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode TRANGE_OpenAndFillImpl( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
-      return TRANGE_OpenCore( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return TRANGE_OpenPass( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode TRANGE_OpenAndFillInternalBody( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode TRANGE_OpenAndFillInternalImpl( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return TRANGE_OpenCore(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return TRANGE_OpenPass(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* TRANGE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal TRANGE_Stream TRANGE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = TRANGE_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -588,7 +588,7 @@ public partial class Core
    internal TRANGE_Stream TRANGE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenBody(sp, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -614,9 +614,9 @@ public partial class Core
    /// span cannot be null.</exception>
    public TRANGE_Stream TRANGE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return TRANGE_OpenInternal(inHigh, inLow, inClose, 0);
    }
 
@@ -646,11 +646,11 @@ public partial class Core
    /// output.</exception>
    public TRANGE_Stream TRANGE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenAndFillBody(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRANGE_OpenAndFillImpl(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

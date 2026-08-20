@@ -84,16 +84,16 @@ public partial class Core
       return Math.Max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
-   internal RetCode CDLEVENINGSTAR( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<double> inOpen,
-                                    ReadOnlySpan<double> inHigh,
-                                    ReadOnlySpan<double> inLow,
-                                    ReadOnlySpan<double> inClose,
-                                    double optInPenetration,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
+   internal RetCode CDLEVENINGSTAR_Impl( int startIdx,
+                                         int endIdx,
+                                         ReadOnlySpan<double> inOpen,
+                                         ReadOnlySpan<double> inHigh,
+                                         ReadOnlySpan<double> inLow,
+                                         ReadOnlySpan<double> inClose,
+                                         double optInPenetration,
+                                         out int outBegIdx,
+                                         out int outNBElement,
+                                         Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -199,16 +199,16 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLEVENINGSTAR( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<float> inOpen,
-                                    ReadOnlySpan<float> inHigh,
-                                    ReadOnlySpan<float> inLow,
-                                    ReadOnlySpan<float> inClose,
-                                    double optInPenetration,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
+   internal RetCode CDLEVENINGSTAR_Impl( int startIdx,
+                                         int endIdx,
+                                         ReadOnlySpan<float> inOpen,
+                                         ReadOnlySpan<float> inHigh,
+                                         ReadOnlySpan<float> inLow,
+                                         ReadOnlySpan<float> inClose,
+                                         double optInPenetration,
+                                         out int outBegIdx,
+                                         out int outNBElement,
+                                         Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -344,7 +344,7 @@ public partial class Core
       RequireLength("CDLEVENINGSTAR", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLEVENINGSTAR", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLEVENINGSTAR", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLEVENINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLEVENINGSTAR", retCode);
       }
@@ -419,7 +419,7 @@ public partial class Core
       RequireLength("CDLEVENINGSTAR", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLEVENINGSTAR", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLEVENINGSTAR", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLEVENINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLEVENINGSTAR", retCode);
       }
@@ -676,7 +676,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLEVENINGSTAR_OpenCore( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLEVENINGSTAR_OpenPass( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -721,7 +721,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -831,29 +831,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLEVENINGSTAR_OpenBody( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
+   private RetCode CDLEVENINGSTAR_OpenImpl( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       int[] sink_outInteger = new int[1];
-      return CDLEVENINGSTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out _, out _, sink_outInteger, 0 );
+      return CDLEVENINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLEVENINGSTAR_OpenAndFillBody( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLEVENINGSTAR_OpenAndFillImpl( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLEVENINGSTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLEVENINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLEVENINGSTAR_OpenAndFillInternalBody( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLEVENINGSTAR_OpenAndFillInternalImpl( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLEVENINGSTAR_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLEVENINGSTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLEVENINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
-      RetCode retCode = CDLEVENINGSTAR_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -864,7 +864,7 @@ public partial class Core
    internal CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
-      RetCode retCode = CDLEVENINGSTAR_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      RetCode retCode = CDLEVENINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -894,10 +894,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLEVENINGSTAR_Stream CDLEVENINGSTAR_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLEVENINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
 
@@ -931,12 +931,12 @@ public partial class Core
    /// output.</exception>
    public CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
-      RetCode retCode = CDLEVENINGSTAR_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

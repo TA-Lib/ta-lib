@@ -85,7 +85,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::QSTICK`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn QSTICK_Internal(
+    pub(crate) fn QSTICK_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -275,7 +275,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.QSTICK_Internal(
+        let retCode = self.QSTICK_Impl(
             startIdx,
             endIdx,
             inOpen,
@@ -364,7 +364,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::QSTICK_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::QSTICK_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn QSTICK_OpenCore(
+    pub(crate) fn QSTICK_OpenPass(
         &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<QSTICK_Stream, RetCode> {
         if inOpen.is_empty() || inClose.is_empty() || inClose.len() != inOpen.len() {
@@ -418,7 +418,7 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         // Do the MA calculation using tight loops.
         // Add-up the initial period, except for the last value.
@@ -480,7 +480,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.QSTICK_OpenCore(inOpen, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.QSTICK_OpenPass(inOpen, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -489,8 +489,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -522,7 +524,7 @@ impl Core {
     ) -> Result<(QSTICK_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.QSTICK_OpenCore(inOpen, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.QSTICK_OpenPass(inOpen, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -531,7 +533,7 @@ impl Core {
     pub(crate) fn QSTICK_OpenAndFillInternal(
         &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<QSTICK_Stream, RetCode> {
-        self.QSTICK_OpenCore(inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.QSTICK_OpenPass(inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

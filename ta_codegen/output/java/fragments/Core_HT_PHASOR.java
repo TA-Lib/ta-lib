@@ -31,13 +31,13 @@
       return 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()] ;
 
    }
-   RetCode HT_PHASOR_Internal( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outInPhase[],
-                               double outQuadrature[] )
+   RetCode HT_PHASOR_Impl( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outInPhase[],
+                           double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -378,13 +378,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode HT_PHASOR_Internal( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outInPhase[],
-                               double outQuadrature[] )
+   RetCode HT_PHASOR_Impl( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outInPhase[],
+                           double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -721,6 +721,7 @@
                               double outInPhase[],
                               double outQuadrature[] )
    {
+      requireIndexRange("HT_PHASOR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_PHASOR_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -729,7 +730,7 @@
       requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw failure("HT_PHASOR", retCode);
       }
@@ -787,6 +788,7 @@
                               double outInPhase[],
                               double outQuadrature[] )
    {
+      requireIndexRange("HT_PHASOR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_PHASOR_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -795,7 +797,7 @@
       requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw failure("HT_PHASOR", retCode);
       }
@@ -1079,7 +1081,7 @@
        */
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_PHASOR update: BadParam");
+            throw new TaLibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
          core.HT_PHASOR_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
          return this.cachedValue;
@@ -1096,7 +1098,7 @@
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_PHASOR peek: BadParam");
+            throw new TaLibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
          HT_PHASOR_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new HT_PHASOR_Stream(this);
@@ -1275,7 +1277,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_PHASOR_OpenCore( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
+   private RetCode HT_PHASOR_OpenPass( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1362,7 +1364,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -1680,56 +1682,56 @@
       sp.cachedValue = new HT_PHASOR_Stream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
       return RetCode.Success;
    }
-   private RetCode HT_PHASOR_OpenBody( HT_PHASOR_Stream sp, double inReal[], int startIdx )
+   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outInPhase = new double[1];
       double[] sink_outQuadrature = new double[1];
-      return HT_PHASOR_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0 );
+      return HT_PHASOR_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0 );
    }
-   private RetCode HT_PHASOR_OpenAndFillBody( HT_PHASOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
+   private RetCode HT_PHASOR_OpenAndFillImpl( HT_PHASOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
       if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
          return RetCode.BadParam;
       }
-      return HT_PHASOR_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
+      return HT_PHASOR_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
    }
-   private RetCode HT_PHASOR_OpenAndFillInternalBody( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
+   private RetCode HT_PHASOR_OpenAndFillInternalImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
-      return HT_PHASOR_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
+      return HT_PHASOR_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
    }
    /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_PHASOR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_PHASOR openAndFill: internal error");
+         throw new TaLibStateException("HT_PHASOR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_PHASOR openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind HT_PHASOR_Open (composition seam). */
    HT_PHASOR_Stream HT_PHASOR_OpenInternal( double inReal[], int startIdx )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_PHASOR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_PHASOR open: internal error");
+         throw new TaLibStateException("HT_PHASOR open: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_PHASOR open: " + retCode);
+      throw new TaLibArgumentException("HT_PHASOR open: " + retCode, retCode);
    }
    /**
     * Open a live HT_PHASOR stream over the warm-up history; the handle's
@@ -1759,16 +1761,16 @@
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_PHASOR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_PHASOR openAndFill: internal error");
+         throw new TaLibStateException("HT_PHASOR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_PHASOR openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
    }

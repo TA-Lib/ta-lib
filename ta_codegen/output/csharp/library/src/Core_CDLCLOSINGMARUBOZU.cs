@@ -76,15 +76,15 @@ public partial class Core
       return Math.Max(BodyLong_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
-   internal RetCode CDLCLOSINGMARUBOZU( int startIdx,
-                                        int endIdx,
-                                        ReadOnlySpan<double> inOpen,
-                                        ReadOnlySpan<double> inHigh,
-                                        ReadOnlySpan<double> inLow,
-                                        ReadOnlySpan<double> inClose,
-                                        out int outBegIdx,
-                                        out int outNBElement,
-                                        Span<int> outInteger )
+   internal RetCode CDLCLOSINGMARUBOZU_Impl( int startIdx,
+                                             int endIdx,
+                                             ReadOnlySpan<double> inOpen,
+                                             ReadOnlySpan<double> inHigh,
+                                             ReadOnlySpan<double> inLow,
+                                             ReadOnlySpan<double> inClose,
+                                             out int outBegIdx,
+                                             out int outNBElement,
+                                             Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -169,15 +169,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLCLOSINGMARUBOZU( int startIdx,
-                                        int endIdx,
-                                        ReadOnlySpan<float> inOpen,
-                                        ReadOnlySpan<float> inHigh,
-                                        ReadOnlySpan<float> inLow,
-                                        ReadOnlySpan<float> inClose,
-                                        out int outBegIdx,
-                                        out int outNBElement,
-                                        Span<int> outInteger )
+   internal RetCode CDLCLOSINGMARUBOZU_Impl( int startIdx,
+                                             int endIdx,
+                                             ReadOnlySpan<float> inOpen,
+                                             ReadOnlySpan<float> inHigh,
+                                             ReadOnlySpan<float> inLow,
+                                             ReadOnlySpan<float> inClose,
+                                             out int outBegIdx,
+                                             out int outNBElement,
+                                             Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -302,7 +302,7 @@ public partial class Core
       RequireLength("CDLCLOSINGMARUBOZU", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLCLOSINGMARUBOZU", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLCLOSINGMARUBOZU", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLCLOSINGMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLCLOSINGMARUBOZU_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLCLOSINGMARUBOZU", retCode);
       }
@@ -376,7 +376,7 @@ public partial class Core
       RequireLength("CDLCLOSINGMARUBOZU", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLCLOSINGMARUBOZU", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLCLOSINGMARUBOZU", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLCLOSINGMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLCLOSINGMARUBOZU_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLCLOSINGMARUBOZU", retCode);
       }
@@ -589,7 +589,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLCLOSINGMARUBOZU_OpenCore( CDLCLOSINGMARUBOZU_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLCLOSINGMARUBOZU_OpenPass( CDLCLOSINGMARUBOZU_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -628,7 +628,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -711,29 +711,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLCLOSINGMARUBOZU_OpenBody( CDLCLOSINGMARUBOZU_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLCLOSINGMARUBOZU_OpenImpl( CDLCLOSINGMARUBOZU_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLCLOSINGMARUBOZU_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLCLOSINGMARUBOZU_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLCLOSINGMARUBOZU_OpenAndFillBody( CDLCLOSINGMARUBOZU_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLCLOSINGMARUBOZU_OpenAndFillImpl( CDLCLOSINGMARUBOZU_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLCLOSINGMARUBOZU_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLCLOSINGMARUBOZU_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLCLOSINGMARUBOZU_OpenAndFillInternalBody( CDLCLOSINGMARUBOZU_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLCLOSINGMARUBOZU_OpenAndFillInternalImpl( CDLCLOSINGMARUBOZU_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLCLOSINGMARUBOZU_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLCLOSINGMARUBOZU_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLCLOSINGMARUBOZU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLCLOSINGMARUBOZU_Stream sp = new CDLCLOSINGMARUBOZU_Stream(this);
-      RetCode retCode = CDLCLOSINGMARUBOZU_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLCLOSINGMARUBOZU_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -744,7 +744,7 @@ public partial class Core
    internal CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLCLOSINGMARUBOZU_Stream sp = new CDLCLOSINGMARUBOZU_Stream(this);
-      RetCode retCode = CDLCLOSINGMARUBOZU_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLCLOSINGMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -773,10 +773,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLCLOSINGMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -811,12 +811,12 @@ public partial class Core
    /// output.</exception>
    public CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLCLOSINGMARUBOZU_Stream sp = new CDLCLOSINGMARUBOZU_Stream(this);
-      RetCode retCode = CDLCLOSINGMARUBOZU_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLCLOSINGMARUBOZU_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

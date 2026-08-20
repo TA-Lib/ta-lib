@@ -34,14 +34,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode QSTICK_Internal( int startIdx,
-                            int endIdx,
-                            double inOpen[],
-                            double inClose[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode QSTICK_Impl( int startIdx,
+                        int endIdx,
+                        double inOpen[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -124,14 +124,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode QSTICK_Internal( int startIdx,
-                            int endIdx,
-                            float inOpen[],
-                            float inClose[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode QSTICK_Impl( int startIdx,
+                        int endIdx,
+                        float inOpen[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -236,6 +236,7 @@
                            int optInTimePeriod,
                            double outReal[] )
    {
+      requireIndexRange("QSTICK", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, QSTICK_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -244,7 +245,7 @@
       requireLength("QSTICK", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = QSTICK_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = QSTICK_Impl(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("QSTICK", retCode);
       }
@@ -307,6 +308,7 @@
                            int optInTimePeriod,
                            double outReal[] )
    {
+      requireIndexRange("QSTICK", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, QSTICK_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -315,7 +317,7 @@
       requireLength("QSTICK", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = QSTICK_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = QSTICK_Impl(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("QSTICK", retCode);
       }
@@ -401,7 +403,7 @@
        */
       public double update( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("QSTICK update: BadParam");
+            throw new TaLibArgumentException("QSTICK update: BadParam", RetCode.BadParam);
          core.QSTICK_StreamStep(this, inOpen, inClose);
          return this.cur_outReal;
       }
@@ -415,7 +417,7 @@
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("QSTICK peek: BadParam");
+            throw new TaLibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
          QSTICK_Stream scratch = new QSTICK_Stream(this);
          core.QSTICK_StreamStep(scratch, inOpen, inClose);
          return scratch.cur_outReal;
@@ -453,7 +455,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode QSTICK_OpenCore( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode QSTICK_OpenPass( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -506,7 +508,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the MA calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -555,55 +557,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode QSTICK_OpenBody( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode QSTICK_OpenImpl( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return QSTICK_OpenCore( sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return QSTICK_OpenPass( sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode QSTICK_OpenAndFillBody( QSTICK_Stream sp, double inOpen[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode QSTICK_OpenAndFillImpl( QSTICK_Stream sp, double inOpen[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      return QSTICK_OpenCore( sp, inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return QSTICK_OpenPass( sp, inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode QSTICK_OpenAndFillInternalBody( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode QSTICK_OpenAndFillInternalImpl( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return QSTICK_OpenCore(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return QSTICK_OpenPass(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* QSTICK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    QSTICK_Stream QSTICK_OpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       QSTICK_Stream sp = new QSTICK_Stream(this);
-      RetCode retCode = QSTICK_OpenAndFillInternalBody(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = QSTICK_OpenAndFillInternalImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("QSTICK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("QSTICK openAndFill: internal error");
+         throw new TaLibStateException("QSTICK openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("QSTICK openAndFill: " + retCode);
+      throw new TaLibArgumentException("QSTICK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind QSTICK_Open (composition seam). */
    QSTICK_Stream QSTICK_OpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
    {
       QSTICK_Stream sp = new QSTICK_Stream(this);
-      RetCode retCode = QSTICK_OpenBody(sp, inOpen, inClose, startIdx, optInTimePeriod);
+      RetCode retCode = QSTICK_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("QSTICK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("QSTICK open: internal error");
+         throw new TaLibStateException("QSTICK open: internal error", retCode);
       }
-      throw new IllegalArgumentException("QSTICK open: " + retCode);
+      throw new TaLibArgumentException("QSTICK open: " + retCode, retCode);
    }
    /**
     * Open a live QSTICK stream over the warm-up history; the handle's
@@ -633,16 +635,16 @@
       QSTICK_Stream sp = new QSTICK_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = QSTICK_OpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = QSTICK_OpenAndFillImpl(sp, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("QSTICK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("QSTICK openAndFill: internal error");
+         throw new TaLibStateException("QSTICK openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("QSTICK openAndFill: " + retCode);
+      throw new TaLibArgumentException("QSTICK openAndFill: " + retCode, retCode);
    }

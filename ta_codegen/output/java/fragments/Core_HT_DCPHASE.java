@@ -38,12 +38,12 @@
       return 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()] ;
 
    }
-   RetCode HT_DCPHASE_Internal( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode HT_DCPHASE_Impl( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -446,12 +446,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode HT_DCPHASE_Internal( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode HT_DCPHASE_Impl( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -833,6 +833,7 @@
                                double inReal[],
                                double outReal[] )
    {
+      requireIndexRange("HT_DCPHASE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_DCPHASE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -840,7 +841,7 @@
       requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_DCPHASE", retCode);
       }
@@ -894,6 +895,7 @@
                                float inReal[],
                                double outReal[] )
    {
+      requireIndexRange("HT_DCPHASE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_DCPHASE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -901,7 +903,7 @@
       requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_DCPHASE", retCode);
       }
@@ -1209,7 +1211,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_DCPHASE update: BadParam");
+            throw new TaLibArgumentException("HT_DCPHASE update: BadParam", RetCode.BadParam);
          core.HT_DCPHASE_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -1225,7 +1227,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_DCPHASE peek: BadParam");
+            throw new TaLibArgumentException("HT_DCPHASE peek: BadParam", RetCode.BadParam);
          HT_DCPHASE_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new HT_DCPHASE_Stream(this);
@@ -1449,7 +1451,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_DCPHASE_OpenCore( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HT_DCPHASE_OpenPass( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1556,7 +1558,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -1934,55 +1936,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_DCPHASE_OpenBody( HT_DCPHASE_Stream sp, double inReal[], int startIdx )
+   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return HT_DCPHASE_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return HT_DCPHASE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode HT_DCPHASE_OpenAndFillBody( HT_DCPHASE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HT_DCPHASE_OpenAndFillImpl( HT_DCPHASE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return HT_DCPHASE_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return HT_DCPHASE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode HT_DCPHASE_OpenAndFillInternalBody( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HT_DCPHASE_OpenAndFillInternalImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return HT_DCPHASE_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return HT_DCPHASE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* HT_DCPHASE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_DCPHASE_Stream HT_DCPHASE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_DCPHASE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_DCPHASE openAndFill: internal error");
+         throw new TaLibStateException("HT_DCPHASE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_DCPHASE openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind HT_DCPHASE_Open (composition seam). */
    HT_DCPHASE_Stream HT_DCPHASE_OpenInternal( double inReal[], int startIdx )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_DCPHASE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_DCPHASE open: internal error");
+         throw new TaLibStateException("HT_DCPHASE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_DCPHASE open: " + retCode);
+      throw new TaLibArgumentException("HT_DCPHASE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_DCPHASE stream over the warm-up history; the handle's
@@ -2012,16 +2014,16 @@
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_DCPHASE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_DCPHASE openAndFill: internal error");
+         throw new TaLibStateException("HT_DCPHASE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_DCPHASE openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + retCode, retCode);
    }

@@ -25,12 +25,12 @@
       return 0 ;
 
    }
-   RetCode LOG10_Internal( int startIdx,
-                           int endIdx,
-                           double inReal[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode LOG10_Impl( int startIdx,
+                       int endIdx,
+                       double inReal[],
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode LOG10_Internal( int startIdx,
-                           int endIdx,
-                           float inReal[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode LOG10_Impl( int startIdx,
+                       int endIdx,
+                       float inReal[],
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -114,6 +114,7 @@
                           double inReal[],
                           double outReal[] )
    {
+      requireIndexRange("LOG10", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, LOG10_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -121,7 +122,7 @@
       requireLength("LOG10", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LOG10_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LOG10_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LOG10", retCode);
       }
@@ -175,6 +176,7 @@
                           float inReal[],
                           double outReal[] )
    {
+      requireIndexRange("LOG10", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, LOG10_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -182,7 +184,7 @@
       requireLength("LOG10", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LOG10_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LOG10_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LOG10", retCode);
       }
@@ -246,7 +248,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("LOG10 update: BadParam");
+            throw new TaLibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
          core.LOG10_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -260,7 +262,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("LOG10 peek: BadParam");
+            throw new TaLibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
          LOG10_Stream scratch = new LOG10_Stream(this);
          core.LOG10_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -287,7 +289,7 @@
    {
       sp.cur_outReal = Math.log10(inReal);
    }
-   private RetCode LOG10_OpenCore( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LOG10_OpenPass( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -308,55 +310,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LOG10_OpenBody( LOG10_Stream sp, double inReal[], int startIdx )
+   private RetCode LOG10_OpenImpl( LOG10_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return LOG10_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return LOG10_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode LOG10_OpenAndFillBody( LOG10_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LOG10_OpenAndFillImpl( LOG10_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return LOG10_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return LOG10_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode LOG10_OpenAndFillInternalBody( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LOG10_OpenAndFillInternalImpl( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return LOG10_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return LOG10_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* LOG10_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LOG10_Stream LOG10_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LOG10_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LOG10 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LOG10 openAndFill: internal error");
+         throw new TaLibStateException("LOG10 openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("LOG10 openAndFill: " + retCode);
+      throw new TaLibArgumentException("LOG10 openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind LOG10_Open (composition seam). */
    LOG10_Stream LOG10_OpenInternal( double inReal[], int startIdx )
    {
       LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LOG10 open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LOG10 open: internal error");
+         throw new TaLibStateException("LOG10 open: internal error", retCode);
       }
-      throw new IllegalArgumentException("LOG10 open: " + retCode);
+      throw new TaLibArgumentException("LOG10 open: " + retCode, retCode);
    }
    /**
     * Open a live LOG10 stream over the warm-up history; the handle's
@@ -386,16 +388,16 @@
       LOG10_Stream sp = new LOG10_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LOG10_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LOG10_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LOG10 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LOG10 openAndFill: internal error");
+         throw new TaLibStateException("LOG10 openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("LOG10 openAndFill: " + retCode);
+      throw new TaLibArgumentException("LOG10 openAndFill: " + retCode, retCode);
    }

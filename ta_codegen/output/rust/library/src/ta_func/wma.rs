@@ -86,7 +86,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::WMA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn WMA_Internal(
+    pub(crate) fn WMA_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -299,7 +299,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.WMA_Internal(
+        let retCode = self.WMA_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -407,7 +407,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::WMA_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::WMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn WMA_OpenCore(
+    pub(crate) fn WMA_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<WMA_Stream, RetCode> {
         if inReal.is_empty() {
@@ -428,7 +428,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             if historyLen < self.WMA_Lookback(optInTimePeriod) + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             let state = WMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
@@ -474,7 +474,7 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         // Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
         // int product n*(n+1) overflows int32 at n>=46341 (#142).
@@ -570,7 +570,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.WMA_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.WMA_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -579,8 +579,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -607,7 +609,7 @@ impl Core {
     ) -> Result<(WMA_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.WMA_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.WMA_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -616,7 +618,7 @@ impl Core {
     pub(crate) fn WMA_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<WMA_Stream, RetCode> {
-        self.WMA_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.WMA_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

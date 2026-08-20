@@ -97,7 +97,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::KAMA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn KAMA_Internal(
+    pub(crate) fn KAMA_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -108,13 +108,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, KAMA_Internal_fma, KAMA_Internal_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, KAMA_Impl_fma, KAMA_Impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.KAMA_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.KAMA_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn KAMA_Internal_fma(
+    fn KAMA_Impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -124,10 +124,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.KAMA_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.KAMA_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn KAMA_Internal_impl(
+    fn KAMA_Impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -394,7 +394,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.KAMA_Internal(
+        let retCode = self.KAMA_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -518,7 +518,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::KAMA_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::KAMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn KAMA_OpenCore(
+    pub(crate) fn KAMA_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<KAMA_Stream, RetCode> {
         if inReal.is_empty() {
@@ -539,7 +539,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             if historyLen < self.KAMA_Lookback(optInTimePeriod) + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             let state = KAMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
@@ -597,7 +597,7 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         // Initialize the variables by going through
         // the lookback period.
@@ -727,7 +727,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.KAMA_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.KAMA_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -736,8 +736,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -764,7 +766,7 @@ impl Core {
     ) -> Result<(KAMA_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.KAMA_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.KAMA_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -773,7 +775,7 @@ impl Core {
     pub(crate) fn KAMA_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<KAMA_Stream, RetCode> {
-        self.KAMA_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.KAMA_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

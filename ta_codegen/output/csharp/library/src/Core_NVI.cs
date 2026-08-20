@@ -72,13 +72,13 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode NVI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inClose,
-                         ReadOnlySpan<double> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode NVI_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inClose,
+                              ReadOnlySpan<double> inVolume,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -139,13 +139,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode NVI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inClose,
-                         ReadOnlySpan<float> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode NVI_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inClose,
+                              ReadOnlySpan<float> inVolume,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -248,7 +248,7 @@ public partial class Core
       RequireLength("NVI", "inClose", inClose.Length, guardInLen);
       RequireLength("NVI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("NVI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = NVI(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = NVI_Impl(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("NVI", retCode);
       }
@@ -323,7 +323,7 @@ public partial class Core
       RequireLength("NVI", "inClose", inClose.Length, guardInLen);
       RequireLength("NVI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("NVI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = NVI(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = NVI_Impl(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("NVI", retCode);
       }
@@ -479,7 +479,7 @@ public partial class Core
       sp.prevVolume = tempVolume;
    }
 
-   private RetCode NVI_OpenCore( NVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode NVI_OpenPass( NVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -546,32 +546,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode NVI_OpenBody( NVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
+   private RetCode NVI_OpenImpl( NVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return NVI_OpenCore( sp, inClose, inVolume, startIdx, out _, out _, sink_outReal, 0 );
+      return NVI_OpenPass( sp, inClose, inVolume, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode NVI_OpenAndFillBody( NVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode NVI_OpenAndFillImpl( NVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
-      return NVI_OpenCore( sp, inClose, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return NVI_OpenPass( sp, inClose, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode NVI_OpenAndFillInternalBody( NVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode NVI_OpenAndFillInternalImpl( NVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return NVI_OpenCore(sp, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return NVI_OpenPass(sp, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* NVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal NVI_Stream NVI_OpenAndFillInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenAndFillInternalBody(sp, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = NVI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -582,7 +582,7 @@ public partial class Core
    internal NVI_Stream NVI_OpenInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
       NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenBody(sp, inClose, inVolume, startIdx);
+      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -607,8 +607,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public NVI_Stream NVI_Open( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return NVI_OpenInternal(inClose, inVolume, 0);
    }
 
@@ -637,10 +637,10 @@ public partial class Core
    /// output.</exception>
    public NVI_Stream NVI_OpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenAndFillBody(sp, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = NVI_OpenAndFillImpl(sp, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

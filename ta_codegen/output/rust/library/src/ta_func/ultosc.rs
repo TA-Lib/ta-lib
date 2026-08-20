@@ -103,7 +103,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::ULTOSC`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn ULTOSC_Internal(
+    pub(crate) fn ULTOSC_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -463,7 +463,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.ULTOSC_Internal(
+        let retCode = self.ULTOSC_Impl(
             startIdx,
             endIdx,
             inHigh,
@@ -636,7 +636,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::ULTOSC_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::ULTOSC_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn ULTOSC_OpenCore(
+    pub(crate) fn ULTOSC_OpenPass(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<ULTOSC_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -739,7 +739,7 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         if optInTimePeriod3 < 1 { return Err(RetCode::InternalError); }
         term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
@@ -907,7 +907,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.ULTOSC_OpenCore(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ULTOSC_OpenPass(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -916,8 +916,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -948,7 +950,7 @@ impl Core {
     ) -> Result<(ULTOSC_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.ULTOSC_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.ULTOSC_OpenPass(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -957,7 +959,7 @@ impl Core {
     pub(crate) fn ULTOSC_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ULTOSC_Stream, RetCode> {
-        self.ULTOSC_OpenCore(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1)
+        self.ULTOSC_OpenPass(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

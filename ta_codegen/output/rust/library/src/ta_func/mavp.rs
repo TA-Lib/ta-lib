@@ -108,7 +108,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::MAVP`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn MAVP_Internal(
+    pub(crate) fn MAVP_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -306,7 +306,7 @@ impl Core {
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
-            retCode = self.MA_Internal(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
+            retCode = self.MA_Impl(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
             if retCode != RetCode::Success {
                 if finalIsAllocated != 0 {
                 }
@@ -363,7 +363,7 @@ impl Core {
                     firstOccurrence = (sortedIdx[bucketStart]) as usize;
                     lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
                     // Calculation of the MA required.
-                    retCode = self.MA_Internal(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
+                    retCode = self.MA_Impl(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
                     if retCode != RetCode::Success {
                         if finalIsAllocated != 0 {
                         }
@@ -502,7 +502,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MAVP_Internal(
+        let retCode = self.MAVP_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -656,8 +656,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::{Core, MAType};
@@ -709,7 +711,7 @@ impl Core {
         let historyLen: usize = inReal.len();
         let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType);
         if historyLen < lookbackTotal + 1 {
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
         // Seed each sub-MA at the first output bar (lookbackTotal), NOT the last.

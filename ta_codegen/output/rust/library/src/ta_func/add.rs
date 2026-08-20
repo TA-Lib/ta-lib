@@ -70,7 +70,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::ADD`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn ADD_Internal(
+    pub(crate) fn ADD_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -177,7 +177,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.ADD_Internal(
+        let retCode = self.ADD_Impl(
             startIdx,
             endIdx,
             inReal0,
@@ -242,7 +242,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::ADD_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::ADD_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn ADD_OpenCore(
+    pub(crate) fn ADD_OpenPass(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<ADD_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
@@ -282,7 +282,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.ADD_OpenCore(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ADD_OpenPass(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -291,8 +291,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -322,7 +324,7 @@ impl Core {
     ) -> Result<(ADD_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.ADD_OpenCore(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.ADD_OpenPass(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -331,7 +333,7 @@ impl Core {
     pub(crate) fn ADD_OpenAndFillInternal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ADD_Stream, RetCode> {
-        self.ADD_OpenCore(inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.ADD_OpenPass(inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

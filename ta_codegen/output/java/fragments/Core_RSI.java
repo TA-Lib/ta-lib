@@ -40,13 +40,13 @@
       return retValue ;
 
    }
-   RetCode RSI_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode RSI_Impl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -220,13 +220,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode RSI_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode RSI_Impl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -403,6 +403,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("RSI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, RSI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -410,7 +411,7 @@
       requireLength("RSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("RSI", retCode);
       }
@@ -480,6 +481,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("RSI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, RSI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -487,7 +489,7 @@
       requireLength("RSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("RSI", retCode);
       }
@@ -563,7 +565,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("RSI update: BadParam");
+            throw new TaLibArgumentException("RSI update: BadParam", RetCode.BadParam);
          core.RSI_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -577,7 +579,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("RSI peek: BadParam");
+            throw new TaLibArgumentException("RSI peek: BadParam", RetCode.BadParam);
          RSI_Stream scratch = new RSI_Stream(this);
          core.RSI_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -627,7 +629,7 @@
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode RSI_OpenCore( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode RSI_OpenPass( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -655,7 +657,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < RSI_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevGain = 0.0;
@@ -696,7 +698,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -812,55 +814,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode RSI_OpenBody( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode RSI_OpenImpl( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return RSI_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return RSI_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode RSI_OpenAndFillBody( RSI_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode RSI_OpenAndFillImpl( RSI_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return RSI_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return RSI_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode RSI_OpenAndFillInternalBody( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode RSI_OpenAndFillInternalImpl( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return RSI_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return RSI_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* RSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    RSI_Stream RSI_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("RSI openAndFill: internal error");
+         throw new TaLibStateException("RSI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("RSI openAndFill: " + retCode);
+      throw new TaLibArgumentException("RSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind RSI_Open (composition seam). */
    RSI_Stream RSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("RSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("RSI open: internal error");
+         throw new TaLibStateException("RSI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("RSI open: " + retCode);
+      throw new TaLibArgumentException("RSI open: " + retCode, retCode);
    }
    /**
     * Open a live RSI stream over the warm-up history; the handle's
@@ -890,16 +892,16 @@
       RSI_Stream sp = new RSI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RSI_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("RSI openAndFill: internal error");
+         throw new TaLibStateException("RSI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("RSI openAndFill: " + retCode);
+      throw new TaLibArgumentException("RSI openAndFill: " + retCode, retCode);
    }

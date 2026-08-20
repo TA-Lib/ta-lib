@@ -69,12 +69,12 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode FLOOR( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<double> inReal,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
+   internal RetCode FLOOR_Impl( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<double> inReal,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -96,12 +96,12 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode FLOOR( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<float> inReal,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
+   internal RetCode FLOOR_Impl( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<float> inReal,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -168,7 +168,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("FLOOR", "inReal", inReal.Length, guardInLen);
       RequireLength("FLOOR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = FLOOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = FLOOR_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("FLOOR", retCode);
       }
@@ -228,7 +228,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("FLOOR", "inReal", inReal.Length, guardInLen);
       RequireLength("FLOOR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = FLOOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = FLOOR_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("FLOOR", retCode);
       }
@@ -342,7 +342,7 @@ public partial class Core
       sp.cur_outReal = Math.Floor(inReal);
    }
 
-   private RetCode FLOOR_OpenCore( FLOOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode FLOOR_OpenPass( FLOOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -366,32 +366,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode FLOOR_OpenBody( FLOOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode FLOOR_OpenImpl( FLOOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return FLOOR_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+      return FLOOR_OpenPass( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode FLOOR_OpenAndFillBody( FLOOR_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode FLOOR_OpenAndFillImpl( FLOOR_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return FLOOR_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return FLOOR_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode FLOOR_OpenAndFillInternalBody( FLOOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode FLOOR_OpenAndFillInternalImpl( FLOOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return FLOOR_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return FLOOR_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* FLOOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal FLOOR_Stream FLOOR_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = FLOOR_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -402,7 +402,7 @@ public partial class Core
    internal FLOOR_Stream FLOOR_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -426,7 +426,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public FLOOR_Stream FLOOR_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return FLOOR_OpenInternal(inReal, 0);
    }
 
@@ -454,9 +454,9 @@ public partial class Core
    /// output.</exception>
    public FLOOR_Stream FLOOR_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = FLOOR_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

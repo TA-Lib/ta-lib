@@ -56,16 +56,16 @@
       return AO_Lookback(optInFastPeriod, optInSlowPeriod) + SMA_Lookback(optInSignalPeriod) ;
 
    }
-   RetCode AC_Internal( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode AC_Impl( int startIdx,
+                    int endIdx,
+                    double inHigh[],
+                    double inLow[],
+                    int optInFastPeriod,
+                    int optInSlowPeriod,
+                    int optInSignalPeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -244,16 +244,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode AC_Internal( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode AC_Impl( int startIdx,
+                    int endIdx,
+                    float inHigh[],
+                    float inLow[],
+                    int optInFastPeriod,
+                    int optInSlowPeriod,
+                    int optInSignalPeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -434,6 +434,7 @@
                        int optInSignalPeriod,
                        double outReal[] )
    {
+      requireIndexRange("AC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -442,7 +443,7 @@
       requireLength("AC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AC_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AC", retCode);
       }
@@ -525,6 +526,7 @@
                        int optInSignalPeriod,
                        double outReal[] )
    {
+      requireIndexRange("AC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -533,7 +535,7 @@
       requireLength("AC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AC_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AC", retCode);
       }
@@ -666,7 +668,7 @@
        */
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("AC update: BadParam");
+            throw new TaLibArgumentException("AC update: BadParam", RetCode.BadParam);
          core.AC_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -682,7 +684,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("AC peek: BadParam");
+            throw new TaLibArgumentException("AC peek: BadParam", RetCode.BadParam);
          AC_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new AC_Stream(this);
@@ -762,7 +764,7 @@
          sp.ringPos_trailingSlowIdx = 0;
       }
    }
-   private RetCode AC_OpenCore( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode AC_OpenPass( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -842,7 +844,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Allocate a circular buffer equal to the requested signal period. */
       if( optInSignalPeriod < 1 ) return RetCode.InternalError;
@@ -985,55 +987,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode AC_OpenBody( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   private RetCode AC_OpenImpl( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return AC_OpenCore( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return AC_OpenPass( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode AC_OpenAndFillBody( AC_Stream sp, double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode AC_OpenAndFillImpl( AC_Stream sp, double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          return RetCode.BadParam;
       }
-      return AC_OpenCore( sp, inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1 );
+      return AC_OpenPass( sp, inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode AC_OpenAndFillInternalBody( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode AC_OpenAndFillInternalImpl( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return AC_OpenCore(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
+      return AC_OpenPass(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* AC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AC_Stream AC_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AC_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AC openAndFill: internal error");
+         throw new TaLibStateException("AC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AC openAndFill: " + retCode);
+      throw new TaLibArgumentException("AC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind AC_Open (composition seam). */
    AC_Stream AC_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenBody(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AC open: internal error");
+         throw new TaLibStateException("AC open: internal error", retCode);
       }
-      throw new IllegalArgumentException("AC open: " + retCode);
+      throw new TaLibArgumentException("AC open: " + retCode, retCode);
    }
    /**
     * Open a live AC stream over the warm-up history; the handle's
@@ -1063,16 +1065,16 @@
       AC_Stream sp = new AC_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AC_OpenAndFillBody(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AC_OpenAndFillImpl(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AC openAndFill: internal error");
+         throw new TaLibStateException("AC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AC openAndFill: " + retCode);
+      throw new TaLibArgumentException("AC openAndFill: " + retCode, retCode);
    }

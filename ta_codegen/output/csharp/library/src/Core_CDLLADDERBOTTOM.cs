@@ -74,15 +74,15 @@ public partial class Core
       return ShadowVeryShort_avgPeriod + 4 ;
 
    }
-   internal RetCode CDLLADDERBOTTOM( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<double> inOpen,
-                                     ReadOnlySpan<double> inHigh,
-                                     ReadOnlySpan<double> inLow,
-                                     ReadOnlySpan<double> inClose,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<int> outInteger )
+   internal RetCode CDLLADDERBOTTOM_Impl( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<double> inOpen,
+                                          ReadOnlySpan<double> inHigh,
+                                          ReadOnlySpan<double> inLow,
+                                          ReadOnlySpan<double> inClose,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -167,15 +167,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLLADDERBOTTOM( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<float> inOpen,
-                                     ReadOnlySpan<float> inHigh,
-                                     ReadOnlySpan<float> inLow,
-                                     ReadOnlySpan<float> inClose,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<int> outInteger )
+   internal RetCode CDLLADDERBOTTOM_Impl( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<float> inOpen,
+                                          ReadOnlySpan<float> inHigh,
+                                          ReadOnlySpan<float> inLow,
+                                          ReadOnlySpan<float> inClose,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -286,7 +286,7 @@ public partial class Core
       RequireLength("CDLLADDERBOTTOM", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLLADDERBOTTOM", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLLADDERBOTTOM", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLLADDERBOTTOM(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLLADDERBOTTOM_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLLADDERBOTTOM", retCode);
       }
@@ -359,7 +359,7 @@ public partial class Core
       RequireLength("CDLLADDERBOTTOM", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLLADDERBOTTOM", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLLADDERBOTTOM", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLLADDERBOTTOM(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLLADDERBOTTOM_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLLADDERBOTTOM", retCode);
       }
@@ -576,7 +576,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLLADDERBOTTOM_OpenCore( CDLLADDERBOTTOM_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLLADDERBOTTOM_OpenPass( CDLLADDERBOTTOM_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -610,7 +610,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -694,29 +694,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLLADDERBOTTOM_OpenBody( CDLLADDERBOTTOM_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLLADDERBOTTOM_OpenImpl( CDLLADDERBOTTOM_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLLADDERBOTTOM_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLLADDERBOTTOM_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLLADDERBOTTOM_OpenAndFillBody( CDLLADDERBOTTOM_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLLADDERBOTTOM_OpenAndFillImpl( CDLLADDERBOTTOM_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLLADDERBOTTOM_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLLADDERBOTTOM_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLLADDERBOTTOM_OpenAndFillInternalBody( CDLLADDERBOTTOM_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLLADDERBOTTOM_OpenAndFillInternalImpl( CDLLADDERBOTTOM_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLLADDERBOTTOM_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLLADDERBOTTOM_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLLADDERBOTTOM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLLADDERBOTTOM_Stream sp = new CDLLADDERBOTTOM_Stream(this);
-      RetCode retCode = CDLLADDERBOTTOM_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLLADDERBOTTOM_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -727,7 +727,7 @@ public partial class Core
    internal CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLLADDERBOTTOM_Stream sp = new CDLLADDERBOTTOM_Stream(this);
-      RetCode retCode = CDLLADDERBOTTOM_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLLADDERBOTTOM_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -756,10 +756,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLLADDERBOTTOM_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -793,12 +793,12 @@ public partial class Core
    /// output.</exception>
    public CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLLADDERBOTTOM_Stream sp = new CDLLADDERBOTTOM_Stream(this);
-      RetCode retCode = CDLLADDERBOTTOM_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLLADDERBOTTOM_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

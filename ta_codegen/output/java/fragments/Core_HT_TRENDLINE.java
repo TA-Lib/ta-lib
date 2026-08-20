@@ -49,12 +49,12 @@
       return 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()] ;
 
    }
-   RetCode HT_TRENDLINE_Internal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode HT_TRENDLINE_Impl( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -429,12 +429,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode HT_TRENDLINE_Internal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
+   RetCode HT_TRENDLINE_Impl( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -781,6 +781,7 @@
                                  double inReal[],
                                  double outReal[] )
    {
+      requireIndexRange("HT_TRENDLINE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_TRENDLINE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -788,7 +789,7 @@
       requireLength("HT_TRENDLINE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDLINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_TRENDLINE", retCode);
       }
@@ -837,6 +838,7 @@
                                  float inReal[],
                                  double outReal[] )
    {
+      requireIndexRange("HT_TRENDLINE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_TRENDLINE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -844,7 +846,7 @@
       requireLength("HT_TRENDLINE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDLINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_TRENDLINE", retCode);
       }
@@ -1143,7 +1145,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_TRENDLINE update: BadParam");
+            throw new TaLibArgumentException("HT_TRENDLINE update: BadParam", RetCode.BadParam);
          core.HT_TRENDLINE_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -1159,7 +1161,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_TRENDLINE peek: BadParam");
+            throw new TaLibArgumentException("HT_TRENDLINE peek: BadParam", RetCode.BadParam);
          HT_TRENDLINE_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new HT_TRENDLINE_Stream(this);
@@ -1369,7 +1371,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_TRENDLINE_OpenCore( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HT_TRENDLINE_OpenPass( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1469,7 +1471,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -1825,55 +1827,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_TRENDLINE_OpenBody( HT_TRENDLINE_Stream sp, double inReal[], int startIdx )
+   private RetCode HT_TRENDLINE_OpenImpl( HT_TRENDLINE_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return HT_TRENDLINE_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return HT_TRENDLINE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode HT_TRENDLINE_OpenAndFillBody( HT_TRENDLINE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HT_TRENDLINE_OpenAndFillImpl( HT_TRENDLINE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return HT_TRENDLINE_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return HT_TRENDLINE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode HT_TRENDLINE_OpenAndFillInternalBody( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HT_TRENDLINE_OpenAndFillInternalImpl( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return HT_TRENDLINE_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return HT_TRENDLINE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* HT_TRENDLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_TRENDLINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_TRENDLINE openAndFill: internal error");
+         throw new TaLibStateException("HT_TRENDLINE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_TRENDLINE openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind HT_TRENDLINE_Open (composition seam). */
    HT_TRENDLINE_Stream HT_TRENDLINE_OpenInternal( double inReal[], int startIdx )
    {
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_TRENDLINE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_TRENDLINE open: internal error");
+         throw new TaLibStateException("HT_TRENDLINE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_TRENDLINE open: " + retCode);
+      throw new TaLibArgumentException("HT_TRENDLINE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_TRENDLINE stream over the warm-up history; the handle's
@@ -1903,16 +1905,16 @@
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDLINE_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_TRENDLINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_TRENDLINE openAndFill: internal error");
+         throw new TaLibStateException("HT_TRENDLINE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_TRENDLINE openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + retCode, retCode);
    }

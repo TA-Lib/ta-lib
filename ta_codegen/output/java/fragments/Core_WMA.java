@@ -34,13 +34,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode WMA_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode WMA_Impl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -164,13 +164,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode WMA_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode WMA_Impl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -290,6 +290,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("WMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, WMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -297,7 +298,7 @@
       requireLength("WMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WMA", retCode);
       }
@@ -358,6 +359,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("WMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, WMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -365,7 +367,7 @@
       requireLength("WMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WMA", retCode);
       }
@@ -457,7 +459,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("WMA update: BadParam");
+            throw new TaLibArgumentException("WMA update: BadParam", RetCode.BadParam);
          core.WMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -471,7 +473,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("WMA peek: BadParam");
+            throw new TaLibArgumentException("WMA peek: BadParam", RetCode.BadParam);
          WMA_Stream scratch = new WMA_Stream(this);
          core.WMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -527,7 +529,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode WMA_OpenCore( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode WMA_OpenPass( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -554,7 +556,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < WMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.periodSum = 0.0;
@@ -588,7 +590,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
        * int product n*(n+1) overflows int32 at n>=46341 (#142).
@@ -677,55 +679,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode WMA_OpenBody( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode WMA_OpenImpl( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return WMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return WMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode WMA_OpenAndFillBody( WMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode WMA_OpenAndFillImpl( WMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return WMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return WMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode WMA_OpenAndFillInternalBody( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode WMA_OpenAndFillInternalImpl( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return WMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return WMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* WMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    WMA_Stream WMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       WMA_Stream sp = new WMA_Stream(this);
-      RetCode retCode = WMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WMA openAndFill: internal error");
+         throw new TaLibStateException("WMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("WMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("WMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind WMA_Open (composition seam). */
    WMA_Stream WMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       WMA_Stream sp = new WMA_Stream(this);
-      RetCode retCode = WMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = WMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WMA open: internal error");
+         throw new TaLibStateException("WMA open: internal error", retCode);
       }
-      throw new IllegalArgumentException("WMA open: " + retCode);
+      throw new TaLibArgumentException("WMA open: " + retCode, retCode);
    }
    /**
     * Open a live WMA stream over the warm-up history; the handle's
@@ -755,16 +757,16 @@
       WMA_Stream sp = new WMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WMA_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WMA openAndFill: internal error");
+         throw new TaLibStateException("WMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("WMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("WMA openAndFill: " + retCode, retCode);
    }

@@ -73,14 +73,14 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode TYPPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              ReadOnlySpan<double> inClose,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode TYPPRICE_Impl( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<double> inHigh,
+                                   ReadOnlySpan<double> inLow,
+                                   ReadOnlySpan<double> inClose,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -104,14 +104,14 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode TYPPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              ReadOnlySpan<float> inClose,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode TYPPRICE_Impl( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<float> inHigh,
+                                   ReadOnlySpan<float> inLow,
+                                   ReadOnlySpan<float> inClose,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -185,7 +185,7 @@ public partial class Core
       RequireLength("TYPPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("TYPPRICE", "inClose", inClose.Length, guardInLen);
       RequireLength("TYPPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TYPPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TYPPRICE", retCode);
       }
@@ -251,7 +251,7 @@ public partial class Core
       RequireLength("TYPPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("TYPPRICE", "inClose", inClose.Length, guardInLen);
       RequireLength("TYPPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TYPPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TYPPRICE", retCode);
       }
@@ -370,7 +370,7 @@ public partial class Core
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }
 
-   private RetCode TYPPRICE_OpenCore( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TYPPRICE_OpenPass( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -396,32 +396,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode TYPPRICE_OpenBody( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode TYPPRICE_OpenImpl( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return TYPPRICE_OpenCore( sp, inHigh, inLow, inClose, startIdx, out _, out _, sink_outReal, 0 );
+      return TYPPRICE_OpenPass( sp, inHigh, inLow, inClose, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode TYPPRICE_OpenAndFillBody( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode TYPPRICE_OpenAndFillImpl( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
-      return TYPPRICE_OpenCore( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return TYPPRICE_OpenPass( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode TYPPRICE_OpenAndFillInternalBody( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode TYPPRICE_OpenAndFillInternalImpl( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return TYPPRICE_OpenCore(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return TYPPRICE_OpenPass(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* TYPPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal TYPPRICE_Stream TYPPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
-      RetCode retCode = TYPPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = TYPPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -432,7 +432,7 @@ public partial class Core
    internal TYPPRICE_Stream TYPPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
-      RetCode retCode = TYPPRICE_OpenBody(sp, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = TYPPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -459,9 +459,9 @@ public partial class Core
    /// span cannot be null.</exception>
    public TYPPRICE_Stream TYPPRICE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return TYPPRICE_OpenInternal(inHigh, inLow, inClose, 0);
    }
 
@@ -491,11 +491,11 @@ public partial class Core
    /// output.</exception>
    public TYPPRICE_Stream TYPPRICE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
-      RetCode retCode = TYPPRICE_OpenAndFillBody(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TYPPRICE_OpenAndFillImpl(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

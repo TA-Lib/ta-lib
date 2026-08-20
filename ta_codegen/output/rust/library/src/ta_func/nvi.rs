@@ -73,7 +73,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::NVI`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn NVI_Internal(
+    pub(crate) fn NVI_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -233,7 +233,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.NVI_Internal(
+        let retCode = self.NVI_Impl(
             startIdx,
             endIdx,
             inClose,
@@ -332,7 +332,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::NVI_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::NVI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn NVI_OpenCore(
+    pub(crate) fn NVI_OpenPass(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<NVI_Stream, RetCode> {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
@@ -408,7 +408,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.NVI_OpenCore(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.NVI_OpenPass(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -417,8 +417,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -450,7 +452,7 @@ impl Core {
     ) -> Result<(NVI_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.NVI_OpenCore(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.NVI_OpenPass(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -459,7 +461,7 @@ impl Core {
     pub(crate) fn NVI_OpenAndFillInternal(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<NVI_Stream, RetCode> {
-        self.NVI_OpenCore(inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.NVI_OpenPass(inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

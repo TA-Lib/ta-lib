@@ -76,13 +76,13 @@ public partial class Core
       return 32 + this.unstablePeriod[(int)FuncUnstId.HT_PHASOR] ;
 
    }
-   internal RetCode HT_PHASOR( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<double> inReal,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outInPhase,
-                               Span<double> outQuadrature )
+   internal RetCode HT_PHASOR_Impl( int startIdx,
+                                    int endIdx,
+                                    ReadOnlySpan<double> inReal,
+                                    out int outBegIdx,
+                                    out int outNBElement,
+                                    Span<double> outInPhase,
+                                    Span<double> outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -428,13 +428,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HT_PHASOR( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<float> inReal,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outInPhase,
-                               Span<double> outQuadrature )
+   internal RetCode HT_PHASOR_Impl( int startIdx,
+                                    int endIdx,
+                                    ReadOnlySpan<float> inReal,
+                                    out int outBegIdx,
+                                    out int outNBElement,
+                                    Span<double> outInPhase,
+                                    Span<double> outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -777,7 +777,7 @@ public partial class Core
       RequireLength("HT_PHASOR", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_PHASOR", "outInPhase", outInPhase.Length, guardOutLen);
       RequireLength("HT_PHASOR", "outQuadrature", outQuadrature.Length, guardOutLen);
-      RetCode retCode = HT_PHASOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_PHASOR", retCode);
       }
@@ -842,7 +842,7 @@ public partial class Core
       RequireLength("HT_PHASOR", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_PHASOR", "outInPhase", outInPhase.Length, guardOutLen);
       RequireLength("HT_PHASOR", "outQuadrature", outQuadrature.Length, guardOutLen);
-      RetCode retCode = HT_PHASOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_PHASOR", retCode);
       }
@@ -1326,7 +1326,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_PHASOR_OpenCore( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature, int outStride )
+   private RetCode HT_PHASOR_OpenPass( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1415,7 +1415,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -1733,33 +1733,33 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_PHASOR_OpenBody( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outInPhase = new double[1];
       double[] sink_outQuadrature = new double[1];
-      return HT_PHASOR_OpenCore( sp, inReal, startIdx, out _, out _, sink_outInPhase, sink_outQuadrature, 0 );
+      return HT_PHASOR_OpenPass( sp, inReal, startIdx, out _, out _, sink_outInPhase, sink_outQuadrature, 0 );
    }
 
-   private RetCode HT_PHASOR_OpenAndFillBody( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
+   private RetCode HT_PHASOR_OpenAndFillImpl( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outInPhase.Overlaps(inReal) || outQuadrature.Overlaps(inReal) || outInPhase.Overlaps(outQuadrature) ) {
          return RetCode.BadParam;
       }
-      return HT_PHASOR_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1 );
+      return HT_PHASOR_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1 );
    }
 
-   private RetCode HT_PHASOR_OpenAndFillInternalBody( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
+   private RetCode HT_PHASOR_OpenAndFillInternalImpl( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
    {
-      return HT_PHASOR_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1);
+      return HT_PHASOR_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1);
    }
 
    /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1770,7 +1770,7 @@ public partial class Core
    internal HT_PHASOR_Stream HT_PHASOR_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1795,7 +1795,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public HT_PHASOR_Stream HT_PHASOR_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return HT_PHASOR_OpenInternal(inReal, 0);
    }
 
@@ -1826,9 +1826,9 @@ public partial class Core
    /// output.</exception>
    public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outInPhase, Span<double> outQuadrature )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

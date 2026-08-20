@@ -76,14 +76,14 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MINMAX( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inReal,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outMin,
-                            Span<double> outMax )
+   internal RetCode MINMAX_Impl( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inReal,
+                                 int optInTimePeriod,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outMin,
+                                 Span<double> outMax )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -270,14 +270,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MINMAX( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inReal,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outMin,
-                            Span<double> outMax )
+   internal RetCode MINMAX_Impl( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inReal,
+                                 int optInTimePeriod,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outMin,
+                                 Span<double> outMax )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -472,7 +472,7 @@ public partial class Core
       RequireLength("MINMAX", "inReal", inReal.Length, guardInLen);
       RequireLength("MINMAX", "outMin", outMin.Length, guardOutLen);
       RequireLength("MINMAX", "outMax", outMax.Length, guardOutLen);
-      RetCode retCode = MINMAX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
       if( retCode != RetCode.Success ) {
          throw Failure("MINMAX", retCode);
       }
@@ -536,7 +536,7 @@ public partial class Core
       RequireLength("MINMAX", "inReal", inReal.Length, guardInLen);
       RequireLength("MINMAX", "outMin", outMin.Length, guardOutLen);
       RequireLength("MINMAX", "outMax", outMax.Length, guardOutLen);
-      RetCode retCode = MINMAX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
       if( retCode != RetCode.Success ) {
          throw Failure("MINMAX", retCode);
       }
@@ -753,7 +753,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MINMAX_OpenCore( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax, int outStride )
+   private RetCode MINMAX_OpenPass( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -796,7 +796,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -900,33 +900,33 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MINMAX_OpenBody( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode MINMAX_OpenImpl( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outMin = new double[1];
       double[] sink_outMax = new double[1];
-      return MINMAX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outMin, sink_outMax, 0 );
+      return MINMAX_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outMin, sink_outMax, 0 );
    }
 
-   private RetCode MINMAX_OpenAndFillBody( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
+   private RetCode MINMAX_OpenAndFillImpl( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outMin.Overlaps(inReal) || outMax.Overlaps(inReal) || outMin.Overlaps(outMax) ) {
          return RetCode.BadParam;
       }
-      return MINMAX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1 );
+      return MINMAX_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1 );
    }
 
-   private RetCode MINMAX_OpenAndFillInternalBody( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
+   private RetCode MINMAX_OpenAndFillInternalImpl( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
    {
-      return MINMAX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1);
+      return MINMAX_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1);
    }
 
    /* MINMAX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MINMAX_Stream MINMAX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -937,7 +937,7 @@ public partial class Core
    internal MINMAX_Stream MINMAX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -964,7 +964,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public MINMAX_Stream MINMAX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return MINMAX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -997,9 +997,9 @@ public partial class Core
    /// output.</exception>
    public MINMAX_Stream MINMAX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outMin, Span<double> outMax )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

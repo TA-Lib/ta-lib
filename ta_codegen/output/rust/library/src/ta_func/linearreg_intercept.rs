@@ -88,7 +88,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::LINEARREG_INTERCEPT`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn LINEARREG_INTERCEPT_Internal(
+    pub(crate) fn LINEARREG_INTERCEPT_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -274,7 +274,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.LINEARREG_INTERCEPT_Internal(
+        let retCode = self.LINEARREG_INTERCEPT_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -370,7 +370,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::LINEARREG_INTERCEPT_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::LINEARREG_INTERCEPT_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn LINEARREG_INTERCEPT_OpenCore(
+    pub(crate) fn LINEARREG_INTERCEPT_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<LINEARREG_INTERCEPT_Stream, RetCode> {
         if inReal.is_empty() {
@@ -426,7 +426,7 @@ impl Core {
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
+            return Err(RetCode::InsufficientHistory);
         }
         outIdx = 0;
         // Index into the output.
@@ -501,7 +501,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.LINEARREG_INTERCEPT_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.LINEARREG_INTERCEPT_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -510,8 +510,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -538,7 +540,7 @@ impl Core {
     ) -> Result<(LINEARREG_INTERCEPT_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.LINEARREG_INTERCEPT_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.LINEARREG_INTERCEPT_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -547,7 +549,7 @@ impl Core {
     pub(crate) fn LINEARREG_INTERCEPT_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<LINEARREG_INTERCEPT_Stream, RetCode> {
-        self.LINEARREG_INTERCEPT_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.LINEARREG_INTERCEPT_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

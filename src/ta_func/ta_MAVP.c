@@ -852,7 +852,7 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
       return TA_BAD_PARAM;
    if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;
    lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );
-   if( historyLen < lookbackTotal + 1 ) return TA_BAD_PARAM;
+   if( historyLen < lookbackTotal + 1 ) return TA_INSUFFICIENT_HISTORY;
 
    sp = (struct TA_MAVP_Stream *)TA_Malloc( sizeof(*sp) );
    if( !sp ) return TA_ALLOC_ERR;

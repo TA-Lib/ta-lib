@@ -81,14 +81,14 @@ public partial class Core
       return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.EMA] ;
 
    }
-   internal RetCode EFI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inClose,
-                         ReadOnlySpan<double> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode EFI_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inClose,
+                              ReadOnlySpan<double> inVolume,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -223,14 +223,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode EFI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inClose,
-                         ReadOnlySpan<float> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode EFI_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inClose,
+                              ReadOnlySpan<float> inVolume,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -375,7 +375,7 @@ public partial class Core
       RequireLength("EFI", "inClose", inClose.Length, guardInLen);
       RequireLength("EFI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("EFI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = EFI_Impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("EFI", retCode);
       }
@@ -452,7 +452,7 @@ public partial class Core
       RequireLength("EFI", "inClose", inClose.Length, guardInLen);
       RequireLength("EFI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("EFI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = EFI_Impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("EFI", retCode);
       }
@@ -591,7 +591,7 @@ public partial class Core
       }
    }
 
-   private RetCode EFI_OpenCore( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode EFI_OpenPass( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -659,7 +659,7 @@ public partial class Core
          if( startIdx > endIdx ) {
             outBegIdx = 0;
             outNBElement = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* No smoothing at a period of 1: the output is the raw Force Index.
           * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -738,7 +738,7 @@ public partial class Core
          if( startIdx > endIdx ) {
             outBegIdx = 0;
             outNBElement = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* No smoothing at a period of 1: the output is the raw Force Index.
           * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -798,32 +798,32 @@ public partial class Core
       }
    }
 
-   private RetCode EFI_OpenBody( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
+   private RetCode EFI_OpenImpl( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return EFI_OpenCore( sp, inClose, inVolume, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return EFI_OpenPass( sp, inClose, inVolume, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode EFI_OpenAndFillBody( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode EFI_OpenAndFillImpl( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
-      return EFI_OpenCore( sp, inClose, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return EFI_OpenPass( sp, inClose, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode EFI_OpenAndFillInternalBody( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode EFI_OpenAndFillInternalImpl( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return EFI_OpenCore(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return EFI_OpenPass(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* EFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal EFI_Stream EFI_OpenAndFillInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenAndFillInternalBody(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = EFI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -834,7 +834,7 @@ public partial class Core
    internal EFI_Stream EFI_OpenInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenBody(sp, inClose, inVolume, startIdx, optInTimePeriod);
+      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -861,8 +861,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public EFI_Stream EFI_Open( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
 
@@ -893,10 +893,10 @@ public partial class Core
    /// output.</exception>
    public EFI_Stream EFI_OpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenAndFillBody(sp, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = EFI_OpenAndFillImpl(sp, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

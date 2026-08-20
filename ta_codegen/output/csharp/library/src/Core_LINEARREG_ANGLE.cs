@@ -84,13 +84,13 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode LINEARREG_ANGLE( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<double> inReal,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<double> outReal )
+   internal RetCode LINEARREG_ANGLE_Impl( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<double> inReal,
+                                          int optInTimePeriod,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -192,13 +192,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode LINEARREG_ANGLE( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<float> inReal,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<double> outReal )
+   internal RetCode LINEARREG_ANGLE_Impl( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<float> inReal,
+                                          int optInTimePeriod,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -317,7 +317,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LINEARREG_ANGLE", "inReal", inReal.Length, guardInLen);
       RequireLength("LINEARREG_ANGLE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LINEARREG_ANGLE(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG_ANGLE", retCode);
       }
@@ -382,7 +382,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LINEARREG_ANGLE", "inReal", inReal.Length, guardInLen);
       RequireLength("LINEARREG_ANGLE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LINEARREG_ANGLE(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG_ANGLE", retCode);
       }
@@ -541,7 +541,7 @@ public partial class Core
       }
    }
 
-   private RetCode LINEARREG_ANGLE_OpenCore( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode LINEARREG_ANGLE_OpenPass( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -596,7 +596,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -661,32 +661,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode LINEARREG_ANGLE_OpenBody( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode LINEARREG_ANGLE_OpenImpl( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return LINEARREG_ANGLE_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return LINEARREG_ANGLE_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode LINEARREG_ANGLE_OpenAndFillBody( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode LINEARREG_ANGLE_OpenAndFillImpl( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return LINEARREG_ANGLE_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return LINEARREG_ANGLE_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode LINEARREG_ANGLE_OpenAndFillInternalBody( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode LINEARREG_ANGLE_OpenAndFillInternalImpl( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return LINEARREG_ANGLE_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return LINEARREG_ANGLE_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* LINEARREG_ANGLE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
-      RetCode retCode = LINEARREG_ANGLE_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -697,7 +697,7 @@ public partial class Core
    internal LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
-      RetCode retCode = LINEARREG_ANGLE_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = LINEARREG_ANGLE_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -725,7 +725,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return LINEARREG_ANGLE_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -757,9 +757,9 @@ public partial class Core
    /// output.</exception>
    public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
-      RetCode retCode = LINEARREG_ANGLE_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

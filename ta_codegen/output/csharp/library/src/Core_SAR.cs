@@ -89,15 +89,15 @@ public partial class Core
       return 1 ;
 
    }
-   internal RetCode SAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inHigh,
-                         ReadOnlySpan<double> inLow,
-                         double optInAcceleration,
-                         double optInMaximum,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode SAR_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
+                              double optInAcceleration,
+                              double optInMaximum,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -201,7 +201,10 @@ public partial class Core
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+      OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+      tempInt = _xr0.BegIdx;
+      tempInt = _xr0.Count;
+      retCode = RetCode.Success;
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -349,15 +352,15 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode SAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inHigh,
-                         ReadOnlySpan<float> inLow,
-                         double optInAcceleration,
-                         double optInMaximum,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode SAR_Impl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
+                              double optInAcceleration,
+                              double optInMaximum,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -403,7 +406,10 @@ public partial class Core
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+      OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+      tempInt = _xr0.BegIdx;
+      tempInt = _xr0.Count;
+      retCode = RetCode.Success;
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -572,7 +578,7 @@ public partial class Core
       RequireLength("SAR", "inHigh", inHigh.Length, guardInLen);
       RequireLength("SAR", "inLow", inLow.Length, guardInLen);
       RequireLength("SAR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SAR_Impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAR", retCode);
       }
@@ -645,7 +651,7 @@ public partial class Core
       RequireLength("SAR", "inHigh", inHigh.Length, guardInLen);
       RequireLength("SAR", "inLow", inLow.Length, guardInLen);
       RequireLength("SAR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SAR_Impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAR", retCode);
       }
@@ -899,7 +905,7 @@ public partial class Core
       }
    }
 
-   private RetCode SAR_OpenCore( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode SAR_OpenPass( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -988,7 +994,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Make sure the acceleration and maximum are coherent.
        * If not, correct the acceleration.
@@ -1002,7 +1008,10 @@ public partial class Core
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+      OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+      tempInt = _xr0.BegIdx;
+      tempInt = _xr0.Count;
+      retCode = RetCode.Success;
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -1161,32 +1170,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode SAR_OpenBody( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum )
+   private RetCode SAR_OpenImpl( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum )
    {
       double[] sink_outReal = new double[1];
-      return SAR_OpenCore( sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, out _, out _, sink_outReal, 0 );
+      return SAR_OpenPass( sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode SAR_OpenAndFillBody( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode SAR_OpenAndFillImpl( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
-      return SAR_OpenCore( sp, inHigh, inLow, 0, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal, 1 );
+      return SAR_OpenPass( sp, inHigh, inLow, 0, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode SAR_OpenAndFillInternalBody( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode SAR_OpenAndFillInternalImpl( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return SAR_OpenCore(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal, 1);
+      return SAR_OpenPass(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* SAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal SAR_Stream SAR_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       SAR_Stream sp = new SAR_Stream(this);
-      RetCode retCode = SAR_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = SAR_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1197,7 +1206,7 @@ public partial class Core
    internal SAR_Stream SAR_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum )
    {
       SAR_Stream sp = new SAR_Stream(this);
-      RetCode retCode = SAR_OpenBody(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum);
+      RetCode retCode = SAR_OpenImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1226,8 +1235,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public SAR_Stream SAR_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInAcceleration, double optInMaximum )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
 
@@ -1260,10 +1269,10 @@ public partial class Core
    /// output.</exception>
    public SAR_Stream SAR_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInAcceleration, double optInMaximum, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       SAR_Stream sp = new SAR_Stream(this);
-      RetCode retCode = SAR_OpenAndFillBody(sp, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SAR_OpenAndFillImpl(sp, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

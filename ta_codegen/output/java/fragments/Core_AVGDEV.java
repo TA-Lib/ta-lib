@@ -32,13 +32,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode AVGDEV_Internal( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode AVGDEV_Impl( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -87,13 +87,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode AVGDEV_Internal( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode AVGDEV_Impl( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -187,6 +187,7 @@
                            int optInTimePeriod,
                            double outReal[] )
    {
+      requireIndexRange("AVGDEV", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AVGDEV_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -194,7 +195,7 @@
       requireLength("AVGDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AVGDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AVGDEV", retCode);
       }
@@ -250,6 +251,7 @@
                            int optInTimePeriod,
                            double outReal[] )
    {
+      requireIndexRange("AVGDEV", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AVGDEV_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -257,7 +259,7 @@
       requireLength("AVGDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AVGDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AVGDEV", retCode);
       }
@@ -337,7 +339,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("AVGDEV update: BadParam");
+            throw new TaLibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
          core.AVGDEV_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -351,7 +353,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("AVGDEV peek: BadParam");
+            throw new TaLibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
          AVGDEV_Stream scratch = new AVGDEV_Stream(this);
          core.AVGDEV_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -394,7 +396,7 @@
          sp.winPos_i = 0;
       }
    }
-   private RetCode AVGDEV_OpenCore( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode AVGDEV_OpenPass( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int outIdx = 0;
@@ -421,7 +423,7 @@
       if( today > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Process the initial DM and TR */
       outBegIdx.value = today;
@@ -457,55 +459,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode AVGDEV_OpenBody( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode AVGDEV_OpenImpl( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return AVGDEV_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return AVGDEV_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode AVGDEV_OpenAndFillBody( AVGDEV_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode AVGDEV_OpenAndFillImpl( AVGDEV_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return AVGDEV_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return AVGDEV_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode AVGDEV_OpenAndFillInternalBody( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode AVGDEV_OpenAndFillInternalImpl( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return AVGDEV_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return AVGDEV_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* AVGDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AVGDEV_Stream AVGDEV_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
-      RetCode retCode = AVGDEV_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AVGDEV_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AVGDEV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AVGDEV openAndFill: internal error");
+         throw new TaLibStateException("AVGDEV openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AVGDEV openAndFill: " + retCode);
+      throw new TaLibArgumentException("AVGDEV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind AVGDEV_Open (composition seam). */
    AVGDEV_Stream AVGDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
-      RetCode retCode = AVGDEV_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = AVGDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AVGDEV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AVGDEV open: internal error");
+         throw new TaLibStateException("AVGDEV open: internal error", retCode);
       }
-      throw new IllegalArgumentException("AVGDEV open: " + retCode);
+      throw new TaLibArgumentException("AVGDEV open: " + retCode, retCode);
    }
    /**
     * Open a live AVGDEV stream over the warm-up history; the handle's
@@ -535,16 +537,16 @@
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AVGDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AVGDEV_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AVGDEV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AVGDEV openAndFill: internal error");
+         throw new TaLibStateException("AVGDEV openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AVGDEV openAndFill: " + retCode);
+      throw new TaLibArgumentException("AVGDEV openAndFill: " + retCode, retCode);
    }

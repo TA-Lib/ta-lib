@@ -76,13 +76,19 @@ fn test_java_sma_ring_stream_section() {
     // Step is a package-private Core method writing the cur_ field.
     assert!(s.contains("void SMA_StreamStep( SMA_Stream sp, double inReal )"));
     assert!(s.contains("sp.cur_outReal ="));
-    // Open body: early-success no-data guard maps to the in-band
-    // insufficient-history signal; the wrapper types it.
-    assert!(s.contains("return RetCode.OutOfRangeEndIndex ;"));
+    // Open body: the early-success no-data guard maps to InsufficientHistory,
+    // which the wrapper types. It used to BORROW OutOfRangeEndIndex in band,
+    // which also meant a history LONGER than MAX_INDEX + 1 -- the only other
+    // producer of that code -- surfaced as "history shorter than lookback + 1".
+    assert!(s.contains("return RetCode.InsufficientHistory ;"));
+    assert!(!s.contains("return RetCode.OutOfRangeEndIndex ;"),
+            "the borrowed in-band code is gone from the open body");
     // The message names the function as the metadata registry spells it, with
     // no C `TA_` prefix (that is C's namespacing, meaningless on a classpath).
     assert!(s.contains("throw new InsufficientHistoryException(\"SMA open:"));
-    assert!(s.contains("throw new IllegalStateException(\"SMA open: internal error\");"));
+    // Carrying, not a plain JDK type: the code has to be recoverable from every
+    // failure the library raises, on this ladder as much as the batch one.
+    assert!(s.contains("throw new TaLibStateException(\"SMA open: internal error\", retCode);"));
     assert!(!s.contains("\"TA_SMA open:"), "no C-namespaced prefix survives");
     // OpenAndFill: aliasing guard (Java is the one managed backend where
     // out == in compiles) and the batch output tail.
@@ -162,7 +168,7 @@ fn test_java_trima_dual_mode() {
     assert!(s.contains("void TRIMA_StreamStep( TRIMA_Stream sp, double inReal )"));
     assert!(s.contains("sp.optInTimePeriod % 2"));
     // Both open arms transcribe under one shared validation head.
-    let opens = s.matches("private RetCode TRIMA_OpenBody").count();
+    let opens = s.matches("private RetCode TRIMA_OpenImpl").count();
     assert_eq!(opens, 1, "one Scalar open body");
 }
 
@@ -410,8 +416,8 @@ fn test_java_stream_emit_ratchet() {
 // Merged Open family (`OpenCore` + stride)
 // ---------------------------------------------------------------------------
 //
-// `<base>_OpenBody` and `<base>_OpenAndFillBody` are one emission,
-// `<base>_OpenCore(..., int outStride)`. Fill passes stride 1 and the caller's
+// `<base>_OpenImpl` and `<base>_OpenAndFillImpl` are one emission,
+// `<base>_OpenPass(..., int outStride)`. Fill passes stride 1 and the caller's
 // arrays; the scalar path passes stride 0 and a one-element sink, so every write
 // collapses onto slot 0 and that slot ends holding the last history value —
 // which is also what makes the `sp.cur_*` capture resolve with no special case.
@@ -421,18 +427,18 @@ fn test_java_stream_emit_ratchet() {
 fn java_open_family_is_one_core_with_two_wrappers() {
     let s = java_stream_section("cdlhammer");
     assert_eq!(
-        s.matches("private RetCode CDLHAMMER_OpenCore(").count(),
+        s.matches("private RetCode CDLHAMMER_OpenPass(").count(),
         1,
         "the core is emitted exactly once"
     );
     assert!(s.contains("int outStride )"), "the core takes a stride");
     for w in [
-        "private RetCode CDLHAMMER_OpenBody(",
-        "private RetCode CDLHAMMER_OpenAndFillBody(",
+        "private RetCode CDLHAMMER_OpenImpl(",
+        "private RetCode CDLHAMMER_OpenAndFillImpl(",
     ] {
         let at = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
         let body = &s[at..at + 800.min(s.len() - at)];
-        assert!(body.contains("CDLHAMMER_OpenCore("), "{w} delegates to the core");
+        assert!(body.contains("CDLHAMMER_OpenPass("), "{w} delegates to the core");
         assert!(
             !body.contains("BodyPeriodTotal"),
             "{w} must not re-transcribe the algorithm"
@@ -443,7 +449,7 @@ fn java_open_family_is_one_core_with_two_wrappers() {
 #[test]
 fn java_scalar_wrapper_uses_a_one_element_sink_at_stride_zero() {
     let s = java_stream_section("cdlhammer");
-    let at = s.find("private RetCode CDLHAMMER_OpenBody(").expect("scalar wrapper");
+    let at = s.find("private RetCode CDLHAMMER_OpenImpl(").expect("scalar wrapper");
     let body = &s[at..at + 800.min(s.len() - at)];
     assert!(body.contains("new int[1]"), "an int output sinks into a 1-element array:\n{body}");
     assert!(body.contains(", 0 );"), "scalar passes stride 0:\n{body}");
@@ -465,7 +471,7 @@ fn java_fill_wrapper_keeps_the_aliasing_guards() {
     // has no hazard.
     let s = java_stream_section("accbands");
     let at = s
-        .find("private RetCode ACCBANDS_OpenAndFillBody(")
+        .find("private RetCode ACCBANDS_OpenAndFillImpl(")
         .expect("fill wrapper");
     let body = &s[at..at + 1600.min(s.len() - at)];
     assert!(
@@ -476,7 +482,7 @@ fn java_fill_wrapper_keeps_the_aliasing_guards() {
         body.contains("(Object)outRealUpperBand == (Object)outRealMiddleBand"),
         "output-vs-output guard survives on the fill wrapper:\n{body}"
     );
-    let sat = s.find("private RetCode ACCBANDS_OpenBody(").expect("scalar wrapper");
+    let sat = s.find("private RetCode ACCBANDS_OpenImpl(").expect("scalar wrapper");
     let sbody = &s[sat..sat + 800.min(s.len() - sat)];
     assert!(
         !sbody.contains("(Object)"),
@@ -489,11 +495,11 @@ fn java_exempt_tiers_keep_two_bodies() {
     for (name, base) in [("ma", "MA"), ("mavp", "MAVP")] {
         let s = java_stream_section(name);
         assert!(
-            !s.contains(&format!("{base}_OpenCore(")),
+            !s.contains(&format!("{base}_OpenPass(")),
             "{base} is an exempt tier and must keep two bodies"
         );
-        assert!(s.contains(&format!("{base}_OpenBody(")));
-        assert!(s.contains(&format!("{base}_OpenAndFillBody(")));
+        assert!(s.contains(&format!("{base}_OpenImpl(")));
+        assert!(s.contains(&format!("{base}_OpenAndFillImpl(")));
     }
 }
 

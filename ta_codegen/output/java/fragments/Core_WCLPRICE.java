@@ -29,14 +29,14 @@
       return 0 ;
 
    }
-   RetCode WCLPRICE_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode WCLPRICE_Impl( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -55,14 +55,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode WCLPRICE_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode WCLPRICE_Impl( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -126,6 +126,7 @@
                              double inClose[],
                              double outReal[] )
    {
+      requireIndexRange("WCLPRICE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, WCLPRICE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -135,7 +136,7 @@
       requireLength("WCLPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WCLPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WCLPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WCLPRICE", retCode);
       }
@@ -190,6 +191,7 @@
                              float inClose[],
                              double outReal[] )
    {
+      requireIndexRange("WCLPRICE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, WCLPRICE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -199,7 +201,7 @@
       requireLength("WCLPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WCLPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WCLPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WCLPRICE", retCode);
       }
@@ -263,7 +265,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("WCLPRICE update: BadParam");
+            throw new TaLibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
          core.WCLPRICE_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -277,7 +279,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("WCLPRICE peek: BadParam");
+            throw new TaLibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
          WCLPRICE_Stream scratch = new WCLPRICE_Stream(this);
          core.WCLPRICE_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -304,7 +306,7 @@
    {
       sp.cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
    }
-   private RetCode WCLPRICE_OpenCore( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode WCLPRICE_OpenPass( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -327,55 +329,55 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode WCLPRICE_OpenBody( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode WCLPRICE_OpenImpl( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return WCLPRICE_OpenCore( sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return WCLPRICE_OpenPass( sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode WCLPRICE_OpenAndFillBody( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode WCLPRICE_OpenAndFillImpl( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      return WCLPRICE_OpenCore( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
+      return WCLPRICE_OpenPass( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode WCLPRICE_OpenAndFillInternalBody( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode WCLPRICE_OpenAndFillInternalImpl( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return WCLPRICE_OpenCore(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return WCLPRICE_OpenPass(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* WCLPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    WCLPRICE_Stream WCLPRICE_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
-      RetCode retCode = WCLPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WCLPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WCLPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WCLPRICE openAndFill: internal error");
+         throw new TaLibStateException("WCLPRICE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("WCLPRICE openAndFill: " + retCode);
+      throw new TaLibArgumentException("WCLPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind WCLPRICE_Open (composition seam). */
    WCLPRICE_Stream WCLPRICE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
-      RetCode retCode = WCLPRICE_OpenBody(sp, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = WCLPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WCLPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WCLPRICE open: internal error");
+         throw new TaLibStateException("WCLPRICE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("WCLPRICE open: " + retCode);
+      throw new TaLibArgumentException("WCLPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live WCLPRICE stream over the warm-up history; the handle's
@@ -405,16 +407,16 @@
       WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WCLPRICE_OpenAndFillBody(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WCLPRICE_OpenAndFillImpl(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WCLPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WCLPRICE openAndFill: internal error");
+         throw new TaLibStateException("WCLPRICE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("WCLPRICE openAndFill: " + retCode);
+      throw new TaLibArgumentException("WCLPRICE openAndFill: " + retCode, retCode);
    }

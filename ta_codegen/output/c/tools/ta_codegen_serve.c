@@ -18050,8 +18050,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18140,8 +18140,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18219,8 +18219,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18306,8 +18306,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18385,8 +18385,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18478,8 +18478,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18565,8 +18565,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18651,8 +18651,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18736,8 +18736,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18820,8 +18820,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18904,8 +18904,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -18988,8 +18988,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19063,8 +19063,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19138,8 +19138,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19225,8 +19225,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19303,8 +19303,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19390,8 +19390,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19481,8 +19481,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19567,8 +19567,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19654,8 +19654,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19740,8 +19740,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -19827,8 +19827,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -19914,8 +19914,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20001,8 +20001,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20088,8 +20088,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20175,8 +20175,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20262,8 +20262,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20349,8 +20349,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20439,8 +20439,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20526,8 +20526,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20613,8 +20613,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20700,8 +20700,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20787,8 +20787,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20874,8 +20874,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -20961,8 +20961,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21051,8 +21051,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21138,8 +21138,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21225,8 +21225,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21312,8 +21312,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21399,8 +21399,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21489,8 +21489,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21579,8 +21579,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21666,8 +21666,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21753,8 +21753,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21840,8 +21840,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -21927,8 +21927,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22014,8 +22014,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22101,8 +22101,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22188,8 +22188,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22275,8 +22275,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22362,8 +22362,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22449,8 +22449,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22536,8 +22536,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22623,8 +22623,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22710,8 +22710,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22797,8 +22797,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22884,8 +22884,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -22971,8 +22971,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23058,8 +23058,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23145,8 +23145,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23232,8 +23232,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23319,8 +23319,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23409,8 +23409,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23499,8 +23499,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23589,8 +23589,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23676,8 +23676,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23763,8 +23763,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23850,8 +23850,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -23937,8 +23937,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24024,8 +24024,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24111,8 +24111,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24198,8 +24198,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24285,8 +24285,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24372,8 +24372,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24459,8 +24459,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24546,8 +24546,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24633,8 +24633,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24720,8 +24720,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24807,8 +24807,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24894,8 +24894,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -24981,8 +24981,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -25068,8 +25068,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -25143,8 +25143,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25233,8 +25233,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25312,8 +25312,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25390,8 +25390,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25472,8 +25472,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25547,8 +25547,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25622,8 +25622,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25700,8 +25700,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25779,8 +25779,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25866,8 +25866,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -25948,8 +25948,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26027,8 +26027,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26102,8 +26102,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26177,8 +26177,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26255,8 +26255,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26331,8 +26331,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26407,8 +26407,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26485,8 +26485,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26565,8 +26565,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26643,8 +26643,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26719,8 +26719,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -26801,8 +26801,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26880,8 +26880,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -26958,8 +26958,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27036,8 +27036,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27114,8 +27114,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27192,8 +27192,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27267,8 +27267,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27342,8 +27342,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27423,8 +27423,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27511,8 +27511,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27612,8 +27612,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27698,8 +27698,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27786,8 +27786,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27871,8 +27871,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -27959,8 +27959,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -28037,8 +28037,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -28115,8 +28115,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -28194,8 +28194,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -28284,8 +28284,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -28362,8 +28362,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -28444,8 +28444,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -28522,8 +28522,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -28600,8 +28600,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -28680,8 +28680,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -28762,8 +28762,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
         pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
@@ -28851,8 +28851,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -28934,8 +28934,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29012,8 +29012,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29091,8 +29091,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29178,8 +29178,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29257,8 +29257,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29336,8 +29336,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29423,8 +29423,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29506,8 +29506,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29590,8 +29590,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29669,8 +29669,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29753,8 +29753,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29835,8 +29835,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29913,8 +29913,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -29991,8 +29991,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30069,8 +30069,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30147,8 +30147,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30226,8 +30226,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30311,8 +30311,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30414,8 +30414,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30489,8 +30489,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30564,8 +30564,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30642,8 +30642,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30717,8 +30717,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30798,8 +30798,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30898,8 +30898,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -30994,8 +30994,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31085,8 +31085,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31166,8 +31166,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31244,8 +31244,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31326,8 +31326,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31401,8 +31401,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31476,8 +31476,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31554,8 +31554,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31637,8 +31637,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31715,8 +31715,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31793,8 +31793,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31871,8 +31871,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -31954,8 +31954,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -32046,8 +32046,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -32127,8 +32127,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -32209,8 +32209,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -32292,8 +32292,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -32375,8 +32375,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -32461,8 +32461,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
@@ -32539,8 +32539,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
             usedFloat = 1;
         }
         int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, elapsed_ns);
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
         if( !json_find_int(json, "no_output") ) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);

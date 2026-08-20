@@ -85,15 +85,15 @@ public partial class Core
       return Math.Max(Math.Max(Math.Max(ShadowLong_avgPeriod, ShadowShort_avgPeriod), Math.Max(Far_avgPeriod, Near_avgPeriod)), BodyLong_avgPeriod) + 2 ;
 
    }
-   internal RetCode CDLADVANCEBLOCK( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<double> inOpen,
-                                     ReadOnlySpan<double> inHigh,
-                                     ReadOnlySpan<double> inLow,
-                                     ReadOnlySpan<double> inClose,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<int> outInteger )
+   internal RetCode CDLADVANCEBLOCK_Impl( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<double> inOpen,
+                                          ReadOnlySpan<double> inHigh,
+                                          ReadOnlySpan<double> inLow,
+                                          ReadOnlySpan<double> inClose,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -255,15 +255,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLADVANCEBLOCK( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<float> inOpen,
-                                     ReadOnlySpan<float> inHigh,
-                                     ReadOnlySpan<float> inLow,
-                                     ReadOnlySpan<float> inClose,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<int> outInteger )
+   internal RetCode CDLADVANCEBLOCK_Impl( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<float> inOpen,
+                                          ReadOnlySpan<float> inHigh,
+                                          ReadOnlySpan<float> inLow,
+                                          ReadOnlySpan<float> inClose,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -448,7 +448,7 @@ public partial class Core
       RequireLength("CDLADVANCEBLOCK", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLADVANCEBLOCK", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLADVANCEBLOCK", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLADVANCEBLOCK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLADVANCEBLOCK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLADVANCEBLOCK", retCode);
       }
@@ -520,7 +520,7 @@ public partial class Core
       RequireLength("CDLADVANCEBLOCK", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLADVANCEBLOCK", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLADVANCEBLOCK", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLADVANCEBLOCK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLADVANCEBLOCK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLADVANCEBLOCK", retCode);
       }
@@ -953,7 +953,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLADVANCEBLOCK_OpenCore( CDLADVANCEBLOCK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLADVANCEBLOCK_OpenPass( CDLADVANCEBLOCK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1008,7 +1008,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -1237,29 +1237,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLADVANCEBLOCK_OpenBody( CDLADVANCEBLOCK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLADVANCEBLOCK_OpenImpl( CDLADVANCEBLOCK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLADVANCEBLOCK_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLADVANCEBLOCK_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLADVANCEBLOCK_OpenAndFillBody( CDLADVANCEBLOCK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLADVANCEBLOCK_OpenAndFillImpl( CDLADVANCEBLOCK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLADVANCEBLOCK_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLADVANCEBLOCK_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLADVANCEBLOCK_OpenAndFillInternalBody( CDLADVANCEBLOCK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLADVANCEBLOCK_OpenAndFillInternalImpl( CDLADVANCEBLOCK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLADVANCEBLOCK_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLADVANCEBLOCK_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLADVANCEBLOCK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
-      RetCode retCode = CDLADVANCEBLOCK_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLADVANCEBLOCK_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1270,7 +1270,7 @@ public partial class Core
    internal CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
-      RetCode retCode = CDLADVANCEBLOCK_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLADVANCEBLOCK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1299,10 +1299,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLADVANCEBLOCK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -1336,12 +1336,12 @@ public partial class Core
    /// output.</exception>
    public CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
-      RetCode retCode = CDLADVANCEBLOCK_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLADVANCEBLOCK_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

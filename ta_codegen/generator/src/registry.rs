@@ -103,15 +103,23 @@ impl Registry {
         // callee's lookback plus the extra history it needs, so a startIdx already
         // clamped to the composite's lookback lands exactly on the callee's.
         //
-        // Java routes to the package-private guarded core (`…_Internal`), not the
-        // public `…` wrapper: the callers pass the C-shaped MInteger out-params,
-        // and going through the wrapper would allocate a throwaway pair per call.
+        // C, Java and C# resolve it to the PUBLIC entry point, which is what C
+        // has always done (`TA_MA` is C's public API, declared in ta_func.h).
+        // RUST IS THE EXCEPTION: the bare name it gets back here is the public
+        // one, and `rust_lang::internal_callee` then appends `_Impl` itself,
+        // because its public tier is a thin `Result` adapter that adds no checks
+        // the body's asserts do not already make (see CLAUDE.md).
+        // Java used to route to the package-private `…_Impl` so the caller
+        // could pass the C-shaped MInteger out-params; the call sites now bind
+        // the returned `OutRange` instead (#236 step 3), which is what puts the
+        // callee's argument checks on the composed path. C# needs no change of
+        // name at all: its two tiers are overloads, and dropping the two `out
+        // int` arguments selects the public one.
         if self.contains(func_name) {
             let name = self.name_of(func_name);
             return match lang {
-                Lang::Rust | Lang::CSharp => name,
+                Lang::Rust | Lang::CSharp | Lang::Java => name,
                 Lang::C => format!("TA_{name}"),
-                Lang::Java => format!("{name}_Internal"),
             };
         }
 
@@ -204,14 +212,17 @@ mod tests {
             "SMA_Lookback"
         );
 
-        // Bare indicator names resolve to the guarded entry point. Java alone
-        // routes to the package-private guarded core rather than the public
-        // OutRange wrapper — cross-indicator callers pass the C-shaped MInteger
-        // out-params straight through, so going through the wrapper would
-        // allocate a throwaway MInteger pair per call.
+        // Bare indicator names resolve to the PUBLIC entry point — the one a
+        // user can reach — in every backend. Java used to route to the
+        // package-private `…_Impl` so the caller could hand the C-shaped
+        // MInteger out-params straight through; the call sites bind the returned
+        // OutRange instead since #236 step 3, which is what puts the callee's
+        // argument checks on the composed path. C# needs no name change at all:
+        // its two tiers are overloads, and dropping the two `out int` arguments
+        // is what selects the public one.
         assert_eq!(registry.resolve_call("ema", Lang::C), "TA_EMA");
         assert_eq!(registry.resolve_call("ema", Lang::Rust), "EMA");
-        assert_eq!(registry.resolve_call("ema", Lang::Java), "EMA_Internal");
+        assert_eq!(registry.resolve_call("ema", Lang::Java), "EMA");
         assert_eq!(registry.resolve_call("ema", Lang::CSharp), "EMA");
 
         // `_private` is resolved by the same rule as any other suffix. Spelled
@@ -227,9 +238,9 @@ mod tests {
         );
 
         // The names that used to be hand-mangled per backend are now verbatim.
-        assert_eq!(registry.resolve_call("ma", Lang::Java), "MA_Internal");
-        assert_eq!(registry.resolve_call("willr", Lang::Java), "WILLR_Internal");
-        assert_eq!(registry.resolve_call("stochf", Lang::Java), "STOCHF_Internal");
+        assert_eq!(registry.resolve_call("ma", Lang::Java), "MA");
+        assert_eq!(registry.resolve_call("willr", Lang::Java), "WILLR");
+        assert_eq!(registry.resolve_call("stochf", Lang::Java), "STOCHF");
         assert_eq!(registry.resolve_call("ma_lookback", Lang::Java), "MA_Lookback");
         assert_eq!(registry.resolve_call("willr", Lang::CSharp), "WILLR");
         assert_eq!(
@@ -263,10 +274,11 @@ mod tests {
     fn test_registry_bare_name_resolves_to_guarded() {
         let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
         let registry = Registry::from_dir(&base);
-        // Bare indicator names resolve to the guarded entry point
+        // Bare indicator names resolve to the PUBLIC entry point, in every
+        // backend, which is what C has always done (#236 step 3).
         assert_eq!(registry.resolve_call("sma", Lang::C), "TA_SMA");
         assert_eq!(registry.resolve_call("sma", Lang::Rust), "SMA");
-        assert_eq!(registry.resolve_call("sma", Lang::Java), "SMA_Internal");
+        assert_eq!(registry.resolve_call("sma", Lang::Java), "SMA");
         assert_eq!(registry.resolve_call("sma", Lang::CSharp), "SMA");
         // `sma` declares no Private variant, but the suffix rule is uniform.
         assert_eq!(registry.resolve_call("sma_private", Lang::C), "TA_SMA_Private");
