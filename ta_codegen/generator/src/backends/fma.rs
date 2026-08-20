@@ -24,10 +24,13 @@ use crate::ir::{BinOp, Expr, Output, ParamType, Statement, VarType};
 use super::rust_lang::{collect_sentinel_vars, collect_signed_int_vars, collect_var_types};
 
 /// Master FMA emission gate. `true` = the FMA-era numerical contract is in force
-/// and every backend fuses. Set it `false` to regenerate the pre-FMA output that
-/// is bit-reproducible against the frozen v0.6.4 reference — the enumeration
-/// oracle described in `docs/fma-readiness-audit.md` (diff the generated code to
-/// see every fusion site, then revert).
+/// and every backend fuses.
+///
+/// This flag is also the fusion-site enumeration oracle: set it `false`, run
+/// `generate`, and diff the generated code to see every site that fuses (and to
+/// confirm the pre-FMA output is byte-identical to the frozen v0.6.4 reference),
+/// then revert. Because all four backends route through this module, one flip
+/// enumerates them all.
 pub const EMIT_FMA: bool = true;
 
 /// Index-param seeds for the `_private` variant (mirrors the Rust

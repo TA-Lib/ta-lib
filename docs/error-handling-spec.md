@@ -158,6 +158,7 @@ to hold it.
 | # | Condition (in order) | Signal | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
 | L-1 | An optional parameter is outside its documented domain | the lookback out-of-range sentinel | ✅ | ⚠️ [1] | ✅ | ✅ |
+| L-1a | …and the sentinel is returned **exactly when** the batch tier would reject the same parameters under B-4 | the lookback out-of-range sentinel | ✅ | | | |
 | L-2 | Nothing else in this tier can fail | — | ✅ | ✅ | ✅ | ✅ |
 
 [1] The sentinel is `-1` in C, Java and C#. Rust's lookback returns an unsigned
@@ -166,6 +167,15 @@ the generated rustdoc states it on every function. The consequence is real and
 worth knowing: a caller who writes `lookback + 1` wraps rather than receiving a
 small number. Deliberate — a signed return would put a negative into every
 downstream index computation.
+
+**Why L-1a is a rule and not a test detail.** A caller sizes its buffers from the
+lookback before it trusts the call, so a lookback that answers a plausible number
+for parameters the call then rejects is a lie a wrapper cannot detect — and the
+reverse, a sentinel for parameters the call accepts, denies a usable call. The two
+tiers derive the domain separately, which is exactly what lets them drift. Asserted
+for C on every optional parameter of every function by the boundary sweep
+(`ta_test_func/test_period_boundary.c`, group `PERIOD1/BOUNDARY`), which counts the
+swept cases and asserts the count; not yet probed in the other three.
 
 ### 2.2 Batch tier
 
@@ -184,6 +194,17 @@ parameter that is NaN is outside every range and is rejected (a plain `x < min |
 x > max` test does not do this — both comparisons are false for NaN — so the
 check is spelled inverted). An enum parameter's domain is its declared member
 set.
+
+**A wide domain is still a domain.** All 24 real optional parameters emit a check;
+what differs is the width. **19 across 11 functions** declare a bound tighter than
+the default — `[0, 1]`, `[0.01, 0.99]`, `[0, TA_REAL_MAX]` (`ta_T3.c` is the shape;
+the emitter is `backends/c.rs`, mirrored in `backends/java.rs` and
+`backends/rust_lang.rs`). The other **5** — `BBANDS`'s two deviation multipliers,
+`SAREXT`'s start value, and `STDDEV`/`VAR`'s — declare the full
+`[TA_REAL_MIN, TA_REAL_MAX]`. That is **not** a no-op: those bounds are `±3e37`,
+finite and far inside a `double`'s `1.8e308`, so the emitted check still rejects
+NaN, both infinities, and any magnitude above `3e37`. B-4 is wide for those five,
+never vacuous.
 
 **Capacity (B-5), precisely.** Every input the body indexes must reach `endIdx`.
 Every output must hold **the count actually produced** — `endIdx - max(startIdx,
