@@ -1,0 +1,473 @@
+==============================================================================
+PART 0 -- both arms are pinned to real implementations, not modelled
+==============================================================================
+
+rule S == the shipped TA_EMA.  ema_probe.c calls TA_EMA(0,60,close,25) from
+  cmake-build/libta-lib.a; all 37 outputs are BIT-IDENTICAL to ema_block_S
+  below.  The same probe shows TA_EMA's first output is the plain 25-bar SMA
+  ending at startIdx (bit-identical), and that TA_EMA re-seeds at
+  startIdx-lookback -- TA_EMA(400,400) and TA_EMA(0,500)[400] differ by 0.199
+  on gData close, so the first-published-value row below is not a curiosity:
+  it is what any narrow-range TA-Lib call returns.
+
+rule T == Tulip ti_smi / TradingView ta.ema.  beta/smi.c seeds
+  ema_r_num = ema_s_num = num[q-1] and ema_r_den = ema_s_den = den[q-1];
+  Pine's ta.ema is `na(sum[1]) ? src : alpha*src + (1-alpha)*nz(sum[1])`.
+  Part D reproduces, to every printed digit, the arm-vs-Tulip table in issue
+  #59 -- which was itself measured against a compiled ti_smi.
+
+==============================================================================
+PART A -- analytic: which seed estimates the converged EMA better?
+==============================================================================
+
+A seeded EMA reproduces the converged EMA exactly, plus one decaying term:
+    y_seed(n) - y*(n) = (1-alpha)^(n-t0) * (seed - y*(t0))
+The decay factor depends on alpha only -- it is the SAME for both rules.
+So the seeding question is entirely 'how big is (seed - y*(t0))?'.
+
+Rule T (TradingView ta.ema / Tulip): seed = x[t0], t0 = first data bar.
+Rule S (TA-Lib / R TTR):             seed = SMA(x[t0-p+1..t0]), t0 = bar p-1,
+                                     summed sequentially, as TA_EMA does.
+
+Rule T seeds p-1 bars earlier, so by rule S's first output bar its error has
+already been damped by (1-alpha)^(p-1).  The 'common' column credits it with
+exactly that head start: it is sd(e_S) / [ (1-alpha)^(p-1) * sd(e_T) ], the
+ratio of the two rules' errors at the SAME bar.  Below 1 = TA-Lib wins.
+
+-- white noise (unit variance / unit increment variance)
+   p |  sd(e_T)  sd(e_S) | e_S/e_T | (1-a)^(p-1) |  common | trend bias: e_T     e_S
+   2 |   0.4082   0.3333 |   0.816 |     0.33333 |   2.449 |        0.50    0.00
+   3 |   0.5774   0.2887 |   0.500 |     0.25000 |   2.000 |        1.00    0.00
+   5 |   0.7303   0.2295 |   0.314 |     0.19753 |   1.591 |        2.00    0.00
+   9 |   0.8433   0.1727 |   0.205 |     0.16777 |   1.221 |        4.00    0.00
+  12 |   0.8807   0.1498 |   0.170 |     0.15920 |   1.069 |        5.50   -0.00
+  13 |   0.8895   0.1440 |   0.162 |     0.15727 |   1.029 |        6.00    0.00
+  20 |   0.9271   0.1162 |   0.125 |     0.14933 |   0.840 |        9.50   -0.00
+  25 |   0.9414   0.1040 |   0.110 |     0.14646 |   0.754 |       12.00    0.00
+  26 |   0.9436   0.1020 |   0.108 |     0.14602 |   0.740 |       12.50   -0.00
+  30 |   0.9509   0.0950 |   0.100 |     0.14456 |   0.691 |       14.50    0.00
+  50 |   0.9703   0.0736 |   0.076 |     0.14082 |   0.538 |       24.50    0.00
+
+-- AR(1) phi=0.50 (unit variance / unit increment variance)
+   p |  sd(e_T)  sd(e_S) | e_S/e_T | (1-a)^(p-1) |  common | trend bias: e_T     e_S
+   2 |   0.3162   0.2236 |   0.707 |     0.33333 |   2.121 |        0.50    0.00
+   3 |   0.4714   0.2357 |   0.500 |     0.25000 |   2.000 |        1.00    0.00
+   5 |   0.6325   0.2388 |   0.378 |     0.19753 |   1.912 |        2.00    0.00
+   9 |   0.7698   0.2233 |   0.290 |     0.16777 |   1.729 |        4.00    0.00
+  12 |   0.8199   0.2087 |   0.255 |     0.15920 |   1.599 |        5.50   -0.00
+  13 |   0.8321   0.2041 |   0.245 |     0.15727 |   1.560 |        6.00    0.00
+  20 |   0.8859   0.1771 |   0.200 |     0.14933 |   1.339 |        9.50   -0.00
+  25 |   0.9071   0.1627 |   0.179 |     0.14646 |   1.225 |       12.00    0.00
+  26 |   0.9104   0.1602 |   0.176 |     0.14602 |   1.205 |       12.50   -0.00
+  30 |   0.9217   0.1511 |   0.164 |     0.14456 |   1.134 |       14.50    0.00
+  50 |   0.9519   0.1212 |   0.127 |     0.14082 |   0.904 |       24.50    0.00
+
+-- AR(1) phi=0.90 (unit variance / unit increment variance)
+   p |  sd(e_T)  sd(e_S) | e_S/e_T | (1-a)^(p-1) |  common | trend bias: e_T     e_S
+   2 |   0.1543   0.0934 |   0.606 |     0.33333 |   1.817 |        0.50    0.00
+   3 |   0.2462   0.1073 |   0.436 |     0.25000 |   1.744 |        1.00    0.00
+   5 |   0.3651   0.1298 |   0.355 |     0.19753 |   1.799 |        2.00    0.00
+   9 |   0.5040   0.1627 |   0.323 |     0.16777 |   1.925 |        4.00    0.00
+  12 |   0.5703   0.1798 |   0.315 |     0.15920 |   1.981 |        5.50   -0.00
+  13 |   0.5883   0.1845 |   0.314 |     0.15727 |   1.994 |        6.00    0.00
+  20 |   0.6803   0.2065 |   0.304 |     0.14933 |   2.033 |        9.50   -0.00
+  25 |   0.7236   0.2147 |   0.297 |     0.14646 |   2.026 |       12.00    0.00
+  26 |   0.7309   0.2158 |   0.295 |     0.14602 |   2.022 |       12.50   -0.00
+  30 |   0.7564   0.2190 |   0.289 |     0.14456 |   2.002 |       14.50    0.00
+  50 |   0.8342   0.2175 |   0.261 |     0.14082 |   1.851 |       24.50    0.00
+
+-- AR(1) phi=0.99 (unit variance / unit increment variance)
+   p |  sd(e_T)  sd(e_S) | e_S/e_T | (1-a)^(p-1) |  common | trend bias: e_T     e_S
+   2 |   0.0499   0.0289 |   0.580 |     0.33333 |   1.741 |        0.50    0.00
+   3 |   0.0812   0.0334 |   0.411 |     0.25000 |   1.645 |        1.00    0.00
+   5 |   0.1252   0.0411 |   0.328 |     0.19753 |   1.660 |        2.00    0.00
+   9 |   0.1849   0.0538 |   0.291 |     0.16777 |   1.734 |        4.00    0.00
+  12 |   0.2186   0.0618 |   0.282 |     0.15920 |   1.774 |        5.50   -0.00
+  13 |   0.2286   0.0642 |   0.281 |     0.15727 |   1.786 |        6.00    0.00
+  20 |   0.2871   0.0792 |   0.276 |     0.14933 |   1.846 |        9.50   -0.00
+  25 |   0.3207   0.0882 |   0.275 |     0.14646 |   1.878 |       12.00    0.00
+  26 |   0.3269   0.0899 |   0.275 |     0.14602 |   1.883 |       12.50   -0.00
+  30 |   0.3499   0.0963 |   0.275 |     0.14456 |   1.904 |       14.50    0.00
+  50 |   0.4391   0.1224 |   0.279 |     0.14082 |   1.979 |       24.50    0.00
+
+-- random walk (unit variance / unit increment variance)
+   p |  sd(e_T)  sd(e_S) | e_S/e_T | (1-a)^(p-1) |  common | trend bias: e_T     e_S
+   2 |   0.3536   0.2041 |   0.577 |     0.33333 |   1.732 |        0.50    0.00
+   3 |   0.5774   0.2357 |   0.408 |     0.25000 |   1.633 |        1.00    0.00
+   5 |   0.8944   0.2897 |   0.324 |     0.19753 |   1.640 |        2.00    0.00
+   9 |   1.3333   0.3798 |   0.285 |     0.16777 |   1.698 |        4.00    0.00
+  12 |   1.5877   0.4364 |   0.275 |     0.15920 |   1.726 |        5.50   -0.00
+  13 |   1.6641   0.4538 |   0.273 |     0.15727 |   1.734 |        6.00    0.00
+  20 |   2.1243   0.5611 |   0.264 |     0.14933 |   1.769 |        9.50   -0.00
+  25 |   2.4000   0.6268 |   0.261 |     0.14646 |   1.783 |       12.00    0.00
+  26 |   2.4515   0.6391 |   0.261 |     0.14602 |   1.785 |       12.50   -0.00
+  30 |   2.6473   0.6863 |   0.259 |     0.14456 |   1.793 |       14.50    0.00
+  50 |   3.4648   0.8854 |   0.256 |     0.14082 |   1.815 |       24.50    0.00
+
+Reading the table:
+  * e_S/e_T < 1 under every process: the SMA seed is the better estimator
+    of the converged EMA, by 3x-9x at the periods SMI uses.
+  * 'common' is the honest head-to-head at the same bar index, with rule T
+    given full credit for having started p-1 bars earlier.
+  * 'trend bias' is EXACT, not statistical.  alpha = 2/(p+1) puts the EMA's
+    centre of mass at (1-alpha)/alpha = (p-1)/2 bars back -- precisely the
+    centre of mass of a p-bar SMA.  So on any locally linear stretch the SMA
+    seed is unbiased to machine precision while the last-value seed is off
+    by (p-1)/2 * slope.  The p-bar SMA is not an arbitrary convention: it is
+    the seed that alpha = 2/(p+1) was matched to.
+
+==============================================================================
+PART B -- empirical, one EMA, on the series SMI actually smooths
+==============================================================================
+
+Error vs the converged EMA, rms over every data-start offset in the corpus,
+as a percentage of the series' own standard deviation.
+  'first out' = each rule at its own first published bar
+  '@common'   = rule T at rule S's first published bar (its head start)
+  'ratio'     = e_S / e_T@common;  below 1 = TA-Lib wins at the same bar
+
+-- gData 10000 / close   (10000 bars, sd = 104.9986)
+      p | e_T first out | e_S first out |    e_T @common | ratio | bias e_T  bias e_S
+      2 |        1.706% |        0.987% |         0.569% |  1.735 |   0.028%    0.000%
+      3 |        2.783% |        1.141% |         0.696% |  1.640 |   0.056%    0.000%
+      5 |        4.300% |        1.401% |         0.849% |  1.649 |   0.111%    0.000%
+      9 |        6.361% |        1.852% |         1.067% |  1.735 |   0.215%   -0.001%
+     12 |        7.527% |        2.129% |         1.198% |  1.777 |   0.293%   -0.002%
+     13 |        7.872% |        2.214% |         1.238% |  1.788 |   0.318%   -0.002%
+     20 |        9.905% |        2.733% |         1.479% |  1.848 |   0.494%   -0.004%
+     25 |       11.094% |        3.037% |         1.625% |  1.869 |   0.627%   -0.005%
+     26 |       11.315% |        3.092% |         1.652% |  1.871 |   0.653%   -0.005%
+     30 |       12.149% |        3.293% |         1.756% |  1.875 |   0.748%   -0.006%
+
+-- gData 10000 / num = C-(HH+LL)/2, q=13   (9988 bars, sd = 8.8121)
+      p | e_T first out | e_S first out |    e_T @common | ratio | bias e_T  bias e_S
+      2 |       15.939% |        9.406% |         5.313% |  1.770 |   0.003%    0.001%
+      3 |       25.874% |       10.651% |         6.468% |  1.647 |   0.014%    0.003%
+      5 |       39.623% |       13.055% |         7.827% |  1.668 |   0.033%    0.005%
+      9 |       56.568% |       18.284% |         9.490% |  1.927 |   0.051%    0.003%
+     12 |       64.553% |       21.918% |        10.277% |  2.133 |   0.051%   -0.003%
+     13 |       66.660% |       23.025% |        10.483% |  2.196 |   0.042%   -0.006%
+     20 |       76.796% |       26.294% |        11.468% |  2.293 |  -0.011%   -0.021%
+     25 |       81.066% |       26.338% |        11.873% |  2.218 |   0.099%   -0.016%
+     26 |       81.747% |       26.266% |        11.937% |  2.200 |   0.123%   -0.013%
+     30 |       84.115% |       25.801% |        12.160% |  2.122 |   0.175%    0.001%
+
+-- gData 10000 / den = HH-LL, q=13   (9988 bars, sd = 17.0207)
+      p | e_T first out | e_S first out |    e_T @common | ratio | bias e_T  bias e_S
+      2 |       12.790% |        7.275% |         4.263% |  1.707 |   0.009%    0.000%
+      3 |       20.931% |        8.562% |         5.233% |  1.636 |   0.019%    0.000%
+      5 |       32.297% |       10.707% |         6.380% |  1.678 |   0.041%    0.001%
+      9 |       46.465% |       14.910% |         7.796% |  1.913 |   0.095%    0.004%
+     12 |       53.230% |       17.938% |         8.474% |  2.117 |   0.113%    0.001%
+     13 |       55.038% |       18.916% |         8.656% |  2.185 |   0.122%    0.000%
+     20 |       63.962% |       21.852% |         9.552% |  2.288 |   0.184%   -0.003%
+     25 |       67.967% |       21.818% |         9.954% |  2.192 |   0.252%   -0.001%
+     26 |       68.623% |       21.733% |        10.020% |  2.169 |   0.273%    0.000%
+     30 |       70.885% |       21.282% |        10.247% |  2.077 |   0.369%    0.009%
+
+-- IBM 6741 / close   (6741 bars, sd = 47.9679)
+      p | e_T first out | e_S first out |    e_T @common | ratio | bias e_T  bias e_S
+      2 |        1.946% |        1.097% |         0.649% |  1.691 |   0.020%    0.000%
+      3 |        3.198% |        1.284% |         0.800% |  1.606 |   0.041%    0.001%
+      5 |        4.968% |        1.638% |         0.981% |  1.669 |   0.080%    0.001%
+      9 |        7.316% |        2.215% |         1.227% |  1.805 |   0.149%   -0.001%
+     12 |        8.599% |        2.566% |         1.369% |  1.875 |   0.200%   -0.003%
+     13 |        8.975% |        2.667% |         1.412% |  1.890 |   0.222%   -0.003%
+     20 |       10.994% |        3.191% |         1.642% |  1.943 |   0.430%    0.007%
+     25 |       11.828% |        3.395% |         1.732% |  1.960 |   0.639%    0.024%
+     26 |       11.951% |        3.429% |         1.745% |  1.965 |   0.684%    0.029%
+     30 |       12.745% |        3.615% |         1.842% |  1.962 |   0.764%    0.037%
+
+-- IBM 6741 / num = C-(HH+LL)/2, q=13   (6729 bars, sd = 4.9923)
+      p | e_T first out | e_S first out |    e_T @common | ratio | bias e_T  bias e_S
+      2 |       16.229% |        9.328% |         5.410% |  1.724 |   0.011%    0.003%
+      3 |       26.629% |       10.543% |         6.657% |  1.584 |   0.034%    0.005%
+      5 |       41.200% |       13.548% |         8.138% |  1.665 |   0.093%    0.010%
+      9 |       58.639% |       19.862% |         9.838% |  2.019 |  -0.012%   -0.022%
+     12 |       65.523% |       23.787% |        10.431% |  2.280 |  -0.332%   -0.085%
+     13 |       67.138% |       24.836% |        10.559% |  2.352 |  -0.456%   -0.111%
+     20 |       75.429% |       27.187% |        11.264% |  2.414 |  -0.499%   -0.174%
+     25 |       76.294% |       24.952% |        11.174% |  2.233 |   0.084%   -0.065%
+     26 |       75.931% |       24.319% |        11.087% |  2.193 |   0.238%   -0.034%
+     30 |       77.825% |       22.278% |        11.251% |  1.980 |   0.148%    0.054%
+
+-- IBM 6741 / den = HH-LL, q=13   (6729 bars, sd = 9.6607)
+      p | e_T first out | e_S first out |    e_T @common | ratio | bias e_T  bias e_S
+      2 |        8.418% |        4.308% |         2.806% |  1.535 |   0.015%    0.000%
+      3 |       14.156% |        5.448% |         3.539% |  1.539 |   0.036%    0.002%
+      5 |       22.485% |        7.247% |         4.442% |  1.632 |   0.105%    0.009%
+      9 |       33.137% |       10.665% |         5.560% |  1.918 |   0.319%    0.030%
+     12 |       37.586% |       12.968% |         5.984% |  2.167 |   0.639%    0.065%
+     13 |       38.430% |       13.655% |         6.044% |  2.259 |   0.780%    0.082%
+     20 |       44.326% |       16.368% |         6.619% |  2.473 |   1.135%    0.133%
+     25 |       46.468% |       16.289% |         6.806% |  2.393 |   1.100%    0.084%
+     26 |       46.770% |       16.131% |         6.829% |  2.362 |   1.086%    0.070%
+     30 |       48.531% |       15.450% |         7.016% |  2.202 |   1.248%    0.024%
+
+==============================================================================
+PART C -- end-to-end SMI(q,r,s), error in SMI points (range -100..+100)
+==============================================================================
+
+Both arms share the identical TA_MAX/TA_MIN front end; only the four EMA
+seeds differ.  Truth = the same chain run from the start of a long history,
+so its own seed is far below double precision by the time we compare.
+
+-- gData 10000   SMI(q=13, r=25, s=2)   2272 offsets, TA-Lib lookback 37
+   first published value:
+      rule T (TV/Tulip)  at bar  12: rms   51.999  p95   98.989  max  145.941
+      rule S (TA-Lib)    at bar  37: rms   13.995  p95   26.485  max   47.779
+   both at bar 37 (TA-Lib's first output; rule T pre-damped):
+      rule T: rms    8.057  p95   15.317  max   43.953
+      rule S: rms   13.995  p95   26.485  max   47.779
+   character of the first published value:
+      rule T equals the RAW unsmoothed 100*num/(0.5*den): max diff 0
+      amplitude vs truth (sd across offsets, 1.0 = right):  rule T 1.67   rule S 1.06
+      max |SMI| over all published values (the bound is 100, and both rules keep it):
+         rule T 100.00000000000011   rule S 97.21077861115766   truth 97.10519685548981
+   worst error anywhere in the arm's own published output:
+      rule T: rms   52.043  p95   98.989  max  145.941
+      rule S: rms   14.029  p95   26.485  max   47.779
+   bars of history needed before rms error stays under ...
+       1.00 pt : rule T    67   rule S    76
+       0.10 pt : rule T    95   rule S   105
+       0.01 pt : rule T   125   rule S   135
+
+-- gData 10000   SMI(q=10, r=3, s=3)   2273 offsets, TA-Lib lookback 13
+   first published value:
+      rule T (TV/Tulip)  at bar   9: rms   34.813  p95   69.942  max  122.537
+      rule S (TA-Lib)    at bar  13: rms    7.475  p95   14.970  max   28.242
+   both at bar 13 (TA-Lib's first output; rule T pre-damped):
+      rule T: rms    5.042  p95   10.178  max   23.661
+      rule S: rms    7.475  p95   14.970  max   28.242
+   character of the first published value:
+      rule T equals the RAW unsmoothed 100*num/(0.5*den): max diff 0
+      amplitude vs truth (sd across offsets, 1.0 = right):  rule T 1.24   rule S 1.04
+      max |SMI| over all published values (the bound is 100, and both rules keep it):
+         rule T 100.00000000000033   rule S 99.12415920967514   truth 99.03545532832996
+   worst error anywhere in the arm's own published output:
+      rule T: rms   34.822  p95   69.942  max  122.537
+      rule S: rms    7.478  p95   14.970  max   28.242
+   bars of history needed before rms error stays under ...
+       1.00 pt : rule T    16   rule S    17
+       0.10 pt : rule T    20   rule S    21
+       0.01 pt : rule T    24   rule S    25
+
+-- gData 10000   SMI(q=5, r=3, s=3)   2274 offsets, TA-Lib lookback 8
+   first published value:
+      rule T (TV/Tulip)  at bar   4: rms   41.683  p95   80.700  max  130.879
+      rule S (TA-Lib)    at bar   8: rms    9.808  p95   18.319  max   44.207
+   both at bar 8 (TA-Lib's first output; rule T pre-damped):
+      rule T: rms    6.447  p95   12.381  max   40.714
+      rule S: rms    9.808  p95   18.319  max   44.207
+   character of the first published value:
+      rule T equals the RAW unsmoothed 100*num/(0.5*den): max diff 0
+      amplitude vs truth (sd across offsets, 1.0 = right):  rule T 1.53   rule S 1.06
+      max |SMI| over all published values (the bound is 100, and both rules keep it):
+         rule T 100.00000000000023   rule S 98.80261806839366   truth 98.79370082709879
+   worst error anywhere in the arm's own published output:
+      rule T: rms   41.700  p95   80.700  max  130.879
+      rule S: rms    9.813  p95   18.319  max   44.207
+   bars of history needed before rms error stays under ...
+       1.00 pt : rule T    12   rule S    13
+       0.10 pt : rule T    16   rule S    17
+       0.01 pt : rule T    19   rule S    20
+
+-- gData 10000   SMI(q=14, r=20, s=5)   2272 offsets, TA-Lib lookback 36
+   first published value:
+      rule T (TV/Tulip)  at bar  13: rms   53.801  p95  103.433  max  171.455
+      rule S (TA-Lib)    at bar  36: rms   11.609  p95   22.045  max   43.905
+   both at bar 36 (TA-Lib's first output; rule T pre-damped):
+      rule T: rms    6.815  p95   13.126  max   40.703
+      rule S: rms   11.609  p95   22.045  max   43.905
+   character of the first published value:
+      rule T equals the RAW unsmoothed 100*num/(0.5*den): max diff 0
+      amplitude vs truth (sd across offsets, 1.0 = right):  rule T 1.57   rule S 1.05
+      max |SMI| over all published values (the bound is 100, and both rules keep it):
+         rule T 100.00000000000016   rule S 97.30509819084519   truth 97.24083859212597
+   worst error anywhere in the arm's own published output:
+      rule T: rms   53.847  p95  103.433  max  171.455
+      rule S: rms   11.651  p95   22.045  max   43.905
+   bars of history needed before rms error stays under ...
+       1.00 pt : rule T    58   rule S    66
+       0.10 pt : rule T    83   rule S    91
+       0.01 pt : rule T   104   rule S   113
+
+-- IBM 6741   SMI(q=13, r=25, s=2)   2914 offsets, TA-Lib lookback 37
+   first published value:
+      rule T (TV/Tulip)  at bar  12: rms   53.123  p95   99.759  max  149.533
+      rule S (TA-Lib)    at bar  37: rms   14.845  p95   28.320  max   42.080
+   both at bar 37 (TA-Lib's first output; rule T pre-damped):
+      rule T: rms    8.032  p95   15.810  max   26.879
+      rule S: rms   14.845  p95   28.320  max   42.080
+   character of the first published value:
+      rule T equals the RAW unsmoothed 100*num/(0.5*den): max diff 0
+      amplitude vs truth (sd across offsets, 1.0 = right):  rule T 1.70   rule S 1.06
+      max |SMI| over all published values (the bound is 100, and both rules keep it):
+         rule T 100.00000000000018   rule S 87.08165756535784   truth 82.58376114404986
+   worst error anywhere in the arm's own published output:
+      rule T: rms   53.155  p95   99.759  max  149.533
+      rule S: rms   14.876  p95   28.320  max   42.080
+   bars of history needed before rms error stays under ...
+       1.00 pt : rule T    65   rule S    74
+       0.10 pt : rule T    94   rule S   104
+       0.01 pt : rule T   123   rule S   133
+
+-- IBM 6741   SMI(q=10, r=3, s=3)   2916 offsets, TA-Lib lookback 13
+   first published value:
+      rule T (TV/Tulip)  at bar   9: rms   34.873  p95   71.423  max  131.947
+      rule S (TA-Lib)    at bar  13: rms    7.443  p95   14.774  max   28.968
+   both at bar 13 (TA-Lib's first output; rule T pre-damped):
+      rule T: rms    5.031  p95   10.286  max   26.301
+      rule S: rms    7.443  p95   14.774  max   28.968
+   character of the first published value:
+      rule T equals the RAW unsmoothed 100*num/(0.5*den): max diff 0
+      amplitude vs truth (sd across offsets, 1.0 = right):  rule T 1.20   rule S 1.04
+      max |SMI| over all published values (the bound is 100, and both rules keep it):
+         rule T 100.00000000000038   rule S 97.22943722943722   truth 95.83950983779842
+   worst error anywhere in the arm's own published output:
+      rule T: rms   34.880  p95   71.423  max  131.947
+      rule S: rms    7.446  p95   14.774  max   28.968
+   bars of history needed before rms error stays under ...
+       1.00 pt : rule T    16   rule S    17
+       0.10 pt : rule T    20   rule S    21
+       0.01 pt : rule T    24   rule S    25
+
+-- IBM 6741   SMI(q=5, r=3, s=3)   2918 offsets, TA-Lib lookback 8
+   first published value:
+      rule T (TV/Tulip)  at bar   4: rms   43.416  p95   87.664  max  136.428
+      rule S (TA-Lib)    at bar   8: rms   10.037  p95   18.908  max   38.583
+   both at bar 8 (TA-Lib's first output; rule T pre-damped):
+      rule T: rms    6.424  p95   12.437  max   36.043
+      rule S: rms   10.037  p95   18.908  max   38.583
+   character of the first published value:
+      rule T equals the RAW unsmoothed 100*num/(0.5*den): max diff 0
+      amplitude vs truth (sd across offsets, 1.0 = right):  rule T 1.38   rule S 1.05
+      max |SMI| over all published values (the bound is 100, and both rules keep it):
+         rule T 100.00000000000081   rule S 96.59640347743247   truth 95.10802396605371
+   worst error anywhere in the arm's own published output:
+      rule T: rms   43.435  p95   87.664  max  136.428
+      rule S: rms   10.041  p95   18.908  max   38.583
+   bars of history needed before rms error stays under ...
+       1.00 pt : rule T    12   rule S    13
+       0.10 pt : rule T    16   rule S    17
+       0.01 pt : rule T    19   rule S    20
+
+-- IBM 6741   SMI(q=14, r=20, s=5)   2914 offsets, TA-Lib lookback 36
+   first published value:
+      rule T (TV/Tulip)  at bar  13: rms   55.472  p95  105.813  max  156.345
+      rule S (TA-Lib)    at bar  36: rms   12.186  p95   23.210  max   32.879
+   both at bar 36 (TA-Lib's first output; rule T pre-damped):
+      rule T: rms    6.736  p95   13.002  max   22.732
+      rule S: rms   12.186  p95   23.210  max   32.879
+   character of the first published value:
+      rule T equals the RAW unsmoothed 100*num/(0.5*den): max diff 0
+      amplitude vs truth (sd across offsets, 1.0 = right):  rule T 1.60   rule S 1.05
+      max |SMI| over all published values (the bound is 100, and both rules keep it):
+         rule T 100.00000000000027   rule S 88.25066029055375   truth 84.38683528860001
+   worst error anywhere in the arm's own published output:
+      rule T: rms   55.503  p95  105.813  max  156.345
+      rule S: rms   12.222  p95   23.210  max   32.879
+   bars of history needed before rms error stays under ...
+       1.00 pt : rule T    57   rule S    65
+       0.10 pt : rule T    80   rule S    88
+       0.01 pt : rule T   103   rule S   111
+
+==============================================================================
+PART D -- the issue's 252-bar table: reproduced, then attributed
+==============================================================================
+
+D1 validates this script against the numbers already in issue #59, which were
+measured independently against a compiled Tulip `ti_smi` (and reproduced it
+bit-for-bit).  Corpus = the first 252 bars of gData -- the issue calls it
+'TA_SREF' but cites the gData files, and only gData reproduces its numbers;
+the separate 252-bar TA_SREF_*_daily_ref_0_PRIV arrays are different data.
+
+   params    | lookback | bars |  max |A-B| | bit-identical from | issue says
+   (13,25,2) |     37   |  215 |    14.6949 |              never | 14.69 / -
+   (10, 3,3) |     13   |  239 |     4.1656 |                 67 | 4.17 / 67
+   ( 5, 3,3) |      8   |  244 |     3.5880 |                 65 | 3.59 / 65
+   (14,20,5) |     36   |  216 |    12.9944 |              never | 12.99 / -
+
+   spot values, SMI(13,25,2), against the issue's sample table:
+     bar  37  A  -10.8035818118385 (issue  -10.8035818118385)  B  -25.4984363633175 (issue  -25.4984363633175)
+     bar 100  A  -45.1029436620775 (issue  -45.1029436620775)  B  -45.2341954189360 (issue  -45.2341954189360)
+     bar 251  A  -46.5268563975259 (issue  -46.5268563975259)  B  -46.5268575905730 (issue  -46.5268575905730)
+
+D2 repeats the identical 252-bar experiment on windows of gData that HAVE
+history in front of them, so the gap can be attributed.  All three numbers
+are measured over the SAME bars -- bar >= lookback, where both arms publish.
+
+   SMI(13,25,2), 2309 windows, over the 215 bars both arms publish:
+      |A-B| disagreement : rms   11.259  max   35.512
+      rule S (TA-Lib)    : rms   14.055  max   47.779
+      rule T (TV/Tulip)  : rms    8.072  max   43.953
+      TA-Lib owns 65% of the disagreement (median over windows)
+
+   SMI(10, 3,3), 2310 windows, over the 239 bars both arms publish:
+      |A-B| disagreement : rms    4.846  max   14.773
+      rule S (TA-Lib)    : rms    7.494  max   28.242
+      rule T (TV/Tulip)  : rms    5.047  max   23.661
+      TA-Lib owns 60% of the disagreement (median over windows)
+
+   SMI( 5, 3,3), 2311 windows, over the 244 bars both arms publish:
+      |A-B| disagreement : rms    5.806  max   17.699
+      rule S (TA-Lib)    : rms    9.808  max   44.207
+      rule T (TV/Tulip)  : rms    6.437  max   40.714
+      TA-Lib owns 62% of the disagreement (median over windows)
+
+   SMI(14,20,5), 2309 windows, over the 216 bars both arms publish:
+      |A-B| disagreement : rms    8.587  max   27.998
+      rule S (TA-Lib)    : rms   11.684  max   43.905
+      rule T (TV/Tulip)  : rms    6.827  max   40.703
+      TA-Lib owns 64% of the disagreement (median over windows)
+
+==============================================================================
+PART E -- EMA cascades, the shape DEMA/TEMA/TRIX/T3/MACD actually ship
+==============================================================================
+
+Every one of those inlines the SAME per-stage seed as TA_EMA: an SMA of the
+stage's first p inputs (verified by reading ta_codegen/input/{dema,tema,trix,
+macd,efi,t3}/*.c -- all carry the CLASSIC branch, and all but t3 also carry a
+METASTOCK branch seeding from inReal[0]; t3 ships CLASSIC only).  So the seed
+error compounds n times and the lookback grows
+as n*(p-1).  Error vs the converged cascade, rms over every data-start offset,
+as a percentage of the input series' standard deviation.
+
+-- gData 10000 / close  (10000 bars, sd = 104.9986)
+   stages          p | lookback | e_T first out | e_S first out | e_T @common | ratio
+   1 (EMA)          5 |        4 |        4.322% |        1.408% |      0.854% |  1.650
+   1 (EMA)         12 |       11 |        7.565% |        2.140% |      1.204% |  1.777
+   1 (EMA)         26 |       25 |       11.372% |        3.108% |      1.661% |  1.871
+   1 (EMA)         30 |       29 |       12.212% |        3.310% |      1.765% |  1.875
+   2 (DEMA)         5 |        8 |        7.101% |        1.106% |      0.722% |  1.532
+   2 (DEMA)        12 |       22 |       11.998% |        1.584% |      0.944% |  1.678
+   2 (DEMA)        26 |       50 |       17.665% |        2.093% |      1.261% |  1.660
+   2 (DEMA)        30 |       58 |       18.882% |        2.187% |      1.335% |  1.639
+   3 (TEMA / TRIX)  5 |       12 |        9.233% |        0.886% |      0.571% |  1.551
+   3 (TEMA / TRIX) 12 |       33 |       15.289% |        1.226% |      0.702% |  1.748
+   3 (TEMA / TRIX) 26 |       75 |       21.613% |        1.530% |      0.909% |  1.684
+   3 (TEMA / TRIX) 30 |       87 |       21.362% |        1.602% |      0.904% |  1.772
+   6 (T3)           5 |       24 |       13.919% |        0.549% |      0.270% |  2.032
+   6 (T3)          12 |       66 |       22.154% |        0.696% |      0.280% |  2.484
+   6 (T3)          26 |      150 |       27.551% |        0.876% |      0.273% |  3.210
+   6 (T3)          30 |      174 |       29.652% |        0.952% |      0.288% |  3.308
+
+-- IBM 6741 / close  (6741 bars, sd = 47.9679)
+   stages          p | lookback | e_T first out | e_S first out | e_T @common | ratio
+   1 (EMA)          5 |        4 |        4.989% |        1.644% |      0.985% |  1.669
+   1 (EMA)         12 |       11 |        8.635% |        2.581% |      1.375% |  1.878
+   1 (EMA)         26 |       25 |       12.094% |        3.453% |      1.766% |  1.955
+   1 (EMA)         30 |       29 |       12.815% |        3.626% |      1.853% |  1.957
+   2 (DEMA)         5 |        8 |        8.209% |        1.318% |      0.833% |  1.581
+   2 (DEMA)        12 |       22 |       13.133% |        1.808% |      1.051% |  1.719
+   2 (DEMA)        26 |       50 |       18.135% |        2.421% |      1.311% |  1.846
+   2 (DEMA)        30 |       58 |       18.779% |        2.488% |      1.326% |  1.876
+   3 (TEMA / TRIX)  5 |       12 |       10.628% |        1.074% |      0.659% |  1.629
+   3 (TEMA / TRIX) 12 |       33 |       16.037% |        1.323% |      0.741% |  1.784
+   3 (TEMA / TRIX) 26 |       75 |       21.978% |        1.738% |      0.902% |  1.927
+   3 (TEMA / TRIX) 30 |       87 |       23.246% |        1.844% |      0.949% |  1.943
+   6 (T3)           5 |       24 |       14.978% |        0.644% |      0.304% |  2.122
+   6 (T3)          12 |       66 |       22.318% |        0.775% |      0.276% |  2.805
+   6 (T3)          26 |      150 |       29.201% |        0.953% |      0.318% |  2.997
+   6 (T3)          30 |      174 |       30.737% |        0.971% |      0.332% |  2.925
+
