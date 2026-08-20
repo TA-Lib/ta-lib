@@ -31,6 +31,7 @@ pub mod rust_abstract;
 pub mod rust_doc;
 pub mod rust_enums;
 pub mod rust_lang;
+pub mod rust_phantom_io;
 pub mod rust_stream;
 pub mod stmt_walk;
 pub mod ta_abstract_c;
