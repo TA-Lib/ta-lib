@@ -117,14 +117,19 @@
           * needs it -- the streaming Update/Peek entry points reject a non-finite
           * bar with TA_BAD_PARAM before it reaches any accumulator.
           */
+         /* The product is kept in its own statement so no compiler may contract it
+          * into an FMA. Contracting here would make the C output disagree with the
+          * Rust, Java and C# backends under the cross-language bitwise gate. Same
+          * reason as in ta_codegen/input/vwma/vwma.c.
+          *
+          * Computed before the guard rather than inside it, and unconditionally,
+          * so it stays a per-bar temporary. Assigned only on the taken arm it
+          * would instead be live across bars, and the streaming tier would carry
+          * it as a fourth state field in every handle -- 8 bytes to hold a value
+          * no later bar reads. The multiply on a skipped bar is discarded.
+          */
+         tempReal = typPrice * volume;
          if( (Double.isFinite(typPrice)) && (Double.isFinite(volume)) ) {
-            /* The product is kept in its own statement so no compiler may
-             * contract it into an FMA. Contracting here would make the C output
-             * disagree with the Rust, Java and C# backends under the
-             * cross-language bitwise gate. Same reason as in
-             * ta_codegen/input/vwma/vwma.c.
-             */
-            tempReal = typPrice * volume;
             sumPV += tempReal;
             sumV += volume;
          }
@@ -187,8 +192,8 @@
       for( i = startIdx; i <= endIdx; i += 1 ) {
          typPrice = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3.0;
          volume = (double)inVolume[i];
+         tempReal = typPrice * volume;
          if( (Double.isFinite(typPrice)) && (Double.isFinite(volume)) ) {
-            tempReal = typPrice * volume;
             sumPV += tempReal;
             sumV += volume;
          }
@@ -388,7 +393,6 @@
       Core core;
       double sumPV;
       double sumV;
-      double tempReal;
       double vwap;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
@@ -408,7 +412,6 @@
          this.core = other.core;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
-         this.tempReal = other.tempReal;
          this.vwap = other.vwap;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -418,7 +421,6 @@
          this.core = other.core;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
-         this.tempReal = other.tempReal;
          this.vwap = other.vwap;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -479,6 +481,7 @@
    {
       double typPrice = 0.0;
       double volume = 0.0;
+      double tempReal = 0.0;
       /* The typical price is written exactly as in ta_TYPPRICE.c so that the
        * two agree bit for bit and this stays a true composite of it.
        */
@@ -525,15 +528,20 @@
        * needs it -- the streaming Update/Peek entry points reject a non-finite
        * bar with TA_BAD_PARAM before it reaches any accumulator.
        */
+      /* The product is kept in its own statement so no compiler may contract it
+       * into an FMA. Contracting here would make the C output disagree with the
+       * Rust, Java and C# backends under the cross-language bitwise gate. Same
+       * reason as in ta_codegen/input/vwma/vwma.c.
+       *
+       * Computed before the guard rather than inside it, and unconditionally,
+       * so it stays a per-bar temporary. Assigned only on the taken arm it
+       * would instead be live across bars, and the streaming tier would carry
+       * it as a fourth state field in every handle -- 8 bytes to hold a value
+       * no later bar reads. The multiply on a skipped bar is discarded.
+       */
+      tempReal = typPrice * volume;
       if( (Double.isFinite(typPrice)) && (Double.isFinite(volume)) ) {
-         /* The product is kept in its own statement so no compiler may
-          * contract it into an FMA. Contracting here would make the C output
-          * disagree with the Rust, Java and C# backends under the
-          * cross-language bitwise gate. Same reason as in
-          * ta_codegen/input/vwma/vwma.c.
-          */
-         sp.tempReal = typPrice * volume;
-         sp.sumPV += sp.tempReal;
+         sp.sumPV += tempReal;
          sp.sumV += volume;
       }
       /* Bars that traded nothing carry no weight, so a zero-volume bar in
@@ -641,14 +649,19 @@
           * needs it -- the streaming Update/Peek entry points reject a non-finite
           * bar with TA_BAD_PARAM before it reaches any accumulator.
           */
+         /* The product is kept in its own statement so no compiler may contract it
+          * into an FMA. Contracting here would make the C output disagree with the
+          * Rust, Java and C# backends under the cross-language bitwise gate. Same
+          * reason as in ta_codegen/input/vwma/vwma.c.
+          *
+          * Computed before the guard rather than inside it, and unconditionally,
+          * so it stays a per-bar temporary. Assigned only on the taken arm it
+          * would instead be live across bars, and the streaming tier would carry
+          * it as a fourth state field in every handle -- 8 bytes to hold a value
+          * no later bar reads. The multiply on a skipped bar is discarded.
+          */
+         tempReal = typPrice * volume;
          if( (Double.isFinite(typPrice)) && (Double.isFinite(volume)) ) {
-            /* The product is kept in its own statement so no compiler may
-             * contract it into an FMA. Contracting here would make the C output
-             * disagree with the Rust, Java and C# backends under the
-             * cross-language bitwise gate. Same reason as in
-             * ta_codegen/input/vwma/vwma.c.
-             */
-            tempReal = typPrice * volume;
             sumPV += tempReal;
             sumV += volume;
          }
@@ -681,7 +694,6 @@
       /* Capture the live batch state into the handle. */
       sp.sumPV = sumPV;
       sp.sumV = sumV;
-      sp.tempReal = tempReal;
       sp.vwap = vwap;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;

@@ -4939,7 +4939,6 @@ static int sv_steq_TA_VWAP( const struct TA_VWAP_Stream *a, const struct TA_VWAP
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( sv_xtier_ne(a->sumPV, b->sumPV, z) ) { *w = "sumPV"; return 1; }
    if( sv_xtier_ne(a->sumV, b->sumV, z) ) { *w = "sumV"; return 1; }
-   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
    if( sv_xtier_ne(a->vwap, b->vwap, z) ) { *w = "vwap"; return 1; }
    return 0;
 }

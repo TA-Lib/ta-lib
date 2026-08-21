@@ -98,15 +98,21 @@ TA_RetCode vwap(int startIdx, int endIdx,
        * needs it -- the streaming Update/Peek entry points reject a non-finite
        * bar with TA_BAD_PARAM before it reaches any accumulator.
        */
+      /* The product is kept in its own statement so no compiler may contract it
+       * into an FMA. Contracting here would make the C output disagree with the
+       * Rust, Java and C# backends under the cross-language bitwise gate. Same
+       * reason as in ta_codegen/input/vwma/vwma.c.
+       *
+       * Computed before the guard rather than inside it, and unconditionally,
+       * so it stays a per-bar temporary. Assigned only on the taken arm it
+       * would instead be live across bars, and the streaming tier would carry
+       * it as a fourth state field in every handle -- 8 bytes to hold a value
+       * no later bar reads. The multiply on a skipped bar is discarded.
+       */
+      tempReal = typPrice * volume;
+
       if( IS_FINITE(typPrice) && IS_FINITE(volume) )
       {
-         /* The product is kept in its own statement so no compiler may
-          * contract it into an FMA. Contracting here would make the C output
-          * disagree with the Rust, Java and C# backends under the
-          * cross-language bitwise gate. Same reason as in
-          * ta_codegen/input/vwma/vwma.c.
-          */
-         tempReal = typPrice * volume;
          sumPV += tempReal;
          sumV  += volume;
       }

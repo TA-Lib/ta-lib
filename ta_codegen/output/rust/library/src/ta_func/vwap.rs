@@ -168,13 +168,18 @@ impl Core {
             // and no value the function has ever produced moves. Only the batch path
             // needs it -- the streaming Update/Peek entry points reject a non-finite
             // bar with TA_BAD_PARAM before it reaches any accumulator.
+            // The product is kept in its own statement so no compiler may contract it
+            // into an FMA. Contracting here would make the C output disagree with the
+            // Rust, Java and C# backends under the cross-language bitwise gate. Same
+            // reason as in ta_codegen/input/vwma/vwma.c.
+            //
+            // Computed before the guard rather than inside it, and unconditionally,
+            // so it stays a per-bar temporary. Assigned only on the taken arm it
+            // would instead be live across bars, and the streaming tier would carry
+            // it as a fourth state field in every handle -- 8 bytes to hold a value
+            // no later bar reads. The multiply on a skipped bar is discarded.
+            tempReal = typPrice * volume;
             if (typPrice).is_finite() && (volume).is_finite() {
-                // The product is kept in its own statement so no compiler may
-                // contract it into an FMA. Contracting here would make the C output
-                // disagree with the Rust, Java and C# backends under the
-                // cross-language bitwise gate. Same reason as in
-                // ta_codegen/input/vwma/vwma.c.
-                tempReal = typPrice * volume;
                 sumPV += tempReal;
                 sumV += volume;
             }
@@ -376,7 +381,6 @@ impl VWAP_Stream {
 struct VWAP_StreamState {
     sumPV: f64,
     sumV: f64,
-    tempReal: f64,
     vwap: f64,
 }
 
@@ -387,7 +391,6 @@ impl VWAP_StreamState {
     fn restore_from(&mut self, src: &Self) {
         self.sumPV = src.sumPV;
         self.sumV = src.sumV;
-        self.tempReal = src.tempReal;
         self.vwap = src.vwap;
     }
 }
@@ -402,6 +405,7 @@ impl Core {
     fn VWAP_step_internal(&self, sp: &mut VWAP_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut typPrice: f64 = 0.0_f64;
         let mut volume: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
         // The typical price is written exactly as in ta_TYPPRICE.c so that the
         // two agree bit for bit and this stays a true composite of it.
         typPrice = (inHigh + inLow + inClose) / 3.0;
@@ -446,14 +450,19 @@ impl Core {
         // and no value the function has ever produced moves. Only the batch path
         // needs it -- the streaming Update/Peek entry points reject a non-finite
         // bar with TA_BAD_PARAM before it reaches any accumulator.
+        // The product is kept in its own statement so no compiler may contract it
+        // into an FMA. Contracting here would make the C output disagree with the
+        // Rust, Java and C# backends under the cross-language bitwise gate. Same
+        // reason as in ta_codegen/input/vwma/vwma.c.
+        //
+        // Computed before the guard rather than inside it, and unconditionally,
+        // so it stays a per-bar temporary. Assigned only on the taken arm it
+        // would instead be live across bars, and the streaming tier would carry
+        // it as a fourth state field in every handle -- 8 bytes to hold a value
+        // no later bar reads. The multiply on a skipped bar is discarded.
+        tempReal = typPrice * volume;
         if (typPrice).is_finite() && (volume).is_finite() {
-            // The product is kept in its own statement so no compiler may
-            // contract it into an FMA. Contracting here would make the C output
-            // disagree with the Rust, Java and C# backends under the
-            // cross-language bitwise gate. Same reason as in
-            // ta_codegen/input/vwma/vwma.c.
-            sp.tempReal = typPrice * volume;
-            sp.sumPV += sp.tempReal;
+            sp.sumPV += tempReal;
             sp.sumV += volume;
         }
         // Bars that traded nothing carry no weight, so a zero-volume bar in
@@ -564,13 +573,18 @@ impl Core {
             // and no value the function has ever produced moves. Only the batch path
             // needs it -- the streaming Update/Peek entry points reject a non-finite
             // bar with TA_BAD_PARAM before it reaches any accumulator.
+            // The product is kept in its own statement so no compiler may contract it
+            // into an FMA. Contracting here would make the C output disagree with the
+            // Rust, Java and C# backends under the cross-language bitwise gate. Same
+            // reason as in ta_codegen/input/vwma/vwma.c.
+            //
+            // Computed before the guard rather than inside it, and unconditionally,
+            // so it stays a per-bar temporary. Assigned only on the taken arm it
+            // would instead be live across bars, and the streaming tier would carry
+            // it as a fourth state field in every handle -- 8 bytes to hold a value
+            // no later bar reads. The multiply on a skipped bar is discarded.
+            tempReal = typPrice * volume;
             if (typPrice).is_finite() && (volume).is_finite() {
-                // The product is kept in its own statement so no compiler may
-                // contract it into an FMA. Contracting here would make the C output
-                // disagree with the Rust, Java and C# backends under the
-                // cross-language bitwise gate. Same reason as in
-                // ta_codegen/input/vwma/vwma.c.
-                tempReal = typPrice * volume;
                 sumPV += tempReal;
                 sumV += volume;
             }
@@ -605,7 +619,6 @@ impl Core {
         let state = VWAP_StreamState {
             sumPV,
             sumV,
-            tempReal,
             vwap,
         };
         Ok(VWAP_Stream { core: self.clone(), state })
