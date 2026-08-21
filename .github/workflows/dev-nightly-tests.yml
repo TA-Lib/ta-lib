@@ -886,3 +886,21 @@ jobs:
             echo "::error::ta_codegen output is out of date. Run 'scripts/build.py generate' and commit the result — see the log above for which files drifted."
             exit 1
           fi
+
+      # Static: it reads the generated `src/ta_func/ta_CDL*.c` as TEXT, so it
+      # builds and runs nothing. It sits here rather than on the PR because the
+      # PR gate is deliberately a fast, lightweight one; systematic checks live
+      # in this run. Sub-second, so it is free next to the regenerate above.
+      #
+      # Nothing else in the tree can see what it checks: a candlestick's only
+      # observable is a 3-valued integer, so a trailing total accumulated over
+      # the wrong bars changes the output only where a comparison happens to
+      # straddle a threshold — on #229's fold, a one-bar rotation moved 3 of 14
+      # functions and left 11 green in every language (#240).
+      - name: Candle trailing-total wiring (read AND write side)
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py check-candle-windows; then
+            echo "::error::A candlestick's trailing total is wired to the wrong bar — see the log above."
+            exit 1
+          fi
