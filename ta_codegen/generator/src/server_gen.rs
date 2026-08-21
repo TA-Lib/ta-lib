@@ -10,7 +10,7 @@ use crate::backends::c::c_predicate_expr;
 use crate::backends::java::java_predicate_expr;
 use crate::backends::rust_lang::rust_predicate_expr;
 use crate::ir::{EnumDef, FuncDef, Input, Output, ParamType};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::Path;
 
 // The three boolean near-zero builtins exposed by the `eval_predicate` JSON-RPC
@@ -1110,6 +1110,570 @@ fn c_canary_check(fbuf: &[String], out_is_int: &[bool]) -> String {
     s
 }
 
+// ---------------------------------------------------------------------------
+// State-equivalence comparators (issue #240)
+// ---------------------------------------------------------------------------
+//
+// A candlestick's only observable is a 3-valued integer, so an arithmetic error
+// inside a `<Setting>PeriodTotal` stays invisible until it crosses a decision
+// threshold. Measured on the #229 window fold: a permanent one-bar rotation of a
+// folded ring read moved the OUTPUT of 3 of 14 functions and left 11 green in
+// every language. It moves the STATE of all 14, on the first bar it is read.
+//
+// So compare state, not output: the handle after `Open(P)` plus `n - P` updates
+// must equal the handle after `Open(n)`, bit for bit. That holds by
+// construction — `Update` is the transcribed batch loop body, so both paths run
+// the identical operation sequence over the identical bars, and the ring cursor
+// is `historyLen % cap` on one side against the same number of `+1`s on the
+// other. The property is independent of firing density and of decision margin,
+// which is exactly what the output comparison is not.
+//
+// The comparator is derived from `c_stream::state_struct_text` — the same text
+// the shipped struct is emitted from — so it cannot fall behind a new field, and
+// a pointer field it cannot associate with a length is a hard generation
+// failure, never a silent skip.
+
+/// How the state comparator treats one pointer field of a stream struct.
+enum SvPtr {
+    /// A Peek scratch mirror: written only inside `Peek`, never part of the
+    /// state two opens must agree on. (Also never fully initialised — Peek
+    /// copies into it — so reading it would compare malloc leftovers.)
+    Mirror,
+    /// `count` elements. With `phase`, the buffer is a ring and the compare is
+    /// LOGICAL: slot `k` of one handle is `(phase + k) % count`, so two handles
+    /// holding the same bars at different rotations compare equal.
+    ///
+    /// They legitimately do. The trailing-ring tiers capture in two different
+    /// layouts: the absolute-mod one (`back > 0`) seeds `ringPos = historyLen %
+    /// cap`, which the updates reproduce exactly, but the plain oldest-slot one
+    /// re-bases every open to phase 0 (`memcpy` of the last `cap` bars,
+    /// `ringPos = 0`) while an update just advances the cursor. Nothing can
+    /// observe the difference — every read is relative to `ringPos` — so
+    /// comparing raw slots would fail 90 of 175 functions on the rotation
+    /// alone. Rotating by each handle's own phase still catches a cursor that
+    /// advances wrongly: that misaligns the CONTENT, which is what is compared.
+    Slots { count: String, is_int: bool, phase: Option<String> },
+    /// The extrema automaton's absolute-index buffer. Only the `cap` bars
+    /// `[trailing-1, trailing-1+cap)` are ever written, at `bar & mask`; the
+    /// allocation is the next power of two, so the slack above the window holds
+    /// whatever malloc returned and must not be read. (`trailing - 1`, not
+    /// `trailing`: `xCap` is `today - trailing + 1` captured with `today`
+    /// already advanced past the last bar, so the filled range is
+    /// `[historyLen - xCap, historyLen)`. `+ phys` keeps the index
+    /// non-negative when `trailing` is 0.)
+    Extrema { cap: String, trailing: String, mask: String, phys: String },
+    /// A typed sub-stream handle: recurse into the callee's comparator.
+    Sub { callee: String },
+    /// The dispatch tier's untyped handle, tagged by an enum param.
+    DispatchSub { tag: String, arms: Vec<(String, String)> },
+    /// MAVP's bank of `count` sub-handles.
+    Bank { count: String, callee: String },
+}
+
+/// One parsed field declaration from a `struct TA_<N>_Stream` body.
+struct SvDecl {
+    name: String,
+    /// `*` count on the declarator (0 for a scalar).
+    ptr: usize,
+    /// Array extent; 1 for a plain scalar.
+    len: usize,
+    is_int: bool,
+}
+
+/// Parse the emitted struct body into field declarations.
+///
+/// Every line is the opening/closing brace, a comment, or
+/// `   <type> [*...]<name>[[N]];`. Anything else is a tier change this code has
+/// not been taught: panic rather than silently drop a field from the compare.
+fn sv_parse_state_struct(name: &str, text: &str) -> Vec<SvDecl> {
+    let mut out = Vec::new();
+    let mut in_comment = false;
+    for raw in text.lines() {
+        let line = raw.trim();
+        // The opening line, not every line starting with `struct` — MAVP's bank
+        // is declared `struct TA_MA_Stream **bank;` and skipping it here left
+        // the bank uncompared (caught by the claimed-set assert below).
+        if line.is_empty() || line.ends_with('{') || line == "};" {
+            continue;
+        }
+        if in_comment {
+            in_comment = !line.contains("*/");
+            continue;
+        }
+        if line.starts_with("/*") {
+            in_comment = !line.contains("*/");
+            continue;
+        }
+        // A trailing comment on the declaration line (`int unused; /* ... */`).
+        let line = match line.find("/*") {
+            Some(at) => line[..at].trim_end(),
+            None => line,
+        };
+        let decl = line
+            .strip_suffix(';')
+            .unwrap_or_else(|| panic!("{name}: unparsable stream state line `{line}`"));
+        let mut tokens: Vec<&str> = decl.split_whitespace().collect();
+        let mut declarator = tokens.pop().unwrap_or_default().to_string();
+        let ptr = declarator.chars().take_while(|c| *c == '*').count();
+        declarator = declarator.trim_start_matches('*').to_string();
+        let mut len = 1usize;
+        if let Some(open) = declarator.find('[') {
+            let close = declarator
+                .find(']')
+                .unwrap_or_else(|| panic!("{name}: unparsable declarator `{declarator}`"));
+            len = declarator[open + 1..close]
+                .parse()
+                .unwrap_or_else(|_| panic!("{name}: non-literal extent in `{declarator}`"));
+            declarator.truncate(open);
+        }
+        let ty = tokens.join(" ");
+        assert!(
+            !declarator.is_empty() && !ty.is_empty(),
+            "{name}: unparsable stream state line `{line}`"
+        );
+        // `double` and `int` are the only scalar storages the tiers emit; an
+        // enum param (TA_MAType) compares like an int.
+        out.push(SvDecl { name: declarator, ptr, len, is_int: ty != "double" });
+    }
+    out
+}
+
+/// Pointer roles contributed by one loop model's buffers.
+fn sv_model_ptrs(
+    model: &crate::streaming::StreamModel,
+    roles: &mut BTreeMap<String, SvPtr>,
+    phases: &mut BTreeSet<String>,
+) {
+    for r in model.rings() {
+        let cap = format!("ringCap_{}", r.var);
+        let pos = format!("ringPos_{}", r.var);
+        phases.insert(pos.clone());
+        for arr in &r.arrays {
+            roles.insert(
+                format!("ring_{}_{arr}", r.var),
+                SvPtr::Slots { count: cap.clone(), is_int: false, phase: Some(pos.clone()) },
+            );
+            roles.insert(format!("ringMirror_{}_{arr}", r.var), SvPtr::Mirror);
+        }
+    }
+    for w in model.windows() {
+        let cap = format!("winCap_{}", w.var);
+        let pos = format!("winPos_{}", w.var);
+        phases.insert(pos.clone());
+        for arr in &w.arrays {
+            roles.insert(
+                format!("win_{}_{arr}", w.var),
+                SvPtr::Slots { count: cap.clone(), is_int: false, phase: Some(pos.clone()) },
+            );
+            roles.insert(format!("winMirror_{}_{arr}", w.var), SvPtr::Mirror);
+        }
+    }
+    for c in model.circs() {
+        // No phase: a CIRCBUF is captured LIVE from the batch — contents AND
+        // rotation — so both opens agree on the raw slots, and the rotation
+        // index is an ordinary state scalar that is compared as one.
+        let size = format!("cbSize_{}", c.id);
+        for (storage, ty) in crate::streaming::circ_storages(c) {
+            let is_int = matches!(ty, crate::ir::VarType::Integer);
+            roles.insert(
+                format!("cb_{storage}"),
+                SvPtr::Slots { count: size.clone(), is_int, phase: None },
+            );
+            roles.insert(format!("cbMirror_{storage}"), SvPtr::Mirror);
+        }
+    }
+    if let Some(ex) = model.extrema() {
+        for arr in &ex.arrays {
+            roles.insert(
+                format!("x_{arr}"),
+                SvPtr::Extrema {
+                    cap: "xCap".to_string(),
+                    trailing: ex.trailing.clone(),
+                    mask: "xMask".to_string(),
+                    phys: "xPhys".to_string(),
+                },
+            );
+            roles.insert(format!("xMirror_{arr}"), SvPtr::Mirror);
+        }
+    }
+}
+
+/// Pointer roles for one streaming function, keyed by field name.
+fn sv_ptr_roles(
+    func: &FuncDef,
+    funcs: &[FuncDef],
+) -> (BTreeMap<String, SvPtr>, BTreeSet<String>) {
+    use crate::streaming::{FuncsLookup, StreamPlan};
+    let resolved = func.resolved_for(crate::ir::Lang::C);
+    let plan = crate::streaming::validate_streamable(&resolved, &FuncsLookup(funcs))
+        .unwrap_or_else(|e| panic!("streaming gate: {e}"));
+    let mut roles: BTreeMap<String, SvPtr> = BTreeMap::new();
+    let mut phases: BTreeSet<String> = BTreeSet::new();
+    match &plan {
+        StreamPlan::Loop(model) => sv_model_ptrs(model, &mut roles, &mut phases),
+        StreamPlan::DualMode(dmp) => {
+            sv_model_ptrs(&dmp.mode_a, &mut roles, &mut phases);
+            sv_model_ptrs(&dmp.mode_b, &mut roles, &mut phases);
+        }
+        StreamPlan::Composed(cp) => {
+            if let Some(model) = &cp.producer {
+                sv_model_ptrs(model, &mut roles, &mut phases);
+            }
+            for (i, sub) in cp.subs.iter().enumerate() {
+                roles.insert(format!("sub{i}"), SvPtr::Sub { callee: sub.callee.to_uppercase() });
+            }
+            for ring in &cp.sub_lag_rings {
+                let s = &ring.series;
+                phases.insert(format!("lagRingPos_{s}"));
+                roles.insert(
+                    format!("lagRing_{s}"),
+                    SvPtr::Slots {
+                        count: format!("lagRingCap_{s}"),
+                        is_int: false,
+                        phase: Some(format!("lagRingPos_{s}")),
+                    },
+                );
+                roles.insert(format!("lagRingMirror_{s}"), SvPtr::Mirror);
+            }
+        }
+        StreamPlan::Dispatch(dp) => {
+            roles.insert(
+                "sub".to_string(),
+                SvPtr::DispatchSub {
+                    tag: dp.param.clone(),
+                    arms: dp
+                        .arms
+                        .iter()
+                        .filter(|a| a.supported && !a.callee.is_empty())
+                        .map(|a| (a.label.clone(), a.callee.to_uppercase()))
+                        .collect(),
+                },
+            );
+        }
+        StreamPlan::PeriodBank(pbp) => {
+            roles.insert(
+                "bank".to_string(),
+                SvPtr::Bank { count: "nBank".to_string(), callee: pbp.callee.to_uppercase() },
+            );
+            roles.insert(
+                "scratch".to_string(),
+                SvPtr::Slots { count: "nBank".to_string(), is_int: false, phase: None },
+            );
+        }
+    }
+    (roles, phases)
+}
+
+/// One function's comparator body plus the callees it recurses into.
+struct SvComparator {
+    body: String,
+    deps: Vec<String>,
+}
+
+/// Bitwise compare of one scalar pair, as a C condition.
+fn sv_ne(lhs: &str, rhs: &str, is_int: bool) -> String {
+    if is_int {
+        format!("{lhs} != {rhs}")
+    } else {
+        // Same rule the batch-vs-stream value legs use: differing bits that are
+        // numerically equal can only be +0.0 vs -0.0, which max/min leave
+        // unspecified. Counted as benign, never a mismatch (#147).
+        format!("sv_xtier_ne({lhs}, {rhs}, z)")
+    }
+}
+
+/// Build the comparator for one streaming function.
+#[allow(clippy::too_many_lines)]
+fn sv_comparator(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> SvComparator {
+    use crate::backends::c::render_c_switch_label;
+    use crate::backends::c_stream;
+    use crate::streaming::FuncsLookup;
+
+    let name = &func.name;
+    let text = c_stream::state_struct_text(func, &FuncsLookup(funcs));
+    let decls = sv_parse_state_struct(name, &text);
+    let (roles, phases) = sv_ptr_roles(func, funcs);
+    let mut claimed: BTreeSet<&str> = BTreeSet::new();
+    let mut body = String::new();
+    let mut deps: Vec<String> = Vec::new();
+
+    for d in &decls {
+        let n = &d.name;
+        if d.ptr == 0 {
+            // A ring cursor is the buffer's phase, not state in its own right:
+            // the two opens seed it differently by design and the rotated
+            // buffer compare below is what actually pins the ring.
+            if phases.contains(n.as_str()) {
+                continue;
+            }
+            if d.len > 1 {
+                let _ = writeln!(
+                    body,
+                    "   for( k = 0; k < {}; k++ ) if( {} ) {{ *w = \"{n}\"; return 1; }}",
+                    d.len,
+                    sv_ne(&format!("a->{n}[k]"), &format!("b->{n}[k]"), d.is_int)
+                );
+            } else {
+                let _ = writeln!(
+                    body,
+                    "   if( {} ) {{ *w = \"{n}\"; return 1; }}",
+                    sv_ne(&format!("a->{n}"), &format!("b->{n}"), d.is_int)
+                );
+            }
+            continue;
+        }
+        let role = roles.get(n.as_str()).unwrap_or_else(|| {
+            panic!(
+                "TA_{name}: stream state pointer `{n}` has no state-equivalence rule. \
+                 A new heap field must say how many elements it carries, or the #240 \
+                 state leg would silently stop comparing it."
+            )
+        });
+        claimed.insert(n.as_str());
+        let guard = format!(
+            "   if( (a->{n} == NULL) != (b->{n} == NULL) ) {{ *w = \"{n}\"; return 1; }}\n"
+        );
+        match role {
+            SvPtr::Mirror => {}
+            SvPtr::Slots { count, is_int, phase } => {
+                body.push_str(&guard);
+                match phase {
+                    None => {
+                        let _ = writeln!(
+                            body,
+                            "   if( a->{n} ) for( k = 0; k < a->{count}; k++ ) if( {} ) {{ *w = \"{n}\"; return 1; }}",
+                            sv_ne(&format!("a->{n}[k]"), &format!("b->{n}[k]"), *is_int)
+                        );
+                    }
+                    Some(pos) => {
+                        let _ = writeln!(body, "   if( a->{n} ) for( k = 0; k < a->{count}; k++ )");
+                        let _ = writeln!(body, "   {{");
+                        let _ = writeln!(body, "      ia = (a->{pos} + k) % a->{count};");
+                        let _ = writeln!(body, "      ib = (b->{pos} + k) % b->{count};");
+                        let _ = writeln!(
+                            body,
+                            "      if( {} ) {{ *w = \"{n}\"; return 1; }}",
+                            sv_ne(&format!("a->{n}[ia]"), &format!("b->{n}[ib]"), *is_int)
+                        );
+                        let _ = writeln!(body, "   }}");
+                    }
+                }
+            }
+            SvPtr::Extrema { cap, trailing, mask, phys } => {
+                body.push_str(&guard);
+                let _ = writeln!(body, "   if( a->{n} ) for( k = 0; k < a->{cap}; k++ )");
+                let _ = writeln!(body, "   {{");
+                let _ = writeln!(body, "      ix = (a->{trailing} - 1 + a->{phys} + k) & a->{mask};");
+                let _ = writeln!(
+                    body,
+                    "      if( {} ) {{ *w = \"{n}\"; return 1; }}",
+                    sv_ne(&format!("a->{n}[ix]"), &format!("b->{n}[ix]"), false)
+                );
+                let _ = writeln!(body, "   }}");
+            }
+            SvPtr::Sub { callee } => {
+                deps.push(callee.clone());
+                body.push_str(&guard);
+                let _ = writeln!(
+                    body,
+                    "   if( a->{n} && sv_steq_TA_{callee}( a->{n}, b->{n}, w, z ) ) return 1;"
+                );
+            }
+            SvPtr::DispatchSub { tag, arms } => {
+                body.push_str(&guard);
+                let _ = writeln!(body, "   if( a->{n} )");
+                let _ = writeln!(body, "      switch( a->{tag} )");
+                let _ = writeln!(body, "      {{");
+                for (label, callee) in arms {
+                    deps.push(callee.clone());
+                    let case = render_c_switch_label(label, enums);
+                    let cty = format!("const struct TA_{callee}_Stream *");
+                    let _ = writeln!(body, "      case {case}:");
+                    let _ = writeln!(
+                        body,
+                        "         if( sv_steq_TA_{callee}( ({cty})a->{n}, ({cty})b->{n}, w, z ) ) return 1;"
+                    );
+                    let _ = writeln!(body, "         break;");
+                }
+                let _ = writeln!(body, "      default:");
+                let _ = writeln!(body, "         *w = \"{n}\"; return 1;");
+                let _ = writeln!(body, "      }}");
+            }
+            SvPtr::Bank { count, callee } => {
+                deps.push(callee.clone());
+                body.push_str(&guard);
+                let _ = writeln!(body, "   if( a->{n} ) for( k = 0; k < a->{count}; k++ )");
+                let _ = writeln!(body, "   {{");
+                let _ = writeln!(
+                    body,
+                    "      if( (a->{n}[k] == NULL) != (b->{n}[k] == NULL) ) {{ *w = \"{n}\"; return 1; }}"
+                );
+                let _ = writeln!(
+                    body,
+                    "      if( a->{n}[k] && sv_steq_TA_{callee}( a->{n}[k], b->{n}[k], w, z ) ) return 1;"
+                );
+                let _ = writeln!(body, "   }}");
+            }
+        }
+    }
+
+    // Every pointer role the model produced must have matched a declared field.
+    // The reverse direction (a declared pointer with no role) panics above; this
+    // catches a spec whose field name the struct emitter spells differently,
+    // which would leave the buffer uncompared without either side noticing.
+    for key in roles.keys() {
+        assert!(
+            claimed.contains(key.as_str()),
+            "TA_{name}: state-equivalence rule for `{key}` matches no field in \
+             `struct TA_{name}_Stream` — the rule and the struct emitter have drifted."
+        );
+    }
+
+    SvComparator { body, deps }
+}
+
+/// Every state-equivalence comparator, plus the names of the functions that
+/// have one.
+///
+/// A comparator that recurses into a sub-handle needs its callee's comparator,
+/// so the set closes under a fixpoint: drop any function whose dependency was
+/// dropped, until nothing moves. The C server's leg is emitted only for what
+/// survives, and `ta_regtest` ratchets the surviving count against the number
+/// of streaming functions, so a shrinking set fails rather than going quiet.
+fn generate_c_state_eq(
+    funcs: &[FuncDef],
+    enums: &HashMap<String, EnumDef>,
+) -> (String, BTreeSet<String>) {
+    let mut comps: BTreeMap<String, SvComparator> = BTreeMap::new();
+    for f in funcs.iter().filter(|f| f.streaming) {
+        comps.insert(f.name.clone(), sv_comparator(f, funcs, enums));
+    }
+    let mut have: BTreeSet<String> = comps.keys().cloned().collect();
+    loop {
+        let dropped: Vec<String> = have
+            .iter()
+            .filter(|n| comps[*n].deps.iter().any(|d| !have.contains(d)))
+            .cloned()
+            .collect();
+        if dropped.is_empty() {
+            break;
+        }
+        for d in dropped {
+            have.remove(&d);
+        }
+    }
+
+    let mut s = String::new();
+    s.push_str("/* ---- state-equivalence comparators (issue #240) ----\n");
+    s.push_str(" * `Open(P)` + (n-P) updates must leave the handle bit-identical to\n");
+    s.push_str(" * `Open(n)`. Compares every carried field; skips the Peek scratch mirrors\n");
+    s.push_str(" * (written only inside Peek) and, for the extrema automaton, the slack\n");
+    s.push_str(" * above the live window (never written, so it holds malloc leftovers).\n");
+    s.push_str(" * Returns 1 and names the field on the first difference. */\n");
+    for n in &have {
+        let _ = writeln!(
+            s,
+            "static int sv_steq_TA_{n}( const struct TA_{n}_Stream *a, const struct TA_{n}_Stream *b, const char **w, int *z );"
+        );
+    }
+    s.push('\n');
+    for n in &have {
+        let _ = writeln!(
+            s,
+            "static int sv_steq_TA_{n}( const struct TA_{n}_Stream *a, const struct TA_{n}_Stream *b, const char **w, int *z )\n{{"
+        );
+        s.push_str("   int k = 0, ix = 0, ia = 0, ib = 0;\n");
+        s.push_str("   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;\n");
+        s.push_str(&comps[n].body);
+        s.push_str("   return 0;\n}\n\n");
+    }
+    (s, have)
+}
+
+// --- the state-equivalence leg's five emission points (issue #240) ----------
+//
+// Each takes the `steq` flag and returns early rather than being called under
+// an `if`: `generate_c_stream_verify` is already at clippy's cognitive-
+// complexity ceiling, and five more branches in it push it over.
+
+/// The leg's per-function locals: one reference handle over the whole history,
+/// plus the verdict it produces. Reopened per candle round, because the
+/// settings a round installs are part of what the state encodes.
+fn emit_sv_state_decls(s: &mut String, name: &str, steq: bool) {
+    if !steq {
+        return;
+    }
+    s.push_str("        int stateChecked = 0, stateOk = 1, stateLegs = 0;\n");
+    s.push_str("        const char *stateWhat = \"-\";\n");
+    let _ = writeln!(s, "        TA_{name}_Stream *stEq = NULL;");
+}
+
+/// `Open(svN)` -- the handle every prefix leg is compared against.
+fn emit_sv_state_open(
+    s: &mut String,
+    name: &str,
+    steq: bool,
+    out_is_int: &[bool],
+    in_args: &str,
+    opt_args: &str,
+) {
+    if !steq {
+        return;
+    }
+    let eouts: String = out_is_int
+        .iter()
+        .enumerate()
+        .map(|(i, is_int)| if *is_int { format!("int e{i} = 0;") } else { format!("double e{i} = 0.0;") })
+        .collect::<Vec<_>>()
+        .join(" ");
+    let eaddrs: String = (0..out_is_int.len())
+        .map(|i| format!("&e{i}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    s.push_str("        {\n");
+    let _ = writeln!(s, "            {eouts}");
+    let _ = writeln!(
+        s,
+        "            if( TA_{name}_Open( &stEq, {in_args}svN, {opt_args}{eaddrs} ) != TA_SUCCESS ) stEq = NULL;"
+    );
+    s.push_str("        }\n");
+}
+
+/// The compare itself: the two handles have now consumed the same `svN` bars by
+/// different routes. Only when the value leg passed -- its loop breaks early on
+/// a mismatch, so the handle would be short of the reference.
+fn emit_sv_state_compare(s: &mut String, name: &str, steq: bool) {
+    if !steq {
+        return;
+    }
+    s.push_str("            if( ok && st && stEq )\n");
+    s.push_str("            {\n");
+    s.push_str("                stateChecked = 1; stateLegs++;\n");
+    let _ = writeln!(
+        s,
+        "                if( sv_steq_TA_{name}( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;"
+    );
+    s.push_str("            }\n");
+}
+
+fn emit_sv_state_close(s: &mut String, name: &str, steq: bool) {
+    if !steq {
+        return;
+    }
+    let _ = writeln!(s, "        if( stEq ) {{ TA_{name}_Close(stEq); stEq = NULL; }}");
+}
+
+/// Folded into `ok` as a safety net, exactly like the fill leg: the driver
+/// reads `state_ok` for the specific message, and a run whose driver check ever
+/// regresses still fails on the generic flag.
+fn emit_sv_state_report(s: &mut String, steq: bool) {
+    if !steq {
+        return;
+    }
+    s.push_str("        if( stateChecked && !stateOk ) allOk = 0;\n");
+    s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"state_checked\\\":%d,\\\"state_legs\\\":%d,\\\"state_ok\\\":%d,\\\"state_bad\\\":\\\"%s\\\"\", stateChecked, stateLegs, stateOk, stateWhat);\n");
+}
+
 #[allow(clippy::too_many_lines)]
 fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
@@ -1157,6 +1721,9 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("                              mode == 1 ? 0 : (mode == 0 ? TA_Globals->candleSettings[i].avgPeriod + 3 : TA_Globals->candleSettings[i].avgPeriod),\n");
     s.push_str("                              TA_Globals->candleSettings[i].factor );\n");
     s.push_str("}\n\n");
+    // State-equivalence comparators, emitted before the handler that calls them.
+    let (steq_code, steq_have) = generate_c_state_eq(funcs, enums);
+    s.push_str(&steq_code);
     s.push_str("static void handle_stream_verify(const char *json, char *resp, int resp_size) {\n");
     s.push_str("    int fnLen = 0;\n");
     s.push_str("    const char *fn = json_find_string(json, \"funcName\", &fnLen);\n");
@@ -1228,9 +1795,11 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_dispatch_precheck(&mut s, func, funcs, &input_arrays, n_outs, name);
 
         let candle = func.flags.iter().any(|f| f == "candlestick");
+        let steq = steq_have.contains(name);
         s.push_str("        TA_RetCode rc;\n");
         s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;\n");
         s.push_str("        int fillOk = 1, fillChecked = 0;\n");
+        emit_sv_state_decls(&mut s, name, steq);
         // Benign +/-0 cases across every cross-tier compare in this request.
         s.push_str("        int svZsign = 0;\n");
         s.push_str("        int pref[4]; int pc[4];\n");
@@ -1469,6 +2038,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;\n");
         s.push_str("            if( !seen ) pref[npref++] = P;\n");
         s.push_str("        }\n");
+        emit_sv_state_open(&mut s, name, steq, &out_is_int, &in_args, &opt_args);
         if !candle {
             s.push_str("        pos = json_appendf(resp, resp_size, 0, \"{\\\"retCode\\\":0,\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d\", svBeg, svNb, npref);\n");
         }
@@ -1528,6 +2098,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         ));
         emit_sv_compare(&mut s, &out_is_int, &bbuf, "                ", "t - svBeg", "t", "");
         s.push_str("            }\n");
+        emit_sv_state_compare(&mut s, name, steq);
         s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
         if candle {
             s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
@@ -1541,6 +2112,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("            if( !pkOk ) peekAll = 0;\n");
             s.push_str("        }\n");
         }
+        emit_sv_state_close(&mut s, name, steq);
         if candle {
             s.push_str("        }\n");
             s.push_str("        if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
@@ -1589,6 +2161,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // explicitly for a clearer message), so a fill regression fails the run
         // even if the driver's fill check ever regresses.
         s.push_str("        if( fillChecked && !fillOk ) allOk = 0;\n");
+        emit_sv_state_report(&mut s, steq);
         if candle {
             s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);\n");
         } else {

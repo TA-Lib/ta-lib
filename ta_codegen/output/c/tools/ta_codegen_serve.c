@@ -476,6 +476,4563 @@ static void sv_candle_avg(int mode) {
                               TA_Globals->candleSettings[i].factor );
 }
 
+/* ---- state-equivalence comparators (issue #240) ----
+ * `Open(P)` + (n-P) updates must leave the handle bit-identical to
+ * `Open(n)`. Compares every carried field; skips the Peek scratch mirrors
+ * (written only inside Peek) and, for the extrema automaton, the slack
+ * above the live window (never written, so it holds malloc leftovers).
+ * Returns 1 and names the field on the first difference. */
+static int sv_steq_TA_AC( const struct TA_AC_Stream *a, const struct TA_AC_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ACCBANDS( const struct TA_ACCBANDS_Stream *a, const struct TA_ACCBANDS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ACOS( const struct TA_ACOS_Stream *a, const struct TA_ACOS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_AD( const struct TA_AD_Stream *a, const struct TA_AD_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ADD( const struct TA_ADD_Stream *a, const struct TA_ADD_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ADOSC( const struct TA_ADOSC_Stream *a, const struct TA_ADOSC_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ADX( const struct TA_ADX_Stream *a, const struct TA_ADX_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ADXR( const struct TA_ADXR_Stream *a, const struct TA_ADXR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_AO( const struct TA_AO_Stream *a, const struct TA_AO_Stream *b, const char **w, int *z );
+static int sv_steq_TA_APO( const struct TA_APO_Stream *a, const struct TA_APO_Stream *b, const char **w, int *z );
+static int sv_steq_TA_AROON( const struct TA_AROON_Stream *a, const struct TA_AROON_Stream *b, const char **w, int *z );
+static int sv_steq_TA_AROONOSC( const struct TA_AROONOSC_Stream *a, const struct TA_AROONOSC_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ASIN( const struct TA_ASIN_Stream *a, const struct TA_ASIN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ATAN( const struct TA_ATAN_Stream *a, const struct TA_ATAN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ATR( const struct TA_ATR_Stream *a, const struct TA_ATR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_AVGDEV( const struct TA_AVGDEV_Stream *a, const struct TA_AVGDEV_Stream *b, const char **w, int *z );
+static int sv_steq_TA_AVGPRICE( const struct TA_AVGPRICE_Stream *a, const struct TA_AVGPRICE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_BBANDS( const struct TA_BBANDS_Stream *a, const struct TA_BBANDS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_BETA( const struct TA_BETA_Stream *a, const struct TA_BETA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_BOP( const struct TA_BOP_Stream *a, const struct TA_BOP_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CCI( const struct TA_CCI_Stream *a, const struct TA_CCI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDL2CROWS( const struct TA_CDL2CROWS_Stream *a, const struct TA_CDL2CROWS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDL3BLACKCROWS( const struct TA_CDL3BLACKCROWS_Stream *a, const struct TA_CDL3BLACKCROWS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDL3INSIDE( const struct TA_CDL3INSIDE_Stream *a, const struct TA_CDL3INSIDE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDL3LINESTRIKE( const struct TA_CDL3LINESTRIKE_Stream *a, const struct TA_CDL3LINESTRIKE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDL3OUTSIDE( const struct TA_CDL3OUTSIDE_Stream *a, const struct TA_CDL3OUTSIDE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDL3STARSINSOUTH( const struct TA_CDL3STARSINSOUTH_Stream *a, const struct TA_CDL3STARSINSOUTH_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDL3WHITESOLDIERS( const struct TA_CDL3WHITESOLDIERS_Stream *a, const struct TA_CDL3WHITESOLDIERS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLABANDONEDBABY( const struct TA_CDLABANDONEDBABY_Stream *a, const struct TA_CDLABANDONEDBABY_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLADVANCEBLOCK( const struct TA_CDLADVANCEBLOCK_Stream *a, const struct TA_CDLADVANCEBLOCK_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLBELTHOLD( const struct TA_CDLBELTHOLD_Stream *a, const struct TA_CDLBELTHOLD_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLBREAKAWAY( const struct TA_CDLBREAKAWAY_Stream *a, const struct TA_CDLBREAKAWAY_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLCLOSINGMARUBOZU( const struct TA_CDLCLOSINGMARUBOZU_Stream *a, const struct TA_CDLCLOSINGMARUBOZU_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLCONCEALBABYSWALL( const struct TA_CDLCONCEALBABYSWALL_Stream *a, const struct TA_CDLCONCEALBABYSWALL_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLCOUNTERATTACK( const struct TA_CDLCOUNTERATTACK_Stream *a, const struct TA_CDLCOUNTERATTACK_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLDARKCLOUDCOVER( const struct TA_CDLDARKCLOUDCOVER_Stream *a, const struct TA_CDLDARKCLOUDCOVER_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLDOJI( const struct TA_CDLDOJI_Stream *a, const struct TA_CDLDOJI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLDOJISTAR( const struct TA_CDLDOJISTAR_Stream *a, const struct TA_CDLDOJISTAR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLDRAGONFLYDOJI( const struct TA_CDLDRAGONFLYDOJI_Stream *a, const struct TA_CDLDRAGONFLYDOJI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLENGULFING( const struct TA_CDLENGULFING_Stream *a, const struct TA_CDLENGULFING_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLEVENINGDOJISTAR( const struct TA_CDLEVENINGDOJISTAR_Stream *a, const struct TA_CDLEVENINGDOJISTAR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLEVENINGSTAR( const struct TA_CDLEVENINGSTAR_Stream *a, const struct TA_CDLEVENINGSTAR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLGAPSIDESIDEWHITE( const struct TA_CDLGAPSIDESIDEWHITE_Stream *a, const struct TA_CDLGAPSIDESIDEWHITE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLGRAVESTONEDOJI( const struct TA_CDLGRAVESTONEDOJI_Stream *a, const struct TA_CDLGRAVESTONEDOJI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLHAMMER( const struct TA_CDLHAMMER_Stream *a, const struct TA_CDLHAMMER_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLHANGINGMAN( const struct TA_CDLHANGINGMAN_Stream *a, const struct TA_CDLHANGINGMAN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLHARAMI( const struct TA_CDLHARAMI_Stream *a, const struct TA_CDLHARAMI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLHARAMICROSS( const struct TA_CDLHARAMICROSS_Stream *a, const struct TA_CDLHARAMICROSS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLHIGHWAVE( const struct TA_CDLHIGHWAVE_Stream *a, const struct TA_CDLHIGHWAVE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLHIKKAKE( const struct TA_CDLHIKKAKE_Stream *a, const struct TA_CDLHIKKAKE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLHIKKAKEMOD( const struct TA_CDLHIKKAKEMOD_Stream *a, const struct TA_CDLHIKKAKEMOD_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLHOMINGPIGEON( const struct TA_CDLHOMINGPIGEON_Stream *a, const struct TA_CDLHOMINGPIGEON_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLIDENTICAL3CROWS( const struct TA_CDLIDENTICAL3CROWS_Stream *a, const struct TA_CDLIDENTICAL3CROWS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLINNECK( const struct TA_CDLINNECK_Stream *a, const struct TA_CDLINNECK_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLINVERTEDHAMMER( const struct TA_CDLINVERTEDHAMMER_Stream *a, const struct TA_CDLINVERTEDHAMMER_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLKICKING( const struct TA_CDLKICKING_Stream *a, const struct TA_CDLKICKING_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLKICKINGBYLENGTH( const struct TA_CDLKICKINGBYLENGTH_Stream *a, const struct TA_CDLKICKINGBYLENGTH_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLLADDERBOTTOM( const struct TA_CDLLADDERBOTTOM_Stream *a, const struct TA_CDLLADDERBOTTOM_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLLONGLEGGEDDOJI( const struct TA_CDLLONGLEGGEDDOJI_Stream *a, const struct TA_CDLLONGLEGGEDDOJI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLLONGLINE( const struct TA_CDLLONGLINE_Stream *a, const struct TA_CDLLONGLINE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLMARUBOZU( const struct TA_CDLMARUBOZU_Stream *a, const struct TA_CDLMARUBOZU_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLMATCHINGLOW( const struct TA_CDLMATCHINGLOW_Stream *a, const struct TA_CDLMATCHINGLOW_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLMATHOLD( const struct TA_CDLMATHOLD_Stream *a, const struct TA_CDLMATHOLD_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLMORNINGDOJISTAR( const struct TA_CDLMORNINGDOJISTAR_Stream *a, const struct TA_CDLMORNINGDOJISTAR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLMORNINGSTAR( const struct TA_CDLMORNINGSTAR_Stream *a, const struct TA_CDLMORNINGSTAR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLONNECK( const struct TA_CDLONNECK_Stream *a, const struct TA_CDLONNECK_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLPIERCING( const struct TA_CDLPIERCING_Stream *a, const struct TA_CDLPIERCING_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLRICKSHAWMAN( const struct TA_CDLRICKSHAWMAN_Stream *a, const struct TA_CDLRICKSHAWMAN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLRISEFALL3METHODS( const struct TA_CDLRISEFALL3METHODS_Stream *a, const struct TA_CDLRISEFALL3METHODS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLSEPARATINGLINES( const struct TA_CDLSEPARATINGLINES_Stream *a, const struct TA_CDLSEPARATINGLINES_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLSHOOTINGSTAR( const struct TA_CDLSHOOTINGSTAR_Stream *a, const struct TA_CDLSHOOTINGSTAR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLSHORTLINE( const struct TA_CDLSHORTLINE_Stream *a, const struct TA_CDLSHORTLINE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLSPINNINGTOP( const struct TA_CDLSPINNINGTOP_Stream *a, const struct TA_CDLSPINNINGTOP_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLSTALLEDPATTERN( const struct TA_CDLSTALLEDPATTERN_Stream *a, const struct TA_CDLSTALLEDPATTERN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLSTICKSANDWICH( const struct TA_CDLSTICKSANDWICH_Stream *a, const struct TA_CDLSTICKSANDWICH_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLTAKURI( const struct TA_CDLTAKURI_Stream *a, const struct TA_CDLTAKURI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLTASUKIGAP( const struct TA_CDLTASUKIGAP_Stream *a, const struct TA_CDLTASUKIGAP_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLTHRUSTING( const struct TA_CDLTHRUSTING_Stream *a, const struct TA_CDLTHRUSTING_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLTRISTAR( const struct TA_CDLTRISTAR_Stream *a, const struct TA_CDLTRISTAR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLUNIQUE3RIVER( const struct TA_CDLUNIQUE3RIVER_Stream *a, const struct TA_CDLUNIQUE3RIVER_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLUPSIDEGAP2CROWS( const struct TA_CDLUPSIDEGAP2CROWS_Stream *a, const struct TA_CDLUPSIDEGAP2CROWS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CDLXSIDEGAP3METHODS( const struct TA_CDLXSIDEGAP3METHODS_Stream *a, const struct TA_CDLXSIDEGAP3METHODS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CEIL( const struct TA_CEIL_Stream *a, const struct TA_CEIL_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CMF( const struct TA_CMF_Stream *a, const struct TA_CMF_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CMO( const struct TA_CMO_Stream *a, const struct TA_CMO_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CMOU( const struct TA_CMOU_Stream *a, const struct TA_CMOU_Stream *b, const char **w, int *z );
+static int sv_steq_TA_CORREL( const struct TA_CORREL_Stream *a, const struct TA_CORREL_Stream *b, const char **w, int *z );
+static int sv_steq_TA_COS( const struct TA_COS_Stream *a, const struct TA_COS_Stream *b, const char **w, int *z );
+static int sv_steq_TA_COSH( const struct TA_COSH_Stream *a, const struct TA_COSH_Stream *b, const char **w, int *z );
+static int sv_steq_TA_DEMA( const struct TA_DEMA_Stream *a, const struct TA_DEMA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_DIV( const struct TA_DIV_Stream *a, const struct TA_DIV_Stream *b, const char **w, int *z );
+static int sv_steq_TA_DX( const struct TA_DX_Stream *a, const struct TA_DX_Stream *b, const char **w, int *z );
+static int sv_steq_TA_EFI( const struct TA_EFI_Stream *a, const struct TA_EFI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_EMA( const struct TA_EMA_Stream *a, const struct TA_EMA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_EXP( const struct TA_EXP_Stream *a, const struct TA_EXP_Stream *b, const char **w, int *z );
+static int sv_steq_TA_FLOOR( const struct TA_FLOOR_Stream *a, const struct TA_FLOOR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_HT_DCPERIOD( const struct TA_HT_DCPERIOD_Stream *a, const struct TA_HT_DCPERIOD_Stream *b, const char **w, int *z );
+static int sv_steq_TA_HT_DCPHASE( const struct TA_HT_DCPHASE_Stream *a, const struct TA_HT_DCPHASE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_HT_PHASOR( const struct TA_HT_PHASOR_Stream *a, const struct TA_HT_PHASOR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_HT_SINE( const struct TA_HT_SINE_Stream *a, const struct TA_HT_SINE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_HT_TRENDLINE( const struct TA_HT_TRENDLINE_Stream *a, const struct TA_HT_TRENDLINE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_HT_TRENDMODE( const struct TA_HT_TRENDMODE_Stream *a, const struct TA_HT_TRENDMODE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_IMI( const struct TA_IMI_Stream *a, const struct TA_IMI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_KAMA( const struct TA_KAMA_Stream *a, const struct TA_KAMA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_LINEARREG( const struct TA_LINEARREG_Stream *a, const struct TA_LINEARREG_Stream *b, const char **w, int *z );
+static int sv_steq_TA_LINEARREG_ANGLE( const struct TA_LINEARREG_ANGLE_Stream *a, const struct TA_LINEARREG_ANGLE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_LINEARREG_INTERCEPT( const struct TA_LINEARREG_INTERCEPT_Stream *a, const struct TA_LINEARREG_INTERCEPT_Stream *b, const char **w, int *z );
+static int sv_steq_TA_LINEARREG_SLOPE( const struct TA_LINEARREG_SLOPE_Stream *a, const struct TA_LINEARREG_SLOPE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_LN( const struct TA_LN_Stream *a, const struct TA_LN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_LOG10( const struct TA_LOG10_Stream *a, const struct TA_LOG10_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MA( const struct TA_MA_Stream *a, const struct TA_MA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MACD( const struct TA_MACD_Stream *a, const struct TA_MACD_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MACDEXT( const struct TA_MACDEXT_Stream *a, const struct TA_MACDEXT_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MACDFIX( const struct TA_MACDFIX_Stream *a, const struct TA_MACDFIX_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MAMA( const struct TA_MAMA_Stream *a, const struct TA_MAMA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MARKETFI( const struct TA_MARKETFI_Stream *a, const struct TA_MARKETFI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MAVP( const struct TA_MAVP_Stream *a, const struct TA_MAVP_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MAX( const struct TA_MAX_Stream *a, const struct TA_MAX_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MAXINDEX( const struct TA_MAXINDEX_Stream *a, const struct TA_MAXINDEX_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MEDPRICE( const struct TA_MEDPRICE_Stream *a, const struct TA_MEDPRICE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MFI( const struct TA_MFI_Stream *a, const struct TA_MFI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MIDPOINT( const struct TA_MIDPOINT_Stream *a, const struct TA_MIDPOINT_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MIDPRICE( const struct TA_MIDPRICE_Stream *a, const struct TA_MIDPRICE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MIN( const struct TA_MIN_Stream *a, const struct TA_MIN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MININDEX( const struct TA_MININDEX_Stream *a, const struct TA_MININDEX_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MINMAX( const struct TA_MINMAX_Stream *a, const struct TA_MINMAX_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MINMAXINDEX( const struct TA_MINMAXINDEX_Stream *a, const struct TA_MINMAXINDEX_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MINUS_DI( const struct TA_MINUS_DI_Stream *a, const struct TA_MINUS_DI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MINUS_DM( const struct TA_MINUS_DM_Stream *a, const struct TA_MINUS_DM_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MOM( const struct TA_MOM_Stream *a, const struct TA_MOM_Stream *b, const char **w, int *z );
+static int sv_steq_TA_MULT( const struct TA_MULT_Stream *a, const struct TA_MULT_Stream *b, const char **w, int *z );
+static int sv_steq_TA_NATR( const struct TA_NATR_Stream *a, const struct TA_NATR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_NVI( const struct TA_NVI_Stream *a, const struct TA_NVI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_OBV( const struct TA_OBV_Stream *a, const struct TA_OBV_Stream *b, const char **w, int *z );
+static int sv_steq_TA_PLUS_DI( const struct TA_PLUS_DI_Stream *a, const struct TA_PLUS_DI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_PLUS_DM( const struct TA_PLUS_DM_Stream *a, const struct TA_PLUS_DM_Stream *b, const char **w, int *z );
+static int sv_steq_TA_PPO( const struct TA_PPO_Stream *a, const struct TA_PPO_Stream *b, const char **w, int *z );
+static int sv_steq_TA_PVI( const struct TA_PVI_Stream *a, const struct TA_PVI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_PVO( const struct TA_PVO_Stream *a, const struct TA_PVO_Stream *b, const char **w, int *z );
+static int sv_steq_TA_QSTICK( const struct TA_QSTICK_Stream *a, const struct TA_QSTICK_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ROC( const struct TA_ROC_Stream *a, const struct TA_ROC_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ROCP( const struct TA_ROCP_Stream *a, const struct TA_ROCP_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ROCR( const struct TA_ROCR_Stream *a, const struct TA_ROCR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ROCR100( const struct TA_ROCR100_Stream *a, const struct TA_ROCR100_Stream *b, const char **w, int *z );
+static int sv_steq_TA_RSI( const struct TA_RSI_Stream *a, const struct TA_RSI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_SAR( const struct TA_SAR_Stream *a, const struct TA_SAR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_SAREXT( const struct TA_SAREXT_Stream *a, const struct TA_SAREXT_Stream *b, const char **w, int *z );
+static int sv_steq_TA_SIN( const struct TA_SIN_Stream *a, const struct TA_SIN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_SINH( const struct TA_SINH_Stream *a, const struct TA_SINH_Stream *b, const char **w, int *z );
+static int sv_steq_TA_SMA( const struct TA_SMA_Stream *a, const struct TA_SMA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_SMI( const struct TA_SMI_Stream *a, const struct TA_SMI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_SQRT( const struct TA_SQRT_Stream *a, const struct TA_SQRT_Stream *b, const char **w, int *z );
+static int sv_steq_TA_STDDEV( const struct TA_STDDEV_Stream *a, const struct TA_STDDEV_Stream *b, const char **w, int *z );
+static int sv_steq_TA_STOCH( const struct TA_STOCH_Stream *a, const struct TA_STOCH_Stream *b, const char **w, int *z );
+static int sv_steq_TA_STOCHF( const struct TA_STOCHF_Stream *a, const struct TA_STOCHF_Stream *b, const char **w, int *z );
+static int sv_steq_TA_STOCHRSI( const struct TA_STOCHRSI_Stream *a, const struct TA_STOCHRSI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_SUB( const struct TA_SUB_Stream *a, const struct TA_SUB_Stream *b, const char **w, int *z );
+static int sv_steq_TA_SUM( const struct TA_SUM_Stream *a, const struct TA_SUM_Stream *b, const char **w, int *z );
+static int sv_steq_TA_T3( const struct TA_T3_Stream *a, const struct TA_T3_Stream *b, const char **w, int *z );
+static int sv_steq_TA_TAN( const struct TA_TAN_Stream *a, const struct TA_TAN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_TANH( const struct TA_TANH_Stream *a, const struct TA_TANH_Stream *b, const char **w, int *z );
+static int sv_steq_TA_TEMA( const struct TA_TEMA_Stream *a, const struct TA_TEMA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_TRANGE( const struct TA_TRANGE_Stream *a, const struct TA_TRANGE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_TRIMA( const struct TA_TRIMA_Stream *a, const struct TA_TRIMA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_TRIX( const struct TA_TRIX_Stream *a, const struct TA_TRIX_Stream *b, const char **w, int *z );
+static int sv_steq_TA_TSF( const struct TA_TSF_Stream *a, const struct TA_TSF_Stream *b, const char **w, int *z );
+static int sv_steq_TA_TYPPRICE( const struct TA_TYPPRICE_Stream *a, const struct TA_TYPPRICE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_ULTOSC( const struct TA_ULTOSC_Stream *a, const struct TA_ULTOSC_Stream *b, const char **w, int *z );
+static int sv_steq_TA_VAR( const struct TA_VAR_Stream *a, const struct TA_VAR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_VWMA( const struct TA_VWMA_Stream *a, const struct TA_VWMA_Stream *b, const char **w, int *z );
+static int sv_steq_TA_WAD( const struct TA_WAD_Stream *a, const struct TA_WAD_Stream *b, const char **w, int *z );
+static int sv_steq_TA_WCLPRICE( const struct TA_WCLPRICE_Stream *a, const struct TA_WCLPRICE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_WILLR( const struct TA_WILLR_Stream *a, const struct TA_WILLR_Stream *b, const char **w, int *z );
+static int sv_steq_TA_WMA( const struct TA_WMA_Stream *a, const struct TA_WMA_Stream *b, const char **w, int *z );
+
+static int sv_steq_TA_AC( const struct TA_AC_Stream *a, const struct TA_AC_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
+   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
+   if( a->optInSignalPeriod != b->optInSignalPeriod ) { *w = "optInSignalPeriod"; return 1; }
+   if( sv_xtier_ne(a->sumFast, b->sumFast, z) ) { *w = "sumFast"; return 1; }
+   if( sv_xtier_ne(a->sumSlow, b->sumSlow, z) ) { *w = "sumSlow"; return 1; }
+   if( sv_xtier_ne(a->sumSignal, b->sumSignal, z) ) { *w = "sumSignal"; return 1; }
+   if( sv_xtier_ne(a->osc, b->osc, z) ) { *w = "osc"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( a->oscBuffer_Idx != b->oscBuffer_Idx ) { *w = "oscBuffer_Idx"; return 1; }
+   if( a->maxIdx_oscBuffer != b->maxIdx_oscBuffer ) { *w = "maxIdx_oscBuffer"; return 1; }
+   if( a->ringCap_trailingFastIdx != b->ringCap_trailingFastIdx ) { *w = "ringCap_trailingFastIdx"; return 1; }
+   if( (a->ring_trailingFastIdx_derived == NULL) != (b->ring_trailingFastIdx_derived == NULL) ) { *w = "ring_trailingFastIdx_derived"; return 1; }
+   if( a->ring_trailingFastIdx_derived ) for( k = 0; k < a->ringCap_trailingFastIdx; k++ )
+   {
+      ia = (a->ringPos_trailingFastIdx + k) % a->ringCap_trailingFastIdx;
+      ib = (b->ringPos_trailingFastIdx + k) % b->ringCap_trailingFastIdx;
+      if( sv_xtier_ne(a->ring_trailingFastIdx_derived[ia], b->ring_trailingFastIdx_derived[ib], z) ) { *w = "ring_trailingFastIdx_derived"; return 1; }
+   }
+   if( a->ringCap_trailingSlowIdx != b->ringCap_trailingSlowIdx ) { *w = "ringCap_trailingSlowIdx"; return 1; }
+   if( (a->ring_trailingSlowIdx_derived == NULL) != (b->ring_trailingSlowIdx_derived == NULL) ) { *w = "ring_trailingSlowIdx_derived"; return 1; }
+   if( a->ring_trailingSlowIdx_derived ) for( k = 0; k < a->ringCap_trailingSlowIdx; k++ )
+   {
+      ia = (a->ringPos_trailingSlowIdx + k) % a->ringCap_trailingSlowIdx;
+      ib = (b->ringPos_trailingSlowIdx + k) % b->ringCap_trailingSlowIdx;
+      if( sv_xtier_ne(a->ring_trailingSlowIdx_derived[ia], b->ring_trailingSlowIdx_derived[ib], z) ) { *w = "ring_trailingSlowIdx_derived"; return 1; }
+   }
+   if( a->cbSize_oscBuffer != b->cbSize_oscBuffer ) { *w = "cbSize_oscBuffer"; return 1; }
+   if( (a->cb_oscBuffer == NULL) != (b->cb_oscBuffer == NULL) ) { *w = "cb_oscBuffer"; return 1; }
+   if( a->cb_oscBuffer ) for( k = 0; k < a->cbSize_oscBuffer; k++ ) if( sv_xtier_ne(a->cb_oscBuffer[k], b->cb_oscBuffer[k], z) ) { *w = "cb_oscBuffer"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_ACCBANDS( const struct TA_ACCBANDS_Stream *a, const struct TA_ACCBANDS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->periodTotalUpper, b->periodTotalUpper, z) ) { *w = "periodTotalUpper"; return 1; }
+   if( sv_xtier_ne(a->periodTotalMiddle, b->periodTotalMiddle, z) ) { *w = "periodTotalMiddle"; return 1; }
+   if( sv_xtier_ne(a->periodTotalLower, b->periodTotalLower, z) ) { *w = "periodTotalLower"; return 1; }
+   if( sv_xtier_ne(a->tempUpper, b->tempUpper, z) ) { *w = "tempUpper"; return 1; }
+   if( sv_xtier_ne(a->tempMiddle, b->tempMiddle, z) ) { *w = "tempMiddle"; return 1; }
+   if( sv_xtier_ne(a->tempLower, b->tempLower, z) ) { *w = "tempLower"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inHigh == NULL) != (b->ring_trailingIdx_inHigh == NULL) ) { *w = "ring_trailingIdx_inHigh"; return 1; }
+   if( a->ring_trailingIdx_inHigh ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inHigh[ia], b->ring_trailingIdx_inHigh[ib], z) ) { *w = "ring_trailingIdx_inHigh"; return 1; }
+   }
+   if( (a->ring_trailingIdx_inLow == NULL) != (b->ring_trailingIdx_inLow == NULL) ) { *w = "ring_trailingIdx_inLow"; return 1; }
+   if( a->ring_trailingIdx_inLow ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inLow[ia], b->ring_trailingIdx_inLow[ib], z) ) { *w = "ring_trailingIdx_inLow"; return 1; }
+   }
+   if( (a->ring_trailingIdx_inClose == NULL) != (b->ring_trailingIdx_inClose == NULL) ) { *w = "ring_trailingIdx_inClose"; return 1; }
+   if( a->ring_trailingIdx_inClose ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inClose[ia], b->ring_trailingIdx_inClose[ib], z) ) { *w = "ring_trailingIdx_inClose"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_ACOS( const struct TA_ACOS_Stream *a, const struct TA_ACOS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_AD( const struct TA_AD_Stream *a, const struct TA_AD_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->ad, b->ad, z) ) { *w = "ad"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_ADD( const struct TA_ADD_Stream *a, const struct TA_ADD_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_ADOSC( const struct TA_ADOSC_Stream *a, const struct TA_ADOSC_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
+   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
+   if( sv_xtier_ne(a->slowEMA, b->slowEMA, z) ) { *w = "slowEMA"; return 1; }
+   if( sv_xtier_ne(a->slowk, b->slowk, z) ) { *w = "slowk"; return 1; }
+   if( sv_xtier_ne(a->one_minus_slowk, b->one_minus_slowk, z) ) { *w = "one_minus_slowk"; return 1; }
+   if( sv_xtier_ne(a->fastEMA, b->fastEMA, z) ) { *w = "fastEMA"; return 1; }
+   if( sv_xtier_ne(a->fastk, b->fastk, z) ) { *w = "fastk"; return 1; }
+   if( sv_xtier_ne(a->one_minus_fastk, b->one_minus_fastk, z) ) { *w = "one_minus_fastk"; return 1; }
+   if( sv_xtier_ne(a->ad, b->ad, z) ) { *w = "ad"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_ADX( const struct TA_ADX_Stream *a, const struct TA_ADX_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
+   if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->prevMinusDM, b->prevMinusDM, z) ) { *w = "prevMinusDM"; return 1; }
+   if( sv_xtier_ne(a->prevPlusDM, b->prevPlusDM, z) ) { *w = "prevPlusDM"; return 1; }
+   if( sv_xtier_ne(a->prevTR, b->prevTR, z) ) { *w = "prevTR"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->diffP, b->diffP, z) ) { *w = "diffP"; return 1; }
+   if( sv_xtier_ne(a->diffM, b->diffM, z) ) { *w = "diffM"; return 1; }
+   if( sv_xtier_ne(a->minusDI, b->minusDI, z) ) { *w = "minusDI"; return 1; }
+   if( sv_xtier_ne(a->plusDI, b->plusDI, z) ) { *w = "plusDI"; return 1; }
+   if( sv_xtier_ne(a->prevADX, b->prevADX, z) ) { *w = "prevADX"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_ADXR( const struct TA_ADXR_Stream *a, const struct TA_ADXR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_ADX( a->sub0, b->sub0, w, z ) ) return 1;
+   if( a->lagRingCap_adx != b->lagRingCap_adx ) { *w = "lagRingCap_adx"; return 1; }
+   if( (a->lagRing_adx == NULL) != (b->lagRing_adx == NULL) ) { *w = "lagRing_adx"; return 1; }
+   if( a->lagRing_adx ) for( k = 0; k < a->lagRingCap_adx; k++ )
+   {
+      ia = (a->lagRingPos_adx + k) % a->lagRingCap_adx;
+      ib = (b->lagRingPos_adx + k) % b->lagRingCap_adx;
+      if( sv_xtier_ne(a->lagRing_adx[ia], b->lagRing_adx[ib], z) ) { *w = "lagRing_adx"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_AO( const struct TA_AO_Stream *a, const struct TA_AO_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
+   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
+   if( sv_xtier_ne(a->sumFast, b->sumFast, z) ) { *w = "sumFast"; return 1; }
+   if( sv_xtier_ne(a->sumSlow, b->sumSlow, z) ) { *w = "sumSlow"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( a->ringCap_trailingFastIdx != b->ringCap_trailingFastIdx ) { *w = "ringCap_trailingFastIdx"; return 1; }
+   if( (a->ring_trailingFastIdx_derived == NULL) != (b->ring_trailingFastIdx_derived == NULL) ) { *w = "ring_trailingFastIdx_derived"; return 1; }
+   if( a->ring_trailingFastIdx_derived ) for( k = 0; k < a->ringCap_trailingFastIdx; k++ )
+   {
+      ia = (a->ringPos_trailingFastIdx + k) % a->ringCap_trailingFastIdx;
+      ib = (b->ringPos_trailingFastIdx + k) % b->ringCap_trailingFastIdx;
+      if( sv_xtier_ne(a->ring_trailingFastIdx_derived[ia], b->ring_trailingFastIdx_derived[ib], z) ) { *w = "ring_trailingFastIdx_derived"; return 1; }
+   }
+   if( a->ringCap_trailingSlowIdx != b->ringCap_trailingSlowIdx ) { *w = "ringCap_trailingSlowIdx"; return 1; }
+   if( (a->ring_trailingSlowIdx_derived == NULL) != (b->ring_trailingSlowIdx_derived == NULL) ) { *w = "ring_trailingSlowIdx_derived"; return 1; }
+   if( a->ring_trailingSlowIdx_derived ) for( k = 0; k < a->ringCap_trailingSlowIdx; k++ )
+   {
+      ia = (a->ringPos_trailingSlowIdx + k) % a->ringCap_trailingSlowIdx;
+      ib = (b->ringPos_trailingSlowIdx + k) % b->ringCap_trailingSlowIdx;
+      if( sv_xtier_ne(a->ring_trailingSlowIdx_derived[ia], b->ring_trailingSlowIdx_derived[ib], z) ) { *w = "ring_trailingSlowIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_APO( const struct TA_APO_Stream *a, const struct TA_APO_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
+   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
+   if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_MA( a->sub0, b->sub0, w, z ) ) return 1;
+   if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
+   if( a->sub1 && sv_steq_TA_MA( a->sub1, b->sub1, w, z ) ) return 1;
+   return 0;
+}
+
+static int sv_steq_TA_AROON( const struct TA_AROON_Stream *a, const struct TA_AROON_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( sv_xtier_ne(a->factor, b->factor, z) ) { *w = "factor"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inHigh == NULL) != (b->x_inHigh == NULL) ) { *w = "x_inHigh"; return 1; }
+   if( a->x_inHigh ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inHigh[ix], b->x_inHigh[ix], z) ) { *w = "x_inHigh"; return 1; }
+   }
+   if( (a->x_inLow == NULL) != (b->x_inLow == NULL) ) { *w = "x_inLow"; return 1; }
+   if( a->x_inLow ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inLow[ix], b->x_inLow[ix], z) ) { *w = "x_inLow"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_AROONOSC( const struct TA_AROONOSC_Stream *a, const struct TA_AROONOSC_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( sv_xtier_ne(a->factor, b->factor, z) ) { *w = "factor"; return 1; }
+   if( sv_xtier_ne(a->aroon, b->aroon, z) ) { *w = "aroon"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inHigh == NULL) != (b->x_inHigh == NULL) ) { *w = "x_inHigh"; return 1; }
+   if( a->x_inHigh ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inHigh[ix], b->x_inHigh[ix], z) ) { *w = "x_inHigh"; return 1; }
+   }
+   if( (a->x_inLow == NULL) != (b->x_inLow == NULL) ) { *w = "x_inLow"; return 1; }
+   if( a->x_inLow ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inLow[ix], b->x_inLow[ix], z) ) { *w = "x_inLow"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_ASIN( const struct TA_ASIN_Stream *a, const struct TA_ASIN_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_ATAN( const struct TA_ATAN_Stream *a, const struct TA_ATAN_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_ATR( const struct TA_ATR_Stream *a, const struct TA_ATR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevATR, b->prevATR, z) ) { *w = "prevATR"; return 1; }
+   if( sv_xtier_ne(a->val3, b->val3, z) ) { *w = "val3"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_AVGDEV( const struct TA_AVGDEV_Stream *a, const struct TA_AVGDEV_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->winCap_i != b->winCap_i ) { *w = "winCap_i"; return 1; }
+   if( (a->win_i_inReal == NULL) != (b->win_i_inReal == NULL) ) { *w = "win_i_inReal"; return 1; }
+   if( a->win_i_inReal ) for( k = 0; k < a->winCap_i; k++ )
+   {
+      ia = (a->winPos_i + k) % a->winCap_i;
+      ib = (b->winPos_i + k) % b->winCap_i;
+      if( sv_xtier_ne(a->win_i_inReal[ia], b->win_i_inReal[ib], z) ) { *w = "win_i_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_AVGPRICE( const struct TA_AVGPRICE_Stream *a, const struct TA_AVGPRICE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_BBANDS( const struct TA_BBANDS_Stream *a, const struct TA_BBANDS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->optInNbDevUp, b->optInNbDevUp, z) ) { *w = "optInNbDevUp"; return 1; }
+   if( sv_xtier_ne(a->optInNbDevDn, b->optInNbDevDn, z) ) { *w = "optInNbDevDn"; return 1; }
+   if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_MA( a->sub0, b->sub0, w, z ) ) return 1;
+   if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
+   if( a->sub1 && sv_steq_TA_STDDEV( a->sub1, b->sub1, w, z ) ) return 1;
+   return 0;
+}
+
+static int sv_steq_TA_BETA( const struct TA_BETA_Stream *a, const struct TA_BETA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->S_xx, b->S_xx, z) ) { *w = "S_xx"; return 1; }
+   if( sv_xtier_ne(a->S_xy, b->S_xy, z) ) { *w = "S_xy"; return 1; }
+   if( sv_xtier_ne(a->S_x, b->S_x, z) ) { *w = "S_x"; return 1; }
+   if( sv_xtier_ne(a->S_y, b->S_y, z) ) { *w = "S_y"; return 1; }
+   if( sv_xtier_ne(a->last_price_x, b->last_price_x, z) ) { *w = "last_price_x"; return 1; }
+   if( sv_xtier_ne(a->last_price_y, b->last_price_y, z) ) { *w = "last_price_y"; return 1; }
+   if( sv_xtier_ne(a->trailing_last_price_x, b->trailing_last_price_x, z) ) { *w = "trailing_last_price_x"; return 1; }
+   if( sv_xtier_ne(a->trailing_last_price_y, b->trailing_last_price_y, z) ) { *w = "trailing_last_price_y"; return 1; }
+   if( sv_xtier_ne(a->x, b->x, z) ) { *w = "x"; return 1; }
+   if( sv_xtier_ne(a->y, b->y, z) ) { *w = "y"; return 1; }
+   if( sv_xtier_ne(a->n, b->n, z) ) { *w = "n"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal0 == NULL) != (b->ring_trailingIdx_inReal0 == NULL) ) { *w = "ring_trailingIdx_inReal0"; return 1; }
+   if( a->ring_trailingIdx_inReal0 ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal0[ia], b->ring_trailingIdx_inReal0[ib], z) ) { *w = "ring_trailingIdx_inReal0"; return 1; }
+   }
+   if( (a->ring_trailingIdx_inReal1 == NULL) != (b->ring_trailingIdx_inReal1 == NULL) ) { *w = "ring_trailingIdx_inReal1"; return 1; }
+   if( a->ring_trailingIdx_inReal1 ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal1[ia], b->ring_trailingIdx_inReal1[ib], z) ) { *w = "ring_trailingIdx_inReal1"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_BOP( const struct TA_BOP_Stream *a, const struct TA_BOP_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_CCI( const struct TA_CCI_Stream *a, const struct TA_CCI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->tempReal2, b->tempReal2, z) ) { *w = "tempReal2"; return 1; }
+   if( sv_xtier_ne(a->theAverage, b->theAverage, z) ) { *w = "theAverage"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( a->circBuffer_Idx != b->circBuffer_Idx ) { *w = "circBuffer_Idx"; return 1; }
+   if( a->maxIdx_circBuffer != b->maxIdx_circBuffer ) { *w = "maxIdx_circBuffer"; return 1; }
+   if( a->cbSize_circBuffer != b->cbSize_circBuffer ) { *w = "cbSize_circBuffer"; return 1; }
+   if( (a->cb_circBuffer == NULL) != (b->cb_circBuffer == NULL) ) { *w = "cb_circBuffer"; return 1; }
+   if( a->cb_circBuffer ) for( k = 0; k < a->cbSize_circBuffer; k++ ) if( sv_xtier_ne(a->cb_circBuffer[k], b->cb_circBuffer[k], z) ) { *w = "cb_circBuffer"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_CDL2CROWS( const struct TA_CDL2CROWS_Stream *a, const struct TA_CDL2CROWS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDL3BLACKCROWS( const struct TA_CDL3BLACKCROWS_Stream *a, const struct TA_CDL3BLACKCROWS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag3_inHigh, b->lag3_inHigh, z) ) { *w = "lag3_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag3_inClose, b->lag3_inClose, z) ) { *w = "lag3_inClose"; return 1; }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDL3INSIDE( const struct TA_CDL3INSIDE_Stream *a, const struct TA_CDL3INSIDE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDL3LINESTRIKE( const struct TA_CDL3LINESTRIKE_Stream *a, const struct TA_CDL3LINESTRIKE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 4; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag3_inHigh, b->lag3_inHigh, z) ) { *w = "lag3_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag3_inLow, b->lag3_inLow, z) ) { *w = "lag3_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag3_inClose, b->lag3_inClose, z) ) { *w = "lag3_inClose"; return 1; }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( a->ringLag_NearTrailingIdx != b->ringLag_NearTrailingIdx ) { *w = "ringLag_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDL3OUTSIDE( const struct TA_CDL3OUTSIDE_Stream *a, const struct TA_CDL3OUTSIDE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_CDL3STARSINSOUTH( const struct TA_CDL3STARSINSOUTH_Stream *a, const struct TA_CDL3STARSINSOUTH_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
+   for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowLongTrailingIdx != b->ringCap_ShadowLongTrailingIdx ) { *w = "ringCap_ShadowLongTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowLongTrailingIdx != b->ringLag_ShadowLongTrailingIdx ) { *w = "ringLag_ShadowLongTrailingIdx"; return 1; }
+   if( (a->ring_ShadowLongTrailingIdx_derived == NULL) != (b->ring_ShadowLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowLongTrailingIdx + k) % a->ringCap_ShadowLongTrailingIdx;
+      ib = (b->ringPos_ShadowLongTrailingIdx + k) % b->ringCap_ShadowLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDL3WHITESOLDIERS( const struct TA_CDL3WHITESOLDIERS_Stream *a, const struct TA_CDL3WHITESOLDIERS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->FarPeriodTotal[k], b->FarPeriodTotal[k], z) ) { *w = "FarPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_FarTrailingIdx != b->ringCap_FarTrailingIdx ) { *w = "ringCap_FarTrailingIdx"; return 1; }
+   if( a->ringLag_FarTrailingIdx != b->ringLag_FarTrailingIdx ) { *w = "ringLag_FarTrailingIdx"; return 1; }
+   if( (a->ring_FarTrailingIdx_derived == NULL) != (b->ring_FarTrailingIdx_derived == NULL) ) { *w = "ring_FarTrailingIdx_derived"; return 1; }
+   if( a->ring_FarTrailingIdx_derived ) for( k = 0; k < a->ringCap_FarTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_FarTrailingIdx + k) % a->ringCap_FarTrailingIdx;
+      ib = (b->ringPos_FarTrailingIdx + k) % b->ringCap_FarTrailingIdx;
+      if( sv_xtier_ne(a->ring_FarTrailingIdx_derived[ia], b->ring_FarTrailingIdx_derived[ib], z) ) { *w = "ring_FarTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( a->ringLag_NearTrailingIdx != b->ringLag_NearTrailingIdx ) { *w = "ringLag_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLABANDONEDBABY( const struct TA_CDLABANDONEDBABY_Stream *a, const struct TA_CDLABANDONEDBABY_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLADVANCEBLOCK( const struct TA_CDLADVANCEBLOCK_Stream *a, const struct TA_CDLADVANCEBLOCK_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowShortPeriodTotal[k], b->ShadowShortPeriodTotal[k], z) ) { *w = "ShadowShortPeriodTotal"; return 1; }
+   for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowLongPeriodTotal[k], b->ShadowLongPeriodTotal[k], z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->FarPeriodTotal[k], b->FarPeriodTotal[k], z) ) { *w = "FarPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_FarTrailingIdx != b->ringCap_FarTrailingIdx ) { *w = "ringCap_FarTrailingIdx"; return 1; }
+   if( a->ringLag_FarTrailingIdx != b->ringLag_FarTrailingIdx ) { *w = "ringLag_FarTrailingIdx"; return 1; }
+   if( (a->ring_FarTrailingIdx_derived == NULL) != (b->ring_FarTrailingIdx_derived == NULL) ) { *w = "ring_FarTrailingIdx_derived"; return 1; }
+   if( a->ring_FarTrailingIdx_derived ) for( k = 0; k < a->ringCap_FarTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_FarTrailingIdx + k) % a->ringCap_FarTrailingIdx;
+      ib = (b->ringPos_FarTrailingIdx + k) % b->ringCap_FarTrailingIdx;
+      if( sv_xtier_ne(a->ring_FarTrailingIdx_derived[ia], b->ring_FarTrailingIdx_derived[ib], z) ) { *w = "ring_FarTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( a->ringLag_NearTrailingIdx != b->ringLag_NearTrailingIdx ) { *w = "ringLag_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowLongTrailingIdx != b->ringCap_ShadowLongTrailingIdx ) { *w = "ringCap_ShadowLongTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowLongTrailingIdx != b->ringLag_ShadowLongTrailingIdx ) { *w = "ringLag_ShadowLongTrailingIdx"; return 1; }
+   if( (a->ring_ShadowLongTrailingIdx_derived == NULL) != (b->ring_ShadowLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowLongTrailingIdx + k) % a->ringCap_ShadowLongTrailingIdx;
+      ib = (b->ringPos_ShadowLongTrailingIdx + k) % b->ringCap_ShadowLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowShortTrailingIdx != b->ringCap_ShadowShortTrailingIdx ) { *w = "ringCap_ShadowShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowShortTrailingIdx != b->ringLag_ShadowShortTrailingIdx ) { *w = "ringLag_ShadowShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowShortTrailingIdx_derived == NULL) != (b->ring_ShadowShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowShortTrailingIdx + k) % a->ringCap_ShadowShortTrailingIdx;
+      ib = (b->ringPos_ShadowShortTrailingIdx + k) % b->ringCap_ShadowShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowShortTrailingIdx_derived[ia], b->ring_ShadowShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLBELTHOLD( const struct TA_CDLBELTHOLD_Stream *a, const struct TA_CDLBELTHOLD_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLBREAKAWAY( const struct TA_CDLBREAKAWAY_Stream *a, const struct TA_CDLBREAKAWAY_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag4_inOpen, b->lag4_inOpen, z) ) { *w = "lag4_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag3_inHigh, b->lag3_inHigh, z) ) { *w = "lag3_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag4_inHigh, b->lag4_inHigh, z) ) { *w = "lag4_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag3_inLow, b->lag3_inLow, z) ) { *w = "lag3_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag4_inLow, b->lag4_inLow, z) ) { *w = "lag4_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag3_inClose, b->lag3_inClose, z) ) { *w = "lag3_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag4_inClose, b->lag4_inClose, z) ) { *w = "lag4_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLCLOSINGMARUBOZU( const struct TA_CDLCLOSINGMARUBOZU_Stream *a, const struct TA_CDLCLOSINGMARUBOZU_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLCONCEALBABYSWALL( const struct TA_CDLCONCEALBABYSWALL_Stream *a, const struct TA_CDLCONCEALBABYSWALL_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 4; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag3_inHigh, b->lag3_inHigh, z) ) { *w = "lag3_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag3_inLow, b->lag3_inLow, z) ) { *w = "lag3_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag3_inClose, b->lag3_inClose, z) ) { *w = "lag3_inClose"; return 1; }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLCOUNTERATTACK( const struct TA_CDLCOUNTERATTACK_Stream *a, const struct TA_CDLCOUNTERATTACK_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
+   for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_EqualTrailingIdx != b->ringCap_EqualTrailingIdx ) { *w = "ringCap_EqualTrailingIdx"; return 1; }
+   if( a->ringLag_EqualTrailingIdx != b->ringLag_EqualTrailingIdx ) { *w = "ringLag_EqualTrailingIdx"; return 1; }
+   if( (a->ring_EqualTrailingIdx_derived == NULL) != (b->ring_EqualTrailingIdx_derived == NULL) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   if( a->ring_EqualTrailingIdx_derived ) for( k = 0; k < a->ringCap_EqualTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_EqualTrailingIdx + k) % a->ringCap_EqualTrailingIdx;
+      ib = (b->ringPos_EqualTrailingIdx + k) % b->ringCap_EqualTrailingIdx;
+      if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLDARKCLOUDCOVER( const struct TA_CDLDARKCLOUDCOVER_Stream *a, const struct TA_CDLDARKCLOUDCOVER_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLDOJI( const struct TA_CDLDOJI_Stream *a, const struct TA_CDLDOJI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLDOJISTAR( const struct TA_CDLDOJISTAR_Stream *a, const struct TA_CDLDOJISTAR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLDRAGONFLYDOJI( const struct TA_CDLDRAGONFLYDOJI_Stream *a, const struct TA_CDLDRAGONFLYDOJI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLENGULFING( const struct TA_CDLENGULFING_Stream *a, const struct TA_CDLENGULFING_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_CDLEVENINGDOJISTAR( const struct TA_CDLEVENINGDOJISTAR_Stream *a, const struct TA_CDLEVENINGDOJISTAR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLEVENINGSTAR( const struct TA_CDLEVENINGSTAR_Stream *a, const struct TA_CDLEVENINGSTAR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal2, b->BodyShortPeriodTotal2, z) ) { *w = "BodyShortPeriodTotal2"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( a->ringLag_BodyShortTrailingIdx != b->ringLag_BodyShortTrailingIdx ) { *w = "ringLag_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLGAPSIDESIDEWHITE( const struct TA_CDLGAPSIDESIDEWHITE_Stream *a, const struct TA_CDLGAPSIDESIDEWHITE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_EqualTrailingIdx != b->ringCap_EqualTrailingIdx ) { *w = "ringCap_EqualTrailingIdx"; return 1; }
+   if( a->ringLag_EqualTrailingIdx != b->ringLag_EqualTrailingIdx ) { *w = "ringLag_EqualTrailingIdx"; return 1; }
+   if( (a->ring_EqualTrailingIdx_derived == NULL) != (b->ring_EqualTrailingIdx_derived == NULL) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   if( a->ring_EqualTrailingIdx_derived ) for( k = 0; k < a->ringCap_EqualTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_EqualTrailingIdx + k) % a->ringCap_EqualTrailingIdx;
+      ib = (b->ringPos_EqualTrailingIdx + k) % b->ringCap_EqualTrailingIdx;
+      if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( a->ringLag_NearTrailingIdx != b->ringLag_NearTrailingIdx ) { *w = "ringLag_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLGRAVESTONEDOJI( const struct TA_CDLGRAVESTONEDOJI_Stream *a, const struct TA_CDLGRAVESTONEDOJI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLHAMMER( const struct TA_CDLHAMMER_Stream *a, const struct TA_CDLHAMMER_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
+   if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyTrailingIdx + k) % a->ringCap_BodyTrailingIdx;
+      ib = (b->ringPos_BodyTrailingIdx + k) % b->ringCap_BodyTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyTrailingIdx_derived[ia], b->ring_BodyTrailingIdx_derived[ib], z) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowLongTrailingIdx != b->ringCap_ShadowLongTrailingIdx ) { *w = "ringCap_ShadowLongTrailingIdx"; return 1; }
+   if( (a->ring_ShadowLongTrailingIdx_derived == NULL) != (b->ring_ShadowLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowLongTrailingIdx + k) % a->ringCap_ShadowLongTrailingIdx;
+      ib = (b->ringPos_ShadowLongTrailingIdx + k) % b->ringCap_ShadowLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLHANGINGMAN( const struct TA_CDLHANGINGMAN_Stream *a, const struct TA_CDLHANGINGMAN_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
+   if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyTrailingIdx + k) % a->ringCap_BodyTrailingIdx;
+      ib = (b->ringPos_BodyTrailingIdx + k) % b->ringCap_BodyTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyTrailingIdx_derived[ia], b->ring_BodyTrailingIdx_derived[ib], z) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowLongTrailingIdx != b->ringCap_ShadowLongTrailingIdx ) { *w = "ringCap_ShadowLongTrailingIdx"; return 1; }
+   if( (a->ring_ShadowLongTrailingIdx_derived == NULL) != (b->ring_ShadowLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowLongTrailingIdx + k) % a->ringCap_ShadowLongTrailingIdx;
+      ib = (b->ringPos_ShadowLongTrailingIdx + k) % b->ringCap_ShadowLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLHARAMI( const struct TA_CDLHARAMI_Stream *a, const struct TA_CDLHARAMI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLHARAMICROSS( const struct TA_CDLHARAMICROSS_Stream *a, const struct TA_CDLHARAMICROSS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLHIGHWAVE( const struct TA_CDLHIGHWAVE_Stream *a, const struct TA_CDLHIGHWAVE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowPeriodTotal, b->ShadowPeriodTotal, z) ) { *w = "ShadowPeriodTotal"; return 1; }
+   if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
+   if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyTrailingIdx + k) % a->ringCap_BodyTrailingIdx;
+      ib = (b->ringPos_BodyTrailingIdx + k) % b->ringCap_BodyTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyTrailingIdx_derived[ia], b->ring_BodyTrailingIdx_derived[ib], z) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowTrailingIdx != b->ringCap_ShadowTrailingIdx ) { *w = "ringCap_ShadowTrailingIdx"; return 1; }
+   if( (a->ring_ShadowTrailingIdx_derived == NULL) != (b->ring_ShadowTrailingIdx_derived == NULL) ) { *w = "ring_ShadowTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowTrailingIdx + k) % a->ringCap_ShadowTrailingIdx;
+      ib = (b->ringPos_ShadowTrailingIdx + k) % b->ringCap_ShadowTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowTrailingIdx_derived[ia], b->ring_ShadowTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLHIKKAKE( const struct TA_CDLHIKKAKE_Stream *a, const struct TA_CDLHIKKAKE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->patternResult != b->patternResult ) { *w = "patternResult"; return 1; }
+   if( a->cd != b->cd ) { *w = "cd"; return 1; }
+   if( sv_xtier_ne(a->savedHigh, b->savedHigh, z) ) { *w = "savedHigh"; return 1; }
+   if( sv_xtier_ne(a->savedLow, b->savedLow, z) ) { *w = "savedLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_CDLHIKKAKEMOD( const struct TA_CDLHIKKAKEMOD_Stream *a, const struct TA_CDLHIKKAKEMOD_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( a->patternResult != b->patternResult ) { *w = "patternResult"; return 1; }
+   if( a->patternCount != b->patternCount ) { *w = "patternCount"; return 1; }
+   if( sv_xtier_ne(a->patternHigh, b->patternHigh, z) ) { *w = "patternHigh"; return 1; }
+   if( sv_xtier_ne(a->patternLow, b->patternLow, z) ) { *w = "patternLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag3_inHigh, b->lag3_inHigh, z) ) { *w = "lag3_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag3_inLow, b->lag3_inLow, z) ) { *w = "lag3_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( a->ringLag_NearTrailingIdx != b->ringLag_NearTrailingIdx ) { *w = "ringLag_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLHOMINGPIGEON( const struct TA_CDLHOMINGPIGEON_Stream *a, const struct TA_CDLHOMINGPIGEON_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLIDENTICAL3CROWS( const struct TA_CDLIDENTICAL3CROWS_Stream *a, const struct TA_CDLIDENTICAL3CROWS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->EqualPeriodTotal[k], b->EqualPeriodTotal[k], z) ) { *w = "EqualPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_EqualTrailingIdx != b->ringCap_EqualTrailingIdx ) { *w = "ringCap_EqualTrailingIdx"; return 1; }
+   if( a->ringLag_EqualTrailingIdx != b->ringLag_EqualTrailingIdx ) { *w = "ringLag_EqualTrailingIdx"; return 1; }
+   if( (a->ring_EqualTrailingIdx_derived == NULL) != (b->ring_EqualTrailingIdx_derived == NULL) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   if( a->ring_EqualTrailingIdx_derived ) for( k = 0; k < a->ringCap_EqualTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_EqualTrailingIdx + k) % a->ringCap_EqualTrailingIdx;
+      ib = (b->ringPos_EqualTrailingIdx + k) % b->ringCap_EqualTrailingIdx;
+      if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLINNECK( const struct TA_CDLINNECK_Stream *a, const struct TA_CDLINNECK_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_EqualTrailingIdx != b->ringCap_EqualTrailingIdx ) { *w = "ringCap_EqualTrailingIdx"; return 1; }
+   if( a->ringLag_EqualTrailingIdx != b->ringLag_EqualTrailingIdx ) { *w = "ringLag_EqualTrailingIdx"; return 1; }
+   if( (a->ring_EqualTrailingIdx_derived == NULL) != (b->ring_EqualTrailingIdx_derived == NULL) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   if( a->ring_EqualTrailingIdx_derived ) for( k = 0; k < a->ringCap_EqualTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_EqualTrailingIdx + k) % a->ringCap_EqualTrailingIdx;
+      ib = (b->ringPos_EqualTrailingIdx + k) % b->ringCap_EqualTrailingIdx;
+      if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLINVERTEDHAMMER( const struct TA_CDLINVERTEDHAMMER_Stream *a, const struct TA_CDLINVERTEDHAMMER_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
+   if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyTrailingIdx + k) % a->ringCap_BodyTrailingIdx;
+      ib = (b->ringPos_BodyTrailingIdx + k) % b->ringCap_BodyTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyTrailingIdx_derived[ia], b->ring_BodyTrailingIdx_derived[ib], z) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowLongTrailingIdx != b->ringCap_ShadowLongTrailingIdx ) { *w = "ringCap_ShadowLongTrailingIdx"; return 1; }
+   if( (a->ring_ShadowLongTrailingIdx_derived == NULL) != (b->ring_ShadowLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowLongTrailingIdx + k) % a->ringCap_ShadowLongTrailingIdx;
+      ib = (b->ringPos_ShadowLongTrailingIdx + k) % b->ringCap_ShadowLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLKICKING( const struct TA_CDLKICKING_Stream *a, const struct TA_CDLKICKING_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLKICKINGBYLENGTH( const struct TA_CDLKICKINGBYLENGTH_Stream *a, const struct TA_CDLKICKINGBYLENGTH_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLLADDERBOTTOM( const struct TA_CDLLADDERBOTTOM_Stream *a, const struct TA_CDLLADDERBOTTOM_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag4_inOpen, b->lag4_inOpen, z) ) { *w = "lag4_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag3_inClose, b->lag3_inClose, z) ) { *w = "lag3_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag4_inClose, b->lag4_inClose, z) ) { *w = "lag4_inClose"; return 1; }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLLONGLEGGEDDOJI( const struct TA_CDLLONGLEGGEDDOJI_Stream *a, const struct TA_CDLLONGLEGGEDDOJI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowLongTrailingIdx != b->ringCap_ShadowLongTrailingIdx ) { *w = "ringCap_ShadowLongTrailingIdx"; return 1; }
+   if( (a->ring_ShadowLongTrailingIdx_derived == NULL) != (b->ring_ShadowLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowLongTrailingIdx + k) % a->ringCap_ShadowLongTrailingIdx;
+      ib = (b->ringPos_ShadowLongTrailingIdx + k) % b->ringCap_ShadowLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLLONGLINE( const struct TA_CDLLONGLINE_Stream *a, const struct TA_CDLLONGLINE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowPeriodTotal, b->ShadowPeriodTotal, z) ) { *w = "ShadowPeriodTotal"; return 1; }
+   if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
+   if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyTrailingIdx + k) % a->ringCap_BodyTrailingIdx;
+      ib = (b->ringPos_BodyTrailingIdx + k) % b->ringCap_BodyTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyTrailingIdx_derived[ia], b->ring_BodyTrailingIdx_derived[ib], z) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowTrailingIdx != b->ringCap_ShadowTrailingIdx ) { *w = "ringCap_ShadowTrailingIdx"; return 1; }
+   if( (a->ring_ShadowTrailingIdx_derived == NULL) != (b->ring_ShadowTrailingIdx_derived == NULL) ) { *w = "ring_ShadowTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowTrailingIdx + k) % a->ringCap_ShadowTrailingIdx;
+      ib = (b->ringPos_ShadowTrailingIdx + k) % b->ringCap_ShadowTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowTrailingIdx_derived[ia], b->ring_ShadowTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLMARUBOZU( const struct TA_CDLMARUBOZU_Stream *a, const struct TA_CDLMARUBOZU_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLMATCHINGLOW( const struct TA_CDLMATCHINGLOW_Stream *a, const struct TA_CDLMATCHINGLOW_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_EqualTrailingIdx != b->ringCap_EqualTrailingIdx ) { *w = "ringCap_EqualTrailingIdx"; return 1; }
+   if( a->ringLag_EqualTrailingIdx != b->ringLag_EqualTrailingIdx ) { *w = "ringLag_EqualTrailingIdx"; return 1; }
+   if( (a->ring_EqualTrailingIdx_derived == NULL) != (b->ring_EqualTrailingIdx_derived == NULL) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   if( a->ring_EqualTrailingIdx_derived ) for( k = 0; k < a->ringCap_EqualTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_EqualTrailingIdx + k) % a->ringCap_EqualTrailingIdx;
+      ib = (b->ringPos_EqualTrailingIdx + k) % b->ringCap_EqualTrailingIdx;
+      if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLMATHOLD( const struct TA_CDLMATHOLD_Stream *a, const struct TA_CDLMATHOLD_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
+   for( k = 0; k < 5; k++ ) if( sv_xtier_ne(a->BodyPeriodTotal[k], b->BodyPeriodTotal[k], z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag4_inOpen, b->lag4_inOpen, z) ) { *w = "lag4_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag3_inHigh, b->lag3_inHigh, z) ) { *w = "lag3_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag4_inHigh, b->lag4_inHigh, z) ) { *w = "lag4_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag3_inLow, b->lag3_inLow, z) ) { *w = "lag3_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag4_inLow, b->lag4_inLow, z) ) { *w = "lag4_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag3_inClose, b->lag3_inClose, z) ) { *w = "lag3_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag4_inClose, b->lag4_inClose, z) ) { *w = "lag4_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( a->ringLag_BodyShortTrailingIdx != b->ringLag_BodyShortTrailingIdx ) { *w = "ringLag_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLMORNINGDOJISTAR( const struct TA_CDLMORNINGDOJISTAR_Stream *a, const struct TA_CDLMORNINGDOJISTAR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLMORNINGSTAR( const struct TA_CDLMORNINGSTAR_Stream *a, const struct TA_CDLMORNINGSTAR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal2, b->BodyShortPeriodTotal2, z) ) { *w = "BodyShortPeriodTotal2"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( a->ringLag_BodyShortTrailingIdx != b->ringLag_BodyShortTrailingIdx ) { *w = "ringLag_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLONNECK( const struct TA_CDLONNECK_Stream *a, const struct TA_CDLONNECK_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_EqualTrailingIdx != b->ringCap_EqualTrailingIdx ) { *w = "ringCap_EqualTrailingIdx"; return 1; }
+   if( a->ringLag_EqualTrailingIdx != b->ringLag_EqualTrailingIdx ) { *w = "ringLag_EqualTrailingIdx"; return 1; }
+   if( (a->ring_EqualTrailingIdx_derived == NULL) != (b->ring_EqualTrailingIdx_derived == NULL) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   if( a->ring_EqualTrailingIdx_derived ) for( k = 0; k < a->ringCap_EqualTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_EqualTrailingIdx + k) % a->ringCap_EqualTrailingIdx;
+      ib = (b->ringPos_EqualTrailingIdx + k) % b->ringCap_EqualTrailingIdx;
+      if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLPIERCING( const struct TA_CDLPIERCING_Stream *a, const struct TA_CDLPIERCING_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLRICKSHAWMAN( const struct TA_CDLRICKSHAWMAN_Stream *a, const struct TA_CDLRICKSHAWMAN_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowLongTrailingIdx != b->ringCap_ShadowLongTrailingIdx ) { *w = "ringCap_ShadowLongTrailingIdx"; return 1; }
+   if( (a->ring_ShadowLongTrailingIdx_derived == NULL) != (b->ring_ShadowLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowLongTrailingIdx + k) % a->ringCap_ShadowLongTrailingIdx;
+      ib = (b->ringPos_ShadowLongTrailingIdx + k) % b->ringCap_ShadowLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLRISEFALL3METHODS( const struct TA_CDLRISEFALL3METHODS_Stream *a, const struct TA_CDLRISEFALL3METHODS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 5; k++ ) if( sv_xtier_ne(a->BodyPeriodTotal[k], b->BodyPeriodTotal[k], z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag4_inOpen, b->lag4_inOpen, z) ) { *w = "lag4_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag3_inHigh, b->lag3_inHigh, z) ) { *w = "lag3_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag4_inHigh, b->lag4_inHigh, z) ) { *w = "lag4_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag3_inLow, b->lag3_inLow, z) ) { *w = "lag3_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag4_inLow, b->lag4_inLow, z) ) { *w = "lag4_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag3_inClose, b->lag3_inClose, z) ) { *w = "lag3_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag4_inClose, b->lag4_inClose, z) ) { *w = "lag4_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( a->ringLag_BodyShortTrailingIdx != b->ringLag_BodyShortTrailingIdx ) { *w = "ringLag_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLSEPARATINGLINES( const struct TA_CDLSEPARATINGLINES_Stream *a, const struct TA_CDLSEPARATINGLINES_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_EqualTrailingIdx != b->ringCap_EqualTrailingIdx ) { *w = "ringCap_EqualTrailingIdx"; return 1; }
+   if( a->ringLag_EqualTrailingIdx != b->ringLag_EqualTrailingIdx ) { *w = "ringLag_EqualTrailingIdx"; return 1; }
+   if( (a->ring_EqualTrailingIdx_derived == NULL) != (b->ring_EqualTrailingIdx_derived == NULL) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   if( a->ring_EqualTrailingIdx_derived ) for( k = 0; k < a->ringCap_EqualTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_EqualTrailingIdx + k) % a->ringCap_EqualTrailingIdx;
+      ib = (b->ringPos_EqualTrailingIdx + k) % b->ringCap_EqualTrailingIdx;
+      if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLSHOOTINGSTAR( const struct TA_CDLSHOOTINGSTAR_Stream *a, const struct TA_CDLSHOOTINGSTAR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
+   if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyTrailingIdx + k) % a->ringCap_BodyTrailingIdx;
+      ib = (b->ringPos_BodyTrailingIdx + k) % b->ringCap_BodyTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyTrailingIdx_derived[ia], b->ring_BodyTrailingIdx_derived[ib], z) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowLongTrailingIdx != b->ringCap_ShadowLongTrailingIdx ) { *w = "ringCap_ShadowLongTrailingIdx"; return 1; }
+   if( (a->ring_ShadowLongTrailingIdx_derived == NULL) != (b->ring_ShadowLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowLongTrailingIdx + k) % a->ringCap_ShadowLongTrailingIdx;
+      ib = (b->ringPos_ShadowLongTrailingIdx + k) % b->ringCap_ShadowLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLSHORTLINE( const struct TA_CDLSHORTLINE_Stream *a, const struct TA_CDLSHORTLINE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowPeriodTotal, b->ShadowPeriodTotal, z) ) { *w = "ShadowPeriodTotal"; return 1; }
+   if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
+   if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyTrailingIdx + k) % a->ringCap_BodyTrailingIdx;
+      ib = (b->ringPos_BodyTrailingIdx + k) % b->ringCap_BodyTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyTrailingIdx_derived[ia], b->ring_BodyTrailingIdx_derived[ib], z) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowTrailingIdx != b->ringCap_ShadowTrailingIdx ) { *w = "ringCap_ShadowTrailingIdx"; return 1; }
+   if( (a->ring_ShadowTrailingIdx_derived == NULL) != (b->ring_ShadowTrailingIdx_derived == NULL) ) { *w = "ring_ShadowTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowTrailingIdx + k) % a->ringCap_ShadowTrailingIdx;
+      ib = (b->ringPos_ShadowTrailingIdx + k) % b->ringCap_ShadowTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowTrailingIdx_derived[ia], b->ring_ShadowTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLSPINNINGTOP( const struct TA_CDLSPINNINGTOP_Stream *a, const struct TA_CDLSPINNINGTOP_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
+   if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyTrailingIdx + k) % a->ringCap_BodyTrailingIdx;
+      ib = (b->ringPos_BodyTrailingIdx + k) % b->ringCap_BodyTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyTrailingIdx_derived[ia], b->ring_BodyTrailingIdx_derived[ib], z) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLSTALLEDPATTERN( const struct TA_CDLSTALLEDPATTERN_Stream *a, const struct TA_CDLSTALLEDPATTERN_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( a->totIdx != b->totIdx ) { *w = "totIdx"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( a->ringLag_NearTrailingIdx != b->ringLag_NearTrailingIdx ) { *w = "ringLag_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLSTICKSANDWICH( const struct TA_CDLSTICKSANDWICH_Stream *a, const struct TA_CDLSTICKSANDWICH_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_EqualTrailingIdx != b->ringCap_EqualTrailingIdx ) { *w = "ringCap_EqualTrailingIdx"; return 1; }
+   if( a->ringLag_EqualTrailingIdx != b->ringLag_EqualTrailingIdx ) { *w = "ringLag_EqualTrailingIdx"; return 1; }
+   if( (a->ring_EqualTrailingIdx_derived == NULL) != (b->ring_EqualTrailingIdx_derived == NULL) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   if( a->ring_EqualTrailingIdx_derived ) for( k = 0; k < a->ringCap_EqualTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_EqualTrailingIdx + k) % a->ringCap_EqualTrailingIdx;
+      ib = (b->ringPos_EqualTrailingIdx + k) % b->ringCap_EqualTrailingIdx;
+      if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLTAKURI( const struct TA_CDLTAKURI_Stream *a, const struct TA_CDLTAKURI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryLongPeriodTotal, b->ShadowVeryLongPeriodTotal, z) ) { *w = "ShadowVeryLongPeriodTotal"; return 1; }
+   if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
+   if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyDojiTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyDojiTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyDojiTrailingIdx + k) % a->ringCap_BodyDojiTrailingIdx;
+      ib = (b->ringPos_BodyDojiTrailingIdx + k) % b->ringCap_BodyDojiTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyDojiTrailingIdx_derived[ia], b->ring_BodyDojiTrailingIdx_derived[ib], z) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryLongTrailingIdx != b->ringCap_ShadowVeryLongTrailingIdx ) { *w = "ringCap_ShadowVeryLongTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryLongTrailingIdx_derived == NULL) != (b->ring_ShadowVeryLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryLongTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryLongTrailingIdx + k) % a->ringCap_ShadowVeryLongTrailingIdx;
+      ib = (b->ringPos_ShadowVeryLongTrailingIdx + k) % b->ringCap_ShadowVeryLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryLongTrailingIdx_derived[ia], b->ring_ShadowVeryLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
+   if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_ShadowVeryShortTrailingIdx + k) % a->ringCap_ShadowVeryShortTrailingIdx;
+      ib = (b->ringPos_ShadowVeryShortTrailingIdx + k) % b->ringCap_ShadowVeryShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_ShadowVeryShortTrailingIdx_derived[ia], b->ring_ShadowVeryShortTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLTASUKIGAP( const struct TA_CDLTASUKIGAP_Stream *a, const struct TA_CDLTASUKIGAP_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_NearTrailingIdx != b->ringCap_NearTrailingIdx ) { *w = "ringCap_NearTrailingIdx"; return 1; }
+   if( a->ringLag_NearTrailingIdx != b->ringLag_NearTrailingIdx ) { *w = "ringLag_NearTrailingIdx"; return 1; }
+   if( (a->ring_NearTrailingIdx_derived == NULL) != (b->ring_NearTrailingIdx_derived == NULL) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   if( a->ring_NearTrailingIdx_derived ) for( k = 0; k < a->ringCap_NearTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_NearTrailingIdx + k) % a->ringCap_NearTrailingIdx;
+      ib = (b->ringPos_NearTrailingIdx + k) % b->ringCap_NearTrailingIdx;
+      if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLTHRUSTING( const struct TA_CDLTHRUSTING_Stream *a, const struct TA_CDLTHRUSTING_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_EqualTrailingIdx != b->ringCap_EqualTrailingIdx ) { *w = "ringCap_EqualTrailingIdx"; return 1; }
+   if( a->ringLag_EqualTrailingIdx != b->ringLag_EqualTrailingIdx ) { *w = "ringLag_EqualTrailingIdx"; return 1; }
+   if( (a->ring_EqualTrailingIdx_derived == NULL) != (b->ring_EqualTrailingIdx_derived == NULL) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   if( a->ring_EqualTrailingIdx_derived ) for( k = 0; k < a->ringCap_EqualTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_EqualTrailingIdx + k) % a->ringCap_EqualTrailingIdx;
+      ib = (b->ringPos_EqualTrailingIdx + k) % b->ringCap_EqualTrailingIdx;
+      if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLTRISTAR( const struct TA_CDLTRISTAR_Stream *a, const struct TA_CDLTRISTAR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
+   if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyTrailingIdx + k) % a->ringCap_BodyTrailingIdx;
+      ib = (b->ringPos_BodyTrailingIdx + k) % b->ringCap_BodyTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyTrailingIdx_derived[ia], b->ring_BodyTrailingIdx_derived[ib], z) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLUNIQUE3RIVER( const struct TA_CDLUNIQUE3RIVER_Stream *a, const struct TA_CDLUNIQUE3RIVER_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLUPSIDEGAP2CROWS( const struct TA_CDLUPSIDEGAP2CROWS_Stream *a, const struct TA_CDLUPSIDEGAP2CROWS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag2_inHigh, b->lag2_inHigh, z) ) { *w = "lag2_inHigh"; return 1; }
+   if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag2_inLow, b->lag2_inLow, z) ) { *w = "lag2_inLow"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyLongTrailingIdx + k) % a->ringCap_BodyLongTrailingIdx;
+      ib = (b->ringPos_BodyLongTrailingIdx + k) % b->ringCap_BodyLongTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
+   }
+   if( a->ringCap_BodyShortTrailingIdx != b->ringCap_BodyShortTrailingIdx ) { *w = "ringCap_BodyShortTrailingIdx"; return 1; }
+   if( (a->ring_BodyShortTrailingIdx_derived == NULL) != (b->ring_BodyShortTrailingIdx_derived == NULL) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   if( a->ring_BodyShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyShortTrailingIdx; k++ )
+   {
+      ia = (a->ringPos_BodyShortTrailingIdx + k) % a->ringCap_BodyShortTrailingIdx;
+      ib = (b->ringPos_BodyShortTrailingIdx + k) % b->ringCap_BodyShortTrailingIdx;
+      if( sv_xtier_ne(a->ring_BodyShortTrailingIdx_derived[ia], b->ring_BodyShortTrailingIdx_derived[ib], z) ) { *w = "ring_BodyShortTrailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CDLXSIDEGAP3METHODS( const struct TA_CDLXSIDEGAP3METHODS_Stream *a, const struct TA_CDLXSIDEGAP3METHODS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_CEIL( const struct TA_CEIL_Stream *a, const struct TA_CEIL_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_CMF( const struct TA_CMF_Stream *a, const struct TA_CMF_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->sumMFV, b->sumMFV, z) ) { *w = "sumMFV"; return 1; }
+   if( sv_xtier_ne(a->sumVol, b->sumVol, z) ) { *w = "sumVol"; return 1; }
+   if( sv_xtier_ne(a->high, b->high, z) ) { *w = "high"; return 1; }
+   if( sv_xtier_ne(a->low, b->low, z) ) { *w = "low"; return 1; }
+   if( sv_xtier_ne(a->close, b->close, z) ) { *w = "close"; return 1; }
+   if( sv_xtier_ne(a->tmp, b->tmp, z) ) { *w = "tmp"; return 1; }
+   if( sv_xtier_ne(a->mfv, b->mfv, z) ) { *w = "mfv"; return 1; }
+   if( a->mfv_Idx != b->mfv_Idx ) { *w = "mfv_Idx"; return 1; }
+   if( a->maxIdx_mfv != b->maxIdx_mfv ) { *w = "maxIdx_mfv"; return 1; }
+   if( a->cbSize_mfv != b->cbSize_mfv ) { *w = "cbSize_mfv"; return 1; }
+   if( (a->cb_mfv_flow == NULL) != (b->cb_mfv_flow == NULL) ) { *w = "cb_mfv_flow"; return 1; }
+   if( a->cb_mfv_flow ) for( k = 0; k < a->cbSize_mfv; k++ ) if( sv_xtier_ne(a->cb_mfv_flow[k], b->cb_mfv_flow[k], z) ) { *w = "cb_mfv_flow"; return 1; }
+   if( (a->cb_mfv_volume == NULL) != (b->cb_mfv_volume == NULL) ) { *w = "cb_mfv_volume"; return 1; }
+   if( a->cb_mfv_volume ) for( k = 0; k < a->cbSize_mfv; k++ ) if( sv_xtier_ne(a->cb_mfv_volume[k], b->cb_mfv_volume[k], z) ) { *w = "cb_mfv_volume"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_CMO( const struct TA_CMO_Stream *a, const struct TA_CMO_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevGain, b->prevGain, z) ) { *w = "prevGain"; return 1; }
+   if( sv_xtier_ne(a->prevLoss, b->prevLoss, z) ) { *w = "prevLoss"; return 1; }
+   if( sv_xtier_ne(a->prevValue, b->prevValue, z) ) { *w = "prevValue"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_CMOU( const struct TA_CMOU_Stream *a, const struct TA_CMOU_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->upSum, b->upSum, z) ) { *w = "upSum"; return 1; }
+   if( sv_xtier_ne(a->downSum, b->downSum, z) ) { *w = "downSum"; return 1; }
+   if( sv_xtier_ne(a->sum, b->sum, z) ) { *w = "sum"; return 1; }
+   if( sv_xtier_ne(a->prevValue, b->prevValue, z) ) { *w = "prevValue"; return 1; }
+   if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_CORREL( const struct TA_CORREL_Stream *a, const struct TA_CORREL_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->sumXY, b->sumXY, z) ) { *w = "sumXY"; return 1; }
+   if( sv_xtier_ne(a->sumX, b->sumX, z) ) { *w = "sumX"; return 1; }
+   if( sv_xtier_ne(a->sumY, b->sumY, z) ) { *w = "sumY"; return 1; }
+   if( sv_xtier_ne(a->sumX2, b->sumX2, z) ) { *w = "sumX2"; return 1; }
+   if( sv_xtier_ne(a->sumY2, b->sumY2, z) ) { *w = "sumY2"; return 1; }
+   if( sv_xtier_ne(a->x, b->x, z) ) { *w = "x"; return 1; }
+   if( sv_xtier_ne(a->y, b->y, z) ) { *w = "y"; return 1; }
+   if( sv_xtier_ne(a->trailingX, b->trailingX, z) ) { *w = "trailingX"; return 1; }
+   if( sv_xtier_ne(a->trailingY, b->trailingY, z) ) { *w = "trailingY"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal0 == NULL) != (b->ring_trailingIdx_inReal0 == NULL) ) { *w = "ring_trailingIdx_inReal0"; return 1; }
+   if( a->ring_trailingIdx_inReal0 ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal0[ia], b->ring_trailingIdx_inReal0[ib], z) ) { *w = "ring_trailingIdx_inReal0"; return 1; }
+   }
+   if( (a->ring_trailingIdx_inReal1 == NULL) != (b->ring_trailingIdx_inReal1 == NULL) ) { *w = "ring_trailingIdx_inReal1"; return 1; }
+   if( a->ring_trailingIdx_inReal1 ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal1[ia], b->ring_trailingIdx_inReal1[ib], z) ) { *w = "ring_trailingIdx_inReal1"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_COS( const struct TA_COS_Stream *a, const struct TA_COS_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_COSH( const struct TA_COSH_Stream *a, const struct TA_COSH_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_DEMA( const struct TA_DEMA_Stream *a, const struct TA_DEMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevEMA1, b->prevEMA1, z) ) { *w = "prevEMA1"; return 1; }
+   if( sv_xtier_ne(a->prevEMA2, b->prevEMA2, z) ) { *w = "prevEMA2"; return 1; }
+   if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_DIV( const struct TA_DIV_Stream *a, const struct TA_DIV_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_DX( const struct TA_DX_Stream *a, const struct TA_DX_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
+   if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->prevMinusDM, b->prevMinusDM, z) ) { *w = "prevMinusDM"; return 1; }
+   if( sv_xtier_ne(a->prevPlusDM, b->prevPlusDM, z) ) { *w = "prevPlusDM"; return 1; }
+   if( sv_xtier_ne(a->prevTR, b->prevTR, z) ) { *w = "prevTR"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->diffP, b->diffP, z) ) { *w = "diffP"; return 1; }
+   if( sv_xtier_ne(a->diffM, b->diffM, z) ) { *w = "diffM"; return 1; }
+   if( sv_xtier_ne(a->minusDI, b->minusDI, z) ) { *w = "minusDI"; return 1; }
+   if( sv_xtier_ne(a->plusDI, b->plusDI, z) ) { *w = "plusDI"; return 1; }
+   if( sv_xtier_ne(a->lastOut_outReal, b->lastOut_outReal, z) ) { *w = "lastOut_outReal"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_EFI( const struct TA_EFI_Stream *a, const struct TA_EFI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   if( sv_xtier_ne(a->prevMA, b->prevMA, z) ) { *w = "prevMA"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_EMA( const struct TA_EMA_Stream *a, const struct TA_EMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   if( sv_xtier_ne(a->prevMA, b->prevMA, z) ) { *w = "prevMA"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_EXP( const struct TA_EXP_Stream *a, const struct TA_EXP_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_FLOOR( const struct TA_FLOOR_Stream *a, const struct TA_FLOOR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->dividerFull, b->dividerFull, z) ) { *w = "dividerFull"; return 1; }
+   if( sv_xtier_ne(a->periodSubFull, b->periodSubFull, z) ) { *w = "periodSubFull"; return 1; }
+   if( sv_xtier_ne(a->periodSumFull, b->periodSumFull, z) ) { *w = "periodSumFull"; return 1; }
+   if( sv_xtier_ne(a->trailingFull, b->trailingFull, z) ) { *w = "trailingFull"; return 1; }
+   if( sv_xtier_ne(a->fullOut, b->fullOut, z) ) { *w = "fullOut"; return 1; }
+   if( a->halfPeriod != b->halfPeriod ) { *w = "halfPeriod"; return 1; }
+   if( a->sqrtPeriod != b->sqrtPeriod ) { *w = "sqrtPeriod"; return 1; }
+   if( sv_xtier_ne(a->dividerHalf, b->dividerHalf, z) ) { *w = "dividerHalf"; return 1; }
+   if( sv_xtier_ne(a->dividerSqrt, b->dividerSqrt, z) ) { *w = "dividerSqrt"; return 1; }
+   if( sv_xtier_ne(a->periodSubHalf, b->periodSubHalf, z) ) { *w = "periodSubHalf"; return 1; }
+   if( sv_xtier_ne(a->periodSumHalf, b->periodSumHalf, z) ) { *w = "periodSumHalf"; return 1; }
+   if( sv_xtier_ne(a->trailingHalf, b->trailingHalf, z) ) { *w = "trailingHalf"; return 1; }
+   if( sv_xtier_ne(a->periodSubSqrt, b->periodSubSqrt, z) ) { *w = "periodSubSqrt"; return 1; }
+   if( sv_xtier_ne(a->periodSumSqrt, b->periodSumSqrt, z) ) { *w = "periodSumSqrt"; return 1; }
+   if( sv_xtier_ne(a->trailingSqrt, b->trailingSqrt, z) ) { *w = "trailingSqrt"; return 1; }
+   if( sv_xtier_ne(a->halfOut, b->halfOut, z) ) { *w = "halfOut"; return 1; }
+   if( sv_xtier_ne(a->diffReal, b->diffReal, z) ) { *w = "diffReal"; return 1; }
+   if( a->dRing_Idx != b->dRing_Idx ) { *w = "dRing_Idx"; return 1; }
+   if( a->maxIdx_dRing != b->maxIdx_dRing ) { *w = "maxIdx_dRing"; return 1; }
+   if( a->ringCap_trailingIdxFull != b->ringCap_trailingIdxFull ) { *w = "ringCap_trailingIdxFull"; return 1; }
+   if( (a->ring_trailingIdxFull_inReal == NULL) != (b->ring_trailingIdxFull_inReal == NULL) ) { *w = "ring_trailingIdxFull_inReal"; return 1; }
+   if( a->ring_trailingIdxFull_inReal ) for( k = 0; k < a->ringCap_trailingIdxFull; k++ )
+   {
+      ia = (a->ringPos_trailingIdxFull + k) % a->ringCap_trailingIdxFull;
+      ib = (b->ringPos_trailingIdxFull + k) % b->ringCap_trailingIdxFull;
+      if( sv_xtier_ne(a->ring_trailingIdxFull_inReal[ia], b->ring_trailingIdxFull_inReal[ib], z) ) { *w = "ring_trailingIdxFull_inReal"; return 1; }
+   }
+   if( a->ringCap_trailingIdxHalf != b->ringCap_trailingIdxHalf ) { *w = "ringCap_trailingIdxHalf"; return 1; }
+   if( (a->ring_trailingIdxHalf_inReal == NULL) != (b->ring_trailingIdxHalf_inReal == NULL) ) { *w = "ring_trailingIdxHalf_inReal"; return 1; }
+   if( a->ring_trailingIdxHalf_inReal ) for( k = 0; k < a->ringCap_trailingIdxHalf; k++ )
+   {
+      ia = (a->ringPos_trailingIdxHalf + k) % a->ringCap_trailingIdxHalf;
+      ib = (b->ringPos_trailingIdxHalf + k) % b->ringCap_trailingIdxHalf;
+      if( sv_xtier_ne(a->ring_trailingIdxHalf_inReal[ia], b->ring_trailingIdxHalf_inReal[ib], z) ) { *w = "ring_trailingIdxHalf_inReal"; return 1; }
+   }
+   if( a->cbSize_dRing != b->cbSize_dRing ) { *w = "cbSize_dRing"; return 1; }
+   if( (a->cb_dRing == NULL) != (b->cb_dRing == NULL) ) { *w = "cb_dRing"; return 1; }
+   if( a->cb_dRing ) for( k = 0; k < a->cbSize_dRing; k++ ) if( sv_xtier_ne(a->cb_dRing[k], b->cb_dRing[k], z) ) { *w = "cb_dRing"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_HT_DCPERIOD( const struct TA_HT_DCPERIOD_Stream *a, const struct TA_HT_DCPERIOD_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->tempReal2, b->tempReal2, z) ) { *w = "tempReal2"; return 1; }
+   if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
+   if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
+   if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
+   if( sv_xtier_ne(a->trailingWMAValue, b->trailingWMAValue, z) ) { *w = "trailingWMAValue"; return 1; }
+   if( sv_xtier_ne(a->smoothedValue, b->smoothedValue, z) ) { *w = "smoothedValue"; return 1; }
+   if( sv_xtier_ne(a->a, b->a, z) ) { *w = "a"; return 1; }
+   if( sv_xtier_ne(a->b, b->b, z) ) { *w = "b"; return 1; }
+   if( sv_xtier_ne(a->hilbertTempReal, b->hilbertTempReal, z) ) { *w = "hilbertTempReal"; return 1; }
+   if( a->hilbertIdx != b->hilbertIdx ) { *w = "hilbertIdx"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Odd[k], b->detrender_Odd[k], z) ) { *w = "detrender_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Even[k], b->detrender_Even[k], z) ) { *w = "detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->detrender, b->detrender, z) ) { *w = "detrender"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Odd, b->prev_detrender_Odd, z) ) { *w = "prev_detrender_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Even, b->prev_detrender_Even, z) ) { *w = "prev_detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Odd, b->prev_detrender_input_Odd, z) ) { *w = "prev_detrender_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Even, b->prev_detrender_input_Even, z) ) { *w = "prev_detrender_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Odd[k], b->Q1_Odd[k], z) ) { *w = "Q1_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Even[k], b->Q1_Even[k], z) ) { *w = "Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->Q1, b->Q1, z) ) { *w = "Q1"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Odd, b->prev_Q1_Odd, z) ) { *w = "prev_Q1_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Even, b->prev_Q1_Even, z) ) { *w = "prev_Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Odd, b->prev_Q1_input_Odd, z) ) { *w = "prev_Q1_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Even, b->prev_Q1_input_Even, z) ) { *w = "prev_Q1_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Odd[k], b->jI_Odd[k], z) ) { *w = "jI_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Even[k], b->jI_Even[k], z) ) { *w = "jI_Even"; return 1; }
+   if( sv_xtier_ne(a->jI, b->jI, z) ) { *w = "jI"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Odd, b->prev_jI_Odd, z) ) { *w = "prev_jI_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Even, b->prev_jI_Even, z) ) { *w = "prev_jI_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Odd, b->prev_jI_input_Odd, z) ) { *w = "prev_jI_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Even, b->prev_jI_input_Even, z) ) { *w = "prev_jI_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Odd[k], b->jQ_Odd[k], z) ) { *w = "jQ_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Even[k], b->jQ_Even[k], z) ) { *w = "jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->jQ, b->jQ, z) ) { *w = "jQ"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Odd, b->prev_jQ_Odd, z) ) { *w = "prev_jQ_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Even, b->prev_jQ_Even, z) ) { *w = "prev_jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Odd, b->prev_jQ_input_Odd, z) ) { *w = "prev_jQ_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Even, b->prev_jQ_input_Even, z) ) { *w = "prev_jQ_input_Even"; return 1; }
+   if( sv_xtier_ne(a->Q2, b->Q2, z) ) { *w = "Q2"; return 1; }
+   if( sv_xtier_ne(a->I2, b->I2, z) ) { *w = "I2"; return 1; }
+   if( sv_xtier_ne(a->prevQ2, b->prevQ2, z) ) { *w = "prevQ2"; return 1; }
+   if( sv_xtier_ne(a->prevI2, b->prevI2, z) ) { *w = "prevI2"; return 1; }
+   if( sv_xtier_ne(a->Re, b->Re, z) ) { *w = "Re"; return 1; }
+   if( sv_xtier_ne(a->Im, b->Im, z) ) { *w = "Im"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev2, b->I1ForOddPrev2, z) ) { *w = "I1ForOddPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev3, b->I1ForOddPrev3, z) ) { *w = "I1ForOddPrev3"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev2, b->I1ForEvenPrev2, z) ) { *w = "I1ForEvenPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev3, b->I1ForEvenPrev3, z) ) { *w = "I1ForEvenPrev3"; return 1; }
+   if( sv_xtier_ne(a->rad2Deg, b->rad2Deg, z) ) { *w = "rad2Deg"; return 1; }
+   if( sv_xtier_ne(a->smoothPeriod, b->smoothPeriod, z) ) { *w = "smoothPeriod"; return 1; }
+   if( a->streamParity != b->streamParity ) { *w = "streamParity"; return 1; }
+   if( a->ringCap_trailingWMAIdx != b->ringCap_trailingWMAIdx ) { *w = "ringCap_trailingWMAIdx"; return 1; }
+   if( (a->ring_trailingWMAIdx_inReal == NULL) != (b->ring_trailingWMAIdx_inReal == NULL) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   if( a->ring_trailingWMAIdx_inReal ) for( k = 0; k < a->ringCap_trailingWMAIdx; k++ )
+   {
+      ia = (a->ringPos_trailingWMAIdx + k) % a->ringCap_trailingWMAIdx;
+      ib = (b->ringPos_trailingWMAIdx + k) % b->ringCap_trailingWMAIdx;
+      if( sv_xtier_ne(a->ring_trailingWMAIdx_inReal[ia], b->ring_trailingWMAIdx_inReal[ib], z) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_HT_DCPHASE( const struct TA_HT_DCPHASE_Stream *a, const struct TA_HT_DCPHASE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->tempReal2, b->tempReal2, z) ) { *w = "tempReal2"; return 1; }
+   if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
+   if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
+   if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
+   if( sv_xtier_ne(a->trailingWMAValue, b->trailingWMAValue, z) ) { *w = "trailingWMAValue"; return 1; }
+   if( sv_xtier_ne(a->smoothedValue, b->smoothedValue, z) ) { *w = "smoothedValue"; return 1; }
+   if( sv_xtier_ne(a->a, b->a, z) ) { *w = "a"; return 1; }
+   if( sv_xtier_ne(a->b, b->b, z) ) { *w = "b"; return 1; }
+   if( sv_xtier_ne(a->hilbertTempReal, b->hilbertTempReal, z) ) { *w = "hilbertTempReal"; return 1; }
+   if( a->hilbertIdx != b->hilbertIdx ) { *w = "hilbertIdx"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Odd[k], b->detrender_Odd[k], z) ) { *w = "detrender_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Even[k], b->detrender_Even[k], z) ) { *w = "detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->detrender, b->detrender, z) ) { *w = "detrender"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Odd, b->prev_detrender_Odd, z) ) { *w = "prev_detrender_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Even, b->prev_detrender_Even, z) ) { *w = "prev_detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Odd, b->prev_detrender_input_Odd, z) ) { *w = "prev_detrender_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Even, b->prev_detrender_input_Even, z) ) { *w = "prev_detrender_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Odd[k], b->Q1_Odd[k], z) ) { *w = "Q1_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Even[k], b->Q1_Even[k], z) ) { *w = "Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->Q1, b->Q1, z) ) { *w = "Q1"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Odd, b->prev_Q1_Odd, z) ) { *w = "prev_Q1_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Even, b->prev_Q1_Even, z) ) { *w = "prev_Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Odd, b->prev_Q1_input_Odd, z) ) { *w = "prev_Q1_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Even, b->prev_Q1_input_Even, z) ) { *w = "prev_Q1_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Odd[k], b->jI_Odd[k], z) ) { *w = "jI_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Even[k], b->jI_Even[k], z) ) { *w = "jI_Even"; return 1; }
+   if( sv_xtier_ne(a->jI, b->jI, z) ) { *w = "jI"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Odd, b->prev_jI_Odd, z) ) { *w = "prev_jI_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Even, b->prev_jI_Even, z) ) { *w = "prev_jI_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Odd, b->prev_jI_input_Odd, z) ) { *w = "prev_jI_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Even, b->prev_jI_input_Even, z) ) { *w = "prev_jI_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Odd[k], b->jQ_Odd[k], z) ) { *w = "jQ_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Even[k], b->jQ_Even[k], z) ) { *w = "jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->jQ, b->jQ, z) ) { *w = "jQ"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Odd, b->prev_jQ_Odd, z) ) { *w = "prev_jQ_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Even, b->prev_jQ_Even, z) ) { *w = "prev_jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Odd, b->prev_jQ_input_Odd, z) ) { *w = "prev_jQ_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Even, b->prev_jQ_input_Even, z) ) { *w = "prev_jQ_input_Even"; return 1; }
+   if( sv_xtier_ne(a->Q2, b->Q2, z) ) { *w = "Q2"; return 1; }
+   if( sv_xtier_ne(a->I2, b->I2, z) ) { *w = "I2"; return 1; }
+   if( sv_xtier_ne(a->prevQ2, b->prevQ2, z) ) { *w = "prevQ2"; return 1; }
+   if( sv_xtier_ne(a->prevI2, b->prevI2, z) ) { *w = "prevI2"; return 1; }
+   if( sv_xtier_ne(a->Re, b->Re, z) ) { *w = "Re"; return 1; }
+   if( sv_xtier_ne(a->Im, b->Im, z) ) { *w = "Im"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev2, b->I1ForOddPrev2, z) ) { *w = "I1ForOddPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev3, b->I1ForOddPrev3, z) ) { *w = "I1ForOddPrev3"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev2, b->I1ForEvenPrev2, z) ) { *w = "I1ForEvenPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev3, b->I1ForEvenPrev3, z) ) { *w = "I1ForEvenPrev3"; return 1; }
+   if( sv_xtier_ne(a->rad2Deg, b->rad2Deg, z) ) { *w = "rad2Deg"; return 1; }
+   if( sv_xtier_ne(a->constDeg2RadBy360, b->constDeg2RadBy360, z) ) { *w = "constDeg2RadBy360"; return 1; }
+   if( sv_xtier_ne(a->smoothPeriod, b->smoothPeriod, z) ) { *w = "smoothPeriod"; return 1; }
+   if( a->idx != b->idx ) { *w = "idx"; return 1; }
+   if( a->DCPeriodInt != b->DCPeriodInt ) { *w = "DCPeriodInt"; return 1; }
+   if( sv_xtier_ne(a->DCPhase, b->DCPhase, z) ) { *w = "DCPhase"; return 1; }
+   if( sv_xtier_ne(a->DCPeriod, b->DCPeriod, z) ) { *w = "DCPeriod"; return 1; }
+   if( sv_xtier_ne(a->imagPart, b->imagPart, z) ) { *w = "imagPart"; return 1; }
+   if( sv_xtier_ne(a->realPart, b->realPart, z) ) { *w = "realPart"; return 1; }
+   if( a->smoothPrice_Idx != b->smoothPrice_Idx ) { *w = "smoothPrice_Idx"; return 1; }
+   if( a->maxIdx_smoothPrice != b->maxIdx_smoothPrice ) { *w = "maxIdx_smoothPrice"; return 1; }
+   if( a->streamParity != b->streamParity ) { *w = "streamParity"; return 1; }
+   if( a->ringCap_trailingWMAIdx != b->ringCap_trailingWMAIdx ) { *w = "ringCap_trailingWMAIdx"; return 1; }
+   if( (a->ring_trailingWMAIdx_inReal == NULL) != (b->ring_trailingWMAIdx_inReal == NULL) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   if( a->ring_trailingWMAIdx_inReal ) for( k = 0; k < a->ringCap_trailingWMAIdx; k++ )
+   {
+      ia = (a->ringPos_trailingWMAIdx + k) % a->ringCap_trailingWMAIdx;
+      ib = (b->ringPos_trailingWMAIdx + k) % b->ringCap_trailingWMAIdx;
+      if( sv_xtier_ne(a->ring_trailingWMAIdx_inReal[ia], b->ring_trailingWMAIdx_inReal[ib], z) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   }
+   if( a->cbSize_smoothPrice != b->cbSize_smoothPrice ) { *w = "cbSize_smoothPrice"; return 1; }
+   if( (a->cb_smoothPrice == NULL) != (b->cb_smoothPrice == NULL) ) { *w = "cb_smoothPrice"; return 1; }
+   if( a->cb_smoothPrice ) for( k = 0; k < a->cbSize_smoothPrice; k++ ) if( sv_xtier_ne(a->cb_smoothPrice[k], b->cb_smoothPrice[k], z) ) { *w = "cb_smoothPrice"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_HT_PHASOR( const struct TA_HT_PHASOR_Stream *a, const struct TA_HT_PHASOR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->tempReal2, b->tempReal2, z) ) { *w = "tempReal2"; return 1; }
+   if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
+   if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
+   if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
+   if( sv_xtier_ne(a->trailingWMAValue, b->trailingWMAValue, z) ) { *w = "trailingWMAValue"; return 1; }
+   if( sv_xtier_ne(a->smoothedValue, b->smoothedValue, z) ) { *w = "smoothedValue"; return 1; }
+   if( sv_xtier_ne(a->a, b->a, z) ) { *w = "a"; return 1; }
+   if( sv_xtier_ne(a->b, b->b, z) ) { *w = "b"; return 1; }
+   if( sv_xtier_ne(a->hilbertTempReal, b->hilbertTempReal, z) ) { *w = "hilbertTempReal"; return 1; }
+   if( a->hilbertIdx != b->hilbertIdx ) { *w = "hilbertIdx"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Odd[k], b->detrender_Odd[k], z) ) { *w = "detrender_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Even[k], b->detrender_Even[k], z) ) { *w = "detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->detrender, b->detrender, z) ) { *w = "detrender"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Odd, b->prev_detrender_Odd, z) ) { *w = "prev_detrender_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Even, b->prev_detrender_Even, z) ) { *w = "prev_detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Odd, b->prev_detrender_input_Odd, z) ) { *w = "prev_detrender_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Even, b->prev_detrender_input_Even, z) ) { *w = "prev_detrender_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Odd[k], b->Q1_Odd[k], z) ) { *w = "Q1_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Even[k], b->Q1_Even[k], z) ) { *w = "Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->Q1, b->Q1, z) ) { *w = "Q1"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Odd, b->prev_Q1_Odd, z) ) { *w = "prev_Q1_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Even, b->prev_Q1_Even, z) ) { *w = "prev_Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Odd, b->prev_Q1_input_Odd, z) ) { *w = "prev_Q1_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Even, b->prev_Q1_input_Even, z) ) { *w = "prev_Q1_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Odd[k], b->jI_Odd[k], z) ) { *w = "jI_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Even[k], b->jI_Even[k], z) ) { *w = "jI_Even"; return 1; }
+   if( sv_xtier_ne(a->jI, b->jI, z) ) { *w = "jI"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Odd, b->prev_jI_Odd, z) ) { *w = "prev_jI_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Even, b->prev_jI_Even, z) ) { *w = "prev_jI_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Odd, b->prev_jI_input_Odd, z) ) { *w = "prev_jI_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Even, b->prev_jI_input_Even, z) ) { *w = "prev_jI_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Odd[k], b->jQ_Odd[k], z) ) { *w = "jQ_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Even[k], b->jQ_Even[k], z) ) { *w = "jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->jQ, b->jQ, z) ) { *w = "jQ"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Odd, b->prev_jQ_Odd, z) ) { *w = "prev_jQ_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Even, b->prev_jQ_Even, z) ) { *w = "prev_jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Odd, b->prev_jQ_input_Odd, z) ) { *w = "prev_jQ_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Even, b->prev_jQ_input_Even, z) ) { *w = "prev_jQ_input_Even"; return 1; }
+   if( sv_xtier_ne(a->Q2, b->Q2, z) ) { *w = "Q2"; return 1; }
+   if( sv_xtier_ne(a->I2, b->I2, z) ) { *w = "I2"; return 1; }
+   if( sv_xtier_ne(a->prevQ2, b->prevQ2, z) ) { *w = "prevQ2"; return 1; }
+   if( sv_xtier_ne(a->prevI2, b->prevI2, z) ) { *w = "prevI2"; return 1; }
+   if( sv_xtier_ne(a->Re, b->Re, z) ) { *w = "Re"; return 1; }
+   if( sv_xtier_ne(a->Im, b->Im, z) ) { *w = "Im"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev2, b->I1ForOddPrev2, z) ) { *w = "I1ForOddPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev3, b->I1ForOddPrev3, z) ) { *w = "I1ForOddPrev3"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev2, b->I1ForEvenPrev2, z) ) { *w = "I1ForEvenPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev3, b->I1ForEvenPrev3, z) ) { *w = "I1ForEvenPrev3"; return 1; }
+   if( sv_xtier_ne(a->rad2Deg, b->rad2Deg, z) ) { *w = "rad2Deg"; return 1; }
+   if( a->streamParity != b->streamParity ) { *w = "streamParity"; return 1; }
+   if( a->ringCap_trailingWMAIdx != b->ringCap_trailingWMAIdx ) { *w = "ringCap_trailingWMAIdx"; return 1; }
+   if( (a->ring_trailingWMAIdx_inReal == NULL) != (b->ring_trailingWMAIdx_inReal == NULL) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   if( a->ring_trailingWMAIdx_inReal ) for( k = 0; k < a->ringCap_trailingWMAIdx; k++ )
+   {
+      ia = (a->ringPos_trailingWMAIdx + k) % a->ringCap_trailingWMAIdx;
+      ib = (b->ringPos_trailingWMAIdx + k) % b->ringCap_trailingWMAIdx;
+      if( sv_xtier_ne(a->ring_trailingWMAIdx_inReal[ia], b->ring_trailingWMAIdx_inReal[ib], z) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_HT_SINE( const struct TA_HT_SINE_Stream *a, const struct TA_HT_SINE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->tempReal2, b->tempReal2, z) ) { *w = "tempReal2"; return 1; }
+   if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
+   if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
+   if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
+   if( sv_xtier_ne(a->trailingWMAValue, b->trailingWMAValue, z) ) { *w = "trailingWMAValue"; return 1; }
+   if( sv_xtier_ne(a->smoothedValue, b->smoothedValue, z) ) { *w = "smoothedValue"; return 1; }
+   if( sv_xtier_ne(a->a, b->a, z) ) { *w = "a"; return 1; }
+   if( sv_xtier_ne(a->b, b->b, z) ) { *w = "b"; return 1; }
+   if( sv_xtier_ne(a->hilbertTempReal, b->hilbertTempReal, z) ) { *w = "hilbertTempReal"; return 1; }
+   if( a->hilbertIdx != b->hilbertIdx ) { *w = "hilbertIdx"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Odd[k], b->detrender_Odd[k], z) ) { *w = "detrender_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Even[k], b->detrender_Even[k], z) ) { *w = "detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->detrender, b->detrender, z) ) { *w = "detrender"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Odd, b->prev_detrender_Odd, z) ) { *w = "prev_detrender_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Even, b->prev_detrender_Even, z) ) { *w = "prev_detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Odd, b->prev_detrender_input_Odd, z) ) { *w = "prev_detrender_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Even, b->prev_detrender_input_Even, z) ) { *w = "prev_detrender_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Odd[k], b->Q1_Odd[k], z) ) { *w = "Q1_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Even[k], b->Q1_Even[k], z) ) { *w = "Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->Q1, b->Q1, z) ) { *w = "Q1"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Odd, b->prev_Q1_Odd, z) ) { *w = "prev_Q1_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Even, b->prev_Q1_Even, z) ) { *w = "prev_Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Odd, b->prev_Q1_input_Odd, z) ) { *w = "prev_Q1_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Even, b->prev_Q1_input_Even, z) ) { *w = "prev_Q1_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Odd[k], b->jI_Odd[k], z) ) { *w = "jI_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Even[k], b->jI_Even[k], z) ) { *w = "jI_Even"; return 1; }
+   if( sv_xtier_ne(a->jI, b->jI, z) ) { *w = "jI"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Odd, b->prev_jI_Odd, z) ) { *w = "prev_jI_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Even, b->prev_jI_Even, z) ) { *w = "prev_jI_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Odd, b->prev_jI_input_Odd, z) ) { *w = "prev_jI_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Even, b->prev_jI_input_Even, z) ) { *w = "prev_jI_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Odd[k], b->jQ_Odd[k], z) ) { *w = "jQ_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Even[k], b->jQ_Even[k], z) ) { *w = "jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->jQ, b->jQ, z) ) { *w = "jQ"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Odd, b->prev_jQ_Odd, z) ) { *w = "prev_jQ_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Even, b->prev_jQ_Even, z) ) { *w = "prev_jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Odd, b->prev_jQ_input_Odd, z) ) { *w = "prev_jQ_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Even, b->prev_jQ_input_Even, z) ) { *w = "prev_jQ_input_Even"; return 1; }
+   if( sv_xtier_ne(a->Q2, b->Q2, z) ) { *w = "Q2"; return 1; }
+   if( sv_xtier_ne(a->I2, b->I2, z) ) { *w = "I2"; return 1; }
+   if( sv_xtier_ne(a->prevQ2, b->prevQ2, z) ) { *w = "prevQ2"; return 1; }
+   if( sv_xtier_ne(a->prevI2, b->prevI2, z) ) { *w = "prevI2"; return 1; }
+   if( sv_xtier_ne(a->Re, b->Re, z) ) { *w = "Re"; return 1; }
+   if( sv_xtier_ne(a->Im, b->Im, z) ) { *w = "Im"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev2, b->I1ForOddPrev2, z) ) { *w = "I1ForOddPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev3, b->I1ForOddPrev3, z) ) { *w = "I1ForOddPrev3"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev2, b->I1ForEvenPrev2, z) ) { *w = "I1ForEvenPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev3, b->I1ForEvenPrev3, z) ) { *w = "I1ForEvenPrev3"; return 1; }
+   if( sv_xtier_ne(a->rad2Deg, b->rad2Deg, z) ) { *w = "rad2Deg"; return 1; }
+   if( sv_xtier_ne(a->deg2Rad, b->deg2Rad, z) ) { *w = "deg2Rad"; return 1; }
+   if( sv_xtier_ne(a->constDeg2RadBy360, b->constDeg2RadBy360, z) ) { *w = "constDeg2RadBy360"; return 1; }
+   if( sv_xtier_ne(a->smoothPeriod, b->smoothPeriod, z) ) { *w = "smoothPeriod"; return 1; }
+   if( a->idx != b->idx ) { *w = "idx"; return 1; }
+   if( a->DCPeriodInt != b->DCPeriodInt ) { *w = "DCPeriodInt"; return 1; }
+   if( sv_xtier_ne(a->DCPhase, b->DCPhase, z) ) { *w = "DCPhase"; return 1; }
+   if( sv_xtier_ne(a->DCPeriod, b->DCPeriod, z) ) { *w = "DCPeriod"; return 1; }
+   if( sv_xtier_ne(a->imagPart, b->imagPart, z) ) { *w = "imagPart"; return 1; }
+   if( sv_xtier_ne(a->realPart, b->realPart, z) ) { *w = "realPart"; return 1; }
+   if( a->smoothPrice_Idx != b->smoothPrice_Idx ) { *w = "smoothPrice_Idx"; return 1; }
+   if( a->maxIdx_smoothPrice != b->maxIdx_smoothPrice ) { *w = "maxIdx_smoothPrice"; return 1; }
+   if( a->streamParity != b->streamParity ) { *w = "streamParity"; return 1; }
+   if( a->ringCap_trailingWMAIdx != b->ringCap_trailingWMAIdx ) { *w = "ringCap_trailingWMAIdx"; return 1; }
+   if( (a->ring_trailingWMAIdx_inReal == NULL) != (b->ring_trailingWMAIdx_inReal == NULL) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   if( a->ring_trailingWMAIdx_inReal ) for( k = 0; k < a->ringCap_trailingWMAIdx; k++ )
+   {
+      ia = (a->ringPos_trailingWMAIdx + k) % a->ringCap_trailingWMAIdx;
+      ib = (b->ringPos_trailingWMAIdx + k) % b->ringCap_trailingWMAIdx;
+      if( sv_xtier_ne(a->ring_trailingWMAIdx_inReal[ia], b->ring_trailingWMAIdx_inReal[ib], z) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   }
+   if( a->cbSize_smoothPrice != b->cbSize_smoothPrice ) { *w = "cbSize_smoothPrice"; return 1; }
+   if( (a->cb_smoothPrice == NULL) != (b->cb_smoothPrice == NULL) ) { *w = "cb_smoothPrice"; return 1; }
+   if( a->cb_smoothPrice ) for( k = 0; k < a->cbSize_smoothPrice; k++ ) if( sv_xtier_ne(a->cb_smoothPrice[k], b->cb_smoothPrice[k], z) ) { *w = "cb_smoothPrice"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_HT_TRENDLINE( const struct TA_HT_TRENDLINE_Stream *a, const struct TA_HT_TRENDLINE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->tempReal2, b->tempReal2, z) ) { *w = "tempReal2"; return 1; }
+   if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
+   if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
+   if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
+   if( sv_xtier_ne(a->trailingWMAValue, b->trailingWMAValue, z) ) { *w = "trailingWMAValue"; return 1; }
+   if( sv_xtier_ne(a->smoothedValue, b->smoothedValue, z) ) { *w = "smoothedValue"; return 1; }
+   if( sv_xtier_ne(a->iTrend1, b->iTrend1, z) ) { *w = "iTrend1"; return 1; }
+   if( sv_xtier_ne(a->iTrend2, b->iTrend2, z) ) { *w = "iTrend2"; return 1; }
+   if( sv_xtier_ne(a->iTrend3, b->iTrend3, z) ) { *w = "iTrend3"; return 1; }
+   if( sv_xtier_ne(a->a, b->a, z) ) { *w = "a"; return 1; }
+   if( sv_xtier_ne(a->b, b->b, z) ) { *w = "b"; return 1; }
+   if( sv_xtier_ne(a->hilbertTempReal, b->hilbertTempReal, z) ) { *w = "hilbertTempReal"; return 1; }
+   if( a->hilbertIdx != b->hilbertIdx ) { *w = "hilbertIdx"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Odd[k], b->detrender_Odd[k], z) ) { *w = "detrender_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Even[k], b->detrender_Even[k], z) ) { *w = "detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->detrender, b->detrender, z) ) { *w = "detrender"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Odd, b->prev_detrender_Odd, z) ) { *w = "prev_detrender_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Even, b->prev_detrender_Even, z) ) { *w = "prev_detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Odd, b->prev_detrender_input_Odd, z) ) { *w = "prev_detrender_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Even, b->prev_detrender_input_Even, z) ) { *w = "prev_detrender_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Odd[k], b->Q1_Odd[k], z) ) { *w = "Q1_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Even[k], b->Q1_Even[k], z) ) { *w = "Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->Q1, b->Q1, z) ) { *w = "Q1"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Odd, b->prev_Q1_Odd, z) ) { *w = "prev_Q1_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Even, b->prev_Q1_Even, z) ) { *w = "prev_Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Odd, b->prev_Q1_input_Odd, z) ) { *w = "prev_Q1_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Even, b->prev_Q1_input_Even, z) ) { *w = "prev_Q1_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Odd[k], b->jI_Odd[k], z) ) { *w = "jI_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Even[k], b->jI_Even[k], z) ) { *w = "jI_Even"; return 1; }
+   if( sv_xtier_ne(a->jI, b->jI, z) ) { *w = "jI"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Odd, b->prev_jI_Odd, z) ) { *w = "prev_jI_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Even, b->prev_jI_Even, z) ) { *w = "prev_jI_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Odd, b->prev_jI_input_Odd, z) ) { *w = "prev_jI_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Even, b->prev_jI_input_Even, z) ) { *w = "prev_jI_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Odd[k], b->jQ_Odd[k], z) ) { *w = "jQ_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Even[k], b->jQ_Even[k], z) ) { *w = "jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->jQ, b->jQ, z) ) { *w = "jQ"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Odd, b->prev_jQ_Odd, z) ) { *w = "prev_jQ_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Even, b->prev_jQ_Even, z) ) { *w = "prev_jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Odd, b->prev_jQ_input_Odd, z) ) { *w = "prev_jQ_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Even, b->prev_jQ_input_Even, z) ) { *w = "prev_jQ_input_Even"; return 1; }
+   if( sv_xtier_ne(a->Q2, b->Q2, z) ) { *w = "Q2"; return 1; }
+   if( sv_xtier_ne(a->I2, b->I2, z) ) { *w = "I2"; return 1; }
+   if( sv_xtier_ne(a->prevQ2, b->prevQ2, z) ) { *w = "prevQ2"; return 1; }
+   if( sv_xtier_ne(a->prevI2, b->prevI2, z) ) { *w = "prevI2"; return 1; }
+   if( sv_xtier_ne(a->Re, b->Re, z) ) { *w = "Re"; return 1; }
+   if( sv_xtier_ne(a->Im, b->Im, z) ) { *w = "Im"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev2, b->I1ForOddPrev2, z) ) { *w = "I1ForOddPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev3, b->I1ForOddPrev3, z) ) { *w = "I1ForOddPrev3"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev2, b->I1ForEvenPrev2, z) ) { *w = "I1ForEvenPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev3, b->I1ForEvenPrev3, z) ) { *w = "I1ForEvenPrev3"; return 1; }
+   if( sv_xtier_ne(a->rad2Deg, b->rad2Deg, z) ) { *w = "rad2Deg"; return 1; }
+   if( sv_xtier_ne(a->smoothPeriod, b->smoothPeriod, z) ) { *w = "smoothPeriod"; return 1; }
+   if( a->DCPeriodInt != b->DCPeriodInt ) { *w = "DCPeriodInt"; return 1; }
+   if( sv_xtier_ne(a->DCPeriod, b->DCPeriod, z) ) { *w = "DCPeriod"; return 1; }
+   if( a->streamParity != b->streamParity ) { *w = "streamParity"; return 1; }
+   if( a->ringCap_trailingWMAIdx != b->ringCap_trailingWMAIdx ) { *w = "ringCap_trailingWMAIdx"; return 1; }
+   if( (a->ring_trailingWMAIdx_inReal == NULL) != (b->ring_trailingWMAIdx_inReal == NULL) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   if( a->ring_trailingWMAIdx_inReal ) for( k = 0; k < a->ringCap_trailingWMAIdx; k++ )
+   {
+      ia = (a->ringPos_trailingWMAIdx + k) % a->ringCap_trailingWMAIdx;
+      ib = (b->ringPos_trailingWMAIdx + k) % b->ringCap_trailingWMAIdx;
+      if( sv_xtier_ne(a->ring_trailingWMAIdx_inReal[ia], b->ring_trailingWMAIdx_inReal[ib], z) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   }
+   if( a->winCap_i != b->winCap_i ) { *w = "winCap_i"; return 1; }
+   if( (a->win_i_inReal == NULL) != (b->win_i_inReal == NULL) ) { *w = "win_i_inReal"; return 1; }
+   if( a->win_i_inReal ) for( k = 0; k < a->winCap_i; k++ )
+   {
+      ia = (a->winPos_i + k) % a->winCap_i;
+      ib = (b->winPos_i + k) % b->winCap_i;
+      if( sv_xtier_ne(a->win_i_inReal[ia], b->win_i_inReal[ib], z) ) { *w = "win_i_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_HT_TRENDMODE( const struct TA_HT_TRENDMODE_Stream *a, const struct TA_HT_TRENDMODE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->tempReal2, b->tempReal2, z) ) { *w = "tempReal2"; return 1; }
+   if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
+   if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
+   if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
+   if( sv_xtier_ne(a->trailingWMAValue, b->trailingWMAValue, z) ) { *w = "trailingWMAValue"; return 1; }
+   if( sv_xtier_ne(a->smoothedValue, b->smoothedValue, z) ) { *w = "smoothedValue"; return 1; }
+   if( sv_xtier_ne(a->iTrend1, b->iTrend1, z) ) { *w = "iTrend1"; return 1; }
+   if( sv_xtier_ne(a->iTrend2, b->iTrend2, z) ) { *w = "iTrend2"; return 1; }
+   if( sv_xtier_ne(a->iTrend3, b->iTrend3, z) ) { *w = "iTrend3"; return 1; }
+   if( sv_xtier_ne(a->a, b->a, z) ) { *w = "a"; return 1; }
+   if( sv_xtier_ne(a->b, b->b, z) ) { *w = "b"; return 1; }
+   if( sv_xtier_ne(a->hilbertTempReal, b->hilbertTempReal, z) ) { *w = "hilbertTempReal"; return 1; }
+   if( a->hilbertIdx != b->hilbertIdx ) { *w = "hilbertIdx"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Odd[k], b->detrender_Odd[k], z) ) { *w = "detrender_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Even[k], b->detrender_Even[k], z) ) { *w = "detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->detrender, b->detrender, z) ) { *w = "detrender"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Odd, b->prev_detrender_Odd, z) ) { *w = "prev_detrender_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Even, b->prev_detrender_Even, z) ) { *w = "prev_detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Odd, b->prev_detrender_input_Odd, z) ) { *w = "prev_detrender_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Even, b->prev_detrender_input_Even, z) ) { *w = "prev_detrender_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Odd[k], b->Q1_Odd[k], z) ) { *w = "Q1_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Even[k], b->Q1_Even[k], z) ) { *w = "Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->Q1, b->Q1, z) ) { *w = "Q1"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Odd, b->prev_Q1_Odd, z) ) { *w = "prev_Q1_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Even, b->prev_Q1_Even, z) ) { *w = "prev_Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Odd, b->prev_Q1_input_Odd, z) ) { *w = "prev_Q1_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Even, b->prev_Q1_input_Even, z) ) { *w = "prev_Q1_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Odd[k], b->jI_Odd[k], z) ) { *w = "jI_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Even[k], b->jI_Even[k], z) ) { *w = "jI_Even"; return 1; }
+   if( sv_xtier_ne(a->jI, b->jI, z) ) { *w = "jI"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Odd, b->prev_jI_Odd, z) ) { *w = "prev_jI_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Even, b->prev_jI_Even, z) ) { *w = "prev_jI_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Odd, b->prev_jI_input_Odd, z) ) { *w = "prev_jI_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Even, b->prev_jI_input_Even, z) ) { *w = "prev_jI_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Odd[k], b->jQ_Odd[k], z) ) { *w = "jQ_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Even[k], b->jQ_Even[k], z) ) { *w = "jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->jQ, b->jQ, z) ) { *w = "jQ"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Odd, b->prev_jQ_Odd, z) ) { *w = "prev_jQ_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Even, b->prev_jQ_Even, z) ) { *w = "prev_jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Odd, b->prev_jQ_input_Odd, z) ) { *w = "prev_jQ_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Even, b->prev_jQ_input_Even, z) ) { *w = "prev_jQ_input_Even"; return 1; }
+   if( sv_xtier_ne(a->Q2, b->Q2, z) ) { *w = "Q2"; return 1; }
+   if( sv_xtier_ne(a->I2, b->I2, z) ) { *w = "I2"; return 1; }
+   if( sv_xtier_ne(a->prevQ2, b->prevQ2, z) ) { *w = "prevQ2"; return 1; }
+   if( sv_xtier_ne(a->prevI2, b->prevI2, z) ) { *w = "prevI2"; return 1; }
+   if( sv_xtier_ne(a->Re, b->Re, z) ) { *w = "Re"; return 1; }
+   if( sv_xtier_ne(a->Im, b->Im, z) ) { *w = "Im"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev2, b->I1ForOddPrev2, z) ) { *w = "I1ForOddPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev3, b->I1ForOddPrev3, z) ) { *w = "I1ForOddPrev3"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev2, b->I1ForEvenPrev2, z) ) { *w = "I1ForEvenPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev3, b->I1ForEvenPrev3, z) ) { *w = "I1ForEvenPrev3"; return 1; }
+   if( sv_xtier_ne(a->rad2Deg, b->rad2Deg, z) ) { *w = "rad2Deg"; return 1; }
+   if( sv_xtier_ne(a->deg2Rad, b->deg2Rad, z) ) { *w = "deg2Rad"; return 1; }
+   if( sv_xtier_ne(a->constDeg2RadBy360, b->constDeg2RadBy360, z) ) { *w = "constDeg2RadBy360"; return 1; }
+   if( sv_xtier_ne(a->smoothPeriod, b->smoothPeriod, z) ) { *w = "smoothPeriod"; return 1; }
+   if( a->idx != b->idx ) { *w = "idx"; return 1; }
+   if( a->DCPeriodInt != b->DCPeriodInt ) { *w = "DCPeriodInt"; return 1; }
+   if( sv_xtier_ne(a->DCPhase, b->DCPhase, z) ) { *w = "DCPhase"; return 1; }
+   if( sv_xtier_ne(a->DCPeriod, b->DCPeriod, z) ) { *w = "DCPeriod"; return 1; }
+   if( sv_xtier_ne(a->imagPart, b->imagPart, z) ) { *w = "imagPart"; return 1; }
+   if( sv_xtier_ne(a->realPart, b->realPart, z) ) { *w = "realPart"; return 1; }
+   if( a->daysInTrend != b->daysInTrend ) { *w = "daysInTrend"; return 1; }
+   if( a->trend != b->trend ) { *w = "trend"; return 1; }
+   if( sv_xtier_ne(a->prevDCPhase, b->prevDCPhase, z) ) { *w = "prevDCPhase"; return 1; }
+   if( sv_xtier_ne(a->trendline, b->trendline, z) ) { *w = "trendline"; return 1; }
+   if( sv_xtier_ne(a->prevSine, b->prevSine, z) ) { *w = "prevSine"; return 1; }
+   if( sv_xtier_ne(a->prevLeadSine, b->prevLeadSine, z) ) { *w = "prevLeadSine"; return 1; }
+   if( sv_xtier_ne(a->sine, b->sine, z) ) { *w = "sine"; return 1; }
+   if( sv_xtier_ne(a->leadSine, b->leadSine, z) ) { *w = "leadSine"; return 1; }
+   if( a->smoothPrice_Idx != b->smoothPrice_Idx ) { *w = "smoothPrice_Idx"; return 1; }
+   if( a->maxIdx_smoothPrice != b->maxIdx_smoothPrice ) { *w = "maxIdx_smoothPrice"; return 1; }
+   if( a->streamParity != b->streamParity ) { *w = "streamParity"; return 1; }
+   if( a->ringCap_trailingWMAIdx != b->ringCap_trailingWMAIdx ) { *w = "ringCap_trailingWMAIdx"; return 1; }
+   if( (a->ring_trailingWMAIdx_inReal == NULL) != (b->ring_trailingWMAIdx_inReal == NULL) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   if( a->ring_trailingWMAIdx_inReal ) for( k = 0; k < a->ringCap_trailingWMAIdx; k++ )
+   {
+      ia = (a->ringPos_trailingWMAIdx + k) % a->ringCap_trailingWMAIdx;
+      ib = (b->ringPos_trailingWMAIdx + k) % b->ringCap_trailingWMAIdx;
+      if( sv_xtier_ne(a->ring_trailingWMAIdx_inReal[ia], b->ring_trailingWMAIdx_inReal[ib], z) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   }
+   if( a->winCap_j != b->winCap_j ) { *w = "winCap_j"; return 1; }
+   if( (a->win_j_inReal == NULL) != (b->win_j_inReal == NULL) ) { *w = "win_j_inReal"; return 1; }
+   if( a->win_j_inReal ) for( k = 0; k < a->winCap_j; k++ )
+   {
+      ia = (a->winPos_j + k) % a->winCap_j;
+      ib = (b->winPos_j + k) % b->winCap_j;
+      if( sv_xtier_ne(a->win_j_inReal[ia], b->win_j_inReal[ib], z) ) { *w = "win_j_inReal"; return 1; }
+   }
+   if( a->cbSize_smoothPrice != b->cbSize_smoothPrice ) { *w = "cbSize_smoothPrice"; return 1; }
+   if( (a->cb_smoothPrice == NULL) != (b->cb_smoothPrice == NULL) ) { *w = "cb_smoothPrice"; return 1; }
+   if( a->cb_smoothPrice ) for( k = 0; k < a->cbSize_smoothPrice; k++ ) if( sv_xtier_ne(a->cb_smoothPrice[k], b->cb_smoothPrice[k], z) ) { *w = "cb_smoothPrice"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_IMI( const struct TA_IMI_Stream *a, const struct TA_IMI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->winCap_i != b->winCap_i ) { *w = "winCap_i"; return 1; }
+   if( (a->win_i_inOpen == NULL) != (b->win_i_inOpen == NULL) ) { *w = "win_i_inOpen"; return 1; }
+   if( a->win_i_inOpen ) for( k = 0; k < a->winCap_i; k++ )
+   {
+      ia = (a->winPos_i + k) % a->winCap_i;
+      ib = (b->winPos_i + k) % b->winCap_i;
+      if( sv_xtier_ne(a->win_i_inOpen[ia], b->win_i_inOpen[ib], z) ) { *w = "win_i_inOpen"; return 1; }
+   }
+   if( (a->win_i_inClose == NULL) != (b->win_i_inClose == NULL) ) { *w = "win_i_inClose"; return 1; }
+   if( a->win_i_inClose ) for( k = 0; k < a->winCap_i; k++ )
+   {
+      ia = (a->winPos_i + k) % a->winCap_i;
+      ib = (b->winPos_i + k) % b->winCap_i;
+      if( sv_xtier_ne(a->win_i_inClose[ia], b->win_i_inClose[ib], z) ) { *w = "win_i_inClose"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_KAMA( const struct TA_KAMA_Stream *a, const struct TA_KAMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->constMax, b->constMax, z) ) { *w = "constMax"; return 1; }
+   if( sv_xtier_ne(a->constDiff, b->constDiff, z) ) { *w = "constDiff"; return 1; }
+   if( sv_xtier_ne(a->sumROC1, b->sumROC1, z) ) { *w = "sumROC1"; return 1; }
+   if( sv_xtier_ne(a->prevKAMA, b->prevKAMA, z) ) { *w = "prevKAMA"; return 1; }
+   if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
+   if( sv_xtier_ne(a->lag1_inReal, b->lag1_inReal, z) ) { *w = "lag1_inReal"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_LINEARREG( const struct TA_LINEARREG_Stream *a, const struct TA_LINEARREG_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
+   if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
+   if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
+   if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_LINEARREG_ANGLE( const struct TA_LINEARREG_ANGLE_Stream *a, const struct TA_LINEARREG_ANGLE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
+   if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
+   if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
+   if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_LINEARREG_INTERCEPT( const struct TA_LINEARREG_INTERCEPT_Stream *a, const struct TA_LINEARREG_INTERCEPT_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
+   if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
+   if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
+   if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_LINEARREG_SLOPE( const struct TA_LINEARREG_SLOPE_Stream *a, const struct TA_LINEARREG_SLOPE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
+   if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
+   if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
+   if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_LN( const struct TA_LN_Stream *a, const struct TA_LN_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_LOG10( const struct TA_LOG10_Stream *a, const struct TA_LOG10_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_MA( const struct TA_MA_Stream *a, const struct TA_MA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
+   if( (a->sub == NULL) != (b->sub == NULL) ) { *w = "sub"; return 1; }
+   if( a->sub )
+      switch( a->optInMAType )
+      {
+      case TA_MAType_SMA:
+         if( sv_steq_TA_SMA( (const struct TA_SMA_Stream *)a->sub, (const struct TA_SMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      case TA_MAType_EMA:
+         if( sv_steq_TA_EMA( (const struct TA_EMA_Stream *)a->sub, (const struct TA_EMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      case TA_MAType_WMA:
+         if( sv_steq_TA_WMA( (const struct TA_WMA_Stream *)a->sub, (const struct TA_WMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      case TA_MAType_DEMA:
+         if( sv_steq_TA_DEMA( (const struct TA_DEMA_Stream *)a->sub, (const struct TA_DEMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      case TA_MAType_TEMA:
+         if( sv_steq_TA_TEMA( (const struct TA_TEMA_Stream *)a->sub, (const struct TA_TEMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      case TA_MAType_TRIMA:
+         if( sv_steq_TA_TRIMA( (const struct TA_TRIMA_Stream *)a->sub, (const struct TA_TRIMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      case TA_MAType_KAMA:
+         if( sv_steq_TA_KAMA( (const struct TA_KAMA_Stream *)a->sub, (const struct TA_KAMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      case TA_MAType_MAMA:
+         if( sv_steq_TA_MAMA( (const struct TA_MAMA_Stream *)a->sub, (const struct TA_MAMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      case TA_MAType_T3:
+         if( sv_steq_TA_T3( (const struct TA_T3_Stream *)a->sub, (const struct TA_T3_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      case TA_MAType_HMA:
+         if( sv_steq_TA_HMA( (const struct TA_HMA_Stream *)a->sub, (const struct TA_HMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
+      default:
+         *w = "sub"; return 1;
+      }
+   return 0;
+}
+
+static int sv_steq_TA_MACD( const struct TA_MACD_Stream *a, const struct TA_MACD_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
+   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
+   if( a->optInSignalPeriod != b->optInSignalPeriod ) { *w = "optInSignalPeriod"; return 1; }
+   if( sv_xtier_ne(a->prevFast, b->prevFast, z) ) { *w = "prevFast"; return 1; }
+   if( sv_xtier_ne(a->prevSlow, b->prevSlow, z) ) { *w = "prevSlow"; return 1; }
+   if( sv_xtier_ne(a->prevSignal, b->prevSignal, z) ) { *w = "prevSignal"; return 1; }
+   if( sv_xtier_ne(a->slowK, b->slowK, z) ) { *w = "slowK"; return 1; }
+   if( sv_xtier_ne(a->fastK, b->fastK, z) ) { *w = "fastK"; return 1; }
+   if( sv_xtier_ne(a->signalK, b->signalK, z) ) { *w = "signalK"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_MACDEXT( const struct TA_MACDEXT_Stream *a, const struct TA_MACDEXT_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
+   if( a->optInFastMAType != b->optInFastMAType ) { *w = "optInFastMAType"; return 1; }
+   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
+   if( a->optInSlowMAType != b->optInSlowMAType ) { *w = "optInSlowMAType"; return 1; }
+   if( a->optInSignalPeriod != b->optInSignalPeriod ) { *w = "optInSignalPeriod"; return 1; }
+   if( a->optInSignalMAType != b->optInSignalMAType ) { *w = "optInSignalMAType"; return 1; }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_MA( a->sub0, b->sub0, w, z ) ) return 1;
+   if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
+   if( a->sub1 && sv_steq_TA_MA( a->sub1, b->sub1, w, z ) ) return 1;
+   if( (a->sub2 == NULL) != (b->sub2 == NULL) ) { *w = "sub2"; return 1; }
+   if( a->sub2 && sv_steq_TA_MA( a->sub2, b->sub2, w, z ) ) return 1;
+   return 0;
+}
+
+static int sv_steq_TA_MACDFIX( const struct TA_MACDFIX_Stream *a, const struct TA_MACDFIX_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInSignalPeriod != b->optInSignalPeriod ) { *w = "optInSignalPeriod"; return 1; }
+   if( sv_xtier_ne(a->prevFast, b->prevFast, z) ) { *w = "prevFast"; return 1; }
+   if( sv_xtier_ne(a->prevSlow, b->prevSlow, z) ) { *w = "prevSlow"; return 1; }
+   if( sv_xtier_ne(a->prevSignal, b->prevSignal, z) ) { *w = "prevSignal"; return 1; }
+   if( sv_xtier_ne(a->slowK, b->slowK, z) ) { *w = "slowK"; return 1; }
+   if( sv_xtier_ne(a->fastK, b->fastK, z) ) { *w = "fastK"; return 1; }
+   if( sv_xtier_ne(a->signalK, b->signalK, z) ) { *w = "signalK"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_MAMA( const struct TA_MAMA_Stream *a, const struct TA_MAMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInFastLimit, b->optInFastLimit, z) ) { *w = "optInFastLimit"; return 1; }
+   if( sv_xtier_ne(a->optInSlowLimit, b->optInSlowLimit, z) ) { *w = "optInSlowLimit"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->tempReal2, b->tempReal2, z) ) { *w = "tempReal2"; return 1; }
+   if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
+   if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
+   if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
+   if( sv_xtier_ne(a->trailingWMAValue, b->trailingWMAValue, z) ) { *w = "trailingWMAValue"; return 1; }
+   if( sv_xtier_ne(a->smoothedValue, b->smoothedValue, z) ) { *w = "smoothedValue"; return 1; }
+   if( sv_xtier_ne(a->a, b->a, z) ) { *w = "a"; return 1; }
+   if( sv_xtier_ne(a->b, b->b, z) ) { *w = "b"; return 1; }
+   if( sv_xtier_ne(a->hilbertTempReal, b->hilbertTempReal, z) ) { *w = "hilbertTempReal"; return 1; }
+   if( a->hilbertIdx != b->hilbertIdx ) { *w = "hilbertIdx"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Odd[k], b->detrender_Odd[k], z) ) { *w = "detrender_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->detrender_Even[k], b->detrender_Even[k], z) ) { *w = "detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->detrender, b->detrender, z) ) { *w = "detrender"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Odd, b->prev_detrender_Odd, z) ) { *w = "prev_detrender_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_Even, b->prev_detrender_Even, z) ) { *w = "prev_detrender_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Odd, b->prev_detrender_input_Odd, z) ) { *w = "prev_detrender_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_detrender_input_Even, b->prev_detrender_input_Even, z) ) { *w = "prev_detrender_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Odd[k], b->Q1_Odd[k], z) ) { *w = "Q1_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->Q1_Even[k], b->Q1_Even[k], z) ) { *w = "Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->Q1, b->Q1, z) ) { *w = "Q1"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Odd, b->prev_Q1_Odd, z) ) { *w = "prev_Q1_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_Even, b->prev_Q1_Even, z) ) { *w = "prev_Q1_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Odd, b->prev_Q1_input_Odd, z) ) { *w = "prev_Q1_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_Q1_input_Even, b->prev_Q1_input_Even, z) ) { *w = "prev_Q1_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Odd[k], b->jI_Odd[k], z) ) { *w = "jI_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jI_Even[k], b->jI_Even[k], z) ) { *w = "jI_Even"; return 1; }
+   if( sv_xtier_ne(a->jI, b->jI, z) ) { *w = "jI"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Odd, b->prev_jI_Odd, z) ) { *w = "prev_jI_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_Even, b->prev_jI_Even, z) ) { *w = "prev_jI_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Odd, b->prev_jI_input_Odd, z) ) { *w = "prev_jI_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jI_input_Even, b->prev_jI_input_Even, z) ) { *w = "prev_jI_input_Even"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Odd[k], b->jQ_Odd[k], z) ) { *w = "jQ_Odd"; return 1; }
+   for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->jQ_Even[k], b->jQ_Even[k], z) ) { *w = "jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->jQ, b->jQ, z) ) { *w = "jQ"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Odd, b->prev_jQ_Odd, z) ) { *w = "prev_jQ_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_Even, b->prev_jQ_Even, z) ) { *w = "prev_jQ_Even"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Odd, b->prev_jQ_input_Odd, z) ) { *w = "prev_jQ_input_Odd"; return 1; }
+   if( sv_xtier_ne(a->prev_jQ_input_Even, b->prev_jQ_input_Even, z) ) { *w = "prev_jQ_input_Even"; return 1; }
+   if( sv_xtier_ne(a->Q2, b->Q2, z) ) { *w = "Q2"; return 1; }
+   if( sv_xtier_ne(a->I2, b->I2, z) ) { *w = "I2"; return 1; }
+   if( sv_xtier_ne(a->prevQ2, b->prevQ2, z) ) { *w = "prevQ2"; return 1; }
+   if( sv_xtier_ne(a->prevI2, b->prevI2, z) ) { *w = "prevI2"; return 1; }
+   if( sv_xtier_ne(a->Re, b->Re, z) ) { *w = "Re"; return 1; }
+   if( sv_xtier_ne(a->Im, b->Im, z) ) { *w = "Im"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev2, b->I1ForOddPrev2, z) ) { *w = "I1ForOddPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForOddPrev3, b->I1ForOddPrev3, z) ) { *w = "I1ForOddPrev3"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev2, b->I1ForEvenPrev2, z) ) { *w = "I1ForEvenPrev2"; return 1; }
+   if( sv_xtier_ne(a->I1ForEvenPrev3, b->I1ForEvenPrev3, z) ) { *w = "I1ForEvenPrev3"; return 1; }
+   if( sv_xtier_ne(a->rad2Deg, b->rad2Deg, z) ) { *w = "rad2Deg"; return 1; }
+   if( sv_xtier_ne(a->mama, b->mama, z) ) { *w = "mama"; return 1; }
+   if( sv_xtier_ne(a->fama, b->fama, z) ) { *w = "fama"; return 1; }
+   if( sv_xtier_ne(a->prevPhase, b->prevPhase, z) ) { *w = "prevPhase"; return 1; }
+   if( a->streamParity != b->streamParity ) { *w = "streamParity"; return 1; }
+   if( a->ringCap_trailingWMAIdx != b->ringCap_trailingWMAIdx ) { *w = "ringCap_trailingWMAIdx"; return 1; }
+   if( (a->ring_trailingWMAIdx_inReal == NULL) != (b->ring_trailingWMAIdx_inReal == NULL) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   if( a->ring_trailingWMAIdx_inReal ) for( k = 0; k < a->ringCap_trailingWMAIdx; k++ )
+   {
+      ia = (a->ringPos_trailingWMAIdx + k) % a->ringCap_trailingWMAIdx;
+      ib = (b->ringPos_trailingWMAIdx + k) % b->ringCap_trailingWMAIdx;
+      if( sv_xtier_ne(a->ring_trailingWMAIdx_inReal[ia], b->ring_trailingWMAIdx_inReal[ib], z) ) { *w = "ring_trailingWMAIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MARKETFI( const struct TA_MARKETFI_Stream *a, const struct TA_MARKETFI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_MAVP( const struct TA_MAVP_Stream *a, const struct TA_MAVP_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInMinPeriod != b->optInMinPeriod ) { *w = "optInMinPeriod"; return 1; }
+   if( a->optInMaxPeriod != b->optInMaxPeriod ) { *w = "optInMaxPeriod"; return 1; }
+   if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
+   if( a->nBank != b->nBank ) { *w = "nBank"; return 1; }
+   if( (a->bank == NULL) != (b->bank == NULL) ) { *w = "bank"; return 1; }
+   if( a->bank ) for( k = 0; k < a->nBank; k++ )
+   {
+      if( (a->bank[k] == NULL) != (b->bank[k] == NULL) ) { *w = "bank"; return 1; }
+      if( a->bank[k] && sv_steq_TA_MA( a->bank[k], b->bank[k], w, z ) ) return 1;
+   }
+   if( (a->scratch == NULL) != (b->scratch == NULL) ) { *w = "scratch"; return 1; }
+   if( a->scratch ) for( k = 0; k < a->nBank; k++ ) if( sv_xtier_ne(a->scratch[k], b->scratch[k], z) ) { *w = "scratch"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_MAX( const struct TA_MAX_Stream *a, const struct TA_MAX_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MAXINDEX( const struct TA_MAXINDEX_Stream *a, const struct TA_MAXINDEX_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MEDPRICE( const struct TA_MEDPRICE_Stream *a, const struct TA_MEDPRICE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_MFI( const struct TA_MFI_Stream *a, const struct TA_MFI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->posSumMF, b->posSumMF, z) ) { *w = "posSumMF"; return 1; }
+   if( sv_xtier_ne(a->negSumMF, b->negSumMF, z) ) { *w = "negSumMF"; return 1; }
+   if( sv_xtier_ne(a->prevValue, b->prevValue, z) ) { *w = "prevValue"; return 1; }
+   if( sv_xtier_ne(a->tempValue1, b->tempValue1, z) ) { *w = "tempValue1"; return 1; }
+   if( sv_xtier_ne(a->tempValue2, b->tempValue2, z) ) { *w = "tempValue2"; return 1; }
+   if( sv_xtier_ne(a->tempValue3, b->tempValue3, z) ) { *w = "tempValue3"; return 1; }
+   if( a->mflow_Idx != b->mflow_Idx ) { *w = "mflow_Idx"; return 1; }
+   if( a->maxIdx_mflow != b->maxIdx_mflow ) { *w = "maxIdx_mflow"; return 1; }
+   if( a->cbSize_mflow != b->cbSize_mflow ) { *w = "cbSize_mflow"; return 1; }
+   if( (a->cb_mflow_positive == NULL) != (b->cb_mflow_positive == NULL) ) { *w = "cb_mflow_positive"; return 1; }
+   if( a->cb_mflow_positive ) for( k = 0; k < a->cbSize_mflow; k++ ) if( sv_xtier_ne(a->cb_mflow_positive[k], b->cb_mflow_positive[k], z) ) { *w = "cb_mflow_positive"; return 1; }
+   if( (a->cb_mflow_negative == NULL) != (b->cb_mflow_negative == NULL) ) { *w = "cb_mflow_negative"; return 1; }
+   if( a->cb_mflow_negative ) for( k = 0; k < a->cbSize_mflow; k++ ) if( sv_xtier_ne(a->cb_mflow_negative[k], b->cb_mflow_negative[k], z) ) { *w = "cb_mflow_negative"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_MIDPOINT( const struct TA_MIDPOINT_Stream *a, const struct TA_MIDPOINT_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( sv_xtier_ne(a->tmpLow, b->tmpLow, z) ) { *w = "tmpLow"; return 1; }
+   if( sv_xtier_ne(a->tmpHigh, b->tmpHigh, z) ) { *w = "tmpHigh"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MIDPRICE( const struct TA_MIDPRICE_Stream *a, const struct TA_MIDPRICE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inHigh == NULL) != (b->x_inHigh == NULL) ) { *w = "x_inHigh"; return 1; }
+   if( a->x_inHigh ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inHigh[ix], b->x_inHigh[ix], z) ) { *w = "x_inHigh"; return 1; }
+   }
+   if( (a->x_inLow == NULL) != (b->x_inLow == NULL) ) { *w = "x_inLow"; return 1; }
+   if( a->x_inLow ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inLow[ix], b->x_inLow[ix], z) ) { *w = "x_inLow"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MIN( const struct TA_MIN_Stream *a, const struct TA_MIN_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MININDEX( const struct TA_MININDEX_Stream *a, const struct TA_MININDEX_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MINMAX( const struct TA_MINMAX_Stream *a, const struct TA_MINMAX_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->tmpHigh, b->tmpHigh, z) ) { *w = "tmpHigh"; return 1; }
+   if( sv_xtier_ne(a->tmpLow, b->tmpLow, z) ) { *w = "tmpLow"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MINMAXINDEX( const struct TA_MINMAXINDEX_Stream *a, const struct TA_MINMAXINDEX_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->tmpHigh, b->tmpHigh, z) ) { *w = "tmpHigh"; return 1; }
+   if( sv_xtier_ne(a->tmpLow, b->tmpLow, z) ) { *w = "tmpLow"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MINUS_DI( const struct TA_MINUS_DI_Stream *a, const struct TA_MINUS_DI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
+   if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->diffP, b->diffP, z) ) { *w = "diffP"; return 1; }
+   if( sv_xtier_ne(a->diffM, b->diffM, z) ) { *w = "diffM"; return 1; }
+   if( sv_xtier_ne(a->prevMinusDM, b->prevMinusDM, z) ) { *w = "prevMinusDM"; return 1; }
+   if( sv_xtier_ne(a->prevTR, b->prevTR, z) ) { *w = "prevTR"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_MINUS_DM( const struct TA_MINUS_DM_Stream *a, const struct TA_MINUS_DM_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
+   if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->diffP, b->diffP, z) ) { *w = "diffP"; return 1; }
+   if( sv_xtier_ne(a->diffM, b->diffM, z) ) { *w = "diffM"; return 1; }
+   if( sv_xtier_ne(a->prevMinusDM, b->prevMinusDM, z) ) { *w = "prevMinusDM"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_MOM( const struct TA_MOM_Stream *a, const struct TA_MOM_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_MULT( const struct TA_MULT_Stream *a, const struct TA_MULT_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_NATR( const struct TA_NATR_Stream *a, const struct TA_NATR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevATR, b->prevATR, z) ) { *w = "prevATR"; return 1; }
+   if( sv_xtier_ne(a->tempValue, b->tempValue, z) ) { *w = "tempValue"; return 1; }
+   if( sv_xtier_ne(a->val3, b->val3, z) ) { *w = "val3"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_NVI( const struct TA_NVI_Stream *a, const struct TA_NVI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->prevNVI, b->prevNVI, z) ) { *w = "prevNVI"; return 1; }
+   if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->prevVolume, b->prevVolume, z) ) { *w = "prevVolume"; return 1; }
+   if( sv_xtier_ne(a->tempNVI, b->tempNVI, z) ) { *w = "tempNVI"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_OBV( const struct TA_OBV_Stream *a, const struct TA_OBV_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->prevReal, b->prevReal, z) ) { *w = "prevReal"; return 1; }
+   if( sv_xtier_ne(a->prevOBV, b->prevOBV, z) ) { *w = "prevOBV"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_PLUS_DI( const struct TA_PLUS_DI_Stream *a, const struct TA_PLUS_DI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
+   if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->diffP, b->diffP, z) ) { *w = "diffP"; return 1; }
+   if( sv_xtier_ne(a->diffM, b->diffM, z) ) { *w = "diffM"; return 1; }
+   if( sv_xtier_ne(a->prevPlusDM, b->prevPlusDM, z) ) { *w = "prevPlusDM"; return 1; }
+   if( sv_xtier_ne(a->prevTR, b->prevTR, z) ) { *w = "prevTR"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_PLUS_DM( const struct TA_PLUS_DM_Stream *a, const struct TA_PLUS_DM_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
+   if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( sv_xtier_ne(a->diffP, b->diffP, z) ) { *w = "diffP"; return 1; }
+   if( sv_xtier_ne(a->diffM, b->diffM, z) ) { *w = "diffM"; return 1; }
+   if( sv_xtier_ne(a->prevPlusDM, b->prevPlusDM, z) ) { *w = "prevPlusDM"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_PPO( const struct TA_PPO_Stream *a, const struct TA_PPO_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
+   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
+   if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_MA( a->sub0, b->sub0, w, z ) ) return 1;
+   if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
+   if( a->sub1 && sv_steq_TA_MA( a->sub1, b->sub1, w, z ) ) return 1;
+   return 0;
+}
+
+static int sv_steq_TA_PVI( const struct TA_PVI_Stream *a, const struct TA_PVI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->prevPVI, b->prevPVI, z) ) { *w = "prevPVI"; return 1; }
+   if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->prevVolume, b->prevVolume, z) ) { *w = "prevVolume"; return 1; }
+   if( sv_xtier_ne(a->tempPVI, b->tempPVI, z) ) { *w = "tempPVI"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_PVO( const struct TA_PVO_Stream *a, const struct TA_PVO_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
+   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
+   if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_MA( a->sub0, b->sub0, w, z ) ) return 1;
+   if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
+   if( a->sub1 && sv_steq_TA_MA( a->sub1, b->sub1, w, z ) ) return 1;
+   return 0;
+}
+
+static int sv_steq_TA_QSTICK( const struct TA_QSTICK_Stream *a, const struct TA_QSTICK_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_derived == NULL) != (b->ring_trailingIdx_derived == NULL) ) { *w = "ring_trailingIdx_derived"; return 1; }
+   if( a->ring_trailingIdx_derived ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_derived[ia], b->ring_trailingIdx_derived[ib], z) ) { *w = "ring_trailingIdx_derived"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_ROC( const struct TA_ROC_Stream *a, const struct TA_ROC_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_ROCP( const struct TA_ROCP_Stream *a, const struct TA_ROCP_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_ROCR( const struct TA_ROCR_Stream *a, const struct TA_ROCR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_ROCR100( const struct TA_ROCR100_Stream *a, const struct TA_ROCR100_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_RSI( const struct TA_RSI_Stream *a, const struct TA_RSI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevGain, b->prevGain, z) ) { *w = "prevGain"; return 1; }
+   if( sv_xtier_ne(a->prevLoss, b->prevLoss, z) ) { *w = "prevLoss"; return 1; }
+   if( sv_xtier_ne(a->prevValue, b->prevValue, z) ) { *w = "prevValue"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_SAR( const struct TA_SAR_Stream *a, const struct TA_SAR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInAcceleration, b->optInAcceleration, z) ) { *w = "optInAcceleration"; return 1; }
+   if( sv_xtier_ne(a->optInMaximum, b->optInMaximum, z) ) { *w = "optInMaximum"; return 1; }
+   if( a->isLong != b->isLong ) { *w = "isLong"; return 1; }
+   if( sv_xtier_ne(a->newHigh, b->newHigh, z) ) { *w = "newHigh"; return 1; }
+   if( sv_xtier_ne(a->newLow, b->newLow, z) ) { *w = "newLow"; return 1; }
+   if( sv_xtier_ne(a->af, b->af, z) ) { *w = "af"; return 1; }
+   if( sv_xtier_ne(a->ep, b->ep, z) ) { *w = "ep"; return 1; }
+   if( sv_xtier_ne(a->sar, b->sar, z) ) { *w = "sar"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_SAREXT( const struct TA_SAREXT_Stream *a, const struct TA_SAREXT_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->optInStartValue, b->optInStartValue, z) ) { *w = "optInStartValue"; return 1; }
+   if( sv_xtier_ne(a->optInOffsetOnReverse, b->optInOffsetOnReverse, z) ) { *w = "optInOffsetOnReverse"; return 1; }
+   if( sv_xtier_ne(a->optInAccelerationInitLong, b->optInAccelerationInitLong, z) ) { *w = "optInAccelerationInitLong"; return 1; }
+   if( sv_xtier_ne(a->optInAccelerationLong, b->optInAccelerationLong, z) ) { *w = "optInAccelerationLong"; return 1; }
+   if( sv_xtier_ne(a->optInAccelerationMaxLong, b->optInAccelerationMaxLong, z) ) { *w = "optInAccelerationMaxLong"; return 1; }
+   if( sv_xtier_ne(a->optInAccelerationInitShort, b->optInAccelerationInitShort, z) ) { *w = "optInAccelerationInitShort"; return 1; }
+   if( sv_xtier_ne(a->optInAccelerationShort, b->optInAccelerationShort, z) ) { *w = "optInAccelerationShort"; return 1; }
+   if( sv_xtier_ne(a->optInAccelerationMaxShort, b->optInAccelerationMaxShort, z) ) { *w = "optInAccelerationMaxShort"; return 1; }
+   if( a->isLong != b->isLong ) { *w = "isLong"; return 1; }
+   if( sv_xtier_ne(a->newHigh, b->newHigh, z) ) { *w = "newHigh"; return 1; }
+   if( sv_xtier_ne(a->newLow, b->newLow, z) ) { *w = "newLow"; return 1; }
+   if( sv_xtier_ne(a->afLong, b->afLong, z) ) { *w = "afLong"; return 1; }
+   if( sv_xtier_ne(a->afShort, b->afShort, z) ) { *w = "afShort"; return 1; }
+   if( sv_xtier_ne(a->ep, b->ep, z) ) { *w = "ep"; return 1; }
+   if( sv_xtier_ne(a->sar, b->sar, z) ) { *w = "sar"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_SIN( const struct TA_SIN_Stream *a, const struct TA_SIN_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_SINH( const struct TA_SINH_Stream *a, const struct TA_SINH_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_SMA( const struct TA_SMA_Stream *a, const struct TA_SMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_SMI( const struct TA_SMI_Stream *a, const struct TA_SMI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
+   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
+   if( a->optInSignalPeriod != b->optInSignalPeriod ) { *w = "optInSignalPeriod"; return 1; }
+   if( sv_xtier_ne(a->kSlow, b->kSlow, z) ) { *w = "kSlow"; return 1; }
+   if( sv_xtier_ne(a->kFast, b->kFast, z) ) { *w = "kFast"; return 1; }
+   if( sv_xtier_ne(a->kSignal, b->kSignal, z) ) { *w = "kSignal"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->emaSlowNum, b->emaSlowNum, z) ) { *w = "emaSlowNum"; return 1; }
+   if( sv_xtier_ne(a->emaSlowDen, b->emaSlowDen, z) ) { *w = "emaSlowDen"; return 1; }
+   if( sv_xtier_ne(a->emaFastNum, b->emaFastNum, z) ) { *w = "emaFastNum"; return 1; }
+   if( sv_xtier_ne(a->emaFastDen, b->emaFastDen, z) ) { *w = "emaFastDen"; return 1; }
+   if( sv_xtier_ne(a->num, b->num, z) ) { *w = "num"; return 1; }
+   if( sv_xtier_ne(a->den, b->den, z) ) { *w = "den"; return 1; }
+   if( sv_xtier_ne(a->halfDen, b->halfDen, z) ) { *w = "halfDen"; return 1; }
+   if( sv_xtier_ne(a->smiValue, b->smiValue, z) ) { *w = "smiValue"; return 1; }
+   if( sv_xtier_ne(a->prevSignal, b->prevSignal, z) ) { *w = "prevSignal"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inHigh == NULL) != (b->x_inHigh == NULL) ) { *w = "x_inHigh"; return 1; }
+   if( a->x_inHigh ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inHigh[ix], b->x_inHigh[ix], z) ) { *w = "x_inHigh"; return 1; }
+   }
+   if( (a->x_inLow == NULL) != (b->x_inLow == NULL) ) { *w = "x_inLow"; return 1; }
+   if( a->x_inLow ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inLow[ix], b->x_inLow[ix], z) ) { *w = "x_inLow"; return 1; }
+   }
+   if( (a->x_inClose == NULL) != (b->x_inClose == NULL) ) { *w = "x_inClose"; return 1; }
+   if( a->x_inClose ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inClose[ix], b->x_inClose[ix], z) ) { *w = "x_inClose"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_SQRT( const struct TA_SQRT_Stream *a, const struct TA_SQRT_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_STDDEV( const struct TA_STDDEV_Stream *a, const struct TA_STDDEV_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->optInNbDev, b->optInNbDev, z) ) { *w = "optInNbDev"; return 1; }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_VAR( a->sub0, b->sub0, w, z ) ) return 1;
+   return 0;
+}
+
+static int sv_steq_TA_STOCH( const struct TA_STOCH_Stream *a, const struct TA_STOCH_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastK_Period != b->optInFastK_Period ) { *w = "optInFastK_Period"; return 1; }
+   if( a->optInSlowK_Period != b->optInSlowK_Period ) { *w = "optInSlowK_Period"; return 1; }
+   if( a->optInSlowK_MAType != b->optInSlowK_MAType ) { *w = "optInSlowK_MAType"; return 1; }
+   if( a->optInSlowD_Period != b->optInSlowD_Period ) { *w = "optInSlowD_Period"; return 1; }
+   if( a->optInSlowD_MAType != b->optInSlowD_MAType ) { *w = "optInSlowD_MAType"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( sv_xtier_ne(a->diff, b->diff, z) ) { *w = "diff"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inHigh == NULL) != (b->x_inHigh == NULL) ) { *w = "x_inHigh"; return 1; }
+   if( a->x_inHigh ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inHigh[ix], b->x_inHigh[ix], z) ) { *w = "x_inHigh"; return 1; }
+   }
+   if( (a->x_inLow == NULL) != (b->x_inLow == NULL) ) { *w = "x_inLow"; return 1; }
+   if( a->x_inLow ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inLow[ix], b->x_inLow[ix], z) ) { *w = "x_inLow"; return 1; }
+   }
+   if( (a->x_inClose == NULL) != (b->x_inClose == NULL) ) { *w = "x_inClose"; return 1; }
+   if( a->x_inClose ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inClose[ix], b->x_inClose[ix], z) ) { *w = "x_inClose"; return 1; }
+   }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_MA( a->sub0, b->sub0, w, z ) ) return 1;
+   if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
+   if( a->sub1 && sv_steq_TA_MA( a->sub1, b->sub1, w, z ) ) return 1;
+   return 0;
+}
+
+static int sv_steq_TA_STOCHF( const struct TA_STOCHF_Stream *a, const struct TA_STOCHF_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInFastK_Period != b->optInFastK_Period ) { *w = "optInFastK_Period"; return 1; }
+   if( a->optInFastD_Period != b->optInFastD_Period ) { *w = "optInFastD_Period"; return 1; }
+   if( a->optInFastD_MAType != b->optInFastD_MAType ) { *w = "optInFastD_MAType"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( sv_xtier_ne(a->diff, b->diff, z) ) { *w = "diff"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inHigh == NULL) != (b->x_inHigh == NULL) ) { *w = "x_inHigh"; return 1; }
+   if( a->x_inHigh ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inHigh[ix], b->x_inHigh[ix], z) ) { *w = "x_inHigh"; return 1; }
+   }
+   if( (a->x_inLow == NULL) != (b->x_inLow == NULL) ) { *w = "x_inLow"; return 1; }
+   if( a->x_inLow ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inLow[ix], b->x_inLow[ix], z) ) { *w = "x_inLow"; return 1; }
+   }
+   if( (a->x_inClose == NULL) != (b->x_inClose == NULL) ) { *w = "x_inClose"; return 1; }
+   if( a->x_inClose ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inClose[ix], b->x_inClose[ix], z) ) { *w = "x_inClose"; return 1; }
+   }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_MA( a->sub0, b->sub0, w, z ) ) return 1;
+   return 0;
+}
+
+static int sv_steq_TA_STOCHRSI( const struct TA_STOCHRSI_Stream *a, const struct TA_STOCHRSI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->optInFastK_Period != b->optInFastK_Period ) { *w = "optInFastK_Period"; return 1; }
+   if( a->optInFastD_Period != b->optInFastD_Period ) { *w = "optInFastD_Period"; return 1; }
+   if( a->optInFastD_MAType != b->optInFastD_MAType ) { *w = "optInFastD_MAType"; return 1; }
+   if( a->peekMode != b->peekMode ) { *w = "peekMode"; return 1; }
+   if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
+   if( a->sub0 && sv_steq_TA_RSI( a->sub0, b->sub0, w, z ) ) return 1;
+   if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
+   if( a->sub1 && sv_steq_TA_STOCHF( a->sub1, b->sub1, w, z ) ) return 1;
+   return 0;
+}
+
+static int sv_steq_TA_SUB( const struct TA_SUB_Stream *a, const struct TA_SUB_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_SUM( const struct TA_SUM_Stream *a, const struct TA_SUM_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_T3( const struct TA_T3_Stream *a, const struct TA_T3_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->optInVFactor, b->optInVFactor, z) ) { *w = "optInVFactor"; return 1; }
+   if( sv_xtier_ne(a->k, b->k, z) ) { *w = "k"; return 1; }
+   if( sv_xtier_ne(a->one_minus_k, b->one_minus_k, z) ) { *w = "one_minus_k"; return 1; }
+   if( sv_xtier_ne(a->e1, b->e1, z) ) { *w = "e1"; return 1; }
+   if( sv_xtier_ne(a->e2, b->e2, z) ) { *w = "e2"; return 1; }
+   if( sv_xtier_ne(a->e3, b->e3, z) ) { *w = "e3"; return 1; }
+   if( sv_xtier_ne(a->e4, b->e4, z) ) { *w = "e4"; return 1; }
+   if( sv_xtier_ne(a->e5, b->e5, z) ) { *w = "e5"; return 1; }
+   if( sv_xtier_ne(a->e6, b->e6, z) ) { *w = "e6"; return 1; }
+   if( sv_xtier_ne(a->c1, b->c1, z) ) { *w = "c1"; return 1; }
+   if( sv_xtier_ne(a->c2, b->c2, z) ) { *w = "c2"; return 1; }
+   if( sv_xtier_ne(a->c3, b->c3, z) ) { *w = "c3"; return 1; }
+   if( sv_xtier_ne(a->c4, b->c4, z) ) { *w = "c4"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_TAN( const struct TA_TAN_Stream *a, const struct TA_TAN_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_TANH( const struct TA_TANH_Stream *a, const struct TA_TANH_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_TEMA( const struct TA_TEMA_Stream *a, const struct TA_TEMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevEMA1, b->prevEMA1, z) ) { *w = "prevEMA1"; return 1; }
+   if( sv_xtier_ne(a->prevEMA2, b->prevEMA2, z) ) { *w = "prevEMA2"; return 1; }
+   if( sv_xtier_ne(a->prevEMA3, b->prevEMA3, z) ) { *w = "prevEMA3"; return 1; }
+   if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_TRANGE( const struct TA_TRANGE_Stream *a, const struct TA_TRANGE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->val3, b->val3, z) ) { *w = "val3"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_TRIMA( const struct TA_TRIMA_Stream *a, const struct TA_TRIMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->numerator, b->numerator, z) ) { *w = "numerator"; return 1; }
+   if( sv_xtier_ne(a->numeratorSub, b->numeratorSub, z) ) { *w = "numeratorSub"; return 1; }
+   if( sv_xtier_ne(a->numeratorAdd, b->numeratorAdd, z) ) { *w = "numeratorAdd"; return 1; }
+   if( sv_xtier_ne(a->factor, b->factor, z) ) { *w = "factor"; return 1; }
+   if( sv_xtier_ne(a->tempReal, b->tempReal, z) ) { *w = "tempReal"; return 1; }
+   if( a->ringCap_middleIdx != b->ringCap_middleIdx ) { *w = "ringCap_middleIdx"; return 1; }
+   if( (a->ring_middleIdx_inReal == NULL) != (b->ring_middleIdx_inReal == NULL) ) { *w = "ring_middleIdx_inReal"; return 1; }
+   if( a->ring_middleIdx_inReal ) for( k = 0; k < a->ringCap_middleIdx; k++ )
+   {
+      ia = (a->ringPos_middleIdx + k) % a->ringCap_middleIdx;
+      ib = (b->ringPos_middleIdx + k) % b->ringCap_middleIdx;
+      if( sv_xtier_ne(a->ring_middleIdx_inReal[ia], b->ring_middleIdx_inReal[ib], z) ) { *w = "ring_middleIdx_inReal"; return 1; }
+   }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_TRIX( const struct TA_TRIX_Stream *a, const struct TA_TRIX_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->prevEMA1, b->prevEMA1, z) ) { *w = "prevEMA1"; return 1; }
+   if( sv_xtier_ne(a->prevEMA2, b->prevEMA2, z) ) { *w = "prevEMA2"; return 1; }
+   if( sv_xtier_ne(a->prevEMA3, b->prevEMA3, z) ) { *w = "prevEMA3"; return 1; }
+   if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_TSF( const struct TA_TSF_Stream *a, const struct TA_TSF_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->SumX, b->SumX, z) ) { *w = "SumX"; return 1; }
+   if( sv_xtier_ne(a->SumXY, b->SumXY, z) ) { *w = "SumXY"; return 1; }
+   if( sv_xtier_ne(a->SumY, b->SumY, z) ) { *w = "SumY"; return 1; }
+   if( sv_xtier_ne(a->Divisor, b->Divisor, z) ) { *w = "Divisor"; return 1; }
+   if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_TYPPRICE( const struct TA_TYPPRICE_Stream *a, const struct TA_TYPPRICE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_ULTOSC( const struct TA_ULTOSC_Stream *a, const struct TA_ULTOSC_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod1 != b->optInTimePeriod1 ) { *w = "optInTimePeriod1"; return 1; }
+   if( a->optInTimePeriod2 != b->optInTimePeriod2 ) { *w = "optInTimePeriod2"; return 1; }
+   if( a->optInTimePeriod3 != b->optInTimePeriod3 ) { *w = "optInTimePeriod3"; return 1; }
+   if( sv_xtier_ne(a->a1Total, b->a1Total, z) ) { *w = "a1Total"; return 1; }
+   if( sv_xtier_ne(a->a2Total, b->a2Total, z) ) { *w = "a2Total"; return 1; }
+   if( sv_xtier_ne(a->a3Total, b->a3Total, z) ) { *w = "a3Total"; return 1; }
+   if( sv_xtier_ne(a->b1Total, b->b1Total, z) ) { *w = "b1Total"; return 1; }
+   if( sv_xtier_ne(a->b2Total, b->b2Total, z) ) { *w = "b2Total"; return 1; }
+   if( sv_xtier_ne(a->b3Total, b->b3Total, z) ) { *w = "b3Total"; return 1; }
+   if( sv_xtier_ne(a->output, b->output, z) ) { *w = "output"; return 1; }
+   if( a->trailingPos1 != b->trailingPos1 ) { *w = "trailingPos1"; return 1; }
+   if( a->trailingPos2 != b->trailingPos2 ) { *w = "trailingPos2"; return 1; }
+   if( a->term_Idx != b->term_Idx ) { *w = "term_Idx"; return 1; }
+   if( a->maxIdx_term != b->maxIdx_term ) { *w = "maxIdx_term"; return 1; }
+   if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
+   if( a->cbSize_term != b->cbSize_term ) { *w = "cbSize_term"; return 1; }
+   if( (a->cb_term_closeMinusTrueLow == NULL) != (b->cb_term_closeMinusTrueLow == NULL) ) { *w = "cb_term_closeMinusTrueLow"; return 1; }
+   if( a->cb_term_closeMinusTrueLow ) for( k = 0; k < a->cbSize_term; k++ ) if( sv_xtier_ne(a->cb_term_closeMinusTrueLow[k], b->cb_term_closeMinusTrueLow[k], z) ) { *w = "cb_term_closeMinusTrueLow"; return 1; }
+   if( (a->cb_term_trueRange == NULL) != (b->cb_term_trueRange == NULL) ) { *w = "cb_term_trueRange"; return 1; }
+   if( a->cb_term_trueRange ) for( k = 0; k < a->cbSize_term; k++ ) if( sv_xtier_ne(a->cb_term_trueRange[k], b->cb_term_trueRange[k], z) ) { *w = "cb_term_trueRange"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_VAR( const struct TA_VAR_Stream *a, const struct TA_VAR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->optInNbDev, b->optInNbDev, z) ) { *w = "optInNbDev"; return 1; }
+   if( sv_xtier_ne(a->shift, b->shift, z) ) { *w = "shift"; return 1; }
+   if( sv_xtier_ne(a->periodTotal1, b->periodTotal1, z) ) { *w = "periodTotal1"; return 1; }
+   if( sv_xtier_ne(a->periodTotal2, b->periodTotal2, z) ) { *w = "periodTotal2"; return 1; }
+   if( sv_xtier_ne(a->meanValue1, b->meanValue1, z) ) { *w = "meanValue1"; return 1; }
+   if( sv_xtier_ne(a->variance, b->variance, z) ) { *w = "variance"; return 1; }
+   if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->windowStart != b->windowStart ) { *w = "windowStart"; return 1; }
+   if( a->nbInitialElementNeeded != b->nbInitialElementNeeded ) { *w = "nbInitialElementNeeded"; return 1; }
+   if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_VWMA( const struct TA_VWMA_Stream *a, const struct TA_VWMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->sumPV, b->sumPV, z) ) { *w = "sumPV"; return 1; }
+   if( sv_xtier_ne(a->sumV, b->sumV, z) ) { *w = "sumV"; return 1; }
+   if( sv_xtier_ne(a->tempPV, b->tempPV, z) ) { *w = "tempPV"; return 1; }
+   if( sv_xtier_ne(a->tempV, b->tempV, z) ) { *w = "tempV"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   if( (a->ring_trailingIdx_inVolume == NULL) != (b->ring_trailingIdx_inVolume == NULL) ) { *w = "ring_trailingIdx_inVolume"; return 1; }
+   if( a->ring_trailingIdx_inVolume ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inVolume[ia], b->ring_trailingIdx_inVolume[ib], z) ) { *w = "ring_trailingIdx_inVolume"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_WAD( const struct TA_WAD_Stream *a, const struct TA_WAD_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( sv_xtier_ne(a->sum, b->sum, z) ) { *w = "sum"; return 1; }
+   if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->trueExtreme, b->trueExtreme, z) ) { *w = "trueExtreme"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_WCLPRICE( const struct TA_WCLPRICE_Stream *a, const struct TA_WCLPRICE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->unused != b->unused ) { *w = "unused"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_WILLR( const struct TA_WILLR_Stream *a, const struct TA_WILLR_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
+   if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
+   if( sv_xtier_ne(a->diff, b->diff, z) ) { *w = "diff"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
+   if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inHigh == NULL) != (b->x_inHigh == NULL) ) { *w = "x_inHigh"; return 1; }
+   if( a->x_inHigh ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inHigh[ix], b->x_inHigh[ix], z) ) { *w = "x_inHigh"; return 1; }
+   }
+   if( (a->x_inLow == NULL) != (b->x_inLow == NULL) ) { *w = "x_inLow"; return 1; }
+   if( a->x_inLow ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inLow[ix], b->x_inLow[ix], z) ) { *w = "x_inLow"; return 1; }
+   }
+   if( (a->x_inClose == NULL) != (b->x_inClose == NULL) ) { *w = "x_inClose"; return 1; }
+   if( a->x_inClose ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inClose[ix], b->x_inClose[ix], z) ) { *w = "x_inClose"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_WMA( const struct TA_WMA_Stream *a, const struct TA_WMA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->periodSum, b->periodSum, z) ) { *w = "periodSum"; return 1; }
+   if( sv_xtier_ne(a->periodSub, b->periodSub, z) ) { *w = "periodSub"; return 1; }
+   if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
+   if( sv_xtier_ne(a->divider, b->divider, z) ) { *w = "divider"; return 1; }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   return 0;
+}
+
 static void handle_stream_verify(const char *json, char *resp, int resp_size) {
     int fnLen = 0;
     const char *fn = json_find_string(json, "funcName", &fnLen);
@@ -501,6 +5058,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_AC_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AC(0, svN - 1, sv_h, sv_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &svBeg, &svNb, sv_b0);
@@ -549,6 +5109,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_AC_Open( &stEq, sv_h, sv_l, svN, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -565,11 +5129,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_AC( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_AC_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_AC_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -590,6 +5160,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -598,6 +5170,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ACCBANDS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ACCBANDS(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0, sv_b1, sv_b2);
@@ -659,6 +5234,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0; double e2 = 0.0;
+            if( TA_ACCBANDS_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0, &e1, &e2 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -681,11 +5260,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ACCBANDS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ACCBANDS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ACCBANDS_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -710,6 +5295,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -717,6 +5304,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ACOS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ACOS(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -765,6 +5355,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ACOS_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -781,11 +5375,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ACOS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ACOS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ACOS_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -806,6 +5406,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -813,6 +5415,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_AD_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AD(0, svN - 1, sv_h, sv_l, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -861,6 +5466,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_AD_Open( &stEq, sv_h, sv_l, sv_c, sv_v, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -877,11 +5486,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_AD( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_AD_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_AD_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -902,6 +5517,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -909,6 +5526,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ADD_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ADD(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -957,6 +5577,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ADD_Open( &stEq, sv_c, sv_v, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -973,11 +5597,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ADD( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ADD_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ADD_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -998,6 +5628,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1007,6 +5639,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ADOSC_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -1057,6 +5692,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ADOSC_Open( &stEq, sv_h, sv_l, sv_c, sv_v, svN, optInFastPeriod, optInSlowPeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1073,11 +5712,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ADOSC( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ADOSC_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ADOSC_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -1099,6 +5744,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1107,6 +5754,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ADX_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(0, (unsigned int)svK);
@@ -1157,6 +5807,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ADX_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1173,11 +5827,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ADX( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ADX_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ADX_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -1199,6 +5859,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(0, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1207,6 +5869,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ADXR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(0, (unsigned int)svK);
@@ -1257,6 +5922,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ADXR_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1273,11 +5942,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ADXR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ADXR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ADXR_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -1299,6 +5974,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(0, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1308,6 +5985,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_AO_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AO(0, svN - 1, sv_h, sv_l, optInFastPeriod, optInSlowPeriod, &svBeg, &svNb, sv_b0);
@@ -1356,6 +6036,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_AO_Open( &stEq, sv_h, sv_l, svN, optInFastPeriod, optInSlowPeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1372,11 +6056,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_AO( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_AO_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_AO_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -1397,6 +6087,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1407,6 +6099,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_APO_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -1463,6 +6158,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_APO_Open( &stEq, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1479,11 +6178,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_APO( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_APO_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_APO_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -1508,6 +6213,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1516,6 +6223,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_AROON_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AROON(0, svN - 1, sv_h, sv_l, optInTimePeriod, &svBeg, &svNb, sv_b0, sv_b1);
@@ -1574,6 +6284,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0;
+            if( TA_AROON_Open( &stEq, sv_h, sv_l, svN, optInTimePeriod, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1593,11 +6307,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_AROON( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_AROON_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_AROON_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -1620,6 +6340,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1628,6 +6350,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_AROONOSC_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AROONOSC(0, svN - 1, sv_h, sv_l, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -1676,6 +6401,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_AROONOSC_Open( &stEq, sv_h, sv_l, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1692,11 +6421,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_AROONOSC( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_AROONOSC_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_AROONOSC_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -1717,6 +6452,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1724,6 +6461,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ASIN_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ASIN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -1772,6 +6512,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ASIN_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1788,11 +6532,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ASIN( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ASIN_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ASIN_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -1813,6 +6563,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1820,6 +6572,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ATAN_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ATAN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -1868,6 +6623,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ATAN_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1884,11 +6643,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ATAN( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ATAN_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ATAN_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -1909,6 +6674,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -1917,6 +6684,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ATR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(2, (unsigned int)svK);
@@ -1967,6 +6737,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ATR_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -1983,11 +6757,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ATR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ATR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ATR_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -2009,6 +6789,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(2, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2017,6 +6799,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_AVGDEV_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AVGDEV(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -2065,6 +6850,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_AVGDEV_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -2081,11 +6870,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_AVGDEV( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_AVGDEV_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_AVGDEV_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -2106,6 +6901,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2113,6 +6910,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_AVGPRICE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AVGPRICE(0, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -2161,6 +6961,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_AVGPRICE_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -2177,11 +6981,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_AVGPRICE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_AVGPRICE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_AVGPRICE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -2202,6 +7012,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2213,6 +7025,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_BBANDS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -2282,6 +7097,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0; double e2 = 0.0;
+            if( TA_BBANDS_Open( &stEq, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &e0, &e1, &e2 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -2304,11 +7123,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_BBANDS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_BBANDS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_BBANDS_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -2337,6 +7162,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2345,6 +7172,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_BETA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_BETA(0, svN - 1, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -2393,6 +7223,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_BETA_Open( &stEq, sv_c, sv_v, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -2409,11 +7243,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_BETA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_BETA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_BETA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -2434,6 +7274,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2441,6 +7283,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_BOP_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_BOP(0, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -2489,6 +7334,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_BOP_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -2505,11 +7354,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_BOP( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_BOP_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_BOP_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -2530,6 +7385,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2538,6 +7395,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CCI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CCI(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -2586,6 +7446,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_CCI_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -2602,11 +7466,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CCI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CCI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_CCI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -2627,6 +7497,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2634,6 +7506,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDL2CROWS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -2683,6 +7558,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDL2CROWS_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -2698,12 +7577,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDL2CROWS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDL2CROWS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDL2CROWS_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -2726,6 +7611,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2733,6 +7620,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDL3BLACKCROWS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -2782,6 +7672,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDL3BLACKCROWS_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -2797,12 +7691,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDL3BLACKCROWS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDL3BLACKCROWS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDL3BLACKCROWS_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -2825,6 +7725,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2832,6 +7734,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDL3INSIDE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -2881,6 +7786,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDL3INSIDE_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -2896,12 +7805,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDL3INSIDE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDL3INSIDE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDL3INSIDE_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -2924,6 +7839,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -2931,6 +7848,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDL3LINESTRIKE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -2980,6 +7900,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDL3LINESTRIKE_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -2995,12 +7919,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDL3LINESTRIKE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDL3LINESTRIKE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDL3LINESTRIKE_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3023,6 +7953,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3030,6 +7962,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDL3OUTSIDE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3079,6 +8014,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDL3OUTSIDE_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3094,12 +8033,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDL3OUTSIDE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDL3OUTSIDE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDL3OUTSIDE_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3122,6 +8067,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3129,6 +8076,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDL3STARSINSOUTH_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3178,6 +8128,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDL3STARSINSOUTH_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3193,12 +8147,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDL3STARSINSOUTH( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDL3STARSINSOUTH_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDL3STARSINSOUTH_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3221,6 +8181,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3228,6 +8190,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDL3WHITESOLDIERS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3277,6 +8242,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDL3WHITESOLDIERS_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3292,12 +8261,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDL3WHITESOLDIERS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDL3WHITESOLDIERS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDL3WHITESOLDIERS_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3320,6 +8295,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3328,6 +8305,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLABANDONEDBABY_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3377,6 +8357,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLABANDONEDBABY_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3392,12 +8376,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLABANDONEDBABY( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLABANDONEDBABY_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLABANDONEDBABY_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3420,6 +8410,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3427,6 +8419,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLADVANCEBLOCK_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3476,6 +8471,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLADVANCEBLOCK_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3491,12 +8490,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLADVANCEBLOCK( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLADVANCEBLOCK_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLADVANCEBLOCK_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3519,6 +8524,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3526,6 +8533,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLBELTHOLD_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3575,6 +8585,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLBELTHOLD_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3590,12 +8604,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLBELTHOLD( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLBELTHOLD_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLBELTHOLD_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3618,6 +8638,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3625,6 +8647,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLBREAKAWAY_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3674,6 +8699,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLBREAKAWAY_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3689,12 +8718,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLBREAKAWAY( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLBREAKAWAY_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLBREAKAWAY_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3717,6 +8752,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3724,6 +8761,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLCLOSINGMARUBOZU_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3773,6 +8813,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLCLOSINGMARUBOZU_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3788,12 +8832,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLCLOSINGMARUBOZU( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLCLOSINGMARUBOZU_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLCLOSINGMARUBOZU_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3816,6 +8866,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3823,6 +8875,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLCONCEALBABYSWALL_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3872,6 +8927,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLCONCEALBABYSWALL_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3887,12 +8946,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLCONCEALBABYSWALL( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLCONCEALBABYSWALL_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLCONCEALBABYSWALL_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -3915,6 +8980,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -3922,6 +8989,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLCOUNTERATTACK_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -3971,6 +9041,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLCOUNTERATTACK_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -3986,12 +9060,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLCOUNTERATTACK( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLCOUNTERATTACK_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLCOUNTERATTACK_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4014,6 +9094,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4022,6 +9104,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLDARKCLOUDCOVER_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4071,6 +9156,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLDARKCLOUDCOVER_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4086,12 +9175,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLDARKCLOUDCOVER( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLDARKCLOUDCOVER_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLDARKCLOUDCOVER_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4114,6 +9209,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4121,6 +9218,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLDOJI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4170,6 +9270,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLDOJI_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4185,12 +9289,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLDOJI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLDOJI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLDOJI_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4213,6 +9323,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4220,6 +9332,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLDOJISTAR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4269,6 +9384,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLDOJISTAR_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4284,12 +9403,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLDOJISTAR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLDOJISTAR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLDOJISTAR_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4312,6 +9437,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4319,6 +9446,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLDRAGONFLYDOJI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4368,6 +9498,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLDRAGONFLYDOJI_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4383,12 +9517,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLDRAGONFLYDOJI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLDRAGONFLYDOJI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLDRAGONFLYDOJI_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4411,6 +9551,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4418,6 +9560,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLENGULFING_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4467,6 +9612,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLENGULFING_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4482,12 +9631,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLENGULFING( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLENGULFING_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLENGULFING_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4510,6 +9665,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4518,6 +9675,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLEVENINGDOJISTAR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4567,6 +9727,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLEVENINGDOJISTAR_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4582,12 +9746,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLEVENINGDOJISTAR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLEVENINGDOJISTAR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLEVENINGDOJISTAR_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4610,6 +9780,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4618,6 +9790,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLEVENINGSTAR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4667,6 +9842,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLEVENINGSTAR_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4682,12 +9861,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLEVENINGSTAR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLEVENINGSTAR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLEVENINGSTAR_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4710,6 +9895,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4717,6 +9904,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLGAPSIDESIDEWHITE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4766,6 +9956,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLGAPSIDESIDEWHITE_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4781,12 +9975,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLGAPSIDESIDEWHITE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLGAPSIDESIDEWHITE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLGAPSIDESIDEWHITE_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4809,6 +10009,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4816,6 +10018,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLGRAVESTONEDOJI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4865,6 +10070,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLGRAVESTONEDOJI_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4880,12 +10089,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLGRAVESTONEDOJI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLGRAVESTONEDOJI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLGRAVESTONEDOJI_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -4908,6 +10123,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -4915,6 +10132,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLHAMMER_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -4964,6 +10184,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLHAMMER_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -4979,12 +10203,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLHAMMER( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLHAMMER_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLHAMMER_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5007,6 +10237,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5014,6 +10246,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLHANGINGMAN_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5063,6 +10298,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLHANGINGMAN_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5078,12 +10317,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLHANGINGMAN( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLHANGINGMAN_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLHANGINGMAN_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5106,6 +10351,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5113,6 +10360,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLHARAMI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5162,6 +10412,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLHARAMI_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5177,12 +10431,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLHARAMI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLHARAMI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLHARAMI_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5205,6 +10465,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5212,6 +10474,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLHARAMICROSS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5261,6 +10526,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLHARAMICROSS_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5276,12 +10545,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLHARAMICROSS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLHARAMICROSS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLHARAMICROSS_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5304,6 +10579,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5311,6 +10588,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLHIGHWAVE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5360,6 +10640,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLHIGHWAVE_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5375,12 +10659,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLHIGHWAVE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLHIGHWAVE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLHIGHWAVE_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5403,6 +10693,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5410,6 +10702,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLHIKKAKE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5459,6 +10754,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLHIKKAKE_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5474,12 +10773,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLHIKKAKE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLHIKKAKE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLHIKKAKE_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5502,6 +10807,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5509,6 +10816,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLHIKKAKEMOD_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5558,6 +10868,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLHIKKAKEMOD_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5573,12 +10887,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLHIKKAKEMOD( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLHIKKAKEMOD_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLHIKKAKEMOD_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5601,6 +10921,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5608,6 +10930,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLHOMINGPIGEON_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5657,6 +10982,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLHOMINGPIGEON_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5672,12 +11001,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLHOMINGPIGEON( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLHOMINGPIGEON_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLHOMINGPIGEON_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5700,6 +11035,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5707,6 +11044,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLIDENTICAL3CROWS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5756,6 +11096,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLIDENTICAL3CROWS_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5771,12 +11115,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLIDENTICAL3CROWS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLIDENTICAL3CROWS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLIDENTICAL3CROWS_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5799,6 +11149,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5806,6 +11158,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLINNECK_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5855,6 +11210,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLINNECK_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5870,12 +11229,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLINNECK( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLINNECK_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLINNECK_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5898,6 +11263,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5905,6 +11272,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLINVERTEDHAMMER_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -5954,6 +11324,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLINVERTEDHAMMER_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -5969,12 +11343,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLINVERTEDHAMMER( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLINVERTEDHAMMER_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLINVERTEDHAMMER_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -5997,6 +11377,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6004,6 +11386,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLKICKING_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6053,6 +11438,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLKICKING_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6068,12 +11457,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLKICKING( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLKICKING_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLKICKING_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6096,6 +11491,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6103,6 +11500,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLKICKINGBYLENGTH_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6152,6 +11552,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLKICKINGBYLENGTH_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6167,12 +11571,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLKICKINGBYLENGTH( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLKICKINGBYLENGTH_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLKICKINGBYLENGTH_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6195,6 +11605,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6202,6 +11614,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLLADDERBOTTOM_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6251,6 +11666,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLLADDERBOTTOM_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6266,12 +11685,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLLADDERBOTTOM( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLLADDERBOTTOM_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLLADDERBOTTOM_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6294,6 +11719,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6301,6 +11728,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLLONGLEGGEDDOJI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6350,6 +11780,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLLONGLEGGEDDOJI_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6365,12 +11799,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLLONGLEGGEDDOJI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLLONGLEGGEDDOJI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLLONGLEGGEDDOJI_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6393,6 +11833,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6400,6 +11842,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLLONGLINE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6449,6 +11894,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLLONGLINE_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6464,12 +11913,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLLONGLINE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLLONGLINE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLLONGLINE_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6492,6 +11947,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6499,6 +11956,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLMARUBOZU_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6548,6 +12008,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLMARUBOZU_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6563,12 +12027,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLMARUBOZU( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLMARUBOZU_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLMARUBOZU_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6591,6 +12061,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6598,6 +12070,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLMATCHINGLOW_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6647,6 +12122,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLMATCHINGLOW_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6662,12 +12141,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLMATCHINGLOW( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLMATCHINGLOW_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLMATCHINGLOW_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6690,6 +12175,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6698,6 +12185,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLMATHOLD_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6747,6 +12237,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLMATHOLD_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6762,12 +12256,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLMATHOLD( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLMATHOLD_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLMATHOLD_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6790,6 +12290,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6798,6 +12300,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLMORNINGDOJISTAR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6847,6 +12352,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLMORNINGDOJISTAR_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6862,12 +12371,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLMORNINGDOJISTAR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLMORNINGDOJISTAR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLMORNINGDOJISTAR_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6890,6 +12405,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6898,6 +12415,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLMORNINGSTAR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -6947,6 +12467,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLMORNINGSTAR_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -6962,12 +12486,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLMORNINGSTAR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLMORNINGSTAR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLMORNINGSTAR_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -6990,6 +12520,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6997,6 +12529,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLONNECK_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7046,6 +12581,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLONNECK_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7061,12 +12600,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLONNECK( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLONNECK_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLONNECK_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7089,6 +12634,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7096,6 +12643,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLPIERCING_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7145,6 +12695,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLPIERCING_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7160,12 +12714,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLPIERCING( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLPIERCING_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLPIERCING_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7188,6 +12748,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7195,6 +12757,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLRICKSHAWMAN_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7244,6 +12809,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLRICKSHAWMAN_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7259,12 +12828,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLRICKSHAWMAN( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLRICKSHAWMAN_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLRICKSHAWMAN_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7287,6 +12862,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7294,6 +12871,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLRISEFALL3METHODS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7343,6 +12923,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLRISEFALL3METHODS_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7358,12 +12942,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLRISEFALL3METHODS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLRISEFALL3METHODS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLRISEFALL3METHODS_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7386,6 +12976,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7393,6 +12985,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLSEPARATINGLINES_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7442,6 +13037,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLSEPARATINGLINES_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7457,12 +13056,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLSEPARATINGLINES( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLSEPARATINGLINES_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLSEPARATINGLINES_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7485,6 +13090,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7492,6 +13099,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLSHOOTINGSTAR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7541,6 +13151,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLSHOOTINGSTAR_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7556,12 +13170,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLSHOOTINGSTAR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLSHOOTINGSTAR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLSHOOTINGSTAR_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7584,6 +13204,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7591,6 +13213,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLSHORTLINE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7640,6 +13265,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLSHORTLINE_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7655,12 +13284,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLSHORTLINE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLSHORTLINE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLSHORTLINE_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7683,6 +13318,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7690,6 +13327,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLSPINNINGTOP_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7739,6 +13379,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLSPINNINGTOP_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7754,12 +13398,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLSPINNINGTOP( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLSPINNINGTOP_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLSPINNINGTOP_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7782,6 +13432,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7789,6 +13441,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLSTALLEDPATTERN_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7838,6 +13493,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLSTALLEDPATTERN_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7853,12 +13512,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLSTALLEDPATTERN( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLSTALLEDPATTERN_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLSTALLEDPATTERN_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7881,6 +13546,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7888,6 +13555,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLSTICKSANDWICH_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -7937,6 +13607,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLSTICKSANDWICH_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -7952,12 +13626,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLSTICKSANDWICH( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLSTICKSANDWICH_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLSTICKSANDWICH_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -7980,6 +13660,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7987,6 +13669,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLTAKURI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -8036,6 +13721,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLTAKURI_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8051,12 +13740,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLTAKURI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLTAKURI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLTAKURI_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -8079,6 +13774,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8086,6 +13783,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLTASUKIGAP_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -8135,6 +13835,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLTASUKIGAP_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8150,12 +13854,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLTASUKIGAP( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLTASUKIGAP_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLTASUKIGAP_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -8178,6 +13888,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8185,6 +13897,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLTHRUSTING_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -8234,6 +13949,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLTHRUSTING_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8249,12 +13968,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLTHRUSTING( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLTHRUSTING_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLTHRUSTING_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -8277,6 +14002,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8284,6 +14011,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLTRISTAR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -8333,6 +14063,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLTRISTAR_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8348,12 +14082,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLTRISTAR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLTRISTAR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLTRISTAR_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -8376,6 +14116,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8383,6 +14125,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLUNIQUE3RIVER_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -8432,6 +14177,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLUNIQUE3RIVER_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8447,12 +14196,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLUNIQUE3RIVER( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLUNIQUE3RIVER_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLUNIQUE3RIVER_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -8475,6 +14230,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8482,6 +14239,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLUPSIDEGAP2CROWS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -8531,6 +14291,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLUPSIDEGAP2CROWS_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8546,12 +14310,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLUPSIDEGAP2CROWS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLUPSIDEGAP2CROWS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLUPSIDEGAP2CROWS_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -8574,6 +14344,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8581,6 +14353,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CDLXSIDEGAP3METHODS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -8630,6 +14405,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_CDLXSIDEGAP3METHODS_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
@@ -8645,12 +14424,18 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CDLXSIDEGAP3METHODS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CDLXSIDEGAP3METHODS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
             if( !pkOk ) peekAll = 0;
             lgi++;
         }
+        if( stEq ) { TA_CDLXSIDEGAP3METHODS_Close(stEq); stEq = NULL; }
         }
         if( rounds > 1 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         {
@@ -8673,6 +14458,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8680,6 +14467,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CEIL_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CEIL(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -8728,6 +14518,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_CEIL_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -8744,11 +14538,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CEIL( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CEIL_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_CEIL_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -8769,6 +14569,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8777,6 +14579,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CMF_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CMF(0, svN - 1, sv_h, sv_l, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -8825,6 +14630,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_CMF_Open( &stEq, sv_h, sv_l, sv_c, sv_v, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -8841,11 +14650,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CMF( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CMF_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_CMF_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -8866,6 +14681,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8874,6 +14691,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CMO_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(3, (unsigned int)svK);
@@ -8924,6 +14744,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_CMO_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -8940,11 +14764,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CMO( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CMO_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_CMO_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -8966,6 +14796,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(3, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8974,6 +14806,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CMOU_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CMOU(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -9022,6 +14857,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_CMOU_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9038,11 +14877,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CMOU( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CMOU_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_CMOU_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9063,6 +14908,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9071,6 +14918,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_CORREL_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CORREL(0, svN - 1, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -9119,6 +14969,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_CORREL_Open( &stEq, sv_c, sv_v, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9135,11 +14989,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_CORREL( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_CORREL_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_CORREL_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9160,6 +15020,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9167,6 +15029,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_COS_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_COS(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -9215,6 +15080,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_COS_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9231,11 +15100,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_COS( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_COS_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_COS_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9256,6 +15131,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9263,6 +15140,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_COSH_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_COSH(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -9311,6 +15191,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_COSH_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9327,11 +15211,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_COSH( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_COSH_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_COSH_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9352,6 +15242,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9360,6 +15252,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_DEMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -9410,6 +15305,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_DEMA_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9426,11 +15325,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_DEMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_DEMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_DEMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9452,6 +15357,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9459,6 +15366,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_DIV_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_DIV(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -9507,6 +15417,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_DIV_Open( &stEq, sv_c, sv_v, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9523,11 +15437,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_DIV( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_DIV_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_DIV_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9548,6 +15468,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9556,6 +15478,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_DX_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(4, (unsigned int)svK);
@@ -9606,6 +15531,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_DX_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9622,11 +15551,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_DX( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_DX_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_DX_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9648,6 +15583,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(4, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9656,6 +15593,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_EFI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_EFI(0, svN - 1, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -9704,6 +15644,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_EFI_Open( &stEq, sv_c, sv_v, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9720,11 +15664,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_EFI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_EFI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_EFI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9745,6 +15695,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9753,6 +15705,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_EMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -9803,6 +15758,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_EMA_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9819,11 +15778,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_EMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_EMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_EMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9845,6 +15810,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9852,6 +15819,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_EXP_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_EXP(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -9900,6 +15870,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_EXP_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -9916,11 +15890,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_EXP( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_EXP_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_EXP_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -9941,6 +15921,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9948,6 +15930,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_FLOOR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_FLOOR(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -9996,6 +15981,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_FLOOR_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10012,11 +16001,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_FLOOR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_FLOOR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_FLOOR_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10037,6 +16032,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10045,6 +16042,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_HMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_HMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -10093,6 +16093,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_HMA_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10109,11 +16113,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_HMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_HMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_HMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10134,6 +16144,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10141,6 +16153,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_HT_DCPERIOD_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(6, (unsigned int)svK);
@@ -10191,6 +16206,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_HT_DCPERIOD_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10207,11 +16226,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_HT_DCPERIOD( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_HT_DCPERIOD_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_HT_DCPERIOD_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10233,6 +16258,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(6, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10240,6 +16267,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_HT_DCPHASE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(7, (unsigned int)svK);
@@ -10290,6 +16320,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_HT_DCPHASE_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10306,11 +16340,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_HT_DCPHASE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_HT_DCPHASE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_HT_DCPHASE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10332,6 +16372,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(7, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10339,6 +16381,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_HT_PHASOR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(8, (unsigned int)svK);
@@ -10399,6 +16444,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0;
+            if( TA_HT_PHASOR_Open( &stEq, sv_c, svN, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10418,11 +16467,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_HT_PHASOR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_HT_PHASOR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_HT_PHASOR_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10446,6 +16501,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(8, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10453,6 +16510,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_HT_SINE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(9, (unsigned int)svK);
@@ -10513,6 +16573,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0;
+            if( TA_HT_SINE_Open( &stEq, sv_c, svN, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10532,11 +16596,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_HT_SINE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_HT_SINE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_HT_SINE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10560,6 +16630,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(9, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10567,6 +16639,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_HT_TRENDLINE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(10, (unsigned int)svK);
@@ -10617,6 +16692,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_HT_TRENDLINE_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10633,11 +16712,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_HT_TRENDLINE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_HT_TRENDLINE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_HT_TRENDLINE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10659,6 +16744,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(10, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10666,6 +16753,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_HT_TRENDMODE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(11, (unsigned int)svK);
@@ -10709,6 +16799,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_HT_TRENDMODE_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10725,11 +16819,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_HT_TRENDMODE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_HT_TRENDMODE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_HT_TRENDMODE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10751,6 +16851,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(11, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10759,6 +16861,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_IMI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_IMI(0, svN - 1, sv_o, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -10807,6 +16912,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_IMI_Open( &stEq, sv_o, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10823,11 +16932,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_IMI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_IMI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_IMI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10848,6 +16963,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10856,6 +16973,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_KAMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(13, (unsigned int)svK);
@@ -10906,6 +17026,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_KAMA_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -10922,11 +17046,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_KAMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_KAMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_KAMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -10948,6 +17078,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(13, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10956,6 +17088,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_LINEARREG_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LINEARREG(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -11004,6 +17139,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_LINEARREG_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11020,11 +17159,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_LINEARREG( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_LINEARREG_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_LINEARREG_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -11045,6 +17190,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11053,6 +17200,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_LINEARREG_ANGLE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LINEARREG_ANGLE(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -11101,6 +17251,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_LINEARREG_ANGLE_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11117,11 +17271,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_LINEARREG_ANGLE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_LINEARREG_ANGLE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_LINEARREG_ANGLE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -11142,6 +17302,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11150,6 +17312,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_LINEARREG_INTERCEPT_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LINEARREG_INTERCEPT(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -11198,6 +17363,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_LINEARREG_INTERCEPT_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11214,11 +17383,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_LINEARREG_INTERCEPT( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_LINEARREG_INTERCEPT_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_LINEARREG_INTERCEPT_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -11239,6 +17414,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11247,6 +17424,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_LINEARREG_SLOPE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LINEARREG_SLOPE(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -11295,6 +17475,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_LINEARREG_SLOPE_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11311,11 +17495,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_LINEARREG_SLOPE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_LINEARREG_SLOPE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_LINEARREG_SLOPE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -11336,6 +17526,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11343,6 +17535,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_LN_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -11391,6 +17586,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_LN_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11407,11 +17606,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_LN( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_LN_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_LN_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -11432,6 +17637,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11439,6 +17646,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_LOG10_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LOG10(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -11487,6 +17697,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_LOG10_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11503,11 +17717,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_LOG10( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_LOG10_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_LOG10_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -11528,6 +17748,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11537,6 +17759,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -11593,6 +17818,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MA_Open( &stEq, sv_c, svN, optInTimePeriod, optInMAType, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11609,11 +17838,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -11638,6 +17873,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11648,6 +17885,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MACD_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -11711,6 +17951,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0; double e2 = 0.0;
+            if( TA_MACD_Open( &stEq, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &e0, &e1, &e2 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11733,11 +17977,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MACD( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MACD_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MACD_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -11763,6 +18013,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11776,6 +18028,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MACDEXT_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -11845,6 +18100,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0; double e2 = 0.0;
+            if( TA_MACDEXT_Open( &stEq, sv_c, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &e0, &e1, &e2 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11867,11 +18126,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MACDEXT( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MACDEXT_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MACDEXT_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -11900,6 +18165,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11908,6 +18175,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MACDFIX_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -11971,6 +18241,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0; double e2 = 0.0;
+            if( TA_MACDFIX_Open( &stEq, sv_c, svN, optInSignalPeriod, &e0, &e1, &e2 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -11993,11 +18267,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MACDFIX( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MACDFIX_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MACDFIX_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12023,6 +18303,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12032,6 +18314,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MAMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -12092,6 +18377,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0;
+            if( TA_MAMA_Open( &stEq, sv_c, svN, optInFastLimit, optInSlowLimit, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12111,11 +18400,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MAMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MAMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MAMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12139,6 +18434,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(14, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12146,6 +18443,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MARKETFI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MARKETFI(0, svN - 1, sv_h, sv_l, sv_v, &svBeg, &svNb, sv_b0);
@@ -12194,6 +18494,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MARKETFI_Open( &stEq, sv_h, sv_l, sv_v, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12210,11 +18514,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MARKETFI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MARKETFI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MARKETFI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12235,6 +18545,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12246,6 +18558,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MAVP_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -12302,6 +18617,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MAVP_Open( &stEq, sv_c, sv_v, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12318,11 +18637,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MAVP( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MAVP_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MAVP_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12347,6 +18672,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12355,6 +18682,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MAX_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MAX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -12403,6 +18733,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MAX_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12419,11 +18753,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MAX( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MAX_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MAX_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12444,6 +18784,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12452,6 +18794,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MAXINDEX_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MAXINDEX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_ib0);
@@ -12493,6 +18838,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_MAXINDEX_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12509,11 +18858,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MAXINDEX( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MAXINDEX_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MAXINDEX_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12534,6 +18889,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12541,6 +18898,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MEDPRICE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MEDPRICE(0, svN - 1, sv_h, sv_l, &svBeg, &svNb, sv_b0);
@@ -12589,6 +18949,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MEDPRICE_Open( &stEq, sv_h, sv_l, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12605,11 +18969,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MEDPRICE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MEDPRICE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MEDPRICE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12630,6 +19000,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12638,6 +19010,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MFI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MFI(0, svN - 1, sv_h, sv_l, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -12686,6 +19061,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MFI_Open( &stEq, sv_h, sv_l, sv_c, sv_v, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12702,11 +19081,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MFI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MFI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MFI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12727,6 +19112,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12735,6 +19122,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MIDPOINT_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MIDPOINT(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -12783,6 +19173,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MIDPOINT_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12799,11 +19193,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MIDPOINT( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MIDPOINT_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MIDPOINT_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12824,6 +19224,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12832,6 +19234,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MIDPRICE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MIDPRICE(0, svN - 1, sv_h, sv_l, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -12880,6 +19285,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MIDPRICE_Open( &stEq, sv_h, sv_l, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12896,11 +19305,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MIDPRICE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MIDPRICE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MIDPRICE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -12921,6 +19336,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12929,6 +19346,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MIN_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MIN(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -12977,6 +19397,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MIN_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -12993,11 +19417,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MIN( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MIN_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MIN_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13018,6 +19448,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13026,6 +19458,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MININDEX_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MININDEX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_ib0);
@@ -13067,6 +19502,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0;
+            if( TA_MININDEX_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13083,11 +19522,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && ((pk0 != v0)) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MININDEX( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MININDEX_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MININDEX_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13108,6 +19553,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13116,6 +19563,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MINMAX_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MINMAX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0, sv_b1);
@@ -13174,6 +19624,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0;
+            if( TA_MINMAX_Open( &stEq, sv_c, svN, optInTimePeriod, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13193,11 +19647,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MINMAX( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MINMAX_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MINMAX_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13220,6 +19680,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13228,6 +19690,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MINMAXINDEX_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MINMAXINDEX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_ib0, sv_ib1);
@@ -13279,6 +19744,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            int e0 = 0; int e1 = 0;
+            if( TA_MINMAXINDEX_Open( &stEq, sv_c, svN, optInTimePeriod, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13298,11 +19767,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if(  v1 != sv_ib1[t - svBeg] ) { ok = 0; badBar = t; badOut = 1; bv = (double)sv_ib1[t - svBeg]; sv = (double)v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MINMAXINDEX( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MINMAXINDEX_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MINMAXINDEX_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13325,6 +19800,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13333,6 +19810,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MINUS_DI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(16, (unsigned int)svK);
@@ -13383,6 +19863,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MINUS_DI_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13399,11 +19883,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MINUS_DI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MINUS_DI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MINUS_DI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13425,6 +19915,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(16, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13433,6 +19925,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MINUS_DM_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(17, (unsigned int)svK);
@@ -13483,6 +19978,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MINUS_DM_Open( &stEq, sv_h, sv_l, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13499,11 +19998,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MINUS_DM( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MINUS_DM_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MINUS_DM_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13525,6 +20030,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(17, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13533,6 +20040,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MOM_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MOM(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -13581,6 +20091,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MOM_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13597,11 +20111,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MOM( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MOM_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MOM_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13622,6 +20142,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13629,6 +20151,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_MULT_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MULT(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -13677,6 +20202,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_MULT_Open( &stEq, sv_c, sv_v, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13693,11 +20222,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_MULT( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_MULT_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_MULT_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13718,6 +20253,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13726,6 +20263,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_NATR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(18, (unsigned int)svK);
@@ -13776,6 +20316,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_NATR_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13792,11 +20336,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_NATR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_NATR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_NATR_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13818,6 +20368,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(18, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13825,6 +20377,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_NVI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_NVI(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -13873,6 +20428,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_NVI_Open( &stEq, sv_c, sv_v, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13889,11 +20448,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_NVI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_NVI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_NVI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -13914,6 +20479,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13921,6 +20488,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_OBV_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_OBV(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -13969,6 +20539,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_OBV_Open( &stEq, sv_c, sv_v, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -13985,11 +20559,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_OBV( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_OBV_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_OBV_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14010,6 +20590,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14018,6 +20600,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_PLUS_DI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(19, (unsigned int)svK);
@@ -14068,6 +20653,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_PLUS_DI_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14084,11 +20673,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_PLUS_DI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_PLUS_DI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_PLUS_DI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14110,6 +20705,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(19, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14118,6 +20715,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_PLUS_DM_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(20, (unsigned int)svK);
@@ -14168,6 +20768,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_PLUS_DM_Open( &stEq, sv_h, sv_l, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14184,11 +20788,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_PLUS_DM( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_PLUS_DM_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_PLUS_DM_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14210,6 +20820,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(20, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14220,6 +20832,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_PPO_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -14276,6 +20891,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_PPO_Open( &stEq, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14292,11 +20911,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_PPO( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_PPO_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_PPO_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14321,6 +20946,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14328,6 +20955,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_PVI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_PVI(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -14376,6 +21006,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_PVI_Open( &stEq, sv_c, sv_v, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14392,11 +21026,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_PVI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_PVI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_PVI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14417,6 +21057,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14427,6 +21069,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_PVO_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -14483,6 +21128,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_PVO_Open( &stEq, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14499,11 +21148,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_PVO( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_PVO_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_PVO_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14528,6 +21183,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14536,6 +21193,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_QSTICK_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_QSTICK(0, svN - 1, sv_o, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -14584,6 +21244,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_QSTICK_Open( &stEq, sv_o, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14600,11 +21264,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_QSTICK( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_QSTICK_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_QSTICK_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14625,6 +21295,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14633,6 +21305,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ROC_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ROC(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -14681,6 +21356,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ROC_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14697,11 +21376,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ROC( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ROC_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ROC_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14722,6 +21407,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14730,6 +21417,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ROCP_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ROCP(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -14778,6 +21468,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ROCP_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14794,11 +21488,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ROCP( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ROCP_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ROCP_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14819,6 +21519,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14827,6 +21529,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ROCR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ROCR(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -14875,6 +21580,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ROCR_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14891,11 +21600,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ROCR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ROCR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ROCR_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -14916,6 +21631,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14924,6 +21641,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ROCR100_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ROCR100(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -14972,6 +21692,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ROCR100_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -14988,11 +21712,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ROCR100( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ROCR100_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ROCR100_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15013,6 +21743,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15021,6 +21753,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_RSI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(21, (unsigned int)svK);
@@ -15071,6 +21806,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_RSI_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -15087,11 +21826,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_RSI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_RSI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_RSI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15113,6 +21858,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(21, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15122,6 +21869,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_SAR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SAR(0, svN - 1, sv_h, sv_l, optInAcceleration, optInMaximum, &svBeg, &svNb, sv_b0);
@@ -15170,6 +21920,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_SAR_Open( &stEq, sv_h, sv_l, svN, optInAcceleration, optInMaximum, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -15186,11 +21940,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_SAR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_SAR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_SAR_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15211,6 +21971,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15226,6 +21988,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_SAREXT_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SAREXT(0, svN - 1, sv_h, sv_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &svBeg, &svNb, sv_b0);
@@ -15274,6 +22039,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_SAREXT_Open( &stEq, sv_h, sv_l, svN, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -15290,11 +22059,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_SAREXT( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_SAREXT_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_SAREXT_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15315,6 +22090,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15322,6 +22099,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_SIN_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SIN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -15370,6 +22150,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_SIN_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -15386,11 +22170,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_SIN( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_SIN_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_SIN_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15411,6 +22201,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15418,6 +22210,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_SINH_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SINH(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -15466,6 +22261,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_SINH_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -15482,11 +22281,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_SINH( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_SINH_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_SINH_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15507,6 +22312,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15515,6 +22322,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_SMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -15563,6 +22373,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_SMA_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -15579,11 +22393,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_SMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_SMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_SMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15604,6 +22424,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15615,6 +22437,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_SMI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -15675,6 +22500,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0;
+            if( TA_SMI_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -15694,11 +22523,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_SMI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_SMI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_SMI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15722,6 +22557,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15729,6 +22566,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_SQRT_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SQRT(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -15777,6 +22617,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_SQRT_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -15793,11 +22637,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_SQRT( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_SQRT_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_SQRT_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15818,6 +22668,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15827,6 +22679,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_STDDEV_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_STDDEV(0, svN - 1, sv_c, optInTimePeriod, optInNbDev, &svBeg, &svNb, sv_b0);
@@ -15875,6 +22730,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_STDDEV_Open( &stEq, sv_c, svN, optInTimePeriod, optInNbDev, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -15891,11 +22750,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_STDDEV( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_STDDEV_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_STDDEV_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -15916,6 +22781,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15928,6 +22795,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_STOCH_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -15994,6 +22864,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0;
+            if( TA_STOCH_Open( &stEq, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16013,11 +22887,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_STOCH( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_STOCH_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_STOCH_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16044,6 +22924,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16054,6 +22936,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_STOCHF_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -16120,6 +23005,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0;
+            if( TA_STOCHF_Open( &stEq, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16139,11 +23028,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_STOCHF( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_STOCHF_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_STOCHF_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16170,6 +23065,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16181,6 +23078,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_STOCHRSI_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -16249,6 +23149,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0; double e1 = 0.0;
+            if( TA_STOCHRSI_Open( &stEq, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16268,11 +23172,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_STOCHRSI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_STOCHRSI_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_STOCHRSI_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16300,6 +23210,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(21, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16307,6 +23219,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_SUB_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SUB(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -16355,6 +23270,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_SUB_Open( &stEq, sv_c, sv_v, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16371,11 +23290,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_SUB( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_SUB_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_SUB_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16396,6 +23321,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16404,6 +23331,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_SUM_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SUM(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -16452,6 +23382,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_SUM_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16468,11 +23402,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_SUM( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_SUM_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_SUM_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16493,6 +23433,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16502,6 +23444,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_T3_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -16552,6 +23497,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_T3_Open( &stEq, sv_c, svN, optInTimePeriod, optInVFactor, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16568,11 +23517,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_T3( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_T3_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_T3_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16594,6 +23549,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(23, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16601,6 +23558,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_TAN_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TAN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -16649,6 +23609,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_TAN_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16665,11 +23629,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_TAN( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_TAN_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_TAN_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16690,6 +23660,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16697,6 +23669,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_TANH_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TANH(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -16745,6 +23720,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_TANH_Open( &stEq, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16761,11 +23740,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_TANH( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_TANH_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_TANH_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16786,6 +23771,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16794,6 +23781,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_TEMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -16844,6 +23834,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_TEMA_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16860,11 +23854,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_TEMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_TEMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_TEMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16886,6 +23886,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16893,6 +23895,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_TRANGE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TRANGE(0, svN - 1, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -16941,6 +23946,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_TRANGE_Open( &stEq, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -16957,11 +23966,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_TRANGE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_TRANGE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_TRANGE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -16982,6 +23997,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16990,6 +24007,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_TRIMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TRIMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -17038,6 +24058,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_TRIMA_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17054,11 +24078,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_TRIMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_TRIMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_TRIMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17079,6 +24109,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17087,6 +24119,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_TRIX_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -17137,6 +24172,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_TRIX_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17153,11 +24192,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_TRIX( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_TRIX_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_TRIX_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17179,6 +24224,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_SetUnstablePeriod(5, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17187,6 +24234,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_TSF_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TSF(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -17235,6 +24285,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_TSF_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17251,11 +24305,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_TSF( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_TSF_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_TSF_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17276,6 +24336,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17283,6 +24345,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_TYPPRICE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TYPPRICE(0, svN - 1, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -17331,6 +24396,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_TYPPRICE_Open( &stEq, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17347,11 +24416,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_TYPPRICE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_TYPPRICE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_TYPPRICE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17372,6 +24447,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17382,6 +24459,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_ULTOSC_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ULTOSC(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &svBeg, &svNb, sv_b0);
@@ -17430,6 +24510,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_ULTOSC_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17446,11 +24530,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_ULTOSC( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_ULTOSC_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_ULTOSC_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17471,6 +24561,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17480,6 +24572,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_VAR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_VAR(0, svN - 1, sv_c, optInTimePeriod, optInNbDev, &svBeg, &svNb, sv_b0);
@@ -17528,6 +24623,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_VAR_Open( &stEq, sv_c, svN, optInTimePeriod, optInNbDev, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17544,11 +24643,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_VAR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_VAR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_VAR_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17569,6 +24674,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17577,6 +24684,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_VWMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_VWMA(0, svN - 1, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -17625,6 +24735,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_VWMA_Open( &stEq, sv_c, sv_v, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17641,11 +24755,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_VWMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_VWMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_VWMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17666,6 +24786,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17673,6 +24795,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_WAD_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_WAD(0, svN - 1, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -17721,6 +24846,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_WAD_Open( &stEq, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17737,11 +24866,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_WAD( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_WAD_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_WAD_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17762,6 +24897,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17769,6 +24906,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_WCLPRICE_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_WCLPRICE(0, svN - 1, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -17817,6 +24957,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_WCLPRICE_Open( &stEq, sv_h, sv_l, sv_c, svN, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17833,11 +24977,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_WCLPRICE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_WCLPRICE_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_WCLPRICE_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17858,6 +25008,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17866,6 +25018,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_WILLR_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_WILLR(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -17914,6 +25069,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_WILLR_Open( &stEq, sv_h, sv_l, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -17930,11 +25089,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_WILLR( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_WILLR_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_WILLR_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -17955,6 +25120,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17963,6 +25130,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int fillOk = 1, fillChecked = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_WMA_Stream *stEq = NULL;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_WMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -18011,6 +25181,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
             if( !seen ) pref[npref++] = P;
         }
+        {
+            double e0 = 0.0;
+            if( TA_WMA_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
         pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
         for( li = 0; li < npref; li++ ) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
@@ -18027,11 +25201,17 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
             }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_WMA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
             if( st ) TA_WMA_Close(st);
             pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
             if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
             if( !pkOk ) peekAll = 0;
         }
+        if( stEq ) { TA_WMA_Close(stEq); stEq = NULL; }
         {
             int Sidx = lb + (svN - lb) / 3;
             if( Sidx > lb && Sidx < svN - 1 ) {
@@ -18052,6 +25232,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         }
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }

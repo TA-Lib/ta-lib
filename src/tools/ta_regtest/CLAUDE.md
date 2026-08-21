@@ -377,6 +377,60 @@ cd ../bin && ./ta_regtest
 ./ta_regtest --codegen --language=c,rust --function=SMA,RSI
 ```
 
+## `stream_verify` — what each leg family can and cannot see (issue #240)
+
+One request drives five families against one seeded series. They are not
+interchangeable, and the coverage they add is very uneven:
+
+| family | what it compares | blind to |
+|---|---|---|
+| `Open` prefix sweep | `Open(P)` + updates to `n-1`, every bar vs batch | nothing structurally — this IS the Update path |
+| `OpenAndFill` | the filled array vs `batch(0, n-1)`, plus the canary slack and the aliasing rejects | the Update path entirely: the fill is the batch transcription |
+| `OpenInternal` anchored leg | `OpenInternal(S)` vs `batch(S)` at the last bar | same — one more open, no update |
+| `Peek` | Peek vs the Update that immediately follows it | a defect in the step: both run it |
+| **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers (the batch transcription is one arm of the compare) |
+
+So of the four value families, three delegate to the batch transcription and the
+fourth is same-tier: the prefix sweep's Update loop was the only thing looking at
+the streaming step, and it can only report a difference the **output** shows.
+
+For a candlestick the output is a 3-valued integer, so an arithmetic error in a
+`<Setting>PeriodTotal` is invisible until it crosses a decision threshold. Both
+directions were measured against #229's window fold, injecting a permanent
+one-bar rotation of a folded ring read:
+
+* at default settings the value legs caught **3 of 14** folded candlesticks
+  (CDLCOUNTERATTACK on MONO_DOWN, CDLKICKING and CDLKICKINGBYLENGTH on ZEROSUM)
+  across 9 shapes each; the state leg caught **14 of 14**;
+* in the `avgPeriod == 0` round — where `TA_STREAM_CANDLEAVERAGE` ignores the
+  running total entirely, about a quarter of every candlestick's legs — the
+  value legs caught **0 of 14** and the state leg still caught **14 of 14**.
+
+The state leg is therefore independent of firing density and of decision margin,
+which is what no amount of extra data buys.
+
+**Why it holds bit-for-bit.** `Update` is the transcribed batch loop body, so
+both routes execute the identical operation sequence over the identical bars,
+and a ring cursor is `historyLen % cap` on one side against the same number of
+`+1`s on the other. Two representation differences are real and are handled
+rather than tolerated: a trailing ring is compared **rotated by each handle's own
+cursor** (the plain oldest-slot layout re-bases every open to phase 0, so raw
+slot-by-slot fails 90 of 175 functions on the rotation alone), and the extrema
+automaton compares only its `xCap` live slots (the allocation is rounded up to a
+power of two and the slack is never written).
+
+**C only, and structurally so.** The C server is one translation unit that
+`#include`s every `ta_*.c`, so a stream state struct is a complete type there
+and the comparator costs no new API surface; in Rust the state lives in the
+`ta-lib` crate and the server is a separate one. What the leg catches is one IR
+rewrite reaching all four backends identically — the same argument
+`check_candle_windows.py` makes for scanning one backend. The comparators are
+generated from `c_stream::state_struct_text`, the same text the shipped struct is
+emitted from, and a state pointer with no length rule fails generation rather
+than being skipped. `ta_regtest` ratchets the comparator count against the
+streaming function count, because the set closes under a fixpoint over
+sub-handles and would otherwise shrink quietly.
+
 ## Signed zero: a value contract, not a bit contract (issue #147)
 
 `max(+0.0, -0.0)` has no defined answer, and the MIN/MAX family answers it

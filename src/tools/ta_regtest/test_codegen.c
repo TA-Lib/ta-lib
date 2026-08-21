@@ -88,6 +88,23 @@ int codegen_lang_has_compatibility_api(const char *lang)
              || strcmp(lang, "csharp") == 0);
 }
 
+/* Which language servers implement the state-equivalence leg (#240): the
+ * handle after Open(P) + (n-P) updates compared field-by-field against the
+ * handle after Open(n).
+ *
+ * C only, and the reason is structural rather than a plan to catch up: the C
+ * server is ONE translation unit that #includes every ta_*.c, so a stream
+ * state struct is a complete type there and the comparator costs no new API
+ * surface. In Rust the state lives in the `ta-lib` crate and the server is a
+ * separate crate; Java and C# would need the fields opened up to their
+ * servers. What the leg catches — a wrong offset in an emitted ring read — is
+ * one IR rewrite reaching all four backends identically, which is the same
+ * argument check_candle_windows.py makes for scanning one backend. */
+static int codegen_lang_has_stream_state_probe(const char *lang)
+{
+    return lang && strcmp(lang, "c") == 0;
+}
+
 /* Which languages cannot be held bit-identical on a call that reaches a
  * transcendental. THE single definition — both --xlang-hash (which copies it
  * into XlangServer.tolTranscendental) and server_verify's own per-call check
@@ -1732,6 +1749,8 @@ typedef struct {
     int               streamSkipped;
     int               streamRejectArms;
     int               streamFillFunctions; /* funcs whose OpenAndFill == batch(0,n-1) bitwise */
+    int               streamStateFunctions; /* funcs whose handle state matched Open(n) (#240) */
+    int               streamStateLegs;      /* legs that compared handle state (#240) */
     long long         streamBenign;        /* cross-tier +0.0/-0.0 pairs (#147) — never a failure */
 } ForEachFuncContext;
 
@@ -3234,6 +3253,9 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int vecIsMin[STREAM_MAX_VEC];
     int nvec, v, variant, legs = 0, rejArms = 0, vecOverflow = 0;
     int fillChecked = 0;   /* set once any leg reports OpenAndFill was verified */
+    int stateChecked = 0;  /* set once any leg reports the state-equivalence compare */
+    int stateLegs = 0;     /* how many legs actually compared handle state */
+    int stateOfLegs = 0;   /* value legs in the requests that reported it */
     long long benign = 0;  /* signed-zero cases this function's legs reported */
     int isUnstable;
 
@@ -3395,6 +3417,32 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     return;
                 }
             }
+            /* State-equivalence leg (#240): the handle after Open(P) + (n-P)
+             * updates must be bit-identical to the handle after Open(n). It
+             * compares STATE, so it fires on the bar a running total first
+             * diverges — independent of whether any pattern ever fires, which
+             * is what the value comparison above cannot be for a candlestick
+             * (a 3-valued output hides a total until it crosses a threshold).
+             * Checked before the generic ok flag so the failure names the
+             * field; folded into ok server-side too, so a regression here
+             * still fails the run. */
+            if( stream_flag(ctx->responseBuf, "\"state_checked\":") == 1 )
+            {
+                stateChecked = 1;
+                stateLegs += stream_flag(ctx->responseBuf, "\"state_legs\":");
+                stateOfLegs += stream_flag(ctx->responseBuf, "\"legs\":");
+                if( stream_flag(ctx->responseBuf, "\"state_ok\":") != 1 )
+                {
+                    printf("STREAM STATE MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                           "  Open(P)+updates and Open(n) left different handles\n"
+                           "  request:  %s\n  response: %s\n",
+                           funcInfo->name, v, K, compat,
+                           ctx->requestBuf, ctx->responseBuf);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
+            }
             if( stream_flag(ctx->responseBuf, "\"ok\":") != 1 ||
                 stream_flag(ctx->responseBuf, "\"peek_ok\":") != 1 )
             {
@@ -3443,6 +3491,23 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * the run — see FuncStreamCounters. */
     record_stream_counters(funcInfo->name, ctx->langIndex, legs, benign);
     if( fillChecked ) ctx->streamFillFunctions++;
+    if( stateChecked ) ctx->streamStateFunctions++;
+    /* Per-leg, not per-function: a function counts as covered as soon as ONE of
+     * its legs compares, so without this a reference open that quietly failed
+     * on 15 of 16 legs would still read as full coverage. Every leg that
+     * compares values also compares state, so within the requests that answered
+     * the state leg at all the two counts must agree. (Requests that did not —
+     * a batch that produced nothing, an expected-reject arm — are excluded from
+     * both sides rather than counted as a shortfall.) */
+    if( stateChecked && stateLegs != stateOfLegs )
+    {
+        printf("STREAM STATE PARTIAL [TA_%s]: %d of %d legs compared handle "
+               "state\n", funcInfo->name, stateLegs, stateOfLegs);
+        ctx->failed++;
+        ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+        return;
+    }
+    ctx->streamStateLegs += stateLegs;
     /* Named per function, like --fuzz-064's BENIGN line: a summary total that
      * starts moving says only that something did, not what. */
     if( benign > 0 )
@@ -4178,6 +4243,8 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamSkipped       = 0;
             ctx.streamRejectArms    = 0;
             ctx.streamFillFunctions = 0;
+            ctx.streamStateFunctions = 0;
+            ctx.streamStateLegs     = 0;
             ctx.streamBenign        = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
             /* The benign total is printed unconditionally, zero included: the
@@ -4187,9 +4254,12 @@ static ErrorNumber test_codegen_for_language(
             printf("  Stream verify: %d functions, %d legs bit-exact vs batch, "
                    "%d expected-reject probes, %d without a stream, "
                    "%lld benign signed-zero\n"
-                   "  OpenAndFill verify: %d functions, filled array == batch(0,n-1) bitwise\n",
+                   "  OpenAndFill verify: %d functions, filled array == batch(0,n-1) bitwise\n"
+                   "  State-equivalence verify: %d functions, %d legs, handle after "
+                   "Open(P)+updates == handle after Open(n) bitwise\n",
                    ctx.streamFunctions, ctx.streamLegs, ctx.streamRejectArms,
-                   ctx.streamSkipped, ctx.streamBenign, ctx.streamFillFunctions);
+                   ctx.streamSkipped, ctx.streamBenign, ctx.streamFillFunctions,
+                   ctx.streamStateFunctions, ctx.streamStateLegs);
             /* Coverage ratchet: every function with a server stream must ALSO
              * verify OpenAndFill (the emit side and this verify side both gate on
              * the same has_open_and_fill, so they cannot desync silently — but if
@@ -4204,6 +4274,31 @@ static ErrorNumber test_codegen_for_language(
                        "verified OpenAndFill — every streamable function must also "
                        "gate-verify its fill array\n",
                        ctx.streamFillFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            /* The same ratchet for the state-equivalence leg (#240). The
+             * comparators are generated from the state struct itself and drop
+             * out as a SET when a sub-handle's callee loses its own, so a
+             * quietly shrinking set is the failure mode to catch; on the
+             * languages that do not emit the leg the count is 0 and the floor
+             * is the language's own (0 == not offered), never a partial. */
+            if( ctx.error == TA_TEST_PASS &&
+                ctx.streamStateFunctions != 0 &&
+                ctx.streamStateFunctions != ctx.streamFunctions )
+            {
+                printf("STREAM STATE PARTIAL: only %d of %d streaming functions "
+                       "compared handle state — the generated comparator set has "
+                       "shrunk (a sub-handle callee lost its comparator, or a new "
+                       "state field has no rule)\n",
+                       ctx.streamStateFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            if( ctx.error == TA_TEST_PASS && ctx.streamStateFunctions == 0 &&
+                codegen_lang_has_stream_state_probe(lang->name) )
+            {
+                printf("STREAM STATE VACUOUS: the %s server offers the "
+                       "state-equivalence leg but reported it for 0 of %d "
+                       "streaming functions\n", lang->name, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
         }
