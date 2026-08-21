@@ -447,9 +447,12 @@ jobs:
         shell: bash
         run: cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings
 
+      # --no-fail-fast: cargo runs the test binaries in sequence and stops at
+      # the first that fails, so one red suite hid the other eleven -- a real
+      # second failure went unseen that way while landing #238.
       - name: Test the generator tool
         shell: bash
-        run: cargo test --manifest-path ta_codegen/generator/Cargo.toml
+        run: cargo test --no-fail-fast --manifest-path ta_codegen/generator/Cargo.toml
 
       # The generated per-function rustdoc examples are runnable doctests, but
       # nothing executed them: clippy --all-targets does not build doctests. They

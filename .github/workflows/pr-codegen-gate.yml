@@ -11,8 +11,22 @@
 # forced to install one to pass it. Compiling those servers and running the
 # cross-language suites needs both, and stays in the nightly.
 #
-# `scripts/build.py regen-check` is the whole gate, so the same command
-# reproduces a failure locally, exactly.
+# `scripts/build.py regen-check` is the first half of the gate, so the same
+# command reproduces that failure locally, exactly.
+#
+# The second half runs the generated crate's doctests and the generator's own
+# test suite. Both are cargo-only, so they keep the no-JDK/no-.NET property
+# above. They are here because the value gates cannot see a whole class of
+# defect: an integer expression that is correct in C, where the counters are
+# signed, and underflows in Rust, where the backend renders them `usize`.
+# Landing #238, `--xlang-hash` reported 5678 cases per language with 0
+# mismatches while the shipped Rust panicked on every debug call -- the servers
+# it compares are release builds, where the underflow wraps instead of trapping.
+# The doctests are built in debug, so Rust's overflow checks are armed, and one
+# is generated per function over a corpus that clears the lookback; that makes
+# them the generic arithmetic-safety gate for all 175 functions. Until now they
+# ran only in the 5AM nightly, i.e. after merge -- the same "one branch too
+# late" this gate was created to fix.
 name: PR Codegen Gate
 
 on:
@@ -25,7 +39,7 @@ jobs:
   regen-check:
     name: ta_codegen output up-to-date
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       # The default merge-commit ref is the right one to gate: it is what lands.
@@ -43,5 +57,23 @@ jobs:
         run: |
           if ! python3 scripts/build.py regen-check; then
             echo "::error::ta_codegen output is out of date. Run 'scripts/build.py generate' and commit the result — see the log above for which files drifted."
+            exit 1
+          fi
+
+      # Debug build on purpose: `cargo test` defaults to it, and the overflow
+      # checks it turns on are the point. Do not add --release here.
+      - name: Run the generated crate's doctests (debug, overflow checks armed)
+        shell: bash
+        run: |
+          if ! cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml; then
+            echo "::error::A generated doctest failed. A panic reading 'attempt to subtract with overflow' means an integer expression that is fine in C underflows once the Rust backend renders it as usize -- compare the counters before subtracting, not after."
+            exit 1
+          fi
+
+      - name: Test the generator tool
+        shell: bash
+        run: |
+          if ! cargo test --no-fail-fast --manifest-path ta_codegen/generator/Cargo.toml; then
+            echo "::error::The generator's own test suite failed. Several suites pin exact-set inventories (FMA fusion, stability classification) that a new indicator must be added to."
             exit 1
           fi
