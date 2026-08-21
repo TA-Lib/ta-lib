@@ -2915,6 +2915,9 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * it again. Overflow is a hard failure, never a skip. */
 #define STREAM_MAX_VEC 128
 #define STREAM_N       240
+/* Stream-leg variants: 0 = ambient defaults, 1 = unstable period, 2 = Metastock,
+ * then one per data shape from MONO_UP up (FUZZ_NSHAPES - 1 of them). */
+#define STREAM_NVARIANT (3 + FUZZ_NSHAPES - 1)
 
 static int stream_flag(const char *resp, const char *key)
 {
@@ -3270,7 +3273,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
          * remaining data shapes so ALL fuzz shapes (incl. CONSTANT, TIE_HEAVY,
          * and FUZZ_CANDLE — the pattern-rich inside-bar shape that makes the
          * candlestick streams non-vacuous) are exercised every run. */
-        for( variant = 0; variant < FUZZ_NSHAPES; variant++ )
+        for( variant = 0; variant < STREAM_NVARIANT; variant++ )
         {
             int K = 0, compat = 0, shape;
             ErrorNumber pipeErr;
@@ -3318,10 +3321,25 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                  * 14, where a tie at ONE extremum cannot change the bits of
                  * (highest+lowest)/2. At range.min/min+1 the same shape carries
                  * 5-21 windows per function whose emitted bits are a tie-break
-                 * choice. Costs <= 2 extra vectors x 6 shapes per function. */
+                 * choice. Costs <= 2 extra vectors x 8 shapes per function. */
                 if( v != 0 && !vecIsMin[v] ) continue;
             }
-            shape = (variant >= 3) ? variant : (v + variant) % 7;
+            /* Variants 3.. walk the shape list from MONO_UP up, so every shape
+             * but RANDWALK (which variant 0 already runs at the defaults) is
+             * reached here — in EVERY language and at ambient K and
+             * compatibility.
+             *
+             * The rotation alone does not reach them (#240). A function with
+             * ONE parameter vector — every candlestick — has only v == 0, so
+             * `(v + variant) % 7` yields shape 1 solely at variant 1, the
+             * unstable-period leg, which a non-unstable function skips; and
+             * shape 2 solely at variant 2, the Metastock leg, which the
+             * languages without a compatibility API skip. So MONO_UP was run
+             * by nobody and MONO_DOWN by C alone. Not academic: 58 of
+             * CDLCOUNTERATTACK's 66 firing bars in this corpus are on
+             * MONO_DOWN, and the MONO_DOWN leg is the one that caught a
+             * one-bar ring rotation for it. */
+            shape = (variant >= 3) ? (variant - 2) : (v + variant) % 7;
             stream_build_request(ctx->requestBuf, funcInfo, vec[v],
                                  shape, 1234 + v * 7 + variant, STREAM_N,
                                  K, compat);
