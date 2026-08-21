@@ -549,6 +549,52 @@ pub fn validate_docs(funcs: &[FuncDef], root: &Path) -> Result<(), Vec<String>> 
     }
 }
 
+/// The line with every backtick code span removed, so a URL quoted as code is not
+/// mistaken for prose.
+///
+/// Backtick RUNS are what delimit a span: it opens with a run of N and closes at the
+/// next run of exactly N (CommonMark), which is how an author quotes content that itself
+/// contains a backtick. Splitting on single backticks gets that exactly backwards for an
+/// even-length run — ``` ``https://x`` ``` splits to `["", "", "https://x", "", ""]`, so
+/// the span's contents land on an even index and come back as prose. An unclosed run is
+/// not a span, so the rest of the line stays prose.
+fn strip_code_spans(line: &str) -> String {
+    let ch: Vec<char> = line.chars().collect();
+    let mut out = String::new();
+    let mut i = 0;
+    while i < ch.len() {
+        if ch[i] != '`' {
+            out.push(ch[i]);
+            i += 1;
+            continue;
+        }
+        let open = i;
+        while i < ch.len() && ch[i] == '`' {
+            i += 1;
+        }
+        let run = i - open;
+        // Look for a closing run of exactly the same length.
+        let mut j = i;
+        while j < ch.len() {
+            if ch[j] == '`' {
+                let start = j;
+                while j < ch.len() && ch[j] == '`' {
+                    j += 1;
+                }
+                if j - start == run {
+                    i = j; // skip the span body and its closing run
+                    break;
+                }
+            } else {
+                j += 1;
+            }
+        }
+        // Unclosed: `i` already sits past the opening run, so the remainder is scanned
+        // as prose. Backticks themselves are never URLs, so dropping them is harmless.
+    }
+    out
+}
+
 /// Reject a bare `http(s)://` URL in the authored prose.
 ///
 /// Every rendering target takes this prose verbatim, and one of them lints it: rustdoc's
@@ -576,9 +622,9 @@ fn validate_no_bare_urls(body: &str, func: &FuncDef) -> Result<(), String> {
         if fenced {
             continue;
         }
-        // Keep only the segments outside backtick code spans: splitting on '`' puts
-        // prose at the even indices and code at the odd ones.
-        for prose in line.split('`').step_by(2) {
+        let stripped = strip_code_spans(line);
+        {
+            let prose = stripped.as_str();
             for (at, _) in prose.match_indices("://") {
                 // Walk back over the scheme by CHARACTER, not by byte: this prose is full
                 // of em dashes and `Σ`, and `byte_index + 1` lands mid-character on one,
@@ -588,7 +634,8 @@ fn validate_no_bare_urls(body: &str, func: &FuncDef) -> Result<(), String> {
                     .rev()
                     .find(|&(_, c)| !c.is_ascii_alphabetic());
                 let start = before.map_or(0, |(i, c)| i + c.len_utf8());
-                if !matches!(&prose[start..at], "http" | "https") {
+                let scheme = &prose[start..at];
+                if !scheme.eq_ignore_ascii_case("http") && !scheme.eq_ignore_ascii_case("https") {
                     continue;
                 }
                 // A `<` before it makes it an autolink. A `(` alone does NOT make it a
@@ -1511,6 +1558,40 @@ mod tests {
                     https://example.com/w\n\
                     ```\n";
         assert!(validate_no_bare_urls(body, &f).is_ok());
+    }
+
+    #[test]
+    fn a_double_backtick_span_is_still_code() {
+        let f = func("X", vec![]);
+        // Double backticks are how an author quotes content containing a backtick.
+        // Splitting on single backticks puts the span body on an even index and
+        // rejects a URL rustdoc never lints.
+        assert!(validate_no_bare_urls("- the endpoint ``https://example.com/x`` here\n", &f).is_ok());
+        assert!(validate_no_bare_urls("- ```https://example.com/y``` here\n", &f).is_ok());
+        // An UNCLOSED run is not a span: a bare URL after it is still bare.
+        let err = validate_no_bare_urls("- stray ` then https://example.com/z\n", &f).unwrap_err();
+        assert!(err.contains("bare URL"), "{err}");
+    }
+
+    #[test]
+    fn a_bare_url_beside_a_quoted_one_is_still_caught() {
+        let f = func("X", vec![]);
+        // The stripper must remove ONLY the span. A bare URL sharing the line is
+        // still bare -- the failure mode where one quoted URL masks a real one.
+        let err = validate_no_bare_urls("- `https://quoted.example/a` and https://bare.example/b\n", &f)
+            .unwrap_err();
+        assert!(err.contains("bare URL"), "{err}");
+        let err2 = validate_no_bare_urls("- https://bare.example/b then `code`\n", &f).unwrap_err();
+        assert!(err2.contains("bare URL"), "{err2}");
+        // Two separate spans on one line, nothing bare between them.
+        assert!(validate_no_bare_urls("- `https://a` x `https://b`\n", &f).is_ok());
+    }
+
+    #[test]
+    fn an_uppercase_scheme_is_still_a_url() {
+        let f = func("X", vec![]);
+        let err = validate_no_bare_urls("- HTTPS://example.com/x\n", &f).unwrap_err();
+        assert!(err.contains("bare URL"), "{err}");
     }
 
     #[test]
