@@ -7468,6 +7468,62 @@ fn test_c_ht_sine_two_sin_outputs() {
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
 }
 
+/// Pin the ARITHMETIC of the #229 folded rescan-window read, not just the
+/// election that produced it.
+///
+/// The election has unit tests in `streaming.rs`: which ring is chosen, which
+/// shapes refuse, which slot the read is routed to. None of them sees the
+/// emitted offset -- an adversarial review shifted it by one bar at the
+/// generator and every one of those tests stayed green, every backend still
+/// compiled, `regen-check` still passed, and `stream_verify` noticed on only
+/// 3 of the 14 folded functions. So the expression itself is pinned here as
+/// text, the way the window read it replaces already was (see
+/// `test_c_ht_trendline_raw_price_window`).
+///
+/// Two things it must say, and the reason each is load-bearing:
+///   * NO `ringLag_` term. A trailing read subtracts the runtime lag; this is
+///     cursor-relative, and slot `pos` already holds the current bar.
+///   * the conditional subtract, not `%`. `pos + cap - w` is in `[1, 2*cap)`
+///     because `w <= back < cap`, so one compare is the exact modulo -- and a
+///     `%` here would also hide an out-of-range offset that the compare form
+///     turns into a read at exactly `cap`.
+#[test]
+fn test_c_folded_window_read_is_cursor_relative_and_de_moduloed() {
+    let s = ht_stream_section("cdl3blackcrows");
+    assert!(
+        !s.contains("win_totIdx_"),
+        "the rescan window keeps no buffer (#229)"
+    );
+    let step = s.split("TA_CDL3BLACKCROWS_StepInternal").nth(1).unwrap();
+    let step = &step[..step.find("TA_CDL3BLACKCROWS_OpenPass").unwrap_or(step.len())];
+    let ring = "ring_ShadowVeryShortTrailingIdx_derived";
+    let pos = "sp->ringPos_ShadowVeryShortTrailingIdx";
+    let cap = "sp->ringCap_ShadowVeryShortTrailingIdx";
+    let want = format!(
+        "sp->{ring}[({pos} + {cap} - sp->totIdx >= {cap}) ? \
+         {pos} + {cap} - sp->totIdx - {cap} : {pos} + {cap} - sp->totIdx]"
+    );
+    assert!(
+        step.contains(&want),
+        "cursor-relative folded read, de-moduloed and with no lag term.\nwant: {want}\nstep: {step}"
+    );
+    // The trailing read in the SAME statement keeps its lag term and its `%`:
+    // the two are different reads of one buffer and must not be conflated.
+    assert!(
+        step.contains(&format!(
+            "sp->{ring}[({pos} + {cap} - sp->ringLag_ShadowVeryShortTrailingIdx - sp->totIdx) % {cap}]"
+        )),
+        "the trailing read is unchanged"
+    );
+    // And the value the ring stores is the shape the window used to recompute.
+    assert!(
+        step.contains(&format!(
+            "sp->{ring}[{pos}] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);"
+        )),
+        "one push per bar, from the same expression the fold matched"
+    );
+}
+
 /// Pin HT_TRENDLINE: a rescan window over the RAW input (the padded-loop source
 /// rewrite of `inReal[idx--]`), no circbuf, single output.
 #[test]
