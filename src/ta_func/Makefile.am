@@ -173,6 +173,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_TYPPRICE.c \
 	ta_ULTOSC.c \
 	ta_VAR.c \
+	ta_VWAP.c \
 	ta_VWMA.c \
 	ta_WAD.c \
 	ta_WCLPRICE.c \

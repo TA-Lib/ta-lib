@@ -281,6 +281,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeTypprice(),
             MakeUltosc(),
             MakeVar(),
+            MakeVwap(),
             MakeVwma(),
             MakeWad(),
             MakeWclprice(),
@@ -4552,6 +4553,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         {
             RetCode rc = core.VAR_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        });
+
+    private static FunctionInfo MakeVwap() => new(
+        name: "VWAP",
+        group: FunctionGroup.VolumeIndicators,
+        hint: "Volume Weighted Average Price",
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.PathDependent,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLCV", PriceComponents.High | PriceComponents.Low | PriceComponents.Close | PriceComponents.Volume, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close, PriceComponents.Volume]),
+        ],
+        optInputs: [],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.VWAP_Lookback(),
+        invoke: static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.VWAP_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
 

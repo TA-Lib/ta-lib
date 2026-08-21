@@ -566,6 +566,9 @@ final class Dispatch {
          case "VAR":
             return core.VAR(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
+         case "VWAP":
+            return core.VWAP(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.realOutput(0));
          case "VWMA":
             return core.VWMA(
                startIdx, endIdx, h.realInput(0), h.price(1, 4), h.intOpt(0), h.realOutput(0));
@@ -932,6 +935,8 @@ final class Dispatch {
             return core.ULTOSC_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "VAR":
             return core.VAR_Lookback(h.intOpt(0), h.realOpt(1));
+         case "VWAP":
+            return core.VWAP_Lookback();
          case "VWMA":
             return core.VWMA_Lookback(h.intOpt(0));
          case "WAD":

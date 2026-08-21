@@ -64,6 +64,29 @@ DEF_FUNCTION( VAR,
              );
 /* VAR END */
 
+/* VWAP BEGIN */
+static const TA_InputParameterInfo    *TA_VWAP_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLCV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_VWAP_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_VWAP_OptInputs[] =
+{ NULL };
+
+DEF_FUNCTION( VWAP,
+              TA_GroupId_VolumeIndicators,
+              "Volume Weighted Average Price",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+             );
+/* VWAP END */
+
 /* VWMA BEGIN */
 static const TA_InputParameterInfo    *TA_VWMA_Inputs[]    =
 {
@@ -97,6 +120,7 @@ DEF_FUNCTION( VWMA,
 const TA_FuncDef *TA_DEF_TableV[] =
 {
    ADD_TO_TABLE(VAR),
+   ADD_TO_TABLE(VWAP),
    ADD_TO_TABLE(VWMA),
    NULL
 };

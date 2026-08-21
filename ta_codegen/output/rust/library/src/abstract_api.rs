@@ -204,6 +204,7 @@ pub enum FuncId {
     TYPPRICE,
     ULTOSC,
     VAR,
+    VWAP,
     VWMA,
     WAD,
     WCLPRICE,
@@ -213,7 +214,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 175;
+    pub const COUNT: usize = 176;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -396,7 +397,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 175] = [
+pub static FUNCS: [FuncInfo; 176] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2268,6 +2269,17 @@ pub static FUNCS: [FuncInfo; 175] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::VWAP,
+        name: "VWAP",
+        group: Group::VolumeIndicators,
+        hint: "Volume Weighted Average Price",
+        flags: FuncFlags(0x23000000),
+        inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
+        opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::VWMA,
         name: "VWMA",
         group: Group::OverlapStudies,
@@ -2500,6 +2512,7 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "TYPPRICE" => FuncId::TYPPRICE,
         "ULTOSC" => FuncId::ULTOSC,
         "VAR" => FuncId::VAR,
+        "VWAP" => FuncId::VWAP,
         "VWMA" => FuncId::VWMA,
         "WAD" => FuncId::WAD,
         "WCLPRICE" => FuncId::WCLPRICE,
@@ -2911,6 +2924,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::TYPPRICE => self.core.TYPPRICE_Lookback(),
             FuncId::ULTOSC => self.core.ULTOSC_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::VAR => self.core.VAR_Lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::VWAP => self.core.VWAP_Lookback(),
             FuncId::VWMA => self.core.VWMA_Lookback(self.int_opt[0]),
             FuncId::WAD => self.core.WAD_Lookback(),
             FuncId::WCLPRICE => self.core.WCLPRICE_Lookback(),
@@ -4632,6 +4646,17 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let rc = self.core.VAR_Impl(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::VWAP => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.VWAP_Impl(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }

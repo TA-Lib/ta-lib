@@ -9794,6 +9794,75 @@ fn legs_VAR(r: &mut Report) {
     r.legs_done("VAR", 1);
 }
 
+const V_VWAP: &[&str] = &[
+    "defaults",
+];
+
+fn sub_VWAP(r: &mut Report) {
+    let core = Core::new();
+    for &label in V_VWAP {
+        let lb = core.VWAP_Lookback();
+        if lb == usize::MAX { continue; }
+        r.control("VWAP", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            core.VWAP(0, lb, &inHigh, &inLow, &inClose, &inVolume, &mut outReal)
+        }));
+        if lb < 1 { r.no_quiet_range("VWAP", label); continue; }
+        r.quiet("VWAP", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            core.VWAP(0, lb - 1, &inHigh, &inLow, &inClose, &inVolume, &mut outReal)
+        }));
+    }
+}
+
+fn legs_VWAP(r: &mut Report) {
+    let core = Core::new();
+    let lb = core.VWAP_Lookback();
+    if lb == usize::MAX { r.no_legs("VWAP"); return; }
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("VWAP", "inHigh", 0, run(|| core.VWAP(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut outReal)));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("VWAP", "inLow", 1, run(|| core.VWAP(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut outReal)));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("VWAP", "inClose", 2, run(|| core.VWAP(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut outReal)));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("VWAP", "inVolume", 3, run(|| core.VWAP(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut outReal)));
+    }
+    r.legs_done("VWAP", 4);
+}
+
 const V_VWMA: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -10223,6 +10292,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("TYPPRICE", sub_TYPPRICE, legs_TYPPRICE),
     ("ULTOSC", sub_ULTOSC, legs_ULTOSC),
     ("VAR", sub_VAR, legs_VAR),
+    ("VWAP", sub_VWAP, legs_VWAP),
     ("VWMA", sub_VWMA, legs_VWMA),
     ("WAD", sub_WAD, legs_WAD),
     ("WCLPRICE", sub_WCLPRICE, legs_WCLPRICE),
@@ -10254,7 +10324,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 175, "probe count");
+    assert_eq!(PROBES.len(), 176, "probe count");
     assert_eq!(
         PROBES.len(),
         ta_lib::abstract_api::funcs().count(),

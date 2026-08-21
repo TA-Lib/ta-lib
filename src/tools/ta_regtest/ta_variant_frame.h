@@ -7004,6 +7004,47 @@ static const TA_VOptSpec TA_VOpt_VAR[] = {
    { "optInNbDev", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 1.0 },
 };
 
+static TA_RetCode TA_VWAP_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_VWAP(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               in[3] /* inVolume */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_VWAP_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_S_VWAP(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               in[3] /* inVolume */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_VWAP[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE, TA_VIN_VOLUME };
+
 static TA_RetCode TA_VWMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7543,6 +7584,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_ULTOSC, 3, TA_VOpt_ULTOSC, 1, 0, 0 },
    { "VAR", TA_VAR_VFrameD, TA_VAR_VFrameS,
      1, TA_VIn_VAR, 2, TA_VOpt_VAR, 1, 0, 0 },
+   { "VWAP", TA_VWAP_VFrameD, TA_VWAP_VFrameS,
+     4, TA_VIn_VWAP, 0, NULL, 1, 0, 0 },
    { "VWMA", TA_VWMA_VFrameD, TA_VWMA_VFrameS,
      2, TA_VIn_VWMA, 1, TA_VOpt_VWMA, 1, 0, 0 },
    { "WAD", TA_WAD_VFrameD, TA_WAD_VFrameS,
@@ -7555,6 +7598,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, 0, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 175
+#define TA_VARIANT_TABLE_SIZE 176
 
 #endif /* TA_VARIANT_FRAME_H */
