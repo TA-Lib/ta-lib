@@ -149,6 +149,7 @@ SAREXT              Parabolic SAR - Extended
 SIN                 Vector Trigonometric Sin
 SINH                Vector Trigonometric Sinh
 SMA                 Simple Moving Average
+SMI                 Stochastic Momentum Index
 SQRT                Vector Square Root
 STDDEV              Standard Deviation
 STOCH               Stochastic

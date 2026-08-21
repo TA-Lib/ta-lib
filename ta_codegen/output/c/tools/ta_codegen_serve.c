@@ -170,6 +170,7 @@
 #include "ta_func/ta_SIN.c"
 #include "ta_func/ta_SINH.c"
 #include "ta_func/ta_SMA.c"
+#include "ta_func/ta_SMI.c"
 #include "ta_func/ta_SQRT.c"
 #include "ta_func/ta_STDDEV.c"
 #include "ta_func/ta_STOCH.c"
@@ -15606,6 +15607,124 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
+    else if( fnLen == 6 && strncmp(fn, "TA_SMI", 6) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int optInFastPeriod = json_find_int(json, "optInFastPeriod");
+        int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
+        int optInSignalPeriod = json_find_int(json, "optInSignalPeriod");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int fillOk = 1, fillChecked = 0;
+        int svZsign = 0;
+        int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(5, (unsigned int)svK);
+        rc = TA_SMI(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &svBeg, &svNb, sv_b0, sv_b1);
+        lb = TA_SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_SMI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_SMI_Open(&st, sv_h, sv_l, sv_c, svN, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_SMI_Close(st); }
+            TA_SetUnstablePeriod(5, 0);
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        {
+            int fBeg = 0, fNb = 0, ft;
+            TA_SMI_Stream *stf = NULL;
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_SMI_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &fBeg, &fNb, sv_f0, sv_f1);
+            fillChecked = 1;
+            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+                if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+            }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
+            if( stf ) TA_SMI_Close(stf);
+        }
+        {
+            int alB = 0, alN = 0;
+            TA_SMI_Stream *sal = NULL;
+            TA_RetCode alrc = TA_SMI_OpenAndFill(&sal, sv_h, sv_l, sv_c, svN, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &alB, &alN, sv_h, sv_f1);
+            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
+            if( sal ) TA_SMI_Close(sal);
+        }
+        {
+            int aaB = 0, aaN = 0;
+            TA_SMI_Stream *saa = NULL;
+            TA_RetCode aarc = TA_SMI_OpenAndFill(&saa, sv_h, sv_l, sv_c, svN, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &aaB, &aaN, sv_f0, sv_f0);
+            if( !( aarc == TA_BAD_PARAM && !saa ) ) fillOk = 0;
+            if( saa ) TA_SMI_Close(saa);
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_SMI_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0;
+            rc = TA_SMI_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            if( ok && sv_xtier_ne(v1, sv_b1[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
+            for( t = P; ok && t < svN; t++ ) {
+                int doPeek = ((t % SV_PEEK_EVERY) == 0);
+                if( doPeek ) TA_SMI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                TA_SMI_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0, &v1);
+                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+                if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
+            }
+            if( st ) TA_SMI_Close(st);
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_SMI(Sidx, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &svBegS, &svNbS, sv_b0, sv_b1);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    double v1 = 0.0;
+                    TA_SMI_Stream *stA = NULL;
+                    TA_RetCode arc = TA_SMI_OpenInternal(&stA, sv_h, sv_l, sv_c, Sidx, svN, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
+                    if( stA ) TA_SMI_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetUnstablePeriod(5, 0);
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        if( fillChecked && !fillOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
+        return;
+    }
     else if( fnLen == 7 && strncmp(fn, "TA_SQRT", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
@@ -30650,6 +30769,105 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
     }
+    else if ( methodLen == 6 && strncmp(method, "TA_SMI", 6) == 0 ) {
+        int startIdx = json_find_int(json, "startIdx");
+        int endIdx = json_find_int(json, "endIdx");
+        int use_preloaded = json_find_int(json, "use_preloaded");
+        if( use_preloaded && g_refN > 0 ) {
+            preload_to_working(3, 1);
+        } else {
+            json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
+            json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
+            json_find_double_array(json, "inClose", g_inBuf2, MAX_ARRAY_SIZE);
+        }
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int optInFastPeriod = json_find_int(json, "optInFastPeriod");
+        int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
+        int optInSignalPeriod = json_find_int(json, "optInSignalPeriod");
+        int outBegIdx = 0, outNBElement = 0;
+        int bench_iters = json_find_int(json, "iters");
+        if( bench_iters < 1 ) bench_iters = 1;
+        int bench_mode = json_find_int(json, "bench_mode");
+#ifdef TA_REF_SERVE
+        if( bench_mode != 0 ) {
+            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        TA_RetCode rc = 0;
+        if( use_preloaded ) {
+            preload_to_working(3, 1);
+        }
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
+        if( bench_mode == 0 )
+        rc = TA_SMI(
+            startIdx, endIdx,
+            g_inBuf0,
+            g_inBuf1,
+            g_inBuf2,
+            optInTimePeriod,
+            optInFastPeriod,
+            optInSlowPeriod,
+            optInSignalPeriod,
+            &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+#ifndef TA_REF_SERVE
+        else if( bench_mode == 1 ) {
+            TA_SMI_Stream *_h = NULL;
+            double _openOut0 = 0;
+            double _openOut1 = 0;
+            rc = TA_SMI_Open( &_h, g_inBuf0, g_inBuf1, g_inBuf2, endIdx + 1, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &_openOut0, &_openOut1 );
+            if( _h ) TA_SMI_Close( _h );
+        }
+        else {
+            TA_SMI_Stream *_h = NULL;
+            rc = TA_SMI_OpenAndFill( &_h, g_inBuf0, g_inBuf1, g_inBuf2, endIdx + 1, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1 );
+            if( _h ) TA_SMI_Close( _h );
+        }
+#endif /* TA_REF_SERVE */
+        }
+        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        int usedFloat = 0;
+        if( json_find_int(json, "use_float") ) {
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf1[_fi] = (float)g_inBuf1[_fi];
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf2[_fi] = (float)g_inBuf2[_fi];
+            rc = TA_S_SMI(
+                startIdx, endIdx,
+                g_sinBuf0,
+                g_sinBuf1,
+                g_sinBuf2,
+                optInTimePeriod,
+                optInFastPeriod,
+                optInSlowPeriod,
+                optInSignalPeriod,
+                &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+            usedFloat = 1;
+        }
+        int pos = json_appendf(resp, resp_size, 0,
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        }
+        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
+    }
     else if ( methodLen == 7 && strncmp(method, "TA_SQRT", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
         int endIdx = json_find_int(json, "endIdx");
@@ -33402,6 +33620,15 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         snprintf(resp, resp_size,
             "{\"lookback\":%d}", lookback);
     }
+    else if ( methodLen == 15 && strncmp(method, "TA_SMI_Lookback", 15) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int optInFastPeriod = json_find_int(json, "optInFastPeriod");
+        int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
+        int optInSignalPeriod = json_find_int(json, "optInSignalPeriod");
+        int lookback = TA_SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        snprintf(resp, resp_size,
+            "{\"lookback\":%d}", lookback);
+    }
     else if ( methodLen == 16 && strncmp(method, "TA_SQRT_Lookback", 16) == 0 ) {
         int lookback = TA_SQRT_Lookback();
         snprintf(resp, resp_size,
@@ -33699,6 +33926,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"TA_SIN\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_SINH\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_SMA\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_SMI\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_SQRT\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_STDDEV\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_STOCH\"");

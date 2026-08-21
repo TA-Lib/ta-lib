@@ -126995,6 +126995,1503 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  082026 MF,CC  Initial version (#238).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#SMI} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Period of the high/low range (default 13; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFastPeriod Period of the second smoothing, applied to the
+        *        first (default 2; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSlowPeriod Period of the first smoothing, applied to the raw
+        *        momentum (default 25; range 2..100000; {@code Integer.MIN_VALUE} selects
+        *        the default).
+        * @param optInSignalPeriod Smoothing period of the signal line (default 9;
+        *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int SMI_Lookback( int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 2;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 25;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+             return -1;
+          }
+          /* One high/low window, then the three EMA warm-ups the pipeline stacks on
+           * top of it: slow smooths the raw momentum, fast smooths that, and signal
+           * smooths the finished SMI line. Every term is exactly the lookback of the
+           * function it comes from, so none of them is restated here -- which is also
+           * what makes SMI inherit TA_FUNC_UNST_EMA from its callee.
+           */
+          return optInTimePeriod - 1 + EMA_Lookback(optInSlowPeriod) + EMA_Lookback(optInFastPeriod) + EMA_Lookback(optInSignalPeriod) ;
+
+       }
+       RetCode SMI_Impl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInTimePeriod,
+                         int optInFastPeriod,
+                         int optInSlowPeriod,
+                         int optInSignalPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outSMI[],
+                         double outSMISignal[] )
+       {
+          double kSlow = 0;
+          double kFast = 0;
+          double kSignal = 0;
+          double highest = 0;
+          double lowest = 0;
+          double tmp = 0;
+          double emaSlowNum = 0;
+          double emaSlowDen = 0;
+          double emaFastNum = 0;
+          double emaFastDen = 0;
+          double sumSlowNum = 0;
+          double sumSlowDen = 0;
+          double sumFastNum = 0;
+          double sumFastDen = 0;
+          double sumSignal = 0;
+          double num = 0;
+          double den = 0;
+          double halfDen = 0;
+          double smiValue = 0;
+          double prevSignal = 0;
+          int lookbackTotal = 0;
+          int lookbackSlow = 0;
+          int lookbackFast = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int highestIdx = 0;
+          int lowestIdx = 0;
+          int i = 0;
+          int outIdx = 0;
+          int nBar = 0;
+          int nFast = 0;
+          int nSignal = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 2;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 25;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( outSMI == outSMISignal ) {
+             return RetCode.BadParam ;
+          }
+          lookbackTotal = SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          outBegIdx.value = startIdx;
+          /* Blau's pipeline in one pass. A composed form is not available: the
+           * streaming producer model carries exactly one intermediate series
+           * (streaming.rs:2076) and SMI has two, the numerator and the denominator,
+           * which must be smoothed separately before they are divided.
+           *
+           * Each of the three stages seeds the way ema.c does -- a simple average of
+           * that stage's first 'period' inputs -- so the result is bit-identical to
+           * TA_MAX + TA_MIN followed by four TA_EMA calls. The stage boundaries below
+           * are the callee LOOKBACKS, not (period-1), so that a warm
+           * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: each stage then seeds
+           * from the values its predecessor would have published, exactly as the
+           * composed form does. The seed sums accumulate from 0.0 in production
+           * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
+           *
+           * TA_GetCompatibility() is deliberately NOT consulted, for the reason
+           * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
+           * preserved for the functions that already shipped with it and dropped from
+           * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
+           * The seeding choice itself is measured in docs/ema-seeding-evaluation.md.
+           */
+          kSlow = 2.0 / (double)(optInSlowPeriod + 1);
+          kFast = 2.0 / (double)(optInFastPeriod + 1);
+          kSignal = 2.0 / (double)(optInSignalPeriod + 1);
+          lookbackSlow = EMA_Lookback(optInSlowPeriod);
+          lookbackFast = EMA_Lookback(optInFastPeriod);
+          emaSlowNum = 0.0;
+          emaSlowDen = 0.0;
+          emaFastNum = 0.0;
+          emaFastDen = 0.0;
+          prevSignal = 0.0;
+          smiValue = 0.0;
+          sumSlowNum = 0.0;
+          sumSlowDen = 0.0;
+          sumFastNum = 0.0;
+          sumFastDen = 0.0;
+          sumSignal = 0.0;
+          highest = 0.0;
+          lowest = 0.0;
+          highestIdx = 0 - 1;
+          lowestIdx = 0 - 1;
+          /* The first bar carrying a full high/low window. */
+          trailingIdx = startIdx - lookbackTotal;
+          today = trailingIdx + (optInTimePeriod - 1);
+          nBar = 0;
+          /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
+           * that completes the signal seed, so it produces the first output pair.
+           */
+          while( today <= startIdx ) {
+             /* Set the lowest low */
+             tmp = inLow[today];
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                lowest = inLow[lowestIdx];
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tmp = inLow[i];
+                   if( tmp < lowest ) {
+                      lowestIdx = i;
+                      lowest = tmp;
+                   }
+                }
+             } else if( tmp <= lowest ) {
+                lowestIdx = today;
+                lowest = tmp;
+             }
+             /* Set the highest high */
+             tmp = inHigh[today];
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                highest = inHigh[highestIdx];
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tmp = inHigh[i];
+                   if( tmp > highest ) {
+                      highestIdx = i;
+                      highest = tmp;
+                   }
+                }
+             } else if( tmp >= highest ) {
+                highestIdx = today;
+                highest = tmp;
+             }
+             den = highest - lowest;
+             num = inClose[today] - (highest + lowest) * 0.5;
+             /* Stage 1: the slow EMA, over the raw momentum. */
+             if( nBar < optInSlowPeriod ) {
+                sumSlowNum = sumSlowNum + num;
+                sumSlowDen = sumSlowDen + den;
+                if( nBar == optInSlowPeriod - 1 ) {
+                   emaSlowNum = sumSlowNum / optInSlowPeriod;
+                   emaSlowDen = sumSlowDen / optInSlowPeriod;
+                }
+             } else {
+                emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
+                emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
+             }
+             /* Stage 2: the fast EMA, over what stage 1 publishes. */
+             nFast = nBar - lookbackSlow;
+             if( nFast >= 0 ) {
+                if( nFast < optInFastPeriod ) {
+                   sumFastNum = sumFastNum + emaSlowNum;
+                   sumFastDen = sumFastDen + emaSlowDen;
+                   if( nFast == optInFastPeriod - 1 ) {
+                      emaFastNum = sumFastNum / optInFastPeriod;
+                      emaFastDen = sumFastDen / optInFastPeriod;
+                   }
+                } else {
+                   emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
+                   emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+                }
+             }
+             /* Stage 3: the SMI line, then the signal EMA over it. */
+             nSignal = nFast - lookbackFast;
+             if( nSignal >= 0 ) {
+                halfDen = 0.5 * emaFastDen;
+                if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+                   smiValue = 100.0 * emaFastNum / halfDen;
+                } else {
+                   smiValue = 0.0;
+                }
+                if( nSignal < optInSignalPeriod ) {
+                   sumSignal = sumSignal + smiValue;
+                   if( nSignal == optInSignalPeriod - 1 ) {
+                      prevSignal = sumSignal / optInSignalPeriod;
+                   }
+                } else {
+                   prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+                }
+             }
+             nBar = nBar + 1;
+             trailingIdx = trailingIdx + 1;
+             today = today + 1;
+          }
+          outSMI[0] = smiValue;
+          outSMISignal[0] = prevSignal;
+          outIdx = 1;
+          /* Stable zone. Every stage is a pure recursion from here on. */
+          while( today <= endIdx ) {
+             /* Set the lowest low */
+             tmp = inLow[today];
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                lowest = inLow[lowestIdx];
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tmp = inLow[i];
+                   if( tmp < lowest ) {
+                      lowestIdx = i;
+                      lowest = tmp;
+                   }
+                }
+             } else if( tmp <= lowest ) {
+                lowestIdx = today;
+                lowest = tmp;
+             }
+             /* Set the highest high */
+             tmp = inHigh[today];
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                highest = inHigh[highestIdx];
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tmp = inHigh[i];
+                   if( tmp > highest ) {
+                      highestIdx = i;
+                      highest = tmp;
+                   }
+                }
+             } else if( tmp >= highest ) {
+                highestIdx = today;
+                highest = tmp;
+             }
+             den = highest - lowest;
+             num = inClose[today] - (highest + lowest) * 0.5;
+             emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
+             emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
+             emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
+             emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+             /* Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
+              * window leaves a sub-epsilon residue that an exact check would divide
+              * into noise (issue #107 / STOCHRSI). A window whose bars are all
+              * H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
+              * CCI (#7) and IMI (#112) convention.
+              */
+             halfDen = 0.5 * emaFastDen;
+             if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+                smiValue = 100.0 * emaFastNum / halfDen;
+             } else {
+                smiValue = 0.0;
+             }
+             prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+             outSMI[outIdx] = smiValue;
+             outSMISignal[outIdx] = prevSignal;
+             outIdx = outIdx + 1;
+             trailingIdx = trailingIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode SMI_Impl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInTimePeriod,
+                         int optInFastPeriod,
+                         int optInSlowPeriod,
+                         int optInSignalPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outSMI[],
+                         double outSMISignal[] )
+       {
+          double kSlow = 0;
+          double kFast = 0;
+          double kSignal = 0;
+          double highest = 0;
+          double lowest = 0;
+          double tmp = 0;
+          double emaSlowNum = 0;
+          double emaSlowDen = 0;
+          double emaFastNum = 0;
+          double emaFastDen = 0;
+          double sumSlowNum = 0;
+          double sumSlowDen = 0;
+          double sumFastNum = 0;
+          double sumFastDen = 0;
+          double sumSignal = 0;
+          double num = 0;
+          double den = 0;
+          double halfDen = 0;
+          double smiValue = 0;
+          double prevSignal = 0;
+          int lookbackTotal = 0;
+          int lookbackSlow = 0;
+          int lookbackFast = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int highestIdx = 0;
+          int lowestIdx = 0;
+          int i = 0;
+          int outIdx = 0;
+          int nBar = 0;
+          int nFast = 0;
+          int nSignal = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 2;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 25;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( outSMI == outSMISignal ) {
+             return RetCode.BadParam ;
+          }
+          lookbackTotal = SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          outBegIdx.value = startIdx;
+          kSlow = 2.0 / (double)(optInSlowPeriod + 1);
+          kFast = 2.0 / (double)(optInFastPeriod + 1);
+          kSignal = 2.0 / (double)(optInSignalPeriod + 1);
+          lookbackSlow = EMA_Lookback(optInSlowPeriod);
+          lookbackFast = EMA_Lookback(optInFastPeriod);
+          emaSlowNum = 0.0;
+          emaSlowDen = 0.0;
+          emaFastNum = 0.0;
+          emaFastDen = 0.0;
+          prevSignal = 0.0;
+          smiValue = 0.0;
+          sumSlowNum = 0.0;
+          sumSlowDen = 0.0;
+          sumFastNum = 0.0;
+          sumFastDen = 0.0;
+          sumSignal = 0.0;
+          highest = 0.0;
+          lowest = 0.0;
+          highestIdx = 0 - 1;
+          lowestIdx = 0 - 1;
+          trailingIdx = startIdx - lookbackTotal;
+          today = trailingIdx + (optInTimePeriod - 1);
+          nBar = 0;
+          while( today <= startIdx ) {
+             tmp = (double)inLow[today];
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                lowest = (double)inLow[lowestIdx];
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tmp = (double)inLow[i];
+                   if( tmp < lowest ) {
+                      lowestIdx = i;
+                      lowest = tmp;
+                   }
+                }
+             } else if( tmp <= lowest ) {
+                lowestIdx = today;
+                lowest = tmp;
+             }
+             tmp = (double)inHigh[today];
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                highest = (double)inHigh[highestIdx];
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tmp = (double)inHigh[i];
+                   if( tmp > highest ) {
+                      highestIdx = i;
+                      highest = tmp;
+                   }
+                }
+             } else if( tmp >= highest ) {
+                highestIdx = today;
+                highest = tmp;
+             }
+             den = highest - lowest;
+             num = (double)inClose[today] - (highest + lowest) * 0.5;
+             if( nBar < optInSlowPeriod ) {
+                sumSlowNum = sumSlowNum + num;
+                sumSlowDen = sumSlowDen + den;
+                if( nBar == optInSlowPeriod - 1 ) {
+                   emaSlowNum = sumSlowNum / optInSlowPeriod;
+                   emaSlowDen = sumSlowDen / optInSlowPeriod;
+                }
+             } else {
+                emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
+                emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
+             }
+             nFast = nBar - lookbackSlow;
+             if( nFast >= 0 ) {
+                if( nFast < optInFastPeriod ) {
+                   sumFastNum = sumFastNum + emaSlowNum;
+                   sumFastDen = sumFastDen + emaSlowDen;
+                   if( nFast == optInFastPeriod - 1 ) {
+                      emaFastNum = sumFastNum / optInFastPeriod;
+                      emaFastDen = sumFastDen / optInFastPeriod;
+                   }
+                } else {
+                   emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
+                   emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+                }
+             }
+             nSignal = nFast - lookbackFast;
+             if( nSignal >= 0 ) {
+                halfDen = 0.5 * emaFastDen;
+                if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+                   smiValue = 100.0 * emaFastNum / halfDen;
+                } else {
+                   smiValue = 0.0;
+                }
+                if( nSignal < optInSignalPeriod ) {
+                   sumSignal = sumSignal + smiValue;
+                   if( nSignal == optInSignalPeriod - 1 ) {
+                      prevSignal = sumSignal / optInSignalPeriod;
+                   }
+                } else {
+                   prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+                }
+             }
+             nBar = nBar + 1;
+             trailingIdx = trailingIdx + 1;
+             today = today + 1;
+          }
+          outSMI[0] = smiValue;
+          outSMISignal[0] = prevSignal;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tmp = (double)inLow[today];
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                lowest = (double)inLow[lowestIdx];
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tmp = (double)inLow[i];
+                   if( tmp < lowest ) {
+                      lowestIdx = i;
+                      lowest = tmp;
+                   }
+                }
+             } else if( tmp <= lowest ) {
+                lowestIdx = today;
+                lowest = tmp;
+             }
+             tmp = (double)inHigh[today];
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                highest = (double)inHigh[highestIdx];
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tmp = (double)inHigh[i];
+                   if( tmp > highest ) {
+                      highestIdx = i;
+                      highest = tmp;
+                   }
+                }
+             } else if( tmp >= highest ) {
+                highestIdx = today;
+                highest = tmp;
+             }
+             den = highest - lowest;
+             num = (double)inClose[today] - (highest + lowest) * 0.5;
+             emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
+             emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
+             emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
+             emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+             halfDen = 0.5 * emaFastDen;
+             if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+                smiValue = 100.0 * emaFastNum / halfDen;
+             } else {
+                smiValue = 0.0;
+             }
+             prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+             outSMI[outIdx] = smiValue;
+             outSMISignal[outIdx] = prevSignal;
+             outIdx = outIdx + 1;
+             trailingIdx = trailingIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * Stochastic Momentum Index: where the close sits relative to the
+        * **midpoint** of the recent high/low range, double-smoothed. Lane's
+        * stochastic measures the close against the bottom of the range; Blau
+        * measures it against the middle, then smooths numerator and denominator
+        * separately with two exponential averages before dividing, which is what
+        * buys the low-lag, smooth-contoured curve. The result runs -100 to +100
+        * rather than 0 to 100, so the zero line is the reference: positive means
+        * the close is above the midpoint of its range, negative below. Extreme
+        * readings mark overbought and oversold conditions, and crossings of the
+        * signal line are the usual trade trigger.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
+        * num = close - 0.5 * (HH + LL);  den = HH - LL
+        * SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
+        * Signal = EMA(SMI, signalPeriod)
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
+        * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up. Implementations seeding from a single first sample — Tulip and TradingView among them — differ over the transient and agree once it decays.</li>
+        * <li>One output range covers both outputs, so the SMI values consumed by the signal line's own warm-up are not published.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#SMI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price series.
+        * @param inLow Low price series.
+        * @param inClose Close price series.
+        * @param optInTimePeriod Period of the high/low range (default 13; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFastPeriod Period of the second smoothing, applied to the
+        *        first (default 2; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSlowPeriod Period of the first smoothing, applied to the raw
+        *        momentum (default 25; range 2..100000; {@code Integer.MIN_VALUE} selects
+        *        the default).
+        * @param optInSignalPeriod Smoothing period of the signal line (default 9;
+        *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outSMI Stochastic Momentum Index, -100 to +100. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outSMISignal Exponential average of the SMI line. Must hold at
+        *        least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
+        *
+        * @see Core#STOCH
+        * @see Core#STOCHRSI
+        * @see Core#WILLR
+        * @see Core#MACD
+        */
+       public OutRange SMI( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            int optInTimePeriod,
+                            int optInFastPeriod,
+                            int optInSlowPeriod,
+                            int optInSignalPeriod,
+                            double outSMI[],
+                            double outSMISignal[] )
+       {
+          requireIndexRange("SMI", startIdx, endIdx);
+          int guardStart = clampedStart(startIdx, endIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SMI", "inHigh", inHigh, guardInLen);
+          requireLength("SMI", "inLow", inLow, guardInLen);
+          requireLength("SMI", "inClose", inClose, guardInLen);
+          requireLength("SMI", "outSMI", outSMI, guardOutLen);
+          requireLength("SMI", "outSMISignal", outSMISignal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = SMI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
+          if( retCode != RetCode.Success ) {
+             throw failure("SMI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Stochastic Momentum Index: where the close sits relative to the
+        * **midpoint** of the recent high/low range, double-smoothed. Lane's
+        * stochastic measures the close against the bottom of the range; Blau
+        * measures it against the middle, then smooths numerator and denominator
+        * separately with two exponential averages before dividing, which is what
+        * buys the low-lag, smooth-contoured curve. The result runs -100 to +100
+        * rather than 0 to 100, so the zero line is the reference: positive means
+        * the close is above the midpoint of its range, negative below. Extreme
+        * readings mark overbought and oversold conditions, and crossings of the
+        * signal line are the usual trade trigger.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
+        * num = close - 0.5 * (HH + LL);  den = HH - LL
+        * SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
+        * Signal = EMA(SMI, signalPeriod)
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
+        * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up. Implementations seeding from a single first sample — Tulip and TradingView among them — differ over the transient and agree once it decays.</li>
+        * <li>One output range covers both outputs, so the SMI values consumed by the signal line's own warm-up are not published.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#SMI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price series.
+        * @param inLow Low price series.
+        * @param inClose Close price series.
+        * @param optInTimePeriod Period of the high/low range (default 13; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFastPeriod Period of the second smoothing, applied to the
+        *        first (default 2; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSlowPeriod Period of the first smoothing, applied to the raw
+        *        momentum (default 25; range 2..100000; {@code Integer.MIN_VALUE} selects
+        *        the default).
+        * @param optInSignalPeriod Smoothing period of the signal line (default 9;
+        *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outSMI Stochastic Momentum Index, -100 to +100. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outSMISignal Exponential average of the SMI line. Must hold at
+        *        least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
+        *
+        * @see Core#STOCH
+        * @see Core#STOCHRSI
+        * @see Core#WILLR
+        * @see Core#MACD
+        */
+       public OutRange SMI( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            int optInTimePeriod,
+                            int optInFastPeriod,
+                            int optInSlowPeriod,
+                            int optInSignalPeriod,
+                            double outSMI[],
+                            double outSMISignal[] )
+       {
+          requireIndexRange("SMI", startIdx, endIdx);
+          int guardStart = clampedStart(startIdx, endIdx, SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SMI", "inHigh", inHigh, guardInLen);
+          requireLength("SMI", "inLow", inLow, guardInLen);
+          requireLength("SMI", "inClose", inClose, guardInLen);
+          requireLength("SMI", "outSMI", outSMI, guardOutLen);
+          requireLength("SMI", "outSMISignal", outSMISignal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = SMI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
+          if( retCode != RetCode.Success ) {
+             throw failure("SMI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SMI stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#SMI} over the same series.
+        * Open with {@link Core#SMI_Open}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code copy} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code copy} never write the handle and may be called
+        * concurrently after safe publication. Independent handles (including
+        * {@code copy()} results) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SMI_Stream {
+          Core core;
+          int optInTimePeriod;
+          int optInFastPeriod;
+          int optInSlowPeriod;
+          int optInSignalPeriod;
+          double kSlow;
+          double kFast;
+          double kSignal;
+          double highest;
+          double lowest;
+          double emaSlowNum;
+          double emaSlowDen;
+          double emaFastNum;
+          double emaFastDen;
+          double num;
+          double den;
+          double halfDen;
+          double smiValue;
+          double prevSignal;
+          int trailingIdx;
+          int highestIdx;
+          int lowestIdx;
+          int i;
+          int today;
+          int xMask;
+          double[] x_inHigh;
+          double[] x_inLow;
+          double[] x_inClose;
+          double cur_outSMI;
+          double cur_outSMISignal;
+          Value cachedValue;
+          OutRange fillRange = OutRange.EMPTY;
+
+          SMI_Stream( Core core ) { this.core = core; }
+
+          /**
+           * The range filled by {@link Core#SMI_OpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
+           */
+          public OutRange fillRange() { return fillRange; }
+
+          SMI_Stream( SMI_Stream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInFastPeriod = other.optInFastPeriod;
+             this.optInSlowPeriod = other.optInSlowPeriod;
+             this.optInSignalPeriod = other.optInSignalPeriod;
+             this.kSlow = other.kSlow;
+             this.kFast = other.kFast;
+             this.kSignal = other.kSignal;
+             this.highest = other.highest;
+             this.lowest = other.lowest;
+             this.emaSlowNum = other.emaSlowNum;
+             this.emaSlowDen = other.emaSlowDen;
+             this.emaFastNum = other.emaFastNum;
+             this.emaFastDen = other.emaFastDen;
+             this.num = other.num;
+             this.den = other.den;
+             this.halfDen = other.halfDen;
+             this.smiValue = other.smiValue;
+             this.prevSignal = other.prevSignal;
+             this.trailingIdx = other.trailingIdx;
+             this.highestIdx = other.highestIdx;
+             this.lowestIdx = other.lowestIdx;
+             this.i = other.i;
+             this.today = other.today;
+             this.xMask = other.xMask;
+             this.x_inHigh = other.x_inHigh.clone();
+             this.x_inLow = other.x_inLow.clone();
+             this.x_inClose = other.x_inClose.clone();
+             this.cur_outSMI = other.cur_outSMI;
+             this.cur_outSMISignal = other.cur_outSMISignal;
+             this.cachedValue = other.cachedValue;
+             this.fillRange = other.fillRange;
+          }
+
+          void copyFrom( SMI_Stream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInFastPeriod = other.optInFastPeriod;
+             this.optInSlowPeriod = other.optInSlowPeriod;
+             this.optInSignalPeriod = other.optInSignalPeriod;
+             this.kSlow = other.kSlow;
+             this.kFast = other.kFast;
+             this.kSignal = other.kSignal;
+             this.highest = other.highest;
+             this.lowest = other.lowest;
+             this.emaSlowNum = other.emaSlowNum;
+             this.emaSlowDen = other.emaSlowDen;
+             this.emaFastNum = other.emaFastNum;
+             this.emaFastDen = other.emaFastDen;
+             this.num = other.num;
+             this.den = other.den;
+             this.halfDen = other.halfDen;
+             this.smiValue = other.smiValue;
+             this.prevSignal = other.prevSignal;
+             this.trailingIdx = other.trailingIdx;
+             this.highestIdx = other.highestIdx;
+             this.lowestIdx = other.lowestIdx;
+             this.i = other.i;
+             this.today = other.today;
+             this.xMask = other.xMask;
+             if( this.x_inHigh != null && this.x_inHigh.length == other.x_inHigh.length ) {
+                System.arraycopy( other.x_inHigh, 0, this.x_inHigh, 0, other.x_inHigh.length );
+             } else {
+                this.x_inHigh = other.x_inHigh.clone();
+             }
+             if( this.x_inLow != null && this.x_inLow.length == other.x_inLow.length ) {
+                System.arraycopy( other.x_inLow, 0, this.x_inLow, 0, other.x_inLow.length );
+             } else {
+                this.x_inLow = other.x_inLow.clone();
+             }
+             if( this.x_inClose != null && this.x_inClose.length == other.x_inClose.length ) {
+                System.arraycopy( other.x_inClose, 0, this.x_inClose, 0, other.x_inClose.length );
+             } else {
+                this.x_inClose = other.x_inClose.clone();
+             }
+             this.cur_outSMI = other.cur_outSMI;
+             this.cur_outSMISignal = other.cur_outSMISignal;
+             this.cachedValue = other.cachedValue;
+             this.fillRange = other.fillRange;
+          }
+
+          /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+          private static final ThreadLocal<SMI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param smi Stochastic Momentum Index, -100 to +100.
+           * @param smiSignal Exponential average of the SMI line.
+           */
+          public record Value(double smi, double smiSignal) { }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the handle is left exactly as it was —
+           * the stream stays usable, so skip the bar or re-open on a clean
+           * history. This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public Value update( double inHigh, double inLow, double inClose ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
+             core.SMI_StreamStep(this, inHigh, inLow, inClose);
+             this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
+             return this.cachedValue;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return (it is the same
+           * generated code, run on a copy). Never writes this handle, so peeks may
+           * run concurrently with each other. It runs on a scratch handle held per thread and
+           * reused, so the copy allocates nothing after the first peek of this
+           * indicator on this thread. That scratch is retained for the life of
+           * the thread.
+           */
+          public Value peek( double inHigh, double inLow, double inClose ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw new TaLibArgumentException("SMI peek: BadParam", RetCode.BadParam);
+             SMI_Stream scratch = PEEK_SCRATCH.get();
+             if( scratch == null ) {
+                scratch = new SMI_Stream(this);
+                PEEK_SCRATCH.set(scratch);
+             } else {
+                scratch.copyFrom(this);
+             }
+             core.SMI_StreamStep(scratch, inHigh, inLow, inClose);
+             return new Value(scratch.cur_outSMI, scratch.cur_outSMISignal);
+          }
+
+          /**
+           * The value at the most recently committed bar — the last history bar
+           * right after open, then whatever the latest {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public Value value() {
+             return this.cachedValue;
+          }
+
+          /**
+           * An independent deep copy of this stream: both evolve separately from
+           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           */
+          public SMI_Stream copy() {
+             return new SMI_Stream(this);
+          }
+       }
+       void SMI_StreamStep( SMI_Stream sp, double inHigh, double inLow, double inClose )
+       {
+          double tmp = 0.0;
+          if( sp.today >= 1073741824 ) {
+             int rebaseShift = sp.trailingIdx & ~sp.xMask;
+             sp.today -= rebaseShift;
+             sp.trailingIdx -= rebaseShift;
+             sp.highestIdx -= rebaseShift;
+             sp.i -= rebaseShift;
+             sp.lowestIdx -= rebaseShift;
+          }
+          sp.x_inHigh[sp.today & sp.xMask] = inHigh;
+          sp.x_inLow[sp.today & sp.xMask] = inLow;
+          sp.x_inClose[sp.today & sp.xMask] = inClose;
+          /* Set the lowest low */
+          tmp = sp.x_inLow[sp.today & sp.xMask];
+          if( sp.lowestIdx < sp.trailingIdx ) {
+             sp.lowestIdx = sp.trailingIdx;
+             sp.lowest = sp.x_inLow[sp.lowestIdx & sp.xMask];
+             sp.i = sp.lowestIdx;
+             while( ++sp.i <= sp.today ) {
+                tmp = sp.x_inLow[sp.i & sp.xMask];
+                if( tmp < sp.lowest ) {
+                   sp.lowestIdx = sp.i;
+                   sp.lowest = tmp;
+                }
+             }
+          } else if( tmp <= sp.lowest ) {
+             sp.lowestIdx = sp.today;
+             sp.lowest = tmp;
+          }
+          /* Set the highest high */
+          tmp = sp.x_inHigh[sp.today & sp.xMask];
+          if( sp.highestIdx < sp.trailingIdx ) {
+             sp.highestIdx = sp.trailingIdx;
+             sp.highest = sp.x_inHigh[sp.highestIdx & sp.xMask];
+             sp.i = sp.highestIdx;
+             while( ++sp.i <= sp.today ) {
+                tmp = sp.x_inHigh[sp.i & sp.xMask];
+                if( tmp > sp.highest ) {
+                   sp.highestIdx = sp.i;
+                   sp.highest = tmp;
+                }
+             }
+          } else if( tmp >= sp.highest ) {
+             sp.highestIdx = sp.today;
+             sp.highest = tmp;
+          }
+          sp.den = sp.highest - sp.lowest;
+          sp.num = sp.x_inClose[sp.today & sp.xMask] - (sp.highest + sp.lowest) * 0.5;
+          sp.emaSlowNum = Math.fma(sp.num - sp.emaSlowNum, sp.kSlow, sp.emaSlowNum);
+          sp.emaSlowDen = Math.fma(sp.den - sp.emaSlowDen, sp.kSlow, sp.emaSlowDen);
+          sp.emaFastNum = Math.fma(sp.emaSlowNum - sp.emaFastNum, sp.kFast, sp.emaFastNum);
+          sp.emaFastDen = Math.fma(sp.emaSlowDen - sp.emaFastDen, sp.kFast, sp.emaFastDen);
+          /* Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
+           * window leaves a sub-epsilon residue that an exact check would divide
+           * into noise (issue #107 / STOCHRSI). A window whose bars are all
+           * H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
+           * CCI (#7) and IMI (#112) convention.
+           */
+          sp.halfDen = 0.5 * sp.emaFastDen;
+          if( !((-0.00000000000001 < sp.halfDen) && (sp.halfDen < 0.00000000000001)) ) {
+             sp.smiValue = 100.0 * sp.emaFastNum / sp.halfDen;
+          } else {
+             sp.smiValue = 0.0;
+          }
+          sp.prevSignal = Math.fma(sp.smiValue - sp.prevSignal, sp.kSignal, sp.prevSignal);
+          sp.cur_outSMI = sp.smiValue;
+          sp.cur_outSMISignal = sp.prevSignal;
+          sp.trailingIdx = sp.trailingIdx + 1;
+          sp.today = sp.today + 1;
+       }
+       private RetCode SMI_OpenPass( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[], int outStride )
+       {
+          double kSlow = 0;
+          double kFast = 0;
+          double kSignal = 0;
+          double highest = 0;
+          double lowest = 0;
+          double tmp = 0;
+          double emaSlowNum = 0;
+          double emaSlowDen = 0;
+          double emaFastNum = 0;
+          double emaFastDen = 0;
+          double sumSlowNum = 0;
+          double sumSlowDen = 0;
+          double sumFastNum = 0;
+          double sumFastDen = 0;
+          double sumSignal = 0;
+          double num = 0;
+          double den = 0;
+          double halfDen = 0;
+          double smiValue = 0;
+          double prevSignal = 0;
+          int lookbackTotal = 0;
+          int lookbackSlow = 0;
+          int lookbackFast = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int highestIdx = 0;
+          int lowestIdx = 0;
+          int i = 0;
+          int outIdx = 0;
+          int nBar = 0;
+          int nFast = 0;
+          int nSignal = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BadParam;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 2;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 25;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          lookbackTotal = SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory ;
+          }
+          outBegIdx.value = startIdx;
+          /* Blau's pipeline in one pass. A composed form is not available: the
+           * streaming producer model carries exactly one intermediate series
+           * (streaming.rs:2076) and SMI has two, the numerator and the denominator,
+           * which must be smoothed separately before they are divided.
+           *
+           * Each of the three stages seeds the way ema.c does -- a simple average of
+           * that stage's first 'period' inputs -- so the result is bit-identical to
+           * TA_MAX + TA_MIN followed by four TA_EMA calls. The stage boundaries below
+           * are the callee LOOKBACKS, not (period-1), so that a warm
+           * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: each stage then seeds
+           * from the values its predecessor would have published, exactly as the
+           * composed form does. The seed sums accumulate from 0.0 in production
+           * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
+           *
+           * TA_GetCompatibility() is deliberately NOT consulted, for the reason
+           * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
+           * preserved for the functions that already shipped with it and dropped from
+           * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
+           * The seeding choice itself is measured in docs/ema-seeding-evaluation.md.
+           */
+          kSlow = 2.0 / (double)(optInSlowPeriod + 1);
+          kFast = 2.0 / (double)(optInFastPeriod + 1);
+          kSignal = 2.0 / (double)(optInSignalPeriod + 1);
+          lookbackSlow = EMA_Lookback(optInSlowPeriod);
+          lookbackFast = EMA_Lookback(optInFastPeriod);
+          emaSlowNum = 0.0;
+          emaSlowDen = 0.0;
+          emaFastNum = 0.0;
+          emaFastDen = 0.0;
+          prevSignal = 0.0;
+          smiValue = 0.0;
+          sumSlowNum = 0.0;
+          sumSlowDen = 0.0;
+          sumFastNum = 0.0;
+          sumFastDen = 0.0;
+          sumSignal = 0.0;
+          highest = 0.0;
+          lowest = 0.0;
+          highestIdx = 0 - 1;
+          lowestIdx = 0 - 1;
+          /* The first bar carrying a full high/low window. */
+          trailingIdx = startIdx - lookbackTotal;
+          today = trailingIdx + (optInTimePeriod - 1);
+          nBar = 0;
+          /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
+           * that completes the signal seed, so it produces the first output pair.
+           */
+          while( today <= startIdx ) {
+             /* Set the lowest low */
+             tmp = inLow[today];
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                lowest = inLow[lowestIdx];
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tmp = inLow[i];
+                   if( tmp < lowest ) {
+                      lowestIdx = i;
+                      lowest = tmp;
+                   }
+                }
+             } else if( tmp <= lowest ) {
+                lowestIdx = today;
+                lowest = tmp;
+             }
+             /* Set the highest high */
+             tmp = inHigh[today];
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                highest = inHigh[highestIdx];
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tmp = inHigh[i];
+                   if( tmp > highest ) {
+                      highestIdx = i;
+                      highest = tmp;
+                   }
+                }
+             } else if( tmp >= highest ) {
+                highestIdx = today;
+                highest = tmp;
+             }
+             den = highest - lowest;
+             num = inClose[today] - (highest + lowest) * 0.5;
+             /* Stage 1: the slow EMA, over the raw momentum. */
+             if( nBar < optInSlowPeriod ) {
+                sumSlowNum = sumSlowNum + num;
+                sumSlowDen = sumSlowDen + den;
+                if( nBar == optInSlowPeriod - 1 ) {
+                   emaSlowNum = sumSlowNum / optInSlowPeriod;
+                   emaSlowDen = sumSlowDen / optInSlowPeriod;
+                }
+             } else {
+                emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
+                emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
+             }
+             /* Stage 2: the fast EMA, over what stage 1 publishes. */
+             nFast = nBar - lookbackSlow;
+             if( nFast >= 0 ) {
+                if( nFast < optInFastPeriod ) {
+                   sumFastNum = sumFastNum + emaSlowNum;
+                   sumFastDen = sumFastDen + emaSlowDen;
+                   if( nFast == optInFastPeriod - 1 ) {
+                      emaFastNum = sumFastNum / optInFastPeriod;
+                      emaFastDen = sumFastDen / optInFastPeriod;
+                   }
+                } else {
+                   emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
+                   emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+                }
+             }
+             /* Stage 3: the SMI line, then the signal EMA over it. */
+             nSignal = nFast - lookbackFast;
+             if( nSignal >= 0 ) {
+                halfDen = 0.5 * emaFastDen;
+                if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+                   smiValue = 100.0 * emaFastNum / halfDen;
+                } else {
+                   smiValue = 0.0;
+                }
+                if( nSignal < optInSignalPeriod ) {
+                   sumSignal = sumSignal + smiValue;
+                   if( nSignal == optInSignalPeriod - 1 ) {
+                      prevSignal = sumSignal / optInSignalPeriod;
+                   }
+                } else {
+                   prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+                }
+             }
+             nBar = nBar + 1;
+             trailingIdx = trailingIdx + 1;
+             today = today + 1;
+          }
+          outSMI[0 * outStride] = smiValue;
+          outSMISignal[0 * outStride] = prevSignal;
+          outIdx = 1;
+          /* Stable zone. Every stage is a pure recursion from here on. */
+          while( today <= endIdx ) {
+             /* Set the lowest low */
+             tmp = inLow[today];
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                lowest = inLow[lowestIdx];
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tmp = inLow[i];
+                   if( tmp < lowest ) {
+                      lowestIdx = i;
+                      lowest = tmp;
+                   }
+                }
+             } else if( tmp <= lowest ) {
+                lowestIdx = today;
+                lowest = tmp;
+             }
+             /* Set the highest high */
+             tmp = inHigh[today];
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                highest = inHigh[highestIdx];
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tmp = inHigh[i];
+                   if( tmp > highest ) {
+                      highestIdx = i;
+                      highest = tmp;
+                   }
+                }
+             } else if( tmp >= highest ) {
+                highestIdx = today;
+                highest = tmp;
+             }
+             den = highest - lowest;
+             num = inClose[today] - (highest + lowest) * 0.5;
+             emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
+             emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
+             emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
+             emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+             /* Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
+              * window leaves a sub-epsilon residue that an exact check would divide
+              * into noise (issue #107 / STOCHRSI). A window whose bars are all
+              * H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
+              * CCI (#7) and IMI (#112) convention.
+              */
+             halfDen = 0.5 * emaFastDen;
+             if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+                smiValue = 100.0 * emaFastNum / halfDen;
+             } else {
+                smiValue = 0.0;
+             }
+             prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+             outSMI[outIdx * outStride] = smiValue;
+             outSMISignal[outIdx * outStride] = prevSignal;
+             outIdx = outIdx + 1;
+             trailingIdx = trailingIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int capX = today - trailingIdx + 1;
+          if( capX < 1 || capX > historyLen ) {
+             return RetCode.InternalError;
+          }
+          int physX = 1;
+          while( physX < capX ) {
+             physX <<= 1;
+          }
+          double[] capX_inHigh = new double[physX];
+          double[] capX_inLow = new double[physX];
+          double[] capX_inClose = new double[physX];
+          for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+             capX_inHigh[fillJ & (physX - 1)] = inHigh[fillJ];
+             capX_inLow[fillJ & (physX - 1)] = inLow[fillJ];
+             capX_inClose[fillJ & (physX - 1)] = inClose[fillJ];
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInFastPeriod = optInFastPeriod;
+          sp.optInSlowPeriod = optInSlowPeriod;
+          sp.optInSignalPeriod = optInSignalPeriod;
+          sp.kSlow = kSlow;
+          sp.kFast = kFast;
+          sp.kSignal = kSignal;
+          sp.highest = highest;
+          sp.lowest = lowest;
+          sp.emaSlowNum = emaSlowNum;
+          sp.emaSlowDen = emaSlowDen;
+          sp.emaFastNum = emaFastNum;
+          sp.emaFastDen = emaFastDen;
+          sp.num = num;
+          sp.den = den;
+          sp.halfDen = halfDen;
+          sp.smiValue = smiValue;
+          sp.prevSignal = prevSignal;
+          sp.trailingIdx = trailingIdx;
+          sp.highestIdx = highestIdx;
+          sp.lowestIdx = lowestIdx;
+          sp.i = i;
+          sp.today = today;
+          sp.xMask = physX - 1;
+          sp.x_inHigh = capX_inHigh;
+          sp.x_inLow = capX_inLow;
+          sp.x_inClose = capX_inClose;
+          sp.cur_outSMI = outSMI[(outNBElement.value - 1) * outStride];
+          sp.cur_outSMISignal = outSMISignal[(outNBElement.value - 1) * outStride];
+          sp.cachedValue = new SMI_Stream.Value(sp.cur_outSMI, sp.cur_outSMISignal);
+          return RetCode.Success;
+       }
+       private RetCode SMI_OpenImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+       {
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outSMI = new double[1];
+          double[] sink_outSMISignal = new double[1];
+          return SMI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outSMI, sink_outSMISignal, 0 );
+       }
+       private RetCode SMI_OpenAndFillImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
+       {
+          if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
+             return RetCode.BadParam;
+          }
+          return SMI_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 );
+       }
+       private RetCode SMI_OpenAndFillInternalImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
+       {
+          return SMI_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1);
+       }
+       /* SMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SMI_Stream SMI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
+       {
+          SMI_Stream sp = new SMI_Stream(this);
+          RetCode retCode = SMI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("SMI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("SMI openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("SMI openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind SMI_Open (composition seam). */
+       SMI_Stream SMI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+       {
+          SMI_Stream sp = new SMI_Stream(this);
+          RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("SMI open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("SMI open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("SMI open: " + retCode, retCode);
+       }
+       /**
+        * Open a live SMI stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#SMI} at that bar.
+        * <p>The history must hold at least {@code SMI_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API).
+        */
+       public SMI_Stream SMI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+       {
+          return SMI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+       }
+       /**
+        * {@link Core#SMI_Open} that also fills the output array(s) bit-identically
+        * to {@link Core#SMI} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values.
+        * <p>The range written is on the returned handle:
+        * {@link SMI_Stream#fillRange()}.
+        */
+       public SMI_Stream SMI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outSMI[], double outSMISignal[] )
+       {
+          SMI_Stream sp = new SMI_Stream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = SMI_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
+          sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("SMI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("SMI openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("SMI openAndFill: " + retCode, retCode);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *
      * Change history:
      *
@@ -145264,6 +146761,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SMI", new AbsFunc("SMI", "Momentum Indicators", "Stochastic Momentum Index", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Period of the high/low range",13.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the second smoothing, applied to the first",2.0, 0,0,0,0,0,0, 2,100000,2,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the first smoothing, applied to the raw momentum",25.0, 0,0,0,0,0,0, 2,100000,2,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outSMI",1), new AbsOut(0,"outSMISignal",4) }));
         ABSTRACT.put("SQRT", new AbsFunc("SQRT", "Math Transform", "Vector Square Root", 1107296256,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
@@ -145633,6 +147134,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_SIN\"")) return handle_SIN(json);
         else if (json.contains("\"TA_SINH\"")) return handle_SINH(json);
         else if (json.contains("\"TA_SMA\"")) return handle_SMA(json);
+        else if (json.contains("\"TA_SMI\"")) return handle_SMI(json);
         else if (json.contains("\"TA_SQRT\"")) return handle_SQRT(json);
         else if (json.contains("\"TA_STDDEV\"")) return handle_STDDEV(json);
         else if (json.contains("\"TA_STOCH\"")) return handle_STOCH(json);
@@ -145959,6 +147461,8 @@ public class TaCodegenServe {
             sb.append("\"TA_SINH\"");
             sb.append(",");
             sb.append("\"TA_SMA\"");
+            sb.append(",");
+            sb.append("\"TA_SMI\"");
             sb.append(",");
             sb.append("\"TA_SQRT\"");
             sb.append(",");
@@ -165932,6 +167436,146 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_SMI(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+        }
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+        int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+        int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec Part 3 item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            try {
+                rc = core.SMI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        } else {
+            try {
+                OutRange _pr = core.SMI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
+        else { try {
+            if (bench_mode == 1) {
+                core.SMI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            } else {
+                core.SMI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            try {
+                OutRange _fr = core.SMI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_SQRT(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -185563,6 +187207,133 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_SMI(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 13;
+        int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 2;
+        int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 25;
+        int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 9;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[5] = svK;
+            RetCode rc;
+            try { rc = c2.SMI_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.SMI_Open(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                Core.SMI_Stream _fh = c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1);
+                OutRange _fr = _fh.fillRange();
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SMI_Stream st;
+                try { st = c2.SMI_Open(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.SMI_Stream.Value v0 = st.value();
+                if (svXtierNe(v0.smi(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.smiSignal(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    if (t % 7 == 0) {
+                        Core.SMI_Stream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.SMI_Stream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                        if (svBne(pk.smi(), up.smi())) peekAll = false;
+                        if (svBne(pk.smiSignal(), up.smiSignal())) peekAll = false;
+                        if (st.value() != up) allOk = false; /* cached Value identity */
+                        if (svXtierNe(up.smi(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smi())) + "\""; }
+                        if (svXtierNe(up.smiSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smiSignal())) + "\""; }
+                    } else {
+                        Core.SMI_Stream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                        if (svXtierNe(up.smi(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smi())) + "\""; }
+                        if (svXtierNe(up.smiSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smiSignal())) + "\""; }
+                    }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.SMI_Stream sA = c2.SMI_Open(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.SMI_Stream sB = sA.copy();
+                        for (int t = mid; t < svN; t++) {
+                            Core.SMI_Stream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            Core.SMI_Stream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svBne(uA.smi(), uB.smi()) || svXtierNe(uA.smi(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.smiSignal(), uB.smiSignal()) || svXtierNe(uA.smiSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.SMI_Open(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.SMI_Stream sD = c2.SMI_Open(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                Core.SMI_Stream sE = c2.SMI_Open(fz_h, fz_l, fz_c, 13, 2, 25, 9);
+                if (svBne(sD.value().smi(), sE.value().smi())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().smiSignal(), sE.value().smiSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_SQRT(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -188312,6 +190083,7 @@ public class TaCodegenServe {
         case "TA_SIN": return sv_SIN(json);
         case "TA_SINH": return sv_SINH(json);
         case "TA_SMA": return sv_SMA(json);
+        case "TA_SMI": return sv_SMI(json);
         case "TA_SQRT": return sv_SQRT(json);
         case "TA_STDDEV": return sv_STDDEV(json);
         case "TA_STOCH": return sv_STOCH(json);

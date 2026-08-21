@@ -12,7 +12,7 @@ ta_regtest validates TA-Lib indicator implementations. It has two modes:
 
 | Flag | Description |
 |------|-------------|
-| `--function=CSV` | Substring filter — matched against the **group tag** in `DO_TEST`, not the function name. A function absent from its group's tag is unreachable by this filter (that is why the composite group is tagged `PVO,VWMA,COMPOSITE`). A tag element ending in `*` is a **prefix claim** instead: `All Candlesticks,CDL*` reaches all 61 candlesticks without spelling them out, and keeps reaching a 62nd. **A filter matching no group is now an error** (`TA_REGTEST_FILTER_MATCHED_NOTHING`) on a run with no `--codegen`/`--xlang-hash`/`--fuzz-064` — those legs filter by real function name and legitimately match no group. |
+| `--function=CSV` | Substring filter — matched against the **group tag** in `DO_TEST`, not the function name. A function absent from its group's tag is unreachable by this filter (that is why the composite groups spell out their members, e.g. `PVO,VWMA,CMF,...`). A tag element ending in `*` is a **prefix claim** instead: `All Candlesticks,CDL*` reaches all 61 candlesticks without spelling them out, and keeps reaching a 62nd. **A filter matching no group is now an error** (`TA_REGTEST_FILTER_MATCHED_NOTHING`) on a run with no `--codegen`/`--xlang-hash`/`--fuzz-064` — those legs filter by real function name and legitimately match no group. |
 | `--codegen` | Run codegen verification after C reference tests |
 | `--language=CSV` | Filter languages for codegen verification (e.g., `c,rust,java`) |
 | `-p` | Profile mode |

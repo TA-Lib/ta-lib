@@ -756,7 +756,13 @@ static ErrorNumber testTAFunction_ALL( void )
    /* The tag is what --function= substring-matches, so every function the
     * group covers must appear in it: --function=VWMA matched nothing before
     * VWMA was named here (issue #137). */
-   DO_TEST( test_func_composite, "PVO,VWMA,CMF,HMA,EFI,QSTICK,AO,AC,SUM,COMPOSITE" );
+   /* Composite functions -- indicators defined as an exact arithmetic
+    * composition of shipped primitives. Split by file (composite1, composite2,
+    * ...) rather than by indicator: one file per group is the convention here,
+    * and a single file had grown past 4000 lines. Each carries its own tag, so
+    * --function= reaches the members of whichever file they live in. */
+   DO_TEST( test_func_composite1, "PVO,VWMA,CMF,HMA,EFI,QSTICK,AO,AC,SUM" );
+   DO_TEST( test_func_composite2, "SMI" );
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_cmf,       "CMF" );
    DO_TEST( test_func_cmou,      "CMOU" );

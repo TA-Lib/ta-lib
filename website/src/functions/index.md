@@ -76,6 +76,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [ROCR](/functions/rocr.md) — Rate of change ratio: (price/prevPrice)
 - [ROCR100](/functions/rocr100.md) — Rate of change ratio 100 scale: (price/prevPrice)*100
 - [RSI](/functions/rsi.md) — Relative Strength Index
+- [SMI](/functions/smi.md) — Stochastic Momentum Index
 - [STOCH](/functions/stoch.md) — Stochastic
 - [STOCHF](/functions/stochf.md) — Stochastic Fast
 - [STOCHRSI](/functions/stochrsi.md) — Stochastic Relative Strength Index

@@ -10,8 +10,7 @@ library publishes is one it stands behind"*, **not** *"the SMA seed is more
 accurate"*. That second claim is false at a common bar and should not be made.
 The split is quantified in §6 and §7.
 
-Raised by [ta-lib-proposal-drafts#59](https://github.com/TA-Lib/ta-lib-proposal-drafts/issues/59)
-(`TA_SMI`), which recommends `TA_EMA` on consistency grounds and never measures
+Raised by [#238](https://github.com/TA-Lib/ta-lib/issues/238) (`TA_SMI`), which recommended `TA_EMA` on consistency grounds and never measures
 accuracy — it only tabulates `|arm A - Tulip|`, the gap between two arms, with no
 third party to say which one is wrong. This document supplies the third party and
 generalises the answer to the whole EMA family. The SMI-specific numbers are in
@@ -175,7 +174,7 @@ repeated as if it were established.
 | 6 chained stages, each SMA-seeded | `T3` |
 | routes through `ma()` → `ema()` | `MA` (MAType=EMA), `APO`, `PPO`, `PVO`, `MACDEXT` |
 | routes through `macd()` | `MACDFIX` |
-| proposed | `TA_SMI` (#59), 4 stages |
+| inlines the recursion + CLASSIC seed directly, 3 stages plus a signal | `SMI` (#238) |
 
 Every one of them reaches `TA_FUNC_UNST_EMA` through `ema_lookback()` — `DEMA`
 and `TEMA`/`TRIX` multiply it by 2 and 3, `MACD` adds it twice (slow + signal) —
@@ -195,8 +194,8 @@ Keep the SMA seed, on these grounds and in this order:
 2. **The SMA seed is the seed `alpha = 2/(p+1)` was designed for** — matched
    centre of mass, exactly zero trend bias (measured -0.006% of sd against rule
    T's +0.748%).
-3. **Consistency.** Thirteen shipped functions plus the `TA_SMI` proposal share
-   this seed; `TTR`, the nearest independent library, uses the same rule.
+3. **Consistency.** Fourteen shipped functions share this seed; `TTR`, the
+   nearest independent library, uses the same rule.
 4. Against that stands §7, which is real and is not to be papered over.
 
 Nothing here argues for changing an oracle policy: Tulip/TradingView remain valid

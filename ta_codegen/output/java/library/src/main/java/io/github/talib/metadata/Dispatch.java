@@ -509,6 +509,9 @@ final class Dispatch {
          case "SMA":
             return core.SMA(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "SMI":
+            return core.SMI(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.realOutput(0), h.realOutput(1));
          case "SQRT":
             return core.SQRT(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -891,6 +894,8 @@ final class Dispatch {
             return core.SINH_Lookback();
          case "SMA":
             return core.SMA_Lookback(h.intOpt(0));
+         case "SMI":
+            return core.SMI_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3));
          case "SQRT":
             return core.SQRT_Lookback();
          case "STDDEV":

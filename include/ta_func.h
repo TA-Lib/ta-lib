@@ -8247,6 +8247,84 @@ TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_SMA_OpenAndFill( TA_SMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_SMI - Stochastic Momentum Index
+ * 
+ * Input  = High, Low, Close
+ * Output = double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Period of the high/low range
+ * 
+ * optInFastPeriod:(From 2 to 100000)
+ *    Period of the second smoothing, applied to the first
+ * 
+ * optInSlowPeriod:(From 2 to 100000)
+ *    Period of the first smoothing, applied to the raw momentum
+ * 
+ * optInSignalPeriod:(From 2 to 100000)
+ *    Smoothing for the signal line (period length)
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_SMI( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         int           optInSignalPeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outSMI[],
+                                         double        outSMISignal[] );
+
+TA_LIB_API TA_RetCode TA_S_SMI( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           int           optInFastPeriod, /* From 2 to 100000 */
+                                           int           optInSlowPeriod, /* From 2 to 100000 */
+                                           int           optInSignalPeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outSMI[],
+                                           double        outSMISignal[] );
+
+TA_LIB_API int TA_SMI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                         int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         int           optInSignalPeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_SMI — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_SMI_Stream TA_SMI_Stream;
+
+TA_LIB_API TA_RetCode TA_SMI_Open( TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outSMI, double *outSMISignal );
+
+TA_LIB_API TA_RetCode TA_SMI_Update( TA_SMI_Stream *stream, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal );
+
+TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal );
+
+TA_LIB_API TA_RetCode TA_SMI_Close( TA_SMI_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_SMI( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_SMI_OpenAndFill( TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[] );
+
+/*
  * TA_SQRT - Vector Square Root
  * 
  * Input  = double

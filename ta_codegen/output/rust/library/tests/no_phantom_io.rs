@@ -8824,6 +8824,72 @@ fn legs_SMA(r: &mut Report) {
     r.legs_done("SMA", 1);
 }
 
+const V_SMI: &[(&str, i32, i32, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN, i32::MIN),
+    ("minimums", 2i32, 2i32, 2i32, 2i32),
+];
+
+fn sub_SMI(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) in V_SMI {
+        let lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        if lb == usize::MAX { continue; }
+        r.control("SMI", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outSMI: Vec<f64> = Vec::with_capacity(1);
+            let mut outSMISignal: Vec<f64> = Vec::with_capacity(1);
+            core.SMI(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outSMI, &mut outSMISignal)
+        }));
+        if lb < 1 { r.no_quiet_range("SMI", label); continue; }
+        r.quiet("SMI", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outSMI: Vec<f64> = Vec::with_capacity(1);
+            let mut outSMISignal: Vec<f64> = Vec::with_capacity(1);
+            core.SMI(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outSMI, &mut outSMISignal)
+        }));
+    }
+}
+
+fn legs_SMI(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInFastPeriod = i32::MIN;
+    let optInSlowPeriod = i32::MIN;
+    let optInSignalPeriod = i32::MIN;
+    let lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+    if lb == usize::MAX { r.no_legs("SMI"); return; }
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outSMI: Vec<f64> = vec![Default::default(); 5];
+        let mut outSMISignal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SMI", "inHigh", 0, run(|| core.SMI(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outSMI, &mut outSMISignal)));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outSMI: Vec<f64> = vec![Default::default(); 5];
+        let mut outSMISignal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SMI", "inLow", 1, run(|| core.SMI(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outSMI, &mut outSMISignal)));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outSMI: Vec<f64> = vec![Default::default(); 5];
+        let mut outSMISignal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SMI", "inClose", 2, run(|| core.SMI(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outSMI, &mut outSMISignal)));
+    }
+    r.legs_done("SMI", 3);
+}
+
 const V_SQRT: &[&str] = &[
     "defaults",
 ];
@@ -10138,6 +10204,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("SIN", sub_SIN, legs_SIN),
     ("SINH", sub_SINH, legs_SINH),
     ("SMA", sub_SMA, legs_SMA),
+    ("SMI", sub_SMI, legs_SMI),
     ("SQRT", sub_SQRT, legs_SQRT),
     ("STDDEV", sub_STDDEV, legs_STDDEV),
     ("STOCH", sub_STOCH, legs_STOCH),
@@ -10187,7 +10254,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 174, "probe count");
+    assert_eq!(PROBES.len(), 175, "probe count");
     assert_eq!(
         PROBES.len(),
         ta_lib::abstract_api::funcs().count(),

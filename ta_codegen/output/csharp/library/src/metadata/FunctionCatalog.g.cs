@@ -262,6 +262,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeSin(),
             MakeSinh(),
             MakeSma(),
+            MakeSmi(),
             MakeSqrt(),
             MakeStddev(),
             MakeStoch(),
@@ -4053,6 +4054,36 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         {
             RetCode rc = core.SMA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        });
+
+    private static FunctionInfo MakeSmi() => new(
+        name: "SMI",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Stochastic Momentum Index",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Period of the high/low range", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 13, 4, 200, 1)),
+            new OptInputInfo("optInFastPeriod", "Fast Period", "Period of the second smoothing, applied to the first", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 2, 2, 200, 1)),
+            new OptInputInfo("optInSlowPeriod", "Slow Period", "Period of the first smoothing, applied to the raw momentum", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 25, 2, 200, 1)),
+            new OptInputInfo("optInSignalPeriod", "Signal Period", "Smoothing for the signal line (period length)", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 9, 2, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outSMI", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outSMISignal", OutputFlags.DashLine),
+        ],
+        lookback: static (core, c) => core.SMI_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3)),
+        invoke: static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SMI_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
 

@@ -191,6 +191,7 @@ extern const TA_FuncDef TA_DEF_SAREXT;
 extern const TA_FuncDef TA_DEF_SIN;
 extern const TA_FuncDef TA_DEF_SINH;
 extern const TA_FuncDef TA_DEF_SMA;
+extern const TA_FuncDef TA_DEF_SMI;
 extern const TA_FuncDef TA_DEF_SQRT;
 extern const TA_FuncDef TA_DEF_STDDEV;
 extern const TA_FuncDef TA_DEF_STOCH;
@@ -310,6 +311,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_ROCR,
 &TA_DEF_ROCR100,
 &TA_DEF_RSI,
+&TA_DEF_SMI,
 &TA_DEF_STOCH,
 &TA_DEF_STOCHF,
 &TA_DEF_STOCHRSI,

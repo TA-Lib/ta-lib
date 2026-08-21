@@ -14,8 +14,8 @@
 //! This test proves that seed difference is immaterial: for every function body,
 //! `fuse_operands` makes the identical decision at every `a*b+c` site whether the
 //! context was built with the 2-seed or the 4-seed index-param set. So C/Java
-//! (uniform seeding) fuse exactly the sites Rust does. It also confirms the 26
-//! fusion-candidate functions actually fuse.
+//! (uniform seeding) fuse exactly the sites Rust does. It also confirms every
+//! function in `fma::FUSING_INVENTORY` actually fuses.
 
 use std::cell::Cell;
 use std::path::Path;
@@ -130,19 +130,7 @@ fn fma_fusion_is_seed_invariant_across_all_functions() {
 /// (guards against the detector silently going dark for all of them).
 #[test]
 fn fma_fusion_fires_for_known_candidates() {
-    // The 27 functions whose generated code contains a fused site (matches the
-    // Rust `mul_add` / C `fma()` / Java `Math.fma` inventory). Kept in step with
-    // the same list in `backend_suite.rs`
-    // (rust_fma_dispatch_fires_for_exactly_the_fusing_functions), which is the
-    // one that also fails on an UNEXPECTED entry.
-    const FUSING: &[&str] = &[
-        "adosc", "bbands", "cdlabandonedbaby", "cdlmorningdojistar", "cdlmorningstar",
-        "cdlpiercing", "cdlthrusting", "dema", "ema", "ht_dcperiod", "ht_dcphase",
-        "ht_phasor", "ht_sine", "ht_trendline", "ht_trendmode", "kama", "linearreg",
-        "macd", "macdfix", "mama", "sar", "sarext", "t3", "tema", "trix", "tsf",
-        "wclprice",
-    ];
-    for name in FUSING {
+    for name in fma::FUSING_INVENTORY {
         let f = load_func_full(name);
         let u = fma::build_fma_var_sets(&f.private_body, &f.outputs, &fma::INDEX_PARAM_SEEDS);
         let n = fused_count(&f.private_body, &u.view());

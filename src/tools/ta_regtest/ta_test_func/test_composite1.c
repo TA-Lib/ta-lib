@@ -210,7 +210,7 @@ static ErrorNumber test_ac_param_reject( const TA_History *history );
 static ErrorNumber test_ac_reference_anchoring( const TA_History *history );
 
 /**** Global functions definitions. ****/
-ErrorNumber test_func_composite( TA_History *history )
+ErrorNumber test_func_composite1( TA_History *history )
 {
    ErrorNumber retValue;
 

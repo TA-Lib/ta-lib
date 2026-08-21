@@ -1406,6 +1406,15 @@ TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_SMA_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_SMI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SMI_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_SQRT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

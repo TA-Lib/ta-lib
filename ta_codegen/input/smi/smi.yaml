@@ -1,0 +1,44 @@
+name: SMI
+group: Momentum Indicators
+hint: Stochastic Momentum Index
+flags: [stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Period of the high/low range
+    range: [2, 100000]
+    default: 13
+    suggested: [4, 200, 1]
+  - name: optInFastPeriod
+    type: integer
+    display_name: Fast Period
+    hint: Period of the second smoothing, applied to the first
+    range: [2, 100000]
+    default: 2
+    suggested: [2, 200, 1]
+  - name: optInSlowPeriod
+    type: integer
+    display_name: Slow Period
+    hint: Period of the first smoothing, applied to the raw momentum
+    range: [2, 100000]
+    default: 25
+    suggested: [2, 200, 1]
+  - name: optInSignalPeriod
+    type: integer
+    display_name: Signal Period
+    hint: Smoothing for the signal line (period length)
+    range: [2, 100000]
+    default: 9
+    suggested: [2, 200, 1]
+outputs:
+  - name: outSMI
+    type: real
+    flags: [line]
+  - name: outSMISignal
+    type: real
+    flags: [dash_line]

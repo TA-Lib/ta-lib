@@ -8596,19 +8596,14 @@ fn csharp_resolve_call_agrees_with_the_emitted_method_names() {
 
 /// Issue #156: the runtime FMA dispatch trio (public dispatcher +
 /// `#[target_feature(enable = "fma")]` clone + `#[inline(always)]` `_impl`)
-/// must be emitted for exactly the functions whose rendered body fuses — the
-/// same 26-function inventory `fma_suite.rs` pins — and never elsewhere.
+/// must be emitted for exactly the functions whose rendered body fuses — this
+/// is the exact-set half of the pair `fma_suite.rs` also lists — and never
+/// elsewhere.
 /// Guards both directions: the dispatch silently going dark, and accidental
 /// dispatch of unfused functions.
 #[test]
 fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
-    const FUSING: &[&str] = &[
-        "adosc", "bbands", "cdlabandonedbaby", "cdlmorningdojistar", "cdlmorningstar",
-        "cdlpiercing", "cdlthrusting", "dema", "efi", "ema", "ht_dcperiod", "ht_dcphase",
-        "ht_phasor", "ht_sine", "ht_trendline", "ht_trendmode", "kama", "linearreg",
-        "macd", "macdfix", "mama", "sar", "sarext", "t3", "tema", "trix", "tsf",
-        "wclprice",
-    ];
+    let fusing = backends::fma::FUSING_INVENTORY;
     let registry = make_registry();
     let helpers = make_helpers();
     let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
@@ -8656,7 +8651,7 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
         }
     }
     dispatched.sort();
-    assert_eq!(dispatched, FUSING, "FMA dispatch inventory drifted");
+    assert_eq!(dispatched, fusing, "FMA dispatch inventory drifted");
     assert!(checked >= 150, "expected ~168 functions, checked {checked}");
 }
 

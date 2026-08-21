@@ -176,6 +176,7 @@
 #include "ta_SIN.c"
 #include "ta_SINH.c"
 #include "ta_SMA.c"
+#include "ta_SMI.c"
 #include "ta_SQRT.c"
 #include "ta_STDDEV.c"
 #include "ta_STOCH.c"
@@ -2730,6 +2731,23 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("SMA %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "SMI") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_SMI(0, g_nPoints - 1, g_high, g_low, g_close, 13, 2, 25, 9, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+            g_sink += (int)g_outBuf1[0];
+        }
+        printf("SMI %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "SQRT") ) {

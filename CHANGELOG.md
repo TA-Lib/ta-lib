@@ -24,6 +24,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - PVI: Positive Volume Index (#126)
   - PVO: Percentage Volume Oscillator (#119)
   - QSTICK: Qstick (#226)
+  - SMI: Stochastic Momentum Index (#238)
   - VWMA: Volume Weighted Moving Average (#131)
   - WAD: Williams' Accumulation/Distribution (#200)
 - (#236) `TA_INSUFFICIENT_HISTORY` (17), a new `TA_RetCode`: a streaming

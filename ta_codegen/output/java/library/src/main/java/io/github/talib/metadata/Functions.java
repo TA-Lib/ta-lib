@@ -239,6 +239,7 @@ public final class Functions {
       put(m, f_SIN());
       put(m, f_SINH());
       put(m, f_SMA());
+      put(m, f_SMI());
       put(m, f_SQRT());
       put(m, f_STDDEV());
       put(m, f_STOCH());
@@ -2669,6 +2670,40 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_SMI() {
+      return new FunctionInfo(
+         "SMI", "Momentum Indicators", "Stochastic Momentum Index", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Period of the high/low range", 13.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFastPeriod", 0x00000000,
+               "Fast Period", "Period of the second smoothing, applied to the first", 2.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSlowPeriod", 0x00000000,
+               "Slow Period", "Period of the first smoothing, applied to the raw momentum", 25.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
+               "Signal Period", "Smoothing for the signal line (period length)", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outSMI", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outSMISignal", 0x00000004)
          ));
    }
 

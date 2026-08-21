@@ -407,6 +407,124 @@ DEF_FUNCTION( SMA,
              );
 /* SMA END */
 
+/* SMI BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SMI_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   13,
+   "Period of the high/low range",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_SMI_FastPeriod =
+{
+   2,
+   100000,
+   2,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SMI_FastPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInFastPeriod",
+   0,
+
+   "Fast Period",
+   (const void *)&TA_DEF_SMI_FastPeriod,
+   2,
+   "Period of the second smoothing, applied to the first",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_SMI_SlowPeriod =
+{
+   2,
+   100000,
+   2,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SMI_SlowPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSlowPeriod",
+   0,
+
+   "Slow Period",
+   (const void *)&TA_DEF_SMI_SlowPeriod,
+   25,
+   "Period of the first smoothing, applied to the raw momentum",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_SMI_SignalPeriod =
+{
+   2,
+   100000,
+   2,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SMI_SignalPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSignalPeriod",
+   0,
+
+   "Signal Period",
+   (const void *)&TA_DEF_SMI_SignalPeriod,
+   9,
+   "Smoothing for the signal line (period length)",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_SMI_outSMI =
+                               { TA_Output_Real, "outSMI", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_SMI_outSMISignal =
+                               { TA_Output_Real, "outSMISignal", TA_OUT_DASH_LINE };
+
+static const TA_InputParameterInfo    *TA_SMI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SMI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_SMI_outSMI,
+  &TA_DEF_UI_Output_Real_SMI_outSMISignal,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SMI_OptInputs[] =
+{ &TA_DEF_UI_D_SMI_TimePeriod,
+  &TA_DEF_UI_D_SMI_FastPeriod,
+  &TA_DEF_UI_D_SMI_SlowPeriod,
+  &TA_DEF_UI_D_SMI_SignalPeriod,
+  NULL
+};
+
+DEF_FUNCTION( SMI,
+              TA_GroupId_MomentumIndicators,
+              "Stochastic Momentum Index",
+              TA_FUNC_FLG_STREAM
+             );
+/* SMI END */
+
 /* SQRT BEGIN */
 static const TA_InputParameterInfo    *TA_SQRT_Inputs[]    =
 {
@@ -775,6 +893,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(SIN),
    ADD_TO_TABLE(SINH),
    ADD_TO_TABLE(SMA),
+   ADD_TO_TABLE(SMI),
    ADD_TO_TABLE(SQRT),
    ADD_TO_TABLE(STDDEV),
    ADD_TO_TABLE(STOCH),

@@ -3392,6 +3392,35 @@ unsigned int TA_SMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_SMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+TA_RetCode TA_SMI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SMI(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInInteger, /* optInFastPeriod*/
+               params->optIn[2].data.optInInteger, /* optInSlowPeriod*/
+               params->optIn[3].data.optInInteger, /* optInSignalPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outSMI */
+               params->out[1].data.outReal /*  outSMISignal */
+               );
+}
+unsigned int TA_SMI_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SMI_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInInteger, /* optInFastPeriod*/
+                    params->optIn[2].data.optInInteger, /* optInSlowPeriod*/
+                    params->optIn[3].data.optInInteger /* optInSignalPeriod*/ );
+}
 TA_RetCode TA_SQRT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

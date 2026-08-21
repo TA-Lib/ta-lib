@@ -563,7 +563,7 @@ static int json_error_is_unsupported(const char *json)
 /* ---- Unstable period lookup ---- */
 
 /* Map function name to TA_FuncUnstId for range-sweep tolerance selection.
- * Entries are the 20 functions that carry TA_FUNC_FLG_UNST_PER, plus the 10
+ * Entries are the 20 functions that carry TA_FUNC_FLG_UNST_PER, plus the
  * derived functions (DEMA/TEMA/TRIX/MACD/MACDEXT/MACDFIX + APO/PPO via EMA,
  * ADXR/STOCHRSI via ADX/RSI) that converge through an internal callee. APO and PPO now default to EMA (issue #120), so their
  * default-parameter range sweep is EMA-converging and needs the loose convergence
@@ -623,6 +623,11 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"PVO",          TA_FUNC_UNST_EMA},
     /* EFI smooths its force series with the same EMA. */
     {"EFI",          TA_FUNC_UNST_EMA},
+    /* SMI's three EMA stages are seeded and advanced exactly as ema.c does,
+     * and its lookback is the sum of three ema_lookback() terms, so the whole
+     * pipeline shifts with UNST_EMA. Measured: outBegIdx 45 -> 54 at the
+     * defaults when the unstable period is set to 3. */
+    {"SMI",          TA_FUNC_UNST_EMA},
     /* ADXR/STOCHRSI own knobs were inert and retired (#129); they converge
      * via their internal ADX/RSI, like the EMA-derived set above. */
     {"ADXR",         TA_FUNC_UNST_ADX},

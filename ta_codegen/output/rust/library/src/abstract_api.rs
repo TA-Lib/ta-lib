@@ -185,6 +185,7 @@ pub enum FuncId {
     SIN,
     SINH,
     SMA,
+    SMI,
     SQRT,
     STDDEV,
     STOCH,
@@ -212,7 +213,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 174;
+    pub const COUNT: usize = 175;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -395,7 +396,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 174] = [
+pub static FUNCS: [FuncInfo; 175] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2058,6 +2059,17 @@ pub static FUNCS: [FuncInfo; 174] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::SMI,
+        name: "SMI",
+        group: Group::MomentumIndicators,
+        hint: "Stochastic Momentum Index",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Period of the high/low range", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 13, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the second smoothing, applied to the first", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 2, suggested: (2, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the first smoothing, applied to the raw momentum", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 25, suggested: (2, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 9, suggested: (2, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outSMI", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outSMISignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::SQRT,
         name: "SQRT",
         group: Group::MathTransform,
@@ -2469,6 +2481,7 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "SIN" => FuncId::SIN,
         "SINH" => FuncId::SINH,
         "SMA" => FuncId::SMA,
+        "SMI" => FuncId::SMI,
         "SQRT" => FuncId::SQRT,
         "STDDEV" => FuncId::STDDEV,
         "STOCH" => FuncId::STOCH,
@@ -2879,6 +2892,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SIN => self.core.SIN_Lookback(),
             FuncId::SINH => self.core.SINH_Lookback(),
             FuncId::SMA => self.core.SMA_Lookback(self.int_opt[0]),
+            FuncId::SMI => self.core.SMI_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
             FuncId::SQRT => self.core.SQRT_Lookback(),
             FuncId::STDDEV => self.core.STDDEV_Lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::STOCH => self.core.STOCH_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
@@ -4438,6 +4452,19 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let rc = self.core.SMA_Impl(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::SMI => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.SMI_Impl(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
                 rc
             }
             FuncId::SQRT => {

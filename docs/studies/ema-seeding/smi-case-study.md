@@ -1,8 +1,8 @@
 # TA_SMI: which EMA seed carries the smaller error?
 
-Supporting measurement for [ta-lib-proposal-drafts#59](https://github.com/TA-Lib/ta-lib-proposal-drafts/issues/59).
+Supporting measurement for [#238](https://github.com/TA-Lib/ta-lib/issues/238).
 
-Issue #59 recommends arm A (`TA_EMA`, SMA-seeded) over arm B (Tulip/TradingView,
+Issue #238 recommended arm A (`TA_EMA`, SMA-seeded) over arm B (Tulip/TradingView,
 seeded with the first sample) on the grounds of *consistency with the rest of the
 library*. It never measures which arm is more **accurate**, because it only ever
 tabulates `|A - B|` — the gap between two arms, with no third party to say which
@@ -54,7 +54,7 @@ Nothing here is a model of what TA-Lib or Tulip "probably" does:
   returns.
 * Rule T is Tulip `beta/smi.c` verbatim (`ema_r_num = ema_s_num = num[q-1]`,
   `ema_r_den = ema_s_den = den[q-1]`). Part D reproduces **every printed digit**
-  of issue #59's own arm-vs-Tulip table, which was itself measured against a
+  of issue #238's own arm-vs-Tulip table, which was itself measured against a
   compiled `ti_smi` — including `-10.8035818118385 / -25.4984363633175` at bar 37
   and "bit-identical from bar 67" at (10,3,3).
 
@@ -71,7 +71,7 @@ the separate `TA_SREF_*_daily_ref_0_PRIV` arrays are different data).
 |---|---|
 | Blau, "Stochastic Momentum", *TASC* v11:1 (Jan 1993); *Momentum, Direction and Divergence* (Wiley 1995) | States the EMA as the bare recursion `EMA(k) = EMA(k-1) + 2/(n+1) * (price(k) - EMA(k-1))`. **No initial condition, no warm-up guidance, no discard rule.** The formula defines the filter's steady state and is silent on the boot. |
 | TradeStation `XAverage` — the platform Blau wrote in (his book is EasyLanguage-based) | `XAverage = XAverage[1] + SmoothingFactor * (Price - XAverage[1])`, seeded on the first computable bar from the price itself — **rule T**. *Secondary evidence:* the seeding line comes from EasyLanguage references rather than from TradeStation's own function page, which only goes as far as *"the effects of the first price will never be completely removed, but its weight will continuously shrink"* (true of an SMA seed too, so that sentence alone does not settle it). |
-| R `TTR::EMA` — the only independent library implementation of `SMI()`, and the source of the 13/25/2/9 defaults #59 proposes | *"The EMA result is initialized with the n-period sample average at period n."* This is **rule S**, exactly TA-Lib's. TTR also warns that EMA-family indicators are *"unstable in the short-term"* because they use their own previous values. |
+| R `TTR::EMA` — the only independent library implementation of `SMI()`, and the source of the 13/25/2/9 defaults #238 proposes | *"The EMA result is initialized with the n-period sample average at period n."* This is **rule S**, exactly TA-Lib's. TTR also warns that EMA-family indicators are *"unstable in the short-term"* because they use their own previous values. |
 | TradingView `ta.ema` | `sum := na(sum[1]) ? src : alpha*src + (1-alpha)*nz(sum[1])` — **rule T**. (Pine's `ta.rma` seeds with an SMA; `ta.ema` does not. TradingView's built-in SMI is `200 * emaEma(relativeRange, lengthD) / emaEma(highestLowestRange, lengthD)` with defaults %K=10, %D=3, and `emaEma` is `ta.ema(ta.ema(src,len),len)`.) |
 | Tulip `beta/smi.c` | **rule T**, as above. |
 
@@ -151,7 +151,7 @@ free invariant worth asserting in the test suite.
 
 ### 2c. The issue's own table, attributed
 
-Same 252-bar geometry as #59, on gData windows that have history in front of them
+Same 252-bar geometry as #238, on gData windows that have history in front of them
 (2309 windows), over the bars **both** arms publish:
 
 | SMI(13,25,2) | rms | max |
@@ -160,9 +160,9 @@ Same 252-bar geometry as #59, on gData windows that have history in front of the
 | rule S (TA-Lib) error | **14.06** | 47.78 |
 | rule T (TV/Tulip) error | **8.07** | 43.95 |
 
-So of the 14.69-point gap #59 reports at (13,25,2), **the median split is about
+So of the 14.69-point gap #238 reports at (13,25,2), **the median split is about
 65% ours, 35% theirs** — measured over the bars where both publish, i.e. after
-TA-Lib's lookback, where rule T has its head start. Anyone reading #59's table as
+TA-Lib's lookback, where rule T has its head start. Anyone reading #238's table as
 "Tulip is wrong by 14.69 points" has it backwards.
 
 ---
@@ -187,7 +187,7 @@ accurate, because it is not.** Stating it precisely:
    The cost of collecting that head start is publishing ~25 bars of near-raw
    output first. That is the trade, stated plainly.
 4. Blau adjudicates nothing here; his platform is on rule T's side, `TTR` — the
-   implementation whose defaults #59 adopts — is on ours.
+   implementation whose defaults #238 adopts — is on ours.
 
 If accuracy at the lookback bar were the *only* criterion, the optimum is neither
 arm: seed with the first sample **and** keep TA-Lib's lookback (rms 8.06 at bar
@@ -197,7 +197,7 @@ it would break 25 years of published values for every EMA-derived function. Not
 proposed — but it is the honest reading of the numbers and should not be
 discovered later as a surprise.
 
-Nothing here disturbs #59's other conclusions: the front end is confirmed, the
+Nothing here disturbs #238's other conclusions: the front end is confirmed, the
 transient is the ordinary `TA_FUNC_UNST_EMA` story, and Tulip remains a valid
 **tail** oracle.
 
