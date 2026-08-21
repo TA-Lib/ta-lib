@@ -64,14 +64,18 @@
        *        = 0             if close == prevClose
        *    WAD = running sum of AD
        *
-       * NO VOLUME IS CONSUMED, despite the name and despite the group this is
-       * filed under. Larry Williams' original multiplies the move by volume;
-       * Achelis' modification drops it, the industry attached Williams' name to
-       * the modification anyway, and Tulip, pandas-ta-classic, cTrader, TC2000,
-       * WealthCharts and MultiCharts all ship the no-volume form. Shipping the
-       * volume form under this name would surprise every user, so this is the
-       * one place the usual "the original author wins" rule is set aside. The
-       * volume-weighted series is a different indicator.
+       * NO VOLUME IS CONSUMED, despite the name. Larry Williams' original
+       * multiplies the move by volume; Achelis' modification drops it, the
+       * industry attached Williams' name to the modification anyway, and Tulip,
+       * pandas-ta-classic, cTrader, TC2000, WealthCharts and MultiCharts all ship
+       * the no-volume form. Shipping the volume form under this name would
+       * surprise every user, so this is the one place the usual "the original
+       * author wins" rule is set aside. The volume-weighted series is a different
+       * indicator. What is left once the multiplier is gone is a signed
+       * close-to-close move clipped by the true-range extreme and accumulated --
+       * momentum measured on the true range -- which is why this is grouped with
+       * the other no-volume directional lines (PLUS_DM, MINUS_DM, BOP, WILLR)
+       * rather than with AD/OBV.
        *
        * The three-way branch is written with plain > and < rather than any
        * epsilon: the flat arm must fire on exactly-equal consecutive closes and
@@ -171,6 +175,9 @@
     * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
     * industry kept Williams' name on that no-volume form. That industry-wide
     * decision is enough for TA-Lib to ship the same form under the same name.
+    * What remains once the multiplier is dropped is a signed close-to-close
+    * move measured on the true range, so it is grouped as a momentum indicator,
+    * not a volume one.
     * <p><b>Formula</b>
     * <pre>{@code
     * TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t > close_{t-1}, close_t - TRH_t if close_t < close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
@@ -245,6 +252,9 @@
     * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
     * industry kept Williams' name on that no-volume form. That industry-wide
     * decision is enough for TA-Lib to ship the same form under the same name.
+    * What remains once the multiplier is dropped is a signed close-to-close
+    * move measured on the true range, so it is grouped as a momentum indicator,
+    * not a volume one.
     * <p><b>Formula</b>
     * <pre>{@code
     * TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t > close_{t-1}, close_t - TRH_t if close_t < close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
@@ -462,14 +472,18 @@
        *        = 0             if close == prevClose
        *    WAD = running sum of AD
        *
-       * NO VOLUME IS CONSUMED, despite the name and despite the group this is
-       * filed under. Larry Williams' original multiplies the move by volume;
-       * Achelis' modification drops it, the industry attached Williams' name to
-       * the modification anyway, and Tulip, pandas-ta-classic, cTrader, TC2000,
-       * WealthCharts and MultiCharts all ship the no-volume form. Shipping the
-       * volume form under this name would surprise every user, so this is the
-       * one place the usual "the original author wins" rule is set aside. The
-       * volume-weighted series is a different indicator.
+       * NO VOLUME IS CONSUMED, despite the name. Larry Williams' original
+       * multiplies the move by volume; Achelis' modification drops it, the
+       * industry attached Williams' name to the modification anyway, and Tulip,
+       * pandas-ta-classic, cTrader, TC2000, WealthCharts and MultiCharts all ship
+       * the no-volume form. Shipping the volume form under this name would
+       * surprise every user, so this is the one place the usual "the original
+       * author wins" rule is set aside. The volume-weighted series is a different
+       * indicator. What is left once the multiplier is gone is a signed
+       * close-to-close move clipped by the true-range extreme and accumulated --
+       * momentum measured on the true range -- which is why this is grouped with
+       * the other no-volume directional lines (PLUS_DM, MINUS_DM, BOP, WILLR)
+       * rather than with AD/OBV.
        *
        * The three-way branch is written with plain > and < rather than any
        * epsilon: the flat arm must fire on exactly-equal consecutive closes and

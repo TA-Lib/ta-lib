@@ -4,7 +4,7 @@
 
 Williams' Accumulation/Distribution: a cumulative line that measures each bar's close against the *true range* extreme — the previous close, whenever it lies outside the current bar — rather than against the bar's own high and low. A close above the previous one accumulates the distance up from the true low; a close below it distributes the distance down from the true high; an unchanged close contributes nothing.
 
-**It consumes no volume.** Larry Williams' original multiplies each move by that bar's volume; Steven Achelis published the modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the industry kept Williams' name on that no-volume form. That industry-wide decision is enough for TA-Lib to ship the same form under the same name.
+**It consumes no volume.** Larry Williams' original multiplies each move by that bar's volume; Steven Achelis published the modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the industry kept Williams' name on that no-volume form. That industry-wide decision is enough for TA-Lib to ship the same form under the same name. What remains once the multiplier is dropped is a signed close-to-close move measured on the true range, so it is grouped as a momentum indicator, not a volume one.
 
 ## Formula
 

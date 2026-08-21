@@ -2281,7 +2281,7 @@ pub static FUNCS: [FuncInfo; 175] = [
     FuncInfo {
         id: FuncId::WAD,
         name: "WAD",
-        group: Group::VolumeIndicators,
+        group: Group::MomentumIndicators,
         hint: "Williams' Accumulation/Distribution (no volume)",
         flags: FuncFlags(0x22000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],

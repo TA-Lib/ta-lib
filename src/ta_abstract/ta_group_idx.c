@@ -317,6 +317,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_STOCHRSI,
 &TA_DEF_TRIX,
 &TA_DEF_ULTOSC,
+&TA_DEF_WAD,
 &TA_DEF_WILLR,
 NULL };
 #define SIZE_GROUP_4 ((sizeof(TA_PerGroupFunc_4)/sizeof(const TA_FuncDef *))-1)
@@ -340,7 +341,6 @@ const TA_FuncDef *TA_PerGroupFunc_6[] = {
 &TA_DEF_OBV,
 &TA_DEF_PVI,
 &TA_DEF_PVO,
-&TA_DEF_WAD,
 NULL };
 #define SIZE_GROUP_6 ((sizeof(TA_PerGroupFunc_6)/sizeof(const TA_FuncDef *))-1)
 

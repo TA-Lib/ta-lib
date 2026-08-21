@@ -82,6 +82,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [STOCHRSI](/functions/stochrsi.md) — Stochastic Relative Strength Index
 - [TRIX](/functions/trix.md) — 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 - [ULTOSC](/functions/ultosc.md) — Ultimate Oscillator
+- [WAD](/functions/wad.md) — Williams' Accumulation/Distribution (no volume)
 - [WILLR](/functions/willr.md) — Williams' %R
 
 ## Overlap Studies
@@ -208,4 +209,3 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [OBV](/functions/obv.md) — On Balance Volume
 - [PVI](/functions/pvi.md) — Positive Volume Index
 - [PVO](/functions/pvo.md) — Percentage Volume Oscillator
-- [WAD](/functions/wad.md) — Williams' Accumulation/Distribution (no volume)

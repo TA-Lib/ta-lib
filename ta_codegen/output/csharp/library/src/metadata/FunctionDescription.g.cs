@@ -7608,7 +7608,7 @@ public static class FunctionDescription
 	<FinancialFunction>
 		<Abbreviation>WAD</Abbreviation>
 		<ShortDescription>Williams&apos; Accumulation/Distribution (no volume)</ShortDescription>
-		<GroupId>Volume Indicators</GroupId>
+		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Path Dependent</Flag>

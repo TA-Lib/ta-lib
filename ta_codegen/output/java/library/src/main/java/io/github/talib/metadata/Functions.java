@@ -3090,7 +3090,7 @@ public final class Functions {
 
    private static FunctionInfo f_WAD() {
       return new FunctionInfo(
-         "WAD", "Volume Indicators", "Williams' Accumulation/Distribution (no volume)", 0x22000000,
+         "WAD", "Momentum Indicators", "Williams' Accumulation/Distribution (no volume)", 0x22000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
          ),

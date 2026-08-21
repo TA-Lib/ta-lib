@@ -45,14 +45,18 @@ TA_RetCode wad(int startIdx, int endIdx,
     *        = 0             if close == prevClose
     *    WAD = running sum of AD
     *
-    * NO VOLUME IS CONSUMED, despite the name and despite the group this is
-    * filed under. Larry Williams' original multiplies the move by volume;
-    * Achelis' modification drops it, the industry attached Williams' name to
-    * the modification anyway, and Tulip, pandas-ta-classic, cTrader, TC2000,
-    * WealthCharts and MultiCharts all ship the no-volume form. Shipping the
-    * volume form under this name would surprise every user, so this is the
-    * one place the usual "the original author wins" rule is set aside. The
-    * volume-weighted series is a different indicator.
+    * NO VOLUME IS CONSUMED, despite the name. Larry Williams' original
+    * multiplies the move by volume; Achelis' modification drops it, the
+    * industry attached Williams' name to the modification anyway, and Tulip,
+    * pandas-ta-classic, cTrader, TC2000, WealthCharts and MultiCharts all ship
+    * the no-volume form. Shipping the volume form under this name would
+    * surprise every user, so this is the one place the usual "the original
+    * author wins" rule is set aside. The volume-weighted series is a different
+    * indicator. What is left once the multiplier is gone is a signed
+    * close-to-close move clipped by the true-range extreme and accumulated --
+    * momentum measured on the true range -- which is why this is grouped with
+    * the other no-volume directional lines (PLUS_DM, MINUS_DM, BOP, WILLR)
+    * rather than with AD/OBV.
     *
     * The three-way branch is written with plain > and < rather than any
     * epsilon: the flat arm must fire on exactly-equal consecutive closes and
