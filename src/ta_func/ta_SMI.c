@@ -285,10 +285,21 @@ TA_LIB_API TA_RetCode TA_SMI( int    startIdx,
          emaSlowNum = fma(num - emaSlowNum, kSlow, emaSlowNum);
          emaSlowDen = fma(den - emaSlowDen, kSlow, emaSlowDen);
       }
-      /* Stage 2: the fast EMA, over what stage 1 publishes. */
-      nFast = nBar - lookbackSlow;
-      if( nFast >= 0 )
+      /* Stage 2: the fast EMA, over what stage 1 publishes.
+       *
+       * The stage counters are compared BEFORE they are subtracted, never
+       * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
+       * is correct in C, where the counters are signed, and broken everywhere
+       * else: the Rust backend renders them as `usize`, so the subtraction
+       * underflows for the first lookbackSlow bars -- a panic in a debug build
+       * and a wrap in release. It would also be invisible to the cross-language
+       * gate, which runs release servers at unstable period 0, where the branch
+       * the wrap wrongly takes happens to be a no-op because both accumulators
+       * are still 0.0.
+       */
+      if( nBar >= lookbackSlow )
       {
+         nFast = nBar - lookbackSlow;
          if( nFast < optInFastPeriod )
          {
             sumFastNum = sumFastNum + emaSlowNum;
@@ -305,9 +316,9 @@ TA_LIB_API TA_RetCode TA_SMI( int    startIdx,
          }
       }
       /* Stage 3: the SMI line, then the signal EMA over it. */
-      nSignal = nFast - lookbackFast;
-      if( nSignal >= 0 )
+      if( nBar >= lookbackSlow + lookbackFast )
       {
+         nSignal = nBar - lookbackSlow - lookbackFast;
          halfDen = 0.5 * emaFastDen;
          if( !TA_IS_ZERO(halfDen) )
          {
@@ -586,9 +597,9 @@ TA_RetCode TA_S_SMI( int    startIdx,
          emaSlowNum = fma(num - emaSlowNum, kSlow, emaSlowNum);
          emaSlowDen = fma(den - emaSlowDen, kSlow, emaSlowDen);
       }
-      nFast = nBar - lookbackSlow;
-      if( nFast >= 0 )
+      if( nBar >= lookbackSlow )
       {
+         nFast = nBar - lookbackSlow;
          if( nFast < optInFastPeriod )
          {
             sumFastNum = sumFastNum + emaSlowNum;
@@ -604,9 +615,9 @@ TA_RetCode TA_S_SMI( int    startIdx,
             emaFastDen = fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
          }
       }
-      nSignal = nFast - lookbackFast;
-      if( nSignal >= 0 )
+      if( nBar >= lookbackSlow + lookbackFast )
       {
+         nSignal = nBar - lookbackSlow - lookbackFast;
          halfDen = 0.5 * emaFastDen;
          if( !TA_IS_ZERO(halfDen) )
          {
@@ -1024,10 +1035,21 @@ static TA_RetCode TA_SMI_OpenPass( struct TA_SMI_Stream **stream, const double i
             emaSlowNum = fma(num - emaSlowNum, kSlow, emaSlowNum);
             emaSlowDen = fma(den - emaSlowDen, kSlow, emaSlowDen);
          }
-         /* Stage 2: the fast EMA, over what stage 1 publishes. */
-         nFast = nBar - lookbackSlow;
-         if( nFast >= 0 )
+         /* Stage 2: the fast EMA, over what stage 1 publishes.
+          *
+          * The stage counters are compared BEFORE they are subtracted, never
+          * after. Writing this as `nFast = nBar - lookbackSlow; if( nFast >= 0 )`
+          * is correct in C, where the counters are signed, and broken everywhere
+          * else: the Rust backend renders them as `usize`, so the subtraction
+          * underflows for the first lookbackSlow bars -- a panic in a debug build
+          * and a wrap in release. It would also be invisible to the cross-language
+          * gate, which runs release servers at unstable period 0, where the branch
+          * the wrap wrongly takes happens to be a no-op because both accumulators
+          * are still 0.0.
+          */
+         if( nBar >= lookbackSlow )
          {
+            nFast = nBar - lookbackSlow;
             if( nFast < optInFastPeriod )
             {
                sumFastNum = sumFastNum + emaSlowNum;
@@ -1044,9 +1066,9 @@ static TA_RetCode TA_SMI_OpenPass( struct TA_SMI_Stream **stream, const double i
             }
          }
          /* Stage 3: the SMI line, then the signal EMA over it. */
-         nSignal = nFast - lookbackFast;
-         if( nSignal >= 0 )
+         if( nBar >= lookbackSlow + lookbackFast )
          {
+            nSignal = nBar - lookbackSlow - lookbackFast;
             halfDen = 0.5 * emaFastDen;
             if( !TA_IS_ZERO(halfDen) )
             {
