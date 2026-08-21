@@ -17,6 +17,7 @@ TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Vol
 
 - The sums run from the first bar of the range and are never reset. Charting packages anchor VWAP to a trading session and restart it at each session boundary; no TA-Lib function takes a timestamp or a session boundary, so the anchor is the range the caller asks for — pass one session's bars to get that session's VWAP. This is how AD and OBV, the other cumulative volume functions, are already used across sessions.
 - Volume is expected to be non-negative. A zero-volume bar carries no weight, so one occurring after volume has traded leaves the average exactly where it was. Before *any* volume has traded there are no weights at all and the weighted mean is undefined; those bars carry the previous value forward, which is 0 until the first bar with volume. A successful call never emits NaN or ±Inf. Other implementations differ here: pandas-ta-classic divides through and emits NaN, and trading-signals emits no value for the bar at all.
+- A bar whose price or volume is not a finite number cannot be weighted, so it is left out of the average entirely and repeats the previous value. It is skipped, not absorbed: the running average stays usable and resumes on the next bar that can be weighted, rather than being held at one stale value for the remainder of the range.
 
 ## Inputs
 

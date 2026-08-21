@@ -565,6 +565,115 @@ static ErrorNumber test_vwap_edges( void )
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
+   /* A bar that cannot be weighted is left out of the average ENTIRELY and
+    * repeats the previous value -- and then the average RESUMES.
+    *
+    * "Skipped, not absorbed" is the whole point, and each expectation below
+    * pins a different half of it:
+    *
+    *   out[3] == out[2] bitwise   -- the bad bar produced no new value.
+    *   out[4] == exactly 101.75   -- which is (100+101+102+104)*1000/4000,
+    *                                 the average over bars {0,1,2,4}. So the
+    *                                 bad bar contributed neither its price
+    *                                 term NOR its volume: had the volume
+    *                                 alone reached the divisor, this would be
+    *                                 407000/5000 == 81.4.
+    *   out[11] != out[3]          -- the line is still moving ten bars later.
+    *
+    * Letting the bad bar into the running sums instead would freeze the
+    * output at one stale value for EVERY remaining bar however clean it was,
+    * because a cumulative sum has no trailing term to subtract it back out.
+    * Silent, permanent, and a plausible-looking price the whole way -- which
+    * is exactly what this leg exists to prevent regressing to.
+    *
+    * Three ways for a bar to be unusable, all reaching the same guard: a
+    * non-finite volume, an infinite volume, and a non-finite PRICE with a
+    * perfectly good volume. The last one is what proves the two sums are
+    * committed together rather than independently.
+    */
+   {
+      static const double badVol[3] = { (double)NAN, (double)INFINITY, -(double)INFINITY };
+      const char *badName[4] = { "NaN volume", "+Inf volume", "-Inf volume", "NaN close" };
+      int which;
+
+      for( which = 0; which < 4; which++ )
+      {
+         for( i = 0; i < 12; i++ )
+         {
+            high[i]   = 101.0 + i;
+            low[i]    =  99.0 + i;
+            close[i]  = 100.0 + i;
+            volume[i] = 1000.0;
+         }
+         if( which < 3 )
+            volume[3] = badVol[which];
+         else
+            close[3] = (double)NAN;   /* price unusable, volume perfectly good */
+
+         retCode = TA_VWAP( 0, 11, high, low, close, volume, &begIdx, &nbElement, out );
+         if( retCode != TA_SUCCESS || nbElement != 12 )
+         {
+            printf( "VWAP skip-bar Fail (%s): rc=%d nbElement=%d expected (success,12)\n",
+                    badName[which], (int)retCode, nbElement );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         for( i = 0; i < nbElement; i++ )
+            if( !isfinite( out[i] ) )
+            {
+               printf( "VWAP skip-bar Fail (%s): out[%d] = %.17g is not finite\n",
+                       badName[which], i, out[i] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         if( memcmp( &out[3], &out[2], sizeof(double) ) != 0 )
+         {
+            printf( "VWAP skip-bar Fail (%s): out[3] = %.17g, expected the bar-2 value "
+                    "%.17g bit for bit\n", badName[which], out[3], out[2] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         if( out[4] != 101.75 )
+         {
+            printf( "VWAP skip-bar Fail (%s): out[4] = %.17g, expected exactly 101.75 "
+                    "(the average over bars 0,1,2,4). 81.4 would mean the bad bar's "
+                    "volume still reached the divisor; a frozen %.17g would mean the "
+                    "sums were poisoned.\n", badName[which], out[4], out[3] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         if( out[11] == out[3] )
+         {
+            printf( "VWAP skip-bar Fail (%s): out[11] is still the frozen %.17g -- the "
+                    "average never resumed\n", badName[which], out[11] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+
+         /* Cross-language, on the DOCTORED arrays. The guard is generated into
+          * all four backends, but every other cross-language leg in this file
+          * feeds the clean 252-bar history, --codegen skips VWAP (no frozen
+          * baseline), and no fuzz shape emits a non-finite bar -- so without
+          * this call the skip has C-only coverage. An emitter that gated
+          * `sumPV +=` and left `sumV += volume` unconditional in one language
+          * would bias every later value there and ship green.
+          *
+          * The inputs travel as hex-of-IEEE-bits, so the NaN and the
+          * infinities arrive bit-exact rather than through a %g round-trip. */
+         if( server_verify_active() )
+         {
+            ErrorNumber e;
+
+            e = server_verify( "VWAP", 0, 11, 12,
+                               retCode, begIdx, nbElement,
+                               (const TA_Real*[]){ high, low, close, volume, NULL },
+                               NULL, 0,
+                               (const TA_Real*[]){ out, NULL }, NULL );
+            if( e != TA_TEST_PASS )
+            {
+               printf( "VWAP skip-bar Fail (%s): cross-language mismatch on the "
+                       "doctored bar\n", badName[which] );
+               return e;
+            }
+         }
+      }
+   }
+
    /* Path dependence, stated directly rather than only implied by the two
     * golden shapes: the same bar computed from a later startIdx is a
     * different number, because the sums are seeded at startIdx and never

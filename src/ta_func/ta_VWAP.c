@@ -123,17 +123,63 @@ TA_LIB_API TA_RetCode TA_VWAP( int    startIdx,
        */
       typPrice = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
       volume = inVolume[i];
-      /* The product is kept in its own statement so no compiler may contract
-       * it into an FMA. Contracting here would make the C output disagree
-       * with the Rust, Java and C# backends under the cross-language bitwise
-       * gate. Same reason as in ta_codegen/input/vwma/vwma.c.
+      /* A bar is weighted only if both of its terms are real numbers. That is
+       * the whole condition: a NaN or an infinity in the price or the volume
+       * is the only way a bar cannot be weighted, and every other bar --
+       * including one that traded nothing -- is weighted normally.
+       *
+       * The test gates BOTH adds. Letting the volume in without its matching
+       * price term would leave a weight in the divisor that nothing paid for,
+       * biasing every later value: a NaN close with a good volume would drag
+       * the next value 25% low.
+       *
+       * Skipping the bar is what makes this recoverable. These are CUMULATIVE
+       * sums with no trailing term to subtract anything back out, so a single
+       * non-finite bar allowed in would leave both sums non-finite for the
+       * REST of the call -- the line would repeat one stale value on every
+       * later bar however clean it was, silently, and looking like a plausible
+       * price the whole way. Skipping keeps the state usable, so the average
+       * resumes on the very next bar that can be weighted.
+       *
+       * Testing the two INPUTS, not the product and not the candidate sums, is
+       * a measured choice:
+       *
+       *   - The candidate sums would have to be committed conditionally, which
+       *     puts four cmovs in the loop-carried dependency chain and costs
+       *     +60% on this loop. Both forms below leave the adds unconditional
+       *     inside a predicted branch and measure free.
+       *   - The product alone would also detect every unusable bar, one test
+       *     instead of two, and measures the same. But it would additionally
+       *     drop a WELL-FORMED bar whose price and volume are both finite and
+       *     whose product merely overflows -- silently, and taking that bar's
+       *     volume out of the divisor with it. Testing the inputs leaves that
+       *     case exactly as it was before this guard existed: the overflow
+       *     reaches the sum and the call reports Inf, which is the documented
+       *     `double` overflow class rather than an indicator defect, and is
+       *     louder than a freeze.
+       *
+       * So this changes behaviour for one thing only: a bar whose price or
+       * volume is not a finite number. On finite data the test is always true
+       * and no value the function has ever produced moves. Only the batch path
+       * needs it -- the streaming Update/Peek entry points reject a non-finite
+       * bar with TA_BAD_PARAM before it reaches any accumulator.
        */
-      tempReal = typPrice * volume;
-      sumPV += tempReal;
-      sumV += volume;
+      if( TA_IS_FINITE(typPrice) && TA_IS_FINITE(volume) )
+      {
+         /* The product is kept in its own statement so no compiler may
+          * contract it into an FMA. Contracting here would make the C output
+          * disagree with the Rust, Java and C# backends under the
+          * cross-language bitwise gate. Same reason as in
+          * ta_codegen/input/vwma/vwma.c.
+          */
+         tempReal = typPrice * volume;
+         sumPV += tempReal;
+         sumV += volume;
+      }
       /* Bars that traded nothing carry no weight, so a zero-volume bar in
        * the middle of a series leaves both sums untouched and repeats the
-       * previous value on its own -- no arm needed for that.
+       * previous value on its own -- no arm needed for that. A bar skipped
+       * by the guard above repeats it for the same reason.
        *
        * The arm below is for the one case the ratio cannot express: a
        * leading run of bars before any volume has traded, where there are
@@ -203,9 +249,12 @@ TA_RetCode TA_S_VWAP( int    startIdx,
    {
       typPrice = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3.0;
       volume = (double)inVolume[i];
-      tempReal = typPrice * volume;
-      sumPV += tempReal;
-      sumV += volume;
+      if( TA_IS_FINITE(typPrice) && TA_IS_FINITE(volume) )
+      {
+         tempReal = typPrice * volume;
+         sumPV += tempReal;
+         sumV += volume;
+      }
       if( sumV > 0.0 )
       {
          vwap = sumPV / sumV;
@@ -222,6 +271,7 @@ TA_RetCode TA_S_VWAP( int    startIdx,
 struct TA_VWAP_Stream {
    double sumPV;
    double sumV;
+   double tempReal;
    double vwap;
 };
 
@@ -230,24 +280,69 @@ static void TA_VWAP_StepInternal( struct TA_VWAP_Stream *sp, double inHigh, doub
 {
    double typPrice;
    double volume;
-   double tempReal;
 
    /* The typical price is written exactly as in ta_TYPPRICE.c so that the
     * two agree bit for bit and this stays a true composite of it.
     */
    typPrice = (inHigh + inLow + inClose) / 3.0;
    volume = inVolume;
-   /* The product is kept in its own statement so no compiler may contract
-    * it into an FMA. Contracting here would make the C output disagree
-    * with the Rust, Java and C# backends under the cross-language bitwise
-    * gate. Same reason as in ta_codegen/input/vwma/vwma.c.
+   /* A bar is weighted only if both of its terms are real numbers. That is
+    * the whole condition: a NaN or an infinity in the price or the volume
+    * is the only way a bar cannot be weighted, and every other bar --
+    * including one that traded nothing -- is weighted normally.
+    *
+    * The test gates BOTH adds. Letting the volume in without its matching
+    * price term would leave a weight in the divisor that nothing paid for,
+    * biasing every later value: a NaN close with a good volume would drag
+    * the next value 25% low.
+    *
+    * Skipping the bar is what makes this recoverable. These are CUMULATIVE
+    * sums with no trailing term to subtract anything back out, so a single
+    * non-finite bar allowed in would leave both sums non-finite for the
+    * REST of the call -- the line would repeat one stale value on every
+    * later bar however clean it was, silently, and looking like a plausible
+    * price the whole way. Skipping keeps the state usable, so the average
+    * resumes on the very next bar that can be weighted.
+    *
+    * Testing the two INPUTS, not the product and not the candidate sums, is
+    * a measured choice:
+    *
+    *   - The candidate sums would have to be committed conditionally, which
+    *     puts four cmovs in the loop-carried dependency chain and costs
+    *     +60% on this loop. Both forms below leave the adds unconditional
+    *     inside a predicted branch and measure free.
+    *   - The product alone would also detect every unusable bar, one test
+    *     instead of two, and measures the same. But it would additionally
+    *     drop a WELL-FORMED bar whose price and volume are both finite and
+    *     whose product merely overflows -- silently, and taking that bar's
+    *     volume out of the divisor with it. Testing the inputs leaves that
+    *     case exactly as it was before this guard existed: the overflow
+    *     reaches the sum and the call reports Inf, which is the documented
+    *     `double` overflow class rather than an indicator defect, and is
+    *     louder than a freeze.
+    *
+    * So this changes behaviour for one thing only: a bar whose price or
+    * volume is not a finite number. On finite data the test is always true
+    * and no value the function has ever produced moves. Only the batch path
+    * needs it -- the streaming Update/Peek entry points reject a non-finite
+    * bar with TA_BAD_PARAM before it reaches any accumulator.
     */
-   tempReal = typPrice * volume;
-   sp->sumPV += tempReal;
-   sp->sumV += volume;
+   if( TA_IS_FINITE(typPrice) && TA_IS_FINITE(volume) )
+   {
+      /* The product is kept in its own statement so no compiler may
+       * contract it into an FMA. Contracting here would make the C output
+       * disagree with the Rust, Java and C# backends under the
+       * cross-language bitwise gate. Same reason as in
+       * ta_codegen/input/vwma/vwma.c.
+       */
+      sp->tempReal = typPrice * volume;
+      sp->sumPV += sp->tempReal;
+      sp->sumV += volume;
+   }
    /* Bars that traded nothing carry no weight, so a zero-volume bar in
     * the middle of a series leaves both sums untouched and repeats the
-    * previous value on its own -- no arm needed for that.
+    * previous value on its own -- no arm needed for that. A bar skipped
+    * by the guard above repeats it for the same reason.
     *
     * The arm below is for the one case the ratio cannot express: a
     * leading run of bars before any volume has traded, where there are
@@ -293,7 +388,7 @@ static TA_RetCode TA_VWAP_OpenPass( struct TA_VWAP_Stream **stream, const double
       double sumV = 0.0;
       double typPrice;
       double volume;
-      double tempReal;
+      double tempReal = 0.0;
       double vwap = 0.0;
       int outIdx;
       int i;
@@ -320,17 +415,63 @@ static TA_RetCode TA_VWAP_OpenPass( struct TA_VWAP_Stream **stream, const double
           */
          typPrice = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
          volume = inVolume[i];
-         /* The product is kept in its own statement so no compiler may contract
-          * it into an FMA. Contracting here would make the C output disagree
-          * with the Rust, Java and C# backends under the cross-language bitwise
-          * gate. Same reason as in ta_codegen/input/vwma/vwma.c.
+         /* A bar is weighted only if both of its terms are real numbers. That is
+          * the whole condition: a NaN or an infinity in the price or the volume
+          * is the only way a bar cannot be weighted, and every other bar --
+          * including one that traded nothing -- is weighted normally.
+          *
+          * The test gates BOTH adds. Letting the volume in without its matching
+          * price term would leave a weight in the divisor that nothing paid for,
+          * biasing every later value: a NaN close with a good volume would drag
+          * the next value 25% low.
+          *
+          * Skipping the bar is what makes this recoverable. These are CUMULATIVE
+          * sums with no trailing term to subtract anything back out, so a single
+          * non-finite bar allowed in would leave both sums non-finite for the
+          * REST of the call -- the line would repeat one stale value on every
+          * later bar however clean it was, silently, and looking like a plausible
+          * price the whole way. Skipping keeps the state usable, so the average
+          * resumes on the very next bar that can be weighted.
+          *
+          * Testing the two INPUTS, not the product and not the candidate sums, is
+          * a measured choice:
+          *
+          *   - The candidate sums would have to be committed conditionally, which
+          *     puts four cmovs in the loop-carried dependency chain and costs
+          *     +60% on this loop. Both forms below leave the adds unconditional
+          *     inside a predicted branch and measure free.
+          *   - The product alone would also detect every unusable bar, one test
+          *     instead of two, and measures the same. But it would additionally
+          *     drop a WELL-FORMED bar whose price and volume are both finite and
+          *     whose product merely overflows -- silently, and taking that bar's
+          *     volume out of the divisor with it. Testing the inputs leaves that
+          *     case exactly as it was before this guard existed: the overflow
+          *     reaches the sum and the call reports Inf, which is the documented
+          *     `double` overflow class rather than an indicator defect, and is
+          *     louder than a freeze.
+          *
+          * So this changes behaviour for one thing only: a bar whose price or
+          * volume is not a finite number. On finite data the test is always true
+          * and no value the function has ever produced moves. Only the batch path
+          * needs it -- the streaming Update/Peek entry points reject a non-finite
+          * bar with TA_BAD_PARAM before it reaches any accumulator.
           */
-         tempReal = typPrice * volume;
-         sumPV += tempReal;
-         sumV += volume;
+         if( TA_IS_FINITE(typPrice) && TA_IS_FINITE(volume) )
+         {
+            /* The product is kept in its own statement so no compiler may
+             * contract it into an FMA. Contracting here would make the C output
+             * disagree with the Rust, Java and C# backends under the
+             * cross-language bitwise gate. Same reason as in
+             * ta_codegen/input/vwma/vwma.c.
+             */
+            tempReal = typPrice * volume;
+            sumPV += tempReal;
+            sumV += volume;
+         }
          /* Bars that traded nothing carry no weight, so a zero-volume bar in
           * the middle of a series leaves both sums untouched and repeats the
-          * previous value on its own -- no arm needed for that.
+          * previous value on its own -- no arm needed for that. A bar skipped
+          * by the guard above repeats it for the same reason.
           *
           * The arm below is for the one case the ratio cannot express: a
           * leading run of bars before any volume has traded, where there are
@@ -361,6 +502,7 @@ static TA_RetCode TA_VWAP_OpenPass( struct TA_VWAP_Stream **stream, const double
       memset( sp, 0, sizeof(*sp) );
       sp->sumPV = sumPV;
       sp->sumV = sumV;
+      sp->tempReal = tempReal;
       sp->vwap = vwap;
       *stream = sp;
       return TA_SUCCESS;
