@@ -176,8 +176,6 @@ Notes that make this precise:
   `TA_XXX_Lookback() + 1` bars; values are unaffected. It is read once at
   `open`; changing it later affects only future opens, never a live stream.
 - **Non-finite input: single values are rejected, arrays are not checked.**
-  The line runs between **input arrays** and **single values**, not between the
-  batch and streaming tiers.
 
   An **input array** is never scanned, in either tier. Keeping an array free of
   NaN and ±Inf is the caller's responsibility; passing a non-finite one is
