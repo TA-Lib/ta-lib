@@ -719,7 +719,7 @@ fn body_name(base: &str) -> String {
 /// **Order.** `requireIndexRange` comes first, then the presence of any non-buffer
 /// argument, then the buffer checks: the specification evaluates B1/B2 before
 /// B3, and this wrapper used to run the presence check ahead of both, so an
-/// absent buffer pre-empted an out-of-range index (Part 3 item 3). The null enum
+/// absent buffer pre-empted an out-of-range index (open item 3). The null enum
 /// check (item 4) has to sit ahead of the `_Lookback` call below, because that is
 /// where a null one is first dereferenced.
 fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {

@@ -29766,7 +29766,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -29877,7 +29877,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ACCBANDS_Lookback(optInTimePeriod);
@@ -29989,7 +29989,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ACOS_Lookback();
@@ -30100,7 +30100,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AD_Lookback();
@@ -30211,7 +30211,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ADD_Lookback();
@@ -30326,7 +30326,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
@@ -30442,7 +30442,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ADX_Lookback(optInTimePeriod);
@@ -30555,7 +30555,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ADXR_Lookback(optInTimePeriod);
@@ -30666,7 +30666,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod);
@@ -30773,7 +30773,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -30879,7 +30879,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AROON_Lookback(optInTimePeriod);
@@ -30990,7 +30990,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AROONOSC_Lookback(optInTimePeriod);
@@ -31094,7 +31094,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ASIN_Lookback();
@@ -31196,7 +31196,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ATAN_Lookback();
@@ -31306,7 +31306,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ATR_Lookback(optInTimePeriod);
@@ -31413,7 +31413,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AVGDEV_Lookback(optInTimePeriod);
@@ -31524,7 +31524,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.AVGPRICE_Lookback();
@@ -31636,7 +31636,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -31748,7 +31748,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.BETA_Lookback(optInTimePeriod);
@@ -31861,7 +31861,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.BOP_Lookback();
@@ -31976,7 +31976,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CCI_Lookback(optInTimePeriod);
@@ -32091,7 +32091,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDL2CROWS_Lookback();
@@ -32208,7 +32208,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDL3BLACKCROWS_Lookback();
@@ -32325,7 +32325,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDL3INSIDE_Lookback();
@@ -32442,7 +32442,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDL3LINESTRIKE_Lookback();
@@ -32559,7 +32559,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDL3OUTSIDE_Lookback();
@@ -32676,7 +32676,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDL3STARSINSOUTH_Lookback();
@@ -32793,7 +32793,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDL3WHITESOLDIERS_Lookback();
@@ -32911,7 +32911,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLABANDONEDBABY_Lookback(optInPenetration);
@@ -33028,7 +33028,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLADVANCEBLOCK_Lookback();
@@ -33145,7 +33145,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLBELTHOLD_Lookback();
@@ -33262,7 +33262,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLBREAKAWAY_Lookback();
@@ -33379,7 +33379,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLCLOSINGMARUBOZU_Lookback();
@@ -33496,7 +33496,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLCONCEALBABYSWALL_Lookback();
@@ -33613,7 +33613,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLCOUNTERATTACK_Lookback();
@@ -33731,7 +33731,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
@@ -33848,7 +33848,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLDOJI_Lookback();
@@ -33965,7 +33965,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLDOJISTAR_Lookback();
@@ -34082,7 +34082,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLDRAGONFLYDOJI_Lookback();
@@ -34199,7 +34199,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLENGULFING_Lookback();
@@ -34317,7 +34317,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
@@ -34435,7 +34435,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLEVENINGSTAR_Lookback(optInPenetration);
@@ -34552,7 +34552,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLGAPSIDESIDEWHITE_Lookback();
@@ -34669,7 +34669,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLGRAVESTONEDOJI_Lookback();
@@ -34786,7 +34786,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLHAMMER_Lookback();
@@ -34903,7 +34903,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLHANGINGMAN_Lookback();
@@ -35020,7 +35020,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLHARAMI_Lookback();
@@ -35137,7 +35137,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLHARAMICROSS_Lookback();
@@ -35254,7 +35254,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLHIGHWAVE_Lookback();
@@ -35371,7 +35371,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLHIKKAKE_Lookback();
@@ -35488,7 +35488,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLHIKKAKEMOD_Lookback();
@@ -35605,7 +35605,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLHOMINGPIGEON_Lookback();
@@ -35722,7 +35722,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLIDENTICAL3CROWS_Lookback();
@@ -35839,7 +35839,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLINNECK_Lookback();
@@ -35956,7 +35956,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLINVERTEDHAMMER_Lookback();
@@ -36073,7 +36073,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLKICKING_Lookback();
@@ -36190,7 +36190,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLKICKINGBYLENGTH_Lookback();
@@ -36307,7 +36307,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLLADDERBOTTOM_Lookback();
@@ -36424,7 +36424,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLLONGLEGGEDDOJI_Lookback();
@@ -36541,7 +36541,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLLONGLINE_Lookback();
@@ -36658,7 +36658,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLMARUBOZU_Lookback();
@@ -36775,7 +36775,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLMATCHINGLOW_Lookback();
@@ -36893,7 +36893,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLMATHOLD_Lookback(optInPenetration);
@@ -37011,7 +37011,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
@@ -37129,7 +37129,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLMORNINGSTAR_Lookback(optInPenetration);
@@ -37246,7 +37246,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLONNECK_Lookback();
@@ -37363,7 +37363,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLPIERCING_Lookback();
@@ -37480,7 +37480,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLRICKSHAWMAN_Lookback();
@@ -37597,7 +37597,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLRISEFALL3METHODS_Lookback();
@@ -37714,7 +37714,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLSEPARATINGLINES_Lookback();
@@ -37831,7 +37831,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLSHOOTINGSTAR_Lookback();
@@ -37948,7 +37948,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLSHORTLINE_Lookback();
@@ -38065,7 +38065,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLSPINNINGTOP_Lookback();
@@ -38182,7 +38182,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLSTALLEDPATTERN_Lookback();
@@ -38299,7 +38299,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLSTICKSANDWICH_Lookback();
@@ -38416,7 +38416,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLTAKURI_Lookback();
@@ -38533,7 +38533,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLTASUKIGAP_Lookback();
@@ -38650,7 +38650,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLTHRUSTING_Lookback();
@@ -38767,7 +38767,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLTRISTAR_Lookback();
@@ -38884,7 +38884,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLUNIQUE3RIVER_Lookback();
@@ -39001,7 +39001,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLUPSIDEGAP2CROWS_Lookback();
@@ -39118,7 +39118,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CDLXSIDEGAP3METHODS_Lookback();
@@ -39226,7 +39226,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CEIL_Lookback();
@@ -39338,7 +39338,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CMF_Lookback(optInTimePeriod);
@@ -39448,7 +39448,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CMO_Lookback(optInTimePeriod);
@@ -39551,7 +39551,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CMOU_Lookback(optInTimePeriod);
@@ -39657,7 +39657,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.CORREL_Lookback(optInTimePeriod);
@@ -39761,7 +39761,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.COS_Lookback();
@@ -39863,7 +39863,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.COSH_Lookback();
@@ -39966,7 +39966,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.DEMA_Lookback(optInTimePeriod);
@@ -40071,7 +40071,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.DIV_Lookback();
@@ -40183,7 +40183,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.DX_Lookback(optInTimePeriod);
@@ -40293,7 +40293,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.EFI_Lookback(optInTimePeriod);
@@ -40399,7 +40399,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.EMA_Lookback(optInTimePeriod);
@@ -40501,7 +40501,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.EXP_Lookback();
@@ -40603,7 +40603,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.FLOOR_Lookback();
@@ -40706,7 +40706,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HMA_Lookback(optInTimePeriod);
@@ -40809,7 +40809,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HT_DCPERIOD_Lookback();
@@ -40912,7 +40912,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HT_DCPHASE_Lookback();
@@ -41015,7 +41015,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HT_PHASOR_Lookback();
@@ -41121,7 +41121,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HT_SINE_Lookback();
@@ -41227,7 +41227,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HT_TRENDLINE_Lookback();
@@ -41330,7 +41330,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.HT_TRENDMODE_Lookback();
@@ -41436,7 +41436,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.IMI_Lookback(optInTimePeriod);
@@ -41542,7 +41542,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.KAMA_Lookback(optInTimePeriod);
@@ -41645,7 +41645,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LINEARREG_Lookback(optInTimePeriod);
@@ -41748,7 +41748,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod);
@@ -41851,7 +41851,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
@@ -41954,7 +41954,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod);
@@ -42056,7 +42056,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LN_Lookback();
@@ -42158,7 +42158,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.LOG10_Lookback();
@@ -42262,7 +42262,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MA_Lookback(optInTimePeriod, optInMAType);
@@ -42367,7 +42367,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -42481,7 +42481,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -42590,7 +42590,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MACDFIX_Lookback(optInSignalPeriod);
@@ -42701,7 +42701,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit);
@@ -42812,7 +42812,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MARKETFI_Lookback();
@@ -42924,7 +42924,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -43029,7 +43029,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MAX_Lookback(optInTimePeriod);
@@ -43132,7 +43132,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MAXINDEX_Lookback(optInTimePeriod);
@@ -43237,7 +43237,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MEDPRICE_Lookback();
@@ -43351,7 +43351,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MFI_Lookback(optInTimePeriod);
@@ -43460,7 +43460,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MIDPOINT_Lookback(optInTimePeriod);
@@ -43566,7 +43566,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MIDPRICE_Lookback(optInTimePeriod);
@@ -43671,7 +43671,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MIN_Lookback(optInTimePeriod);
@@ -43774,7 +43774,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MININDEX_Lookback(optInTimePeriod);
@@ -43877,7 +43877,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MINMAX_Lookback(optInTimePeriod);
@@ -43983,7 +43983,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MINMAXINDEX_Lookback(optInTimePeriod);
@@ -44096,7 +44096,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MINUS_DI_Lookback(optInTimePeriod);
@@ -44207,7 +44207,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MINUS_DM_Lookback(optInTimePeriod);
@@ -44312,7 +44312,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MOM_Lookback(optInTimePeriod);
@@ -44417,7 +44417,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.MULT_Lookback();
@@ -44529,7 +44529,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.NATR_Lookback(optInTimePeriod);
@@ -44638,7 +44638,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.NVI_Lookback();
@@ -44745,7 +44745,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.OBV_Lookback();
@@ -44857,7 +44857,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PLUS_DI_Lookback(optInTimePeriod);
@@ -44968,7 +44968,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PLUS_DM_Lookback(optInTimePeriod);
@@ -45075,7 +45075,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -45180,7 +45180,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PVI_Lookback();
@@ -45287,7 +45287,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -45393,7 +45393,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.QSTICK_Lookback(optInTimePeriod);
@@ -45498,7 +45498,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ROC_Lookback(optInTimePeriod);
@@ -45601,7 +45601,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ROCP_Lookback(optInTimePeriod);
@@ -45704,7 +45704,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ROCR_Lookback(optInTimePeriod);
@@ -45807,7 +45807,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ROCR100_Lookback(optInTimePeriod);
@@ -45911,7 +45911,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.RSI_Lookback(optInTimePeriod);
@@ -46018,7 +46018,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SAR_Lookback(optInAcceleration, optInMaximum);
@@ -46133,7 +46133,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -46237,7 +46237,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SIN_Lookback();
@@ -46339,7 +46339,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SINH_Lookback();
@@ -46442,7 +46442,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SMA_Lookback(optInTimePeriod);
@@ -46554,7 +46554,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -46663,7 +46663,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SQRT_Lookback();
@@ -46767,7 +46767,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev);
@@ -46880,7 +46880,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -46998,7 +46998,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -47111,7 +47111,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -47219,7 +47219,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SUB_Lookback();
@@ -47324,7 +47324,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.SUM_Lookback(optInTimePeriod);
@@ -47429,7 +47429,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.T3_Lookback(optInTimePeriod, optInVFactor);
@@ -47531,7 +47531,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TAN_Lookback();
@@ -47633,7 +47633,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TANH_Lookback();
@@ -47736,7 +47736,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TEMA_Lookback(optInTimePeriod);
@@ -47844,7 +47844,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TRANGE_Lookback();
@@ -47951,7 +47951,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TRIMA_Lookback(optInTimePeriod);
@@ -48054,7 +48054,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TRIX_Lookback(optInTimePeriod);
@@ -48157,7 +48157,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TSF_Lookback(optInTimePeriod);
@@ -48265,7 +48265,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.TYPPRICE_Lookback();
@@ -48380,7 +48380,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -48488,7 +48488,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.VAR_Lookback(optInTimePeriod, optInNbDev);
@@ -48599,7 +48599,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.VWAP_Lookback();
@@ -48711,7 +48711,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.VWMA_Lookback(optInTimePeriod);
@@ -48821,7 +48821,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.WAD_Lookback();
@@ -48933,7 +48933,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.WCLPRICE_Lookback();
@@ -49046,7 +49046,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.WILLR_Lookback(optInTimePeriod);
@@ -49153,7 +49153,7 @@ public class TaCodegenServe {
         // accepted by C and Java -- a four-way divergence on a call the specification says
         // all four accept. Sizing to zero here would reach it on every multi-output
         // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec Part 3 item 11.
+        // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
         int _lb = core.WMA_Lookback(optInTimePeriod);

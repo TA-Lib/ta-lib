@@ -6858,7 +6858,7 @@ buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust\n
 accepted by C and Java -- a four-way divergence on a call the specification says\n\
 all four accept. Sizing to zero here would reach it on every multi-output\n\
 function, which is a semantic question, not a harness one. Recorded as\n\
-error-handling-spec Part 3 item 11.\n\
+error-handling-spec, open item 11.\n\
 The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no\n\
 sizes and cannot make the check, so an exact buffer would test nothing there.";
 

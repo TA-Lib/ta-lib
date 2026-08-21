@@ -273,7 +273,7 @@ public final class Core {
     * runs first only to fix the ORDER. The specification lists the index rules
     * before the presence check, and without this an absent buffer pre-empted
     * them — a negative {@code startIdx} with a null input reported the null
-    * ({@code docs/error-handling-spec.md}, Part 3 item 3). A caller cannot fix
+    * ({@code docs/error-handling-spec.md}, open item 3). A caller cannot fix
     * an argument the diagnosis never mentions.
     *
     * <p>The duplication is deliberate and cheap: two comparisons on a path that
@@ -296,7 +296,7 @@ public final class Core {
     * types, C's are integers, and Rust's cannot be absent. A null one used to
     * reach the {@code switch} inside the function's own {@code _Lookback} and
     * surface as a bare {@link NullPointerException} naming neither the function
-    * nor the parameter ({@code docs/error-handling-spec.md}, Part 3 item 4).
+    * nor the parameter ({@code docs/error-handling-spec.md}, open item 4).
     *
     * <p>It reports {@link RetCode#BadParam}, the code C answers for an absent
     * argument it can detect, and it runs after {@link Core#requireIndexRange}

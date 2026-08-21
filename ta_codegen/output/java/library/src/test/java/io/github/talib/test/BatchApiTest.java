@@ -752,7 +752,7 @@ public class BatchApiTest {
      * <p>The specification lists B-1 and B-2 ahead of B-3, and this wrapper used
      * to run the presence check first, so a negative {@code startIdx} with a null
      * input reported the null and said nothing about the index
-     * ({@code docs/error-handling-spec.md}, Part 3 item 3). Every case here is
+     * ({@code docs/error-handling-spec.md}, open item 3). Every case here is
      * BOTH faults at once; only the order decides which is reported.
      */
     static void anIndexFaultOutranksAnAbsentArgument() {
@@ -783,7 +783,7 @@ public class BatchApiTest {
      *
      * <p>It used to reach the {@code switch} inside the function's own
      * {@code _Lookback} and surface as a bare {@link NullPointerException} naming
-     * neither ({@code docs/error-handling-spec.md}, Part 3 item 4). Java is the
+     * neither ({@code docs/error-handling-spec.md}, open item 4). Java is the
      * only backend where this is expressible at all.
      */
     static void aNullEnumIsNamed() {

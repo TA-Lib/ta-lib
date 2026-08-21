@@ -997,7 +997,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -1112,7 +1112,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ACCBANDS_Lookback(optInTimePeriod);
@@ -1217,7 +1217,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ACOS_Lookback();
@@ -1334,7 +1334,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.AD_Lookback();
@@ -1440,7 +1440,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ADD_Lookback();
@@ -1560,7 +1560,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
@@ -1679,7 +1679,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ADX_Lookback(optInTimePeriod);
@@ -1793,7 +1793,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ADXR_Lookback(optInTimePeriod);
@@ -1901,7 +1901,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod);
@@ -2005,7 +2005,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -2115,7 +2115,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.AROON_Lookback(optInTimePeriod);
@@ -2224,7 +2224,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.AROONOSC_Lookback(optInTimePeriod);
@@ -2322,7 +2322,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ASIN_Lookback();
@@ -2418,7 +2418,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ATAN_Lookback();
@@ -2532,7 +2532,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ATR_Lookback(optInTimePeriod);
@@ -2632,7 +2632,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.AVGDEV_Lookback(optInTimePeriod);
@@ -2750,7 +2750,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.AVGPRICE_Lookback();
@@ -2855,7 +2855,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -2972,7 +2972,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.BETA_Lookback(optInTimePeriod);
@@ -3091,7 +3091,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.BOP_Lookback();
@@ -3205,7 +3205,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CCI_Lookback(optInTimePeriod);
@@ -3325,7 +3325,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDL2CROWS_Lookback();
@@ -3445,7 +3445,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDL3BLACKCROWS_Lookback();
@@ -3565,7 +3565,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDL3INSIDE_Lookback();
@@ -3685,7 +3685,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDL3LINESTRIKE_Lookback();
@@ -3805,7 +3805,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDL3OUTSIDE_Lookback();
@@ -3925,7 +3925,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDL3STARSINSOUTH_Lookback();
@@ -4045,7 +4045,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDL3WHITESOLDIERS_Lookback();
@@ -4166,7 +4166,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLABANDONEDBABY_Lookback(optInPenetration);
@@ -4287,7 +4287,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLADVANCEBLOCK_Lookback();
@@ -4407,7 +4407,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLBELTHOLD_Lookback();
@@ -4527,7 +4527,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLBREAKAWAY_Lookback();
@@ -4647,7 +4647,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLCLOSINGMARUBOZU_Lookback();
@@ -4767,7 +4767,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLCONCEALBABYSWALL_Lookback();
@@ -4887,7 +4887,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLCOUNTERATTACK_Lookback();
@@ -5008,7 +5008,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
@@ -5129,7 +5129,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLDOJI_Lookback();
@@ -5249,7 +5249,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLDOJISTAR_Lookback();
@@ -5369,7 +5369,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLDRAGONFLYDOJI_Lookback();
@@ -5489,7 +5489,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLENGULFING_Lookback();
@@ -5610,7 +5610,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
@@ -5732,7 +5732,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLEVENINGSTAR_Lookback(optInPenetration);
@@ -5853,7 +5853,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLGAPSIDESIDEWHITE_Lookback();
@@ -5973,7 +5973,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLGRAVESTONEDOJI_Lookback();
@@ -6093,7 +6093,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLHAMMER_Lookback();
@@ -6213,7 +6213,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLHANGINGMAN_Lookback();
@@ -6333,7 +6333,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLHARAMI_Lookback();
@@ -6453,7 +6453,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLHARAMICROSS_Lookback();
@@ -6573,7 +6573,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLHIGHWAVE_Lookback();
@@ -6693,7 +6693,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLHIKKAKE_Lookback();
@@ -6813,7 +6813,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLHIKKAKEMOD_Lookback();
@@ -6933,7 +6933,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLHOMINGPIGEON_Lookback();
@@ -7053,7 +7053,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLIDENTICAL3CROWS_Lookback();
@@ -7173,7 +7173,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLINNECK_Lookback();
@@ -7293,7 +7293,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLINVERTEDHAMMER_Lookback();
@@ -7413,7 +7413,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLKICKING_Lookback();
@@ -7533,7 +7533,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLKICKINGBYLENGTH_Lookback();
@@ -7653,7 +7653,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLLADDERBOTTOM_Lookback();
@@ -7773,7 +7773,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLLONGLEGGEDDOJI_Lookback();
@@ -7893,7 +7893,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLLONGLINE_Lookback();
@@ -8013,7 +8013,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLMARUBOZU_Lookback();
@@ -8133,7 +8133,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLMATCHINGLOW_Lookback();
@@ -8254,7 +8254,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLMATHOLD_Lookback(optInPenetration);
@@ -8376,7 +8376,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
@@ -8498,7 +8498,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLMORNINGSTAR_Lookback(optInPenetration);
@@ -8619,7 +8619,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLONNECK_Lookback();
@@ -8739,7 +8739,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLPIERCING_Lookback();
@@ -8859,7 +8859,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLRICKSHAWMAN_Lookback();
@@ -8979,7 +8979,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLRISEFALL3METHODS_Lookback();
@@ -9099,7 +9099,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLSEPARATINGLINES_Lookback();
@@ -9219,7 +9219,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLSHOOTINGSTAR_Lookback();
@@ -9339,7 +9339,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLSHORTLINE_Lookback();
@@ -9459,7 +9459,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLSPINNINGTOP_Lookback();
@@ -9579,7 +9579,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLSTALLEDPATTERN_Lookback();
@@ -9699,7 +9699,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLSTICKSANDWICH_Lookback();
@@ -9819,7 +9819,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLTAKURI_Lookback();
@@ -9939,7 +9939,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLTASUKIGAP_Lookback();
@@ -10059,7 +10059,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLTHRUSTING_Lookback();
@@ -10179,7 +10179,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLTRISTAR_Lookback();
@@ -10299,7 +10299,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLUNIQUE3RIVER_Lookback();
@@ -10419,7 +10419,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLUPSIDEGAP2CROWS_Lookback();
@@ -10539,7 +10539,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CDLXSIDEGAP3METHODS_Lookback();
@@ -10638,7 +10638,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CEIL_Lookback();
@@ -10756,7 +10756,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CMF_Lookback(optInTimePeriod);
@@ -10860,7 +10860,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CMO_Lookback(optInTimePeriod);
@@ -10958,7 +10958,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CMOU_Lookback(optInTimePeriod);
@@ -11063,7 +11063,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.CORREL_Lookback(optInTimePeriod);
@@ -11161,7 +11161,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.COS_Lookback();
@@ -11257,7 +11257,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.COSH_Lookback();
@@ -11354,7 +11354,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.DEMA_Lookback(optInTimePeriod);
@@ -11458,7 +11458,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.DIV_Lookback();
@@ -11573,7 +11573,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.DX_Lookback(optInTimePeriod);
@@ -11680,7 +11680,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.EFI_Lookback(optInTimePeriod);
@@ -11782,7 +11782,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.EMA_Lookback(optInTimePeriod);
@@ -11879,7 +11879,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.EXP_Lookback();
@@ -11975,7 +11975,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.FLOOR_Lookback();
@@ -12072,7 +12072,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.HMA_Lookback(optInTimePeriod);
@@ -12172,7 +12172,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.HT_DCPERIOD_Lookback();
@@ -12271,7 +12271,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.HT_DCPHASE_Lookback();
@@ -12370,7 +12370,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.HT_PHASOR_Lookback();
@@ -12472,7 +12472,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.HT_SINE_Lookback();
@@ -12574,7 +12574,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.HT_TRENDLINE_Lookback();
@@ -12673,7 +12673,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.HT_TRENDMODE_Lookback();
@@ -12777,7 +12777,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.IMI_Lookback(optInTimePeriod);
@@ -12879,7 +12879,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.KAMA_Lookback(optInTimePeriod);
@@ -12977,7 +12977,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.LINEARREG_Lookback(optInTimePeriod);
@@ -13075,7 +13075,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod);
@@ -13173,7 +13173,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
@@ -13271,7 +13271,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod);
@@ -13368,7 +13368,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.LN_Lookback();
@@ -13464,7 +13464,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.LOG10_Lookback();
@@ -13564,7 +13564,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MA_Lookback(optInTimePeriod, optInMAType);
@@ -13668,7 +13668,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -13785,7 +13785,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -13897,7 +13897,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MACDFIX_Lookback(optInSignalPeriod);
@@ -14005,7 +14005,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit);
@@ -14120,7 +14120,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MARKETFI_Lookback();
@@ -14230,7 +14230,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -14334,7 +14334,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MAX_Lookback(optInTimePeriod);
@@ -14432,7 +14432,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MAXINDEX_Lookback(optInTimePeriod);
@@ -14536,7 +14536,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MEDPRICE_Lookback();
@@ -14655,7 +14655,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MFI_Lookback(optInTimePeriod);
@@ -14756,7 +14756,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MIDPOINT_Lookback(optInTimePeriod);
@@ -14861,7 +14861,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MIDPRICE_Lookback(optInTimePeriod);
@@ -14960,7 +14960,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MIN_Lookback(optInTimePeriod);
@@ -15058,7 +15058,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MININDEX_Lookback(optInTimePeriod);
@@ -15156,7 +15156,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MINMAX_Lookback(optInTimePeriod);
@@ -15257,7 +15257,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MINMAXINDEX_Lookback(optInTimePeriod);
@@ -15375,7 +15375,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MINUS_DI_Lookback(optInTimePeriod);
@@ -15485,7 +15485,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MINUS_DM_Lookback(optInTimePeriod);
@@ -15584,7 +15584,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MOM_Lookback(optInTimePeriod);
@@ -15688,7 +15688,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.MULT_Lookback();
@@ -15803,7 +15803,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.NATR_Lookback(optInTimePeriod);
@@ -15909,7 +15909,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.NVI_Lookback();
@@ -16013,7 +16013,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.OBV_Lookback();
@@ -16128,7 +16128,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.PLUS_DI_Lookback(optInTimePeriod);
@@ -16238,7 +16238,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.PLUS_DM_Lookback(optInTimePeriod);
@@ -16341,7 +16341,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -16450,7 +16450,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.PVI_Lookback();
@@ -16552,7 +16552,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -16662,7 +16662,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.QSTICK_Lookback(optInTimePeriod);
@@ -16761,7 +16761,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ROC_Lookback(optInTimePeriod);
@@ -16859,7 +16859,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ROCP_Lookback(optInTimePeriod);
@@ -16957,7 +16957,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ROCR_Lookback(optInTimePeriod);
@@ -17055,7 +17055,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ROCR100_Lookback(optInTimePeriod);
@@ -17156,7 +17156,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.RSI_Lookback(optInTimePeriod);
@@ -17262,7 +17262,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.SAR_Lookback(optInAcceleration, optInMaximum);
@@ -17376,7 +17376,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -17481,7 +17481,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.SIN_Lookback();
@@ -17577,7 +17577,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.SINH_Lookback();
@@ -17674,7 +17674,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.SMA_Lookback(optInTimePeriod);
@@ -17789,7 +17789,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -17894,7 +17894,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.SQRT_Lookback();
@@ -17992,7 +17992,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev);
@@ -18113,7 +18113,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -18241,7 +18241,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -18354,7 +18354,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -18467,7 +18467,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.SUB_Lookback();
@@ -18565,7 +18565,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.SUM_Lookback(optInTimePeriod);
@@ -18667,7 +18667,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.T3_Lookback(optInTimePeriod, optInVFactor);
@@ -18765,7 +18765,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.TAN_Lookback();
@@ -18861,7 +18861,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.TANH_Lookback();
@@ -18958,7 +18958,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.TEMA_Lookback(optInTimePeriod);
@@ -19069,7 +19069,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.TRANGE_Lookback();
@@ -19168,7 +19168,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.TRIMA_Lookback(optInTimePeriod);
@@ -19266,7 +19266,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.TRIX_Lookback(optInTimePeriod);
@@ -19364,7 +19364,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.TSF_Lookback(optInTimePeriod);
@@ -19475,7 +19475,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.TYPPRICE_Lookback();
@@ -19590,7 +19590,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -19693,7 +19693,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.VAR_Lookback(optInTimePeriod, optInNbDev);
@@ -19812,7 +19812,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.VWAP_Lookback();
@@ -19919,7 +19919,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.VWMA_Lookback(optInTimePeriod);
@@ -20031,7 +20031,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.WAD_Lookback();
@@ -20143,7 +20143,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.WCLPRICE_Lookback();
@@ -20256,7 +20256,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.WILLR_Lookback(optInTimePeriod);
@@ -20356,7 +20356,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // accepted by C and Java -- a four-way divergence on a call the specification says
             // all four accept. Sizing to zero here would reach it on every multi-output
             // function, which is a semantic question, not a harness one. Recorded as
-            // error-handling-spec Part 3 item 11.
+            // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
             let _lb = core.WMA_Lookback(optInTimePeriod);
