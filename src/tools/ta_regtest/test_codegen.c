@@ -5055,10 +5055,10 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
 /* ---- One-time FMA re-baselining transition gate (PR #96) -------------------
  * TA-Lib adopted an explicit-FMA numerical contract: each function is faithful
  * to its algorithm within 1e-9 relative, NOT bit-for-bit
- * (docs/fma-readiness-audit.md). The current library now fuses `a*b + c` into
- * `fma()` wherever the shared codegen detector fires; the frozen v0.6.4 oracle
- * does not. So the two differ by <=~1.7e-10 relative on the fused functions —
- * authorized, below the 1e-9 contract, but no longer hash-exact.
+ * (docs/studies/fma-readiness-audit.md). The current library now fuses `a*b + c`
+ * into `fma()` wherever the shared codegen detector fires; the frozen v0.6.4
+ * oracle does not. So the two differ by <=~1.7e-10 relative on the fused
+ * functions — authorized, below the 1e-9 contract, but no longer hash-exact.
  *
  * While this is 1, any per-element diff NOT covered by an explicit FUZZ_064_TOL
  * entry is tolerated when it is within the contract itself:

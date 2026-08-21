@@ -14,8 +14,8 @@ Raised by [#238](https://github.com/TA-Lib/ta-lib/issues/238) (`TA_SMI`), which 
 accuracy — it only tabulates `|arm A - Tulip|`, the gap between two arms, with no
 third party to say which one is wrong. This document supplies the third party and
 generalises the answer to the whole EMA family. The SMI-specific numbers are in
-[`studies/ema-seeding/smi-case-study.md`](studies/ema-seeding/smi-case-study.md);
-the code, data and full output are in [`studies/ema-seeding/`](studies/ema-seeding/).
+[`smi-case-study.md`](smi-case-study.md); the code, data and full output are
+beside this file.
 
 ---
 
