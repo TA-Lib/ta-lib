@@ -648,7 +648,7 @@ impl CCI_Stream {
     /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
     /// often removed outright by the optimizer, which is why nothing is
     /// reused here, but that is not a guarantee: budget for a clone of the
-    /// window and prefer `update` on a `clone()` in a hot loop.
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///

@@ -302,16 +302,6 @@ struct TA_CDLCOUNTERATTACK_Stream {
    int ringLag_EqualTrailingIdx;
    double *ring_EqualTrailingIdx_derived;
    double *ringMirror_EqualTrailingIdx_derived;
-   int winPos_totIdx;
-   int winCap_totIdx;
-   double *win_totIdx_inOpen;
-   double *winMirror_totIdx_inOpen;
-   double *win_totIdx_inHigh;
-   double *winMirror_totIdx_inHigh;
-   double *win_totIdx_inLow;
-   double *winMirror_totIdx_inLow;
-   double *win_totIdx_inClose;
-   double *winMirror_totIdx_inClose;
 };
 
 /* Private function, not in public API. */
@@ -322,14 +312,6 @@ static void TA_CDLCOUNTERATTACK_ReleaseInternal( struct TA_CDLCOUNTERATTACK_Stre
    if( sp->ringMirror_BodyLongTrailingIdx_derived ) TA_Free( sp->ringMirror_BodyLongTrailingIdx_derived );
    if( sp->ring_EqualTrailingIdx_derived ) TA_Free( sp->ring_EqualTrailingIdx_derived );
    if( sp->ringMirror_EqualTrailingIdx_derived ) TA_Free( sp->ringMirror_EqualTrailingIdx_derived );
-   if( sp->win_totIdx_inOpen ) TA_Free( sp->win_totIdx_inOpen );
-   if( sp->winMirror_totIdx_inOpen ) TA_Free( sp->winMirror_totIdx_inOpen );
-   if( sp->win_totIdx_inHigh ) TA_Free( sp->win_totIdx_inHigh );
-   if( sp->winMirror_totIdx_inHigh ) TA_Free( sp->winMirror_totIdx_inHigh );
-   if( sp->win_totIdx_inLow ) TA_Free( sp->win_totIdx_inLow );
-   if( sp->winMirror_totIdx_inLow ) TA_Free( sp->winMirror_totIdx_inLow );
-   if( sp->win_totIdx_inClose ) TA_Free( sp->win_totIdx_inClose );
-   if( sp->winMirror_totIdx_inClose ) TA_Free( sp->winMirror_totIdx_inClose );
    TA_Free( sp );
 }
 
@@ -338,10 +320,6 @@ static void TA_CDLCOUNTERATTACK_StepInternal( struct TA_CDLCOUNTERATTACK_Stream 
 {
    sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
-   sp->win_totIdx_inOpen[sp->winPos_totIdx] = inOpen;
-   sp->win_totIdx_inHigh[sp->winPos_totIdx] = inHigh;
-   sp->win_totIdx_inLow[sp->winPos_totIdx] = inLow;
-   sp->win_totIdx_inClose[sp->winPos_totIdx] = inClose;
    if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* opposite candles */
        fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* 1st long */
        fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal[0],inOpen,inHigh,inLow,inClose) && /* 2nd long */
@@ -359,7 +337,7 @@ static void TA_CDLCOUNTERATTACK_StepInternal( struct TA_CDLCOUNTERATTACK_Stream 
    sp->EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx];
    for( sp->totIdx = 1; sp->totIdx >= 0; sp->totIdx -= 1 )
    {
-      sp->BodyLongPeriodTotal[sp->totIdx] = sp->BodyLongPeriodTotal[sp->totIdx] + (TA_STREAM_CANDLERANGE(BodyLong,sp->win_totIdx_inOpen[(sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx >= sp->winCap_totIdx) ? sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx - sp->winCap_totIdx : sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx],sp->win_totIdx_inHigh[(sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx >= sp->winCap_totIdx) ? sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx - sp->winCap_totIdx : sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx],sp->win_totIdx_inLow[(sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx >= sp->winCap_totIdx) ? sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx - sp->winCap_totIdx : sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx],sp->win_totIdx_inClose[(sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx >= sp->winCap_totIdx) ? sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx - sp->winCap_totIdx : sp->winPos_totIdx + sp->winCap_totIdx - sp->totIdx]) - sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx - sp->totIdx) % sp->ringCap_BodyLongTrailingIdx]);
+      sp->BodyLongPeriodTotal[sp->totIdx] = sp->BodyLongPeriodTotal[sp->totIdx] + (sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->totIdx >= sp->ringCap_BodyLongTrailingIdx) ? sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->totIdx - sp->ringCap_BodyLongTrailingIdx : sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->totIdx] - sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx - sp->totIdx) % sp->ringCap_BodyLongTrailingIdx]);
    }
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
@@ -374,11 +352,6 @@ static void TA_CDLCOUNTERATTACK_StepInternal( struct TA_CDLCOUNTERATTACK_Stream 
    if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
    {
       sp->ringPos_EqualTrailingIdx = 0;
-   }
-   sp->winPos_totIdx = sp->winPos_totIdx + 1;
-   if( sp->winPos_totIdx >= sp->winCap_totIdx )
-   {
-      sp->winPos_totIdx = 0;
    }
 }
 
@@ -523,29 +496,6 @@ static TA_RetCode TA_CDLCOUNTERATTACK_OpenPass( struct TA_CDLCOUNTERATTACK_Strea
         }
       }
       sp->ringPos_EqualTrailingIdx = historyLen % sp->ringCap_EqualTrailingIdx;
-      sp->winCap_totIdx = (int)(2);
-      if( sp->winCap_totIdx < 1 || sp->winCap_totIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      sp->win_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inOpen ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_totIdx_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inOpen ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->win_totIdx_inOpen, inOpen + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
-      sp->win_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inHigh ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_totIdx_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inHigh ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->win_totIdx_inHigh, inHigh + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
-      sp->win_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inLow ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_totIdx_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inLow ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->win_totIdx_inLow, inLow + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
-      sp->win_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->win_totIdx_inClose ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_totIdx_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_totIdx );
-      if( !sp->winMirror_totIdx_inClose ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->win_totIdx_inClose, inClose + (historyLen - sp->winCap_totIdx), sizeof(double) * (size_t)sp->winCap_totIdx );
-      sp->winPos_totIdx = 0;
       sp->lag1_inOpen = inOpen[historyLen - 1];
       sp->lag1_inHigh = inHigh[historyLen - 1];
       sp->lag1_inLow = inLow[historyLen - 1];
@@ -617,14 +567,6 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Peek( const TA_CDLCOUNTERATTACK_Stream
    memcpy( scratch.ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_BodyLongTrailingIdx > 0 ? stream->ringCap_BodyLongTrailingIdx : 1) );
    scratch.ring_EqualTrailingIdx_derived = stream->ringMirror_EqualTrailingIdx_derived;
    memcpy( scratch.ring_EqualTrailingIdx_derived, stream->ring_EqualTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_EqualTrailingIdx > 0 ? stream->ringCap_EqualTrailingIdx : 1) );
-   scratch.win_totIdx_inOpen = stream->winMirror_totIdx_inOpen;
-   memcpy( scratch.win_totIdx_inOpen, stream->win_totIdx_inOpen, sizeof(double) * (size_t)stream->winCap_totIdx );
-   scratch.win_totIdx_inHigh = stream->winMirror_totIdx_inHigh;
-   memcpy( scratch.win_totIdx_inHigh, stream->win_totIdx_inHigh, sizeof(double) * (size_t)stream->winCap_totIdx );
-   scratch.win_totIdx_inLow = stream->winMirror_totIdx_inLow;
-   memcpy( scratch.win_totIdx_inLow, stream->win_totIdx_inLow, sizeof(double) * (size_t)stream->winCap_totIdx );
-   scratch.win_totIdx_inClose = stream->winMirror_totIdx_inClose;
-   memcpy( scratch.win_totIdx_inClose, stream->win_totIdx_inClose, sizeof(double) * (size_t)stream->winCap_totIdx );
    TA_CDLCOUNTERATTACK_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }

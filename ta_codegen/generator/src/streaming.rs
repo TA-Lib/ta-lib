@@ -125,6 +125,26 @@ pub struct DerivedRing {
     pub raw_arrays: Vec<String>,
 }
 
+/// One rescan-window read routed into a trailing ring that already holds it
+/// (#229, the last tranche). The window then carries no buffer of its own: a
+/// read `<shape>(in*[cursor - w])` becomes a cursor-relative read of the
+/// derived ring whose per-bar push value is that same shape, on the same bars.
+///
+/// The containment is analytic rather than a corpus coincidence:
+/// `ringCap = ringLag + back + 1`, [`eligible_window_folds`] refuses unless
+/// `back + 1 >= winCap`, and `ringLag >= 0` is checked at open -- so the ring
+/// always spans at least the window's `[cursor - winCap + 1 .. cursor]`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WindowFold {
+    /// The rescan-window counter the read is offset by (`totIdx`).
+    pub win_var: String,
+    /// The trailing ring holding the value.
+    pub ring_var: String,
+    /// The derived shape as written at `in*[cursor - w]`, matched by
+    /// [`shape_key`] against the ring's own shape.
+    pub expr: Expr,
+}
+
 /// One bounded rescan window: an inner loop reads `in[cursor - w]` where `w`
 /// is that loop's counter, bounded by a parameter expression (LINEARREG's
 /// `for(i=P; i--!=0;)`, AVGDEV's `for(i=0; i<P; i++)`). The stream keeps the
@@ -132,6 +152,13 @@ pub struct DerivedRing {
 /// transition body; reads become `win[(pos + cap - w) % cap]`, so the loaded
 /// value sequence — and therefore the FP summation order — is exactly the
 /// batch's. O(cap) work per update, same as the batch's own per-bar rescan.
+///
+/// A window only reaches this point when it needs a buffer of its own. When
+/// every read through the counter is a derived shape a trailing ring already
+/// stores, [`eligible_window_folds`] routes the reads into that ring and no
+/// `WindowSpec` is built — which is why the 14 candlesticks that carried
+/// `win_totIdx_in{Open,High,Low,Close}` carry nothing now, and AVGDEV / IMI /
+/// HT_TRENDLINE / HT_TRENDMODE, whose reads are raw columns, still do.
 #[derive(Debug, Clone)]
 pub struct WindowSpec {
     /// The inner-loop counter variable (stays a live local in the transition).
@@ -1575,11 +1602,10 @@ pub fn analyze_region_scoped<'a>(
     // scalar keeps a single ring of that scalar instead of one ring per array.
     // This runs BEFORE the fold below, so it sees raw `in<Array>[v]` reads; a
     // later pass reading these statements sees `derived[v]` instead, which is a
-    // different shape key. Window analysis, when it lands, has to compute its
-    // eligibility here too rather than downstream of the fold.
+    // different shape key -- which is why the window election below sits HERE,
+    // beside this one, and not downstream of either fold.
     let derived_slots: BTreeMap<String, DerivedRing> =
         eligible_derived(&steady_stmts, &trailing, &bar_inputs);
-    let steady_stmts = fold_derived_reads(&steady_stmts, &derived_slots);
 
     let ring_vars: BTreeSet<String> = trailing.keys().cloned().collect();
     check_window_disjoint(&scanned_windows, &ring_vars, &cursor)?;
@@ -1590,7 +1616,32 @@ pub fn analyze_region_scoped<'a>(
             ring.derived = Some(dr.clone());
         }
     }
-    let windows = assemble_windows(scanned_windows, &bar_inputs);
+    // #229 last tranche: a rescan window read only through shapes those rings
+    // already store keeps NO buffer -- the read is routed into the ring. Both
+    // elections read the raw statements; both folds then run, in either order,
+    // because each matches on its own index form.
+    let window_folds = eligible_window_folds(&steady_stmts, &scanned_windows, &rings, &cursor);
+    let steady_stmts = fold_derived_reads(&steady_stmts, &derived_slots);
+    let (steady_stmts, folded_windows) =
+        apply_window_folds(steady_stmts, &window_folds, &cursor, &bar_inputs);
+    let all_windows = assemble_windows(scanned_windows, &bar_inputs);
+    let window_count = all_windows.len();
+    let windows: Vec<WindowSpec> = all_windows
+        .into_iter()
+        .filter(|w| !folded_windows.contains(&w.var))
+        .collect();
+    // The synthetic names both folds introduce: real references in the loop,
+    // never declared symbols.
+    let synthetic_slots: BTreeSet<String> = derived_slots
+        .values()
+        .map(|d| d.slot.clone())
+        .chain(
+            window_folds
+                .iter()
+                .filter(|f| folded_windows.contains(&f.win_var))
+                .map(|f| window_slot_name(&f.ring_var)),
+        )
+        .collect();
 
     let out_feedback = collect_out_feedback(&steady_stmts, &outputs);
     check_no_output_read_back(&steady_stmts, &outputs)?;
@@ -1612,18 +1663,18 @@ pub fn analyze_region_scoped<'a>(
         circ_extra: &circ_extra,
         parity_field: parity.as_ref().map(|p| p.field.as_str()),
     };
-    let (extrema, (mut state, temps)) =
-        classify_or_extrema(
-            &ctx,
-            &derived_slots
-                .values()
-                .map(|d| d.slot.clone())
-                .collect::<BTreeSet<_>>(),
-            &ring_vars,
-            &trailing,
-            &windows,
-            &circs,
-        )?;
+    let (extrema, (mut state, temps)) = classify_or_extrema(
+        &ctx,
+        &synthetic_slots,
+        &ring_vars,
+        &trailing,
+        // The PRE-fold count: the refusal below asks whether the batch body has
+        // a rescan window at all, not whether one kept a buffer. An extrema
+        // automaton reads through its own ring and `model.rings()` is empty
+        // under it, so a folded read would have no ring to resolve against.
+        window_count,
+        &circs,
+    )?;
     force_circ_index_state(&circs, &mut state, &temps);
     // The carried parity field is synthetic (no VarDecl): classify_locals skips
     // it, so append it as an ordinary int state field here (emitter seeds/flips
@@ -3994,7 +4045,9 @@ fn classify_or_extrema(
     derived_slots: &BTreeSet<String>,
     ring_vars: &BTreeSet<String>,
     trailing: &BTreeMap<String, BTreeSet<String>>,
-    windows: &[WindowSpec],
+    // How many rescan windows the body has BEFORE the #229 fold drops any: the
+    // refusal below is about the shape of the batch body.
+    window_count: usize,
     circs: &[CircState],
 ) -> Result<(Option<ExtremaState>, Classified), StreamError> {
     let run = |rings: &BTreeSet<String>| {
@@ -4016,7 +4069,7 @@ fn classify_or_extrema(
     match run(ring_vars) {
         Ok(st) => Ok((None, st)),
         Err(StreamError::Unsupported(ref msg)) if msg.contains("index bookkeeping") => {
-            if !windows.is_empty() || !circs.is_empty() || ctx.counter.is_some() {
+            if window_count > 0 || !circs.is_empty() || ctx.counter.is_some() {
                 return Err(StreamError::Unsupported(
                     "extrema automaton mixed with other buffer forms".into(),
                 ));
@@ -4290,21 +4343,30 @@ enum VShape {
     Mixed,
 }
 
-/// Classify `expr` against trailing var `var`, collecting the MAXIMAL `Derived`
-/// subtrees. A subtree is maximal when it is Derived and its parent is not.
+/// Classify `expr` against ONE bar, selected by `at` -- a predicate on an array
+/// read's index expression -- collecting the MAXIMAL `Derived` subtrees. A
+/// subtree is maximal when it is Derived and its parent is not.
+///
+/// The bar is named by the index FORM rather than by a variable, because the
+/// two consumers select different forms and one statement can hold both:
+/// `ta_CDLADVANCEBLOCK.c:186` subtracts the `Near` range of bar
+/// `NearTrailingIdx - totIdx` from the `Near` range of bar `i - totIdx`, and
+/// both mention `totIdx`. A trailing ring selects `expr_mentions(idx, var)`;
+/// a rescan window selects `classify_input_index(idx, cursor)` == `WindowVar(w)`,
+/// which tells the two apart.
 fn classify_v(
     expr: &Expr,
-    var: &str,
+    at: &dyn Fn(&Expr) -> bool,
     assigned: &BTreeSet<String>,
     pure_calls: &BTreeSet<String>,
     out: &mut Vec<Expr>,
 ) -> VShape {
     let kids: Vec<&Expr> = match expr {
         Expr::ArrayAccess(_, idx) => {
-            // A read at `var` is Derived on its own; a read at any other index
-            // is Mixed -- it is another bar, so nothing here is a function of
-            // the trailing one.
-            return if expr_mentions(idx, var) {
+            // A read at the selected bar is Derived on its own; a read at any
+            // other index is Mixed -- it is another bar, so nothing here is a
+            // function of the selected one.
+            return if at(idx) {
                 VShape::Derived
             } else {
                 VShape::Mixed
@@ -4327,7 +4389,7 @@ fn classify_v(
                 // was given may still hold maximal derived subtrees.
                 for arg in args {
                     if matches!(
-                        classify_v(arg, var, assigned, pure_calls, out),
+                        classify_v(arg, at, assigned, pure_calls, out),
                         VShape::Derived
                     ) {
                         out.push(arg.clone());
@@ -4348,7 +4410,7 @@ fn classify_v(
         | Expr::PreDecrement(inner) => {
             // Mutating: never fold one into a ring.
             if matches!(
-                classify_v(inner, var, assigned, pure_calls, out),
+                classify_v(inner, at, assigned, pure_calls, out),
                 VShape::Derived
             ) {
                 out.push((**inner).clone());
@@ -4361,7 +4423,7 @@ fn classify_v(
     };
     let shapes: Vec<VShape> = kids
         .iter()
-        .map(|kid| classify_v(kid, var, assigned, pure_calls, out))
+        .map(|kid| classify_v(kid, at, assigned, pure_calls, out))
         .collect();
     let any_derived = shapes.iter().any(|sh| matches!(sh, VShape::Derived));
     let any_mixed = shapes.iter().any(|sh| matches!(sh, VShape::Mixed));
@@ -4513,6 +4575,40 @@ fn shape_key(e: &Expr) -> String {
     format!("{:?}", blank(e))
 }
 
+/// The single bar a derived shape reads, or `None` when its array reads are not
+/// all at ONE index expression.
+///
+/// A ring stores one scalar per bar, so a shape that reads two bars cannot be
+/// reproduced from it. [`classify_v`] does not settle that on its own: a window
+/// selects `WindowVar(w)`, which names one bar, but a trailing ring selects
+/// `expr_mentions(idx, var)`, and both `in*[T]` and `in*[T-1]` satisfy it. This
+/// is also what makes the two rewriters safe -- they match on [`shape_key`],
+/// which BLANKS indices, so a same-key occurrence reading mixed bars would
+/// otherwise be substituted as if it were the elected one.
+///
+/// No shipped function writes such a shape: all 129 derived shapes in the
+/// corpus read one index, 120 of them because `ta_candlerange`'s call site
+/// forces it. So this guard keeps a property rather than fixing a live defect,
+/// and it fails CLOSED -- the fold is refused, never mis-applied.
+fn single_read_index(e: &Expr) -> Option<Expr> {
+    let mut idx: Option<Expr> = None;
+    let mut mixed = false;
+    walk_expr(e, &mut |x| {
+        if let Expr::ArrayAccess(_, i) = x {
+            match &idx {
+                None => idx = Some((**i).clone()),
+                Some(prev) if format!("{prev:?}") == format!("{i:?}") => {}
+                Some(_) => mixed = true,
+            }
+        }
+    });
+    if mixed {
+        None
+    } else {
+        idx
+    }
+}
+
 /// The eligible derived rings: one shape covering every read at that index,
 /// with more than one array behind it.
 ///
@@ -4536,14 +4632,14 @@ fn eligible_derived(
         for st in stmts {
             walk_stmt_exprs(st, &mut |e| {
                 let mut found = Vec::new();
-                let sh = classify_v(e, v, &assigned, &pure, &mut found);
+                let sh = classify_v(e, &|idx| expr_mentions(idx, v), &assigned, &pure, &mut found);
                 if matches!(sh, VShape::Derived) {
                     found.push(e.clone());
                 }
                 shapes.extend(found);
             });
         }
-        if shapes.is_empty() {
+        if shapes.is_empty() || shapes.iter().any(|sh| single_read_index(sh).is_none()) {
             continue;
         }
         let mut keys: Vec<String> = shapes.iter().map(shape_key).collect();
@@ -4604,13 +4700,158 @@ fn fold_derived_reads(
                 if shape_key(&e) != key {
                     return e;
                 }
-                let mut idx: Option<Expr> = None;
-                walk_expr(&e, &mut |x| {
-                    if let Expr::ArrayAccess(_, i) = x {
-                        if idx.is_none() && expr_mentions(i, &var) {
-                            idx = Some((**i).clone());
-                        }
+                match single_read_index(&e).filter(|i| expr_mentions(i, &var)) {
+                    Some(i) => Expr::ArrayAccess(slot.clone(), Box::new(i)),
+                    None => e,
+                }
+            },
+            &Some,
+        );
+    }
+    cur
+}
+
+/// Synthetic array name a folded rescan-window read (#229) carries until
+/// [`rewrite_expr_for_transition`] resolves it to a ring slot. One name per
+/// ring rather than the shared `"derived"` slot, because ONE window can route
+/// to SEVERAL rings -- CDLADVANCEBLOCK reads `totIdx` under Far, Near,
+/// ShadowLong and ShadowShort -- so the read has to say which. Never emitted:
+/// the transition rewrite replaces it, and a name that somehow survived would
+/// be an undefined symbol in every backend rather than a silently wrong read.
+fn window_slot_name(ring_var: &str) -> String {
+    format!("derivedAt_{ring_var}")
+}
+
+/// The rescan-window reads that an existing derived ring can serve (#229, the
+/// last tranche). Returns one entry per (window counter, derived shape).
+///
+/// A window read `<shape>(in*[cursor - w])` and the ring's push value are the
+/// same expression over the same bar, so the ring's stored double IS the value
+/// the window read would recompute -- byte for byte, since the push renders
+/// from the same [`DerivedRing::expr`]. Four conditions, all fail-closed:
+///
+/// 1. the window bound is a literal, so `winCap` can be compared at all;
+/// 2. every read through the counter sits inside a derived shape (checked by
+///    [`has_window_read`] on the FOLDED statements, not asserted here);
+/// 3. the shape matches a ring's shape with the index blanked, which carries
+///    the callee AND the candle setting -- `ta_candlerange(Near, ...)` and
+///    `ta_candlerange(Far, ...)` key differently;
+/// 4. that ring is absolute-mod (`back > 0`) and at least as deep as the
+///    window. `back > 0` is what puts the CURRENT bar in the ring before the
+///    body reads it: an oldest-slot ring stores after the subtraction, so at
+///    read time it holds the trailing bar, not `cursor`.
+///
+/// Runs on the RAW statements, beside [`eligible_derived`] and before either
+/// fold: after the ring fold the two sides of
+/// `total += range(S, in*[i - t]) - range(S, in*[trail - t])` no longer key
+/// alike, and a window pass reading folded statements would find nothing.
+fn eligible_window_folds(
+    stmts: &[Statement],
+    scanned_windows: &[(String, Expr, BTreeSet<String>)],
+    rings: &[RingSpec],
+    cursor: &str,
+) -> Vec<WindowFold> {
+    let assigned = assigned_in(stmts);
+    let pure = pure_helper_names();
+    let mut by_shape: BTreeMap<String, Vec<&RingSpec>> = BTreeMap::new();
+    for r in rings {
+        match &r.derived {
+            Some(dr) if r.back > 0 => by_shape.entry(shape_key(&dr.expr)).or_default().push(r),
+            _ => {}
+        }
+    }
+    let mut out: Vec<WindowFold> = Vec::new();
+    for (w, cap, _) in scanned_windows {
+        let Expr::IntLiteral(cap) = cap else { continue };
+        // One entry per distinct shape; a shape read at several sites folds
+        // once and the rewrite reaches every occurrence.
+        let mut picked: BTreeMap<String, WindowFold> = BTreeMap::new();
+        let mut refused = false;
+        let at = |idx: &Expr| {
+            matches!(classify_input_index(idx, cursor), InputIndex::WindowVar(ref x) if x == w)
+        };
+        for st in stmts {
+            walk_stmt_exprs(st, &mut |e| {
+                let mut found = Vec::new();
+                if matches!(
+                    classify_v(e, &at, &assigned, &pure, &mut found),
+                    VShape::Derived
+                ) {
+                    found.push(e.clone());
+                }
+                for shape in found {
+                    if single_read_index(&shape).is_none() {
+                        refused = true;
+                        continue;
                     }
+                    let key = shape_key(&shape);
+                    if picked.contains_key(&key) {
+                        continue;
+                    }
+                    match by_shape
+                        .get(&key)
+                        .and_then(|rs| rs.iter().find(|r| r.back + 1 >= *cap))
+                    {
+                        Some(r) => {
+                            picked.insert(
+                                key,
+                                WindowFold {
+                                    win_var: w.clone(),
+                                    ring_var: r.var.clone(),
+                                    expr: shape,
+                                },
+                            );
+                        }
+                        // A shape no ring covers -- a raw column read keys as
+                        // `ArrayAccess(inClose, 0)`, and no derived ring can
+                        // hold one (`eligible_derived` needs two arrays behind
+                        // a single key). Not what excludes today's four
+                        // non-candle windows, though: AVGDEV and IMI never
+                        // reach here (their bound is a parameter expression,
+                        // refused above), and HT_TRENDLINE / HT_TRENDMODE
+                        // arrive with an empty `by_shape` because their only
+                        // ring is raw. This arm is the guard for a window that
+                        // has SOME matched shape and one unmatched -- which no
+                        // shipped function has, so it is load-bearing only for
+                        // what gets added next.
+                        None => refused = true,
+                    }
+                }
+            });
+        }
+        if !refused {
+            out.extend(picked.into_values());
+        }
+    }
+    out
+}
+
+/// Replace every derived window read with a read of the synthetic slot naming
+/// the ring that holds it, keeping the batch's own index expression so the
+/// offset resolves exactly as the window buffer's did.
+///
+/// The index form, not the shape alone, is what discriminates: the ring read in
+/// the same statement (`ta_CDLADVANCEBLOCK.c:186`) has the IDENTICAL shape key
+/// and must be left to [`fold_derived_reads`], which likewise looks only for an
+/// index naming its own trailing var.
+fn fold_window_reads(stmts: &[Statement], folds: &[&WindowFold], cursor: &str) -> Vec<Statement> {
+    let mut cur = stmts.to_vec();
+    for f in folds {
+        let key = shape_key(&f.expr);
+        let w = f.win_var.clone();
+        let slot = window_slot_name(&f.ring_var);
+        let cursor = cursor.to_string();
+        cur = rewrite_stmts(
+            &cur,
+            &move |e: Expr| {
+                if shape_key(&e) != key {
+                    return e;
+                }
+                let idx = single_read_index(&e).filter(|i| {
+                    matches!(
+                        classify_input_index(i, &cursor),
+                        InputIndex::WindowVar(ref v) if *v == w
+                    )
                 });
                 match idx {
                     Some(i) => Expr::ArrayAccess(slot.clone(), Box::new(i)),
@@ -4621,6 +4862,65 @@ fn fold_derived_reads(
         );
     }
     cur
+}
+
+/// Does any input-array read still go through window counter `w`? The window
+/// buffer may be dropped only when none does. Scans the SAME way
+/// [`scan_accesses`] does, so a read it would have recorded cannot hide here.
+fn has_window_read(
+    stmts: &[Statement],
+    w: &str,
+    cursor: &str,
+    bar_inputs: &[String],
+) -> bool {
+    let mut found = false;
+    for st in stmts {
+        walk_stmt_exprs(st, &mut |e| {
+            walk_expr(e, &mut |x| {
+                if let Expr::ArrayAccess(name, idx) = x {
+                    if bar_inputs.iter().any(|i| i == name)
+                        && matches!(
+                            classify_input_index(idx, cursor),
+                            InputIndex::WindowVar(ref v) if v == w
+                        )
+                    {
+                        found = true;
+                    }
+                }
+            });
+        });
+    }
+    found
+}
+
+/// Apply the window folds one counter at a time, keeping a counter's fold only
+/// when nothing reads a raw column through it afterwards. Returns the rewritten
+/// statements and the counters whose [`WindowSpec`] may be dropped.
+///
+/// The residue check is the whole safety argument for dropping a buffer: the
+/// election above proves each shape it FOUND has a ring, and this proves it
+/// found them all. Fails closed -- a surviving read keeps the window.
+fn apply_window_folds(
+    stmts: Vec<Statement>,
+    folds: &[WindowFold],
+    cursor: &str,
+    bar_inputs: &[String],
+) -> (Vec<Statement>, BTreeSet<String>) {
+    let mut by_win: BTreeMap<String, Vec<&WindowFold>> = BTreeMap::new();
+    for f in folds {
+        by_win.entry(f.win_var.clone()).or_default().push(f);
+    }
+    let mut cur = stmts;
+    let mut dropped: BTreeSet<String> = BTreeSet::new();
+    for (w, fs) in by_win {
+        let folded = fold_window_reads(&cur, &fs, cursor);
+        if has_window_read(&folded, &w, cursor, bar_inputs) {
+            continue;
+        }
+        cur = folded;
+        dropped.insert(w);
+    }
+    (cur, dropped)
 }
 
 /// Rings in a stable order: by variable name, arrays in signature order.
@@ -5963,6 +6263,112 @@ fn ring_offset_read(
     )
 }
 
+/// Read a derived ring at `cursor - off`: `ring[(pos + cap - off) % cap]`.
+///
+/// Unlike [`ring_offset_read`] there is no runtime-lag term, because this
+/// resolves a RESCAN-WINDOW offset (#229) rather than a trailing one: slot
+/// `pos` holds the CURRENT bar, stored by the transition prologue, which is
+/// why the election refuses any ring with `back == 0` (those store after the
+/// body). `off` is in `[0, winCap - 1]` and `winCap <= back + 1 <= cap`, so
+/// `pos + cap - off` is in `[1, 2*cap)` and one conditional subtract is the
+/// exact modulo -- the same form the window buffer read used, so the fold
+/// changes the buffer and nothing about the per-element cost.
+fn ring_cursor_read(ring: &RingSpec, array: &str, off: Expr, names: &dyn NameMap) -> Expr {
+    let cap = Expr::Var(names.ring_cap(&ring.var));
+    let x = Expr::BinOp(
+        Box::new(Expr::BinOp(
+            Box::new(Expr::Var(names.ring_pos(&ring.var))),
+            BinOp::Add,
+            Box::new(cap.clone()),
+        )),
+        BinOp::Sub,
+        Box::new(off),
+    );
+    let idx = Expr::Ternary(
+        Box::new(Expr::BinOp(
+            Box::new(x.clone()),
+            BinOp::GreaterEq,
+            Box::new(cap.clone()),
+        )),
+        Box::new(Expr::BinOp(Box::new(x.clone()), BinOp::Sub, Box::new(cap))),
+        Box::new(x),
+    );
+    Expr::ArrayAccess(names.ring_buf(&ring.var, array), Box::new(idx))
+}
+
+/// Read column `array` of rescan window `w0` at offset `w0` bars back --
+/// `win[(pos + cap - w0) % cap]`, with slot `pos` holding the current bar
+/// (written before the transition body).
+///
+/// `w0` is a window offset in `[0, cap-1]`, so `pos + cap - w0` is in
+/// `[1, 2*cap)` and the modulo is a single conditional subtract: emit
+/// `X >= cap ? X - cap : X` rather than a per-element runtime integer division,
+/// which brings the stream window-rescan to batch@last's cost (#110).
+///
+/// Bottom-up rewriting may already have state-mapped the offset var, so the
+/// window is resolved by either spelling.
+fn window_buf_read(
+    model: &StreamModel,
+    array: &str,
+    w0: &str,
+    names: &dyn NameMap,
+) -> Option<Expr> {
+    let win = model
+        .windows()
+        .iter()
+        .find(|win| win.var == w0 || names.state(&win.var) == w0)?;
+    let cap = Expr::Var(names.win_cap(&win.var));
+    let x = Expr::BinOp(
+        Box::new(Expr::BinOp(
+            Box::new(Expr::Var(names.win_pos(&win.var))),
+            BinOp::Add,
+            Box::new(cap.clone()),
+        )),
+        BinOp::Sub,
+        Box::new(Expr::Var(w0.to_string())),
+    );
+    let idx = Expr::Ternary(
+        Box::new(Expr::BinOp(
+            Box::new(x.clone()),
+            BinOp::GreaterEq,
+            Box::new(cap.clone()),
+        )),
+        Box::new(Expr::BinOp(Box::new(x.clone()), BinOp::Sub, Box::new(cap))),
+        Box::new(x),
+    );
+    Some(Expr::ArrayAccess(
+        names.win_buf(&win.var, array),
+        Box::new(idx),
+    ))
+}
+
+/// The ring a folded window read (#229) names, if any.
+fn window_slot_ring<'a>(model: &'a StreamModel, name: &str) -> Option<&'a RingSpec> {
+    model
+        .rings()
+        .iter()
+        .find(|r| r.derived.is_some() && window_slot_name(&r.var) == name)
+}
+
+/// Resolve a folded rescan-window read to the ring slot that holds it --
+/// cursor-relative, because slot `pos` is the current bar's.
+///
+/// Returning `None` leaves a synthetic name no backend declares, so a form the
+/// election did not anticipate is a build error rather than a wrong read.
+fn window_slot_read(
+    name: &str,
+    idx: &Expr,
+    model: &StreamModel,
+    names: &dyn NameMap,
+) -> Option<Expr> {
+    let ring = window_slot_ring(model, name)?;
+    let slot = &ring.derived.as_ref()?.slot;
+    match classify_input_index(idx, &model.cursor) {
+        InputIndex::WindowVar(w) => Some(ring_cursor_read(ring, slot, Expr::Var(w), names)),
+        _ => None,
+    }
+}
+
 /// Is `name` the synthetic slot of some derived ring (#229)?
 fn is_derived_slot(model: &StreamModel, name: &str) -> bool {
     model
@@ -6153,6 +6559,11 @@ fn rewrite_expr_for_transition(
         Expr::ArrayAccess(ref n, ref idx) if is_derived_slot(model, n) => {
             derived_slot_read(n, idx, model, names).unwrap_or(e)
         }
+        // #229 folded rescan-window read: the ring already holds this shape on
+        // this bar, so the window buffer was dropped.
+        Expr::ArrayAccess(ref n, ref idx) if window_slot_ring(model, n).is_some() => {
+            window_slot_read(n, idx, model, names).unwrap_or(e)
+        }
         Expr::ArrayAccess(n, idx) if model.bar_inputs.contains(&n) => {
             match classify_input_index(&idx, &model.cursor) {
                 InputIndex::Current => Expr::Var(names.bar(&n)),
@@ -6183,54 +6594,10 @@ fn rewrite_expr_for_transition(
                     let ring = model.rings().iter().find(|r| r.var == v).unwrap();
                     ring_offset_read(ring, &n, None, Some(Expr::Var(w)), names)
                 }
-                InputIndex::WindowVar(w0) => {
-                    // Bottom-up rewriting may already have state-mapped the
-                    // offset var; resolve back to the window it belongs to.
-                    let win = model.windows().iter().find(|win| {
-                        win.var == w0 || names.state(&win.var) == w0
-                    });
-                    match win {
-                        Some(win) => {
-                            // Bar `w` back from the current one (slot `pos` holds
-                            // the current bar, written before the transition body).
-                            // The logical index is (pos + cap - w) % cap; but `w`
-                            // is a window offset in [0, cap-1], so that operand is
-                            // in [1, 2*cap) and the modulo is a single conditional
-                            // subtract. Emit `X >= cap ? X - cap : X` instead of a
-                            // per-element runtime integer division -- brings the
-                            // stream window-rescan to batch@last's cost (#110).
-                            let pos = Expr::Var(names.win_pos(&win.var));
-                            let cap = Expr::Var(names.win_cap(&win.var));
-                            let x = Expr::BinOp(
-                                Box::new(Expr::BinOp(
-                                    Box::new(pos),
-                                    BinOp::Add,
-                                    Box::new(cap.clone()),
-                                )),
-                                BinOp::Sub,
-                                Box::new(Expr::Var(w0)),
-                            );
-                            let idx_expr = Expr::Ternary(
-                                Box::new(Expr::BinOp(
-                                    Box::new(x.clone()),
-                                    BinOp::GreaterEq,
-                                    Box::new(cap.clone()),
-                                )),
-                                Box::new(Expr::BinOp(
-                                    Box::new(x.clone()),
-                                    BinOp::Sub,
-                                    Box::new(cap),
-                                )),
-                                Box::new(x),
-                            );
-                            Expr::ArrayAccess(
-                                names.win_buf(&win.var, &n),
-                                Box::new(idx_expr),
-                            )
-                        }
-                        None => Expr::ArrayAccess(n, idx),
-                    }
-                }
+                InputIndex::WindowVar(w0) => match window_buf_read(model, &n, &w0, names) {
+                    Some(read) => read,
+                    None => Expr::ArrayAccess(n, idx),
+                },
                 _ => Expr::ArrayAccess(n, idx),
             }
         }
@@ -7052,4 +7419,282 @@ mod tests {
         let t = build_transition(&m, &TestNames).unwrap();
         assert_eq!(t.len(), 2); // ad update + output write
     }
+
+    // -- #229 rescan-window fold: the fail-closed conditions -----------------
+    //
+    // The corpus exercises only two of the four refusals: AVGDEV / IMI /
+    // HT_TRENDLINE / HT_TRENDMODE have no derived ring at all, and no shipped
+    // function has a ring that is present but unusable. These build the
+    // statements directly so each condition is pinned on its own, and so the
+    // dangerous case -- a matching ring EXISTS and the window is dropped
+    // anyway while one read still names a raw column -- is covered.
+
+    /// `ta_highlowrange(inHigh[idx], inLow[idx])` -- a two-array pure-helper
+    /// shape, the same form the candlesticks fold.
+    fn hlr(idx: Expr) -> Expr {
+        Expr::FuncCall(
+            "ta_highlowrange".into(),
+            vec![acc("inHigh", idx.clone()), acc("inLow", idx)],
+        )
+    }
+    fn cursor_minus(w: &str) -> Expr {
+        sub(var("i"), var(w))
+    }
+    fn trail_minus(w: &str) -> Expr {
+        sub(var("trailIdx"), var(w))
+    }
+
+    /// The statement every case below shares: one window read and one trailing
+    /// read of the SAME shape, in one expression — the entanglement
+    /// `ta_CDLADVANCEBLOCK.c:186` has and the reason the two folds must be told
+    /// apart by index form rather than by shape.
+    fn win_stmts() -> Vec<Statement> {
+        vec![assign(
+            var("total"),
+            add(
+                var("total"),
+                sub(hlr(cursor_minus("w")), hlr(trail_minus("w"))),
+            ),
+        )]
+    }
+
+    fn derived_ring(back: i64) -> RingSpec {
+        RingSpec {
+            var: "trailIdx".into(),
+            arrays: vec!["derived".into()],
+            back,
+            fwd: 0,
+            derived: Some(DerivedRing {
+                slot: "derived".into(),
+                expr: hlr(trail_minus("w")),
+                raw_arrays: vec!["inHigh".into(), "inLow".into()],
+            }),
+        }
+    }
+
+    fn scanned_win(cap: i64) -> Vec<(String, Expr, BTreeSet<String>)> {
+        vec![(
+            "w".into(),
+            Expr::IntLiteral(cap),
+            ["inHigh".to_string(), "inLow".to_string()]
+                .into_iter()
+                .collect(),
+        )]
+    }
+
+    #[test]
+    fn window_folds_when_a_deep_enough_derived_ring_holds_the_shape() {
+        let folds =
+            eligible_window_folds(&win_stmts(), &scanned_win(3), &[derived_ring(2)], "i");
+        assert_eq!(folds.len(), 1, "one shape, one fold");
+        assert_eq!(folds[0].ring_var, "trailIdx");
+        let bars = vec!["inHigh".to_string(), "inLow".to_string()];
+        let (folded, dropped) = apply_window_folds(win_stmts(), &folds, "i", &bars);
+        assert!(dropped.contains("w"), "the window keeps no buffer");
+        // The window read became a ring read; the TRAILING read of the same
+        // shape did NOT — it is `fold_derived_reads`' business and still names
+        // the raw columns here.
+        let txt = format!("{folded:?}");
+        assert!(txt.contains("derivedAt_trailIdx"), "routed: {txt}");
+        assert!(
+            txt.contains("Var(\"trailIdx\")"),
+            "the trailing read is untouched: {txt}"
+        );
+        assert!(!has_window_read(&folded, "w", "i", &bars));
+    }
+
+    #[test]
+    fn window_keeps_its_buffer_when_one_read_is_raw() {
+        // Same shape, same ring — plus one bare `inLow[i - w]`. That read keys
+        // as `ArrayAccess(inLow, 0)`, which no derived ring can hold, so the
+        // whole window is refused. This is the fail-open that would otherwise
+        // drop a buffer something still reads.
+        let mut stmts = win_stmts();
+        stmts.push(assign(
+            var("other"),
+            add(var("other"), acc("inLow", cursor_minus("w"))),
+        ));
+        let folds = eligible_window_folds(&stmts, &scanned_win(3), &[derived_ring(2)], "i");
+        assert!(folds.is_empty(), "one raw read refuses the whole window");
+    }
+
+    #[test]
+    fn window_refuses_an_oldest_slot_ring() {
+        // `back == 0` is the layout that stores the current bar AFTER the body,
+        // so slot `pos` holds the trailing bar at read time. Nothing in the
+        // corpus pairs one with a window, and this is what keeps it that way.
+        //
+        // cap 1 is the ONLY depth at which a `back == 0` ring clears
+        // `back + 1 >= cap`, so it is the only cap at which this test measures
+        // the `back > 0` filter rather than the depth check standing in for it.
+        let folds =
+            eligible_window_folds(&win_stmts(), &scanned_win(1), &[derived_ring(0)], "i");
+        assert!(folds.is_empty(), "an oldest-slot ring cannot serve the cursor");
+        // Control: the same cap with an absolute-mod ring DOES fold, so the
+        // emptiness above is the filter and not the parameters.
+        let folds =
+            eligible_window_folds(&win_stmts(), &scanned_win(1), &[derived_ring(1)], "i");
+        assert_eq!(folds.len(), 1, "back > 0 at the same cap folds");
+    }
+
+    #[test]
+    fn window_refuses_a_same_key_subtree_reading_two_bars() {
+        // [`shape_key`] blanks indices, so an expression reading its columns at
+        // DIFFERENT bars keys identically to one reading them all at the window
+        // bar. Electing the well-formed one must not license rewriting the
+        // mixed one: that would substitute one stored scalar for a two-bar
+        // expression and delete the second read outright, with the window
+        // buffer gone and no residue for `has_window_read` to catch.
+        //
+        // Reaching it needs the mixed subtree's own Derived child to be a
+        // shape with a ring of its own -- a bare column read keys as
+        // `ArrayAccess(inHigh, 0)`, which no ring can hold, so the plain mixed
+        // case is refused one step earlier. Hence the nesting. No shipped
+        // indicator writes it; the guard is why one could.
+        let inner = |idx: Expr| {
+            Expr::FuncCall(
+                "ta_highlowrange".into(),
+                vec![acc("inHigh", idx.clone()), acc("inLow", idx)],
+            )
+        };
+        // `ta_candlecolor` sorts before `ta_highlowrange`, so the OUTER fold is
+        // applied first -- the order in which the hazard is live. Applied the
+        // other way the inner rewrite changes the outer's key and the outer
+        // fold simply stops matching.
+        let outer = |o_idx: Expr, i_idx: Expr| {
+            Expr::FuncCall(
+                "ta_candlecolor".into(),
+                vec![inner(i_idx), acc("inOpen", o_idx)],
+            )
+        };
+        let well_formed = outer(cursor_minus("w"), cursor_minus("w"));
+        let mixed = outer(sub(var("i"), Expr::IntLiteral(1)), cursor_minus("w"));
+        assert_eq!(
+            shape_key(&well_formed),
+            shape_key(&mixed),
+            "the two key alike -- that is the whole hazard"
+        );
+        let rings = vec![
+            derived_ring(2),
+            RingSpec {
+                var: "trailOuter".into(),
+                arrays: vec!["derived".into()],
+                back: 2,
+                fwd: 0,
+                derived: Some(DerivedRing {
+                    slot: "derived".into(),
+                    expr: outer(trail_minus("w"), trail_minus("w")),
+                    raw_arrays: vec!["inOpen".into(), "inHigh".into(), "inLow".into()],
+                }),
+            },
+        ];
+        let stmts = vec![
+            assign(var("a"), add(var("a"), well_formed)),
+            assign(var("b"), add(var("b"), mixed)),
+        ];
+        let folds = eligible_window_folds(&stmts, &scanned_win(3), &rings, "i");
+        assert!(!folds.is_empty(), "the well-formed read is still elected");
+        let bars = vec!["inOpen".to_string(), "inHigh".to_string(), "inLow".to_string()];
+        let (folded, _) = apply_window_folds(stmts, &folds, "i", &bars);
+        let txt = format!("{folded:?}");
+        assert!(
+            txt.contains("ArrayAccess(\"inOpen\", BinOp(Var(\"i\"), Sub, IntLiteral(1)))"),
+            "the second bar's read survives the fold: {txt}"
+        );
+    }
+
+    #[test]
+    fn window_refuses_a_ring_shallower_than_the_window() {
+        // cap 4 needs offsets 0..3, so `back + 1 >= 4`. At back == 2 the ring
+        // spans three bars and the deepest read would name the wrong one.
+        let folds =
+            eligible_window_folds(&win_stmts(), &scanned_win(4), &[derived_ring(2)], "i");
+        assert!(folds.is_empty(), "cap 4 needs back >= 3");
+        let folds =
+            eligible_window_folds(&win_stmts(), &scanned_win(4), &[derived_ring(3)], "i");
+        assert_eq!(folds.len(), 1, "back == 3 is exactly deep enough");
+    }
+
+    #[test]
+    fn window_refuses_a_ring_of_another_shape() {
+        // Shape keys carry the callee and its non-index arguments, which is what
+        // keeps CDLADVANCEBLOCK's four settings routed to four different rings.
+        let mut other = derived_ring(2);
+        other.derived.as_mut().unwrap().expr = Expr::FuncCall(
+            "ta_realbody".into(),
+            vec![acc("inClose", trail_minus("w")), acc("inOpen", trail_minus("w"))],
+        );
+        let folds = eligible_window_folds(&win_stmts(), &scanned_win(3), &[other], "i");
+        assert!(folds.is_empty(), "a different shape is not a match");
+    }
+
+    #[test]
+    fn derived_ring_refuses_a_shape_reading_two_bars() {
+        // The ring side of the same hazard, and the older one: `classify_v`
+        // selects a trailing bar with `expr_mentions(idx, var)`, which BOTH
+        // `in*[T]` and `in*[T-1]` satisfy, so a two-bar shape passes the
+        // classifier. A ring stores one scalar per bar and cannot reproduce it.
+        let two_bar = Expr::FuncCall(
+            "ta_highlowrange".into(),
+            vec![
+                acc("inHigh", var("T")),
+                acc("inLow", sub(var("T"), Expr::IntLiteral(1))),
+            ],
+        );
+        let stmts = vec![assign(var("total"), add(var("total"), two_bar))];
+        let mut trailing: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        trailing.insert(
+            "T".into(),
+            ["inHigh".to_string(), "inLow".to_string()].into_iter().collect(),
+        );
+        let bars = vec!["inHigh".to_string(), "inLow".to_string()];
+        assert!(
+            eligible_derived(&stmts, &trailing, &bars).is_empty(),
+            "a two-bar shape is not a per-bar scalar"
+        );
+        // Control: the same shape read at ONE bar is elected, so the emptiness
+        // above is the guard and not the fixture.
+        let one_bar = Expr::FuncCall(
+            "ta_highlowrange".into(),
+            vec![acc("inHigh", var("T")), acc("inLow", var("T"))],
+        );
+        let stmts = vec![assign(var("total"), add(var("total"), one_bar))];
+        assert_eq!(eligible_derived(&stmts, &trailing, &bars).len(), 1);
+    }
+
+    #[test]
+    fn window_refuses_a_non_literal_bound() {
+        // A parameter-bounded rescan (AVGDEV's `optInTimePeriod`) gives no
+        // number to compare the ring depth against, so it is never folded.
+        let scanned = vec![(
+            "w".to_string(),
+            var("optInTimePeriod"),
+            ["inHigh".to_string(), "inLow".to_string()]
+                .into_iter()
+                .collect(),
+        )];
+        let folds = eligible_window_folds(&win_stmts(), &scanned, &[derived_ring(9)], "i");
+        assert!(folds.is_empty(), "an unbounded window cannot be sized");
+    }
+
+    #[test]
+    fn apply_window_folds_keeps_a_window_with_residue() {
+        // The second, independent gate: hand it a fold that covers only part of
+        // the reads and it must decline to drop the buffer even though the fold
+        // itself is well-formed.
+        let mut stmts = win_stmts();
+        stmts.push(assign(
+            var("other"),
+            add(var("other"), acc("inLow", cursor_minus("w"))),
+        ));
+        let fold = WindowFold {
+            win_var: "w".into(),
+            ring_var: "trailIdx".into(),
+            expr: hlr(cursor_minus("w")),
+        };
+        let bars = vec!["inHigh".to_string(), "inLow".to_string()];
+        let (_, dropped) = apply_window_folds(stmts, &[fold], "i", &bars);
+        assert!(dropped.is_empty(), "a surviving raw read keeps the window");
+    }
+
 }

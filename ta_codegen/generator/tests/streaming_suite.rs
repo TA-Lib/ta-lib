@@ -307,11 +307,48 @@ fn cdleveningstar_ring_has_forward_offset() {
     assert!(r.back >= 1, "forward reads force the absolute-mod layout");
 }
 
+/// Array names read anywhere in a transition, so a test can see which buffer a
+/// read was routed to without rendering a backend.
+fn read_arrays(m: &streaming::StreamModel<'_>) -> std::collections::BTreeSet<String> {
+    let mut out = std::collections::BTreeSet::new();
+    for st in &m.steady_stmts {
+        streaming::walk_stmt_exprs(st, &mut |e| {
+            streaming::walk_expr(e, &mut |x| {
+                if let ir::Expr::ArrayAccess(n, _) = x {
+                    out.insert(n.clone());
+                }
+            });
+        });
+    }
+    out
+}
+
+/// Raw input columns still read at an index mentioning `off` — what a dropped
+/// window buffer must leave none of. The lag reads (`in[cursor]`,
+/// `in[cursor - 2]`) that feed the pattern logic name no counter and are not
+/// this fold's business, so keying on the offset is what keeps the assertion
+/// about the fold rather than about the function.
+fn raw_reads_offset_by(m: &streaming::StreamModel<'_>, off: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    for st in &m.steady_stmts {
+        streaming::walk_stmt_exprs(st, &mut |e| {
+            streaming::walk_expr(e, &mut |x| {
+                if let ir::Expr::ArrayAccess(n, idx) = x {
+                    if m.bar_inputs.iter().any(|b| b == n) && format!("{idx:?}").contains(off) {
+                        out.push(format!("{n}[{idx:?}]"));
+                    }
+                }
+            });
+        });
+    }
+    out
+}
+
 #[test]
 fn cdl3blackcrows_var_offset_ring_window_and_array_state() {
     // in[ShadowVeryShortTrailingIdx - totIdx] with for(totIdx=2; totIdx>=0;):
-    // ring back = counter max (2), rescan window on totIdx, and the per-candle
-    // totals carry as fixed-size array state.
+    // ring back = counter max (2), and the per-candle totals carry as
+    // fixed-size array state.
     let f = load("cdl3blackcrows");
     let m = streaming::analyze(&f).expect("CDL3BLACKCROWS analyzes");
     let r = m
@@ -320,13 +357,61 @@ fn cdl3blackcrows_var_offset_ring_window_and_array_state() {
         .find(|r| r.var == "ShadowVeryShortTrailingIdx")
         .expect("ShadowVeryShort ring");
     assert!(r.back >= 2, "counter-offset ring, got {}", r.back);
-    assert!(!m.windows().is_empty(), "in[i - totIdx] rescan window");
     assert!(
         m.state
             .iter()
             .any(|(n, t)| n == "ShadowVeryShortPeriodTotal"
                 && matches!(t, ta_codegen_lib::ir::VarType::RealArray(_))),
         "fixed-size array state"
+    );
+}
+
+#[test]
+fn cdl3blackcrows_window_folds_into_its_ring() {
+    // #229 last tranche: `in*[i - totIdx]` is read only through
+    // ta_candlerange(ShadowVeryShort, ...) — the exact value the ShadowVeryShort
+    // ring already stores — so the window keeps NO buffer of its own.
+    let f = load("cdl3blackcrows");
+    let m = streaming::analyze(&f).expect("CDL3BLACKCROWS analyzes");
+    assert!(
+        m.windows().is_empty(),
+        "the totIdx window is served by the ring, got {:?}",
+        m.windows().iter().map(|w| &w.var).collect::<Vec<_>>()
+    );
+    // Dropping a window is only correct if the reads went SOMEWHERE: pin the
+    // routing, not just the absence. An empty window list with the reads still
+    // naming raw columns would be the fail-open this asserts against.
+    let reads = read_arrays(&m);
+    assert!(
+        reads.contains("derivedAt_ShadowVeryShortTrailingIdx"),
+        "window reads routed into the ShadowVeryShort ring, saw {reads:?}"
+    );
+    assert!(
+        raw_reads_offset_by(&m, "totIdx").is_empty(),
+        "no raw column is still read through the counter, saw {:?}",
+        raw_reads_offset_by(&m, "totIdx")
+    );
+}
+
+#[test]
+fn avgdev_window_keeps_its_buffer() {
+    // The control for the fold above, over the real corpus. Two guards would
+    // each hold it on their own and it is the FIRST that fires: AVGDEV's window
+    // is bounded by `optInTimePeriod`, not a literal, so the ring depth has
+    // nothing to compare against. Its reads being raw columns is the second.
+    // (The raw-column refusal itself is pinned by
+    // `window_keeps_its_buffer_when_one_read_is_raw` in `streaming.rs`, where
+    // the fixture can hold the two apart.)
+    let f = load("avgdev");
+    let m = streaming::analyze(&f).expect("AVGDEV analyzes");
+    assert_eq!(
+        m.windows().len(),
+        1,
+        "raw rescan reads keep their own buffer"
+    );
+    assert!(
+        read_arrays(&m).contains("inReal"),
+        "AVGDEV still reads the raw column"
     );
 }
 
@@ -341,16 +426,44 @@ fn cdlkickingbylength_ternary_index_hoisted() {
 
 #[test]
 fn cdladvanceblock_merges_window_bounds_to_widest() {
-    // totIdx is bound by three loops (2, 1, 2 inclusive) — the window keeps
-    // the widest literal bound instead of rejecting.
+    // totIdx is bound by three loops (2, 1, 2 inclusive) — the merge keeps the
+    // widest literal bound instead of rejecting. Since #229 dropped the window
+    // buffer the bound is observable on the rings it sizes: every ring read at
+    // `[<Setting>TrailingIdx - totIdx]` gets back = cap - 1 = 2, which is also
+    // what makes the ring deep enough to serve the window read.
     let f = load("cdladvanceblock");
     let m = streaming::analyze(&f).expect("CDLADVANCEBLOCK analyzes");
-    let w = m.windows().iter().find(|w| w.var == "totIdx").expect("totIdx window");
-    assert!(
-        matches!(w.cap, ta_codegen_lib::ir::Expr::IntLiteral(3)),
-        "widest inclusive bound 2 -> exclusive cap 3, got {:?}",
-        w.cap
-    );
+    for setting in ["ShadowShort", "ShadowLong", "Near", "Far"] {
+        let v = format!("{setting}TrailingIdx");
+        let r = m
+            .rings()
+            .iter()
+            .find(|r| r.var == v)
+            .unwrap_or_else(|| panic!("{v} ring"));
+        assert_eq!(r.back, 2, "widest inclusive bound 2 sizes {v}");
+    }
+}
+
+#[test]
+fn cdladvanceblock_window_folds_per_setting() {
+    // One window counter, FOUR candle settings read through it, each routed to
+    // its own ring — the case that made a single shared "derived" slot name
+    // insufficient. `ta_CDLADVANCEBLOCK.c:186` also holds a window read and a
+    // ring read of the same Near setting in ONE statement, so the two folds
+    // must be told apart by index form rather than by shape.
+    let f = load("cdladvanceblock");
+    let m = streaming::analyze(&f).expect("CDLADVANCEBLOCK analyzes");
+    assert!(m.windows().is_empty(), "the totIdx window is served by rings");
+    let reads = read_arrays(&m);
+    for setting in ["ShadowShort", "ShadowLong", "Near", "Far"] {
+        assert!(
+            reads.contains(&format!("derivedAt_{setting}TrailingIdx")),
+            "{setting} window read routed to its own ring, saw {reads:?}"
+        );
+    }
+    // The trailing side of the same statements still resolves through the
+    // shared slot: both folds fired, neither swallowed the other.
+    assert!(reads.contains("derived"), "trailing reads still folded");
 }
 
 #[test]
