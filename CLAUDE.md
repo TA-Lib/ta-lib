@@ -62,7 +62,7 @@ A cross-call inside a body calls the callee's *public* tier and lets its
 rejection throw, so the callers that need a code back convert it themselves:
 the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`. That conversion is
 live only while cross-calls go through the public tier — the same fact that
-withholds ten cores from `NoPhantomIoTest`'s sweep — so the two move together.
+withholds `MA` from `NoPhantomIoTest`'s sweep — so the two move together.
 
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source
