@@ -14,7 +14,11 @@ functions (Open/Update/Peek/Close, rings, sub-handles). This drives them:
      what lets LeakSanitizer run at process exit (driving it through ta_regtest
      kills the server, so LSan stays silent). ASan/UBSan errors abort mid-run.
   4. Fail if the server's stderr shows any sanitizer diagnostic, if it exits
-     non-zero, or if no leg actually ran (vacuous).
+     non-zero, if a request went unanswered, or if no leg actually ran (vacuous).
+  5. Fail on the VALUE signal the responses already carry (`ok` / `peek_ok` /
+     `fill_ok`). This is a memory-safety gate by design, but the flags are in
+     the stdout it parses anyway, and discarding them let a +1 ring rotation
+     print PASS while every response reported a batch-vs-stream mismatch (#240).
 
 This is the "sanitizer legs" follow-up for the stream servers. It only detects
 issues on paths that actually execute — allocation-failure branches (which
@@ -144,6 +148,44 @@ def load_streamable():
     return funcs
 
 
+def read_responses(stdout):
+    """Parse the server's stream_verify responses.
+
+    Returns `(verified, answered, value_fails)`: the number of responses that
+    reported a non-zero leg count (the non-vacuity signal), the number of
+    responses seen at all, and a list of human-readable failures.
+
+    The `ok` / `peek_ok` / `fill_ok` flags were already in this stdout and were
+    thrown away, so a run whose legs all reported a batch-vs-stream mismatch
+    still printed PASS (#240). They are cheap to read and are read here.
+    """
+    verified = answered = 0
+    fails = []
+    for ln in stdout.splitlines():
+        ln = ln.strip()
+        if not ln:
+            continue
+        answered += 1
+        try:
+            r = json.loads(ln)
+        except ValueError:
+            fails.append("unparseable response: %s" % ln[:200])
+            continue
+        if "error" in r:
+            # Every request is built from a `stream` YAML flag, so the server
+            # answering "not_streamable" is a set mismatch, not a skip.
+            fails.append("server error: %s  (%s)" % (r["error"], ln[:160]))
+            continue
+        if r.get("legs", 0):
+            verified += 1
+        for flag in ("ok", "peek_ok"):
+            if r.get(flag, 1) != 1:
+                fails.append("%s=0 in %s" % (flag, ln[:200]))
+        if r.get("fill_checked") == 1 and r.get("fill_ok") != 1:
+            fails.append("fill_ok=0 in %s" % ln[:200])
+    return verified, answered, fails
+
+
 def main():
     build_server()
     funcs = load_streamable()
@@ -162,11 +204,11 @@ def main():
                "runtime error:", "detected memory leaks", "SUMMARY: ")
     hits = [ln for ln in stderr.splitlines() if any(m in ln for m in markers)]
 
-    # Non-vacuity: at least some legs must have actually verified.
-    verified = sum(1 for ln in proc.stdout.decode(errors="replace").splitlines()
-                   if '"legs":' in ln and '"legs":0' not in ln)
+    stdout = proc.stdout.decode(errors="replace")
+    verified, answered, value_fails = read_responses(stdout)
 
-    print(f"server exit={proc.returncode}  legs-verified(non-zero)={verified}")
+    print(f"server exit={proc.returncode}  responses={answered}/{len(reqs)}  "
+          f"legs-verified(non-zero)={verified}  value-mismatches={len(value_fails)}")
     if hits:
         print("\n!!! SANITIZER DIAGNOSTIC(S):")
         print(stderr)
@@ -178,7 +220,26 @@ def main():
     if verified == 0:
         print("\n!!! vacuous: no stream leg verified — broken server or filter?")
         return 1
-    print("PASS — C stream API is ASan/UBSan/LSan clean on all exercised paths.")
+    # One response per request. A short count is the server dying or wedging
+    # part-way; without this the legs that never ran read as "clean".
+    if answered != len(reqs):
+        print(f"\n!!! {len(reqs) - answered} request(s) went unanswered — the "
+              f"server stopped part-way through the sweep.")
+        return 1
+    if value_fails:
+        print(f"\n!!! {len(value_fails)} leg(s) reported a batch-vs-stream "
+              f"mismatch:")
+        for f in value_fails[:20]:
+            print("   %s" % f)
+        if len(value_fails) > 20:
+            print("   ... and %d more" % (len(value_fails) - 20))
+        print("\nThese are VALUE failures, not memory ones — the same signal "
+              "ta_regtest --codegen reports. They are checked here because the "
+              "responses are already parsed for the non-vacuity count above, "
+              "and discarding them let a +1 ring rotation print PASS (#240).")
+        return 1
+    print("PASS — C stream API is ASan/UBSan/LSan clean, and every leg it drove "
+          "matched batch bitwise.")
     return 0
 
 
