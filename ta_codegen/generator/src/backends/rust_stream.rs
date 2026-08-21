@@ -2200,7 +2200,7 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
         // a code-generation outcome that varies by toolchain — measured real on
         // another box for exactly these functions — and a doc that promises it
         // sends someone into a tick loop expecting a free call.
-        "The copy is a throwaway. Its buffer clone is\n    /// often removed outright by the optimizer, which is why nothing is\n    /// reused here, but that is not a guarantee: budget for a clone of the\n    /// window and prefer `update` on a `clone()` in a hot loop."
+        "The copy is a throwaway. Its buffer clone is\n    /// often removed outright by the optimizer, which is why nothing is\n    /// reused here, but that is not a guarantee: budget for a clone of the\n    /// buffers it does own and prefer `update` on a `clone()` in a hot loop."
     } else {
         "This handle holds only scalars, so the copy is a\n    /// few machine words and `peek` never allocates."
     };
