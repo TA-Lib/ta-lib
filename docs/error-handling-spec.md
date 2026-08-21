@@ -59,7 +59,7 @@ it, and no backend invents a code of its own. It has 20 members, but the
 
 | RetCode | Meaning |
 |---|---|
-| `TA_SUCCESS` | the call completed; the reported range says how much was written |
+| `TA_SUCCESS` | the call completed; the reported `OutRange` says what was written |
 | `TA_BAD_PARAM` | the catch-all rejection |
 | `TA_OUT_OF_RANGE_START_INDEX` | `startIdx` outside the addressable index domain |
 | `TA_OUT_OF_RANGE_END_INDEX` | `endIdx` outside the domain, or below `startIdx` |
@@ -79,8 +79,15 @@ column reads *(none)*: C is handed bare pointers and has no sizes, so it cannot
 detect the condition at all, and the three backends that can detect it raise
 rather than return a code (Appendix A).
 
-`MAX_INDEX` is the addressable index ceiling, 100 000 000, identical in all four
-backends.
+**`OutRange`.** What a successful call reports about its own output: the index
+of the first value written, in the input series' coordinates, and how many values
+follow it. Only that range is written — see N2 — and a call that produces nothing
+reports an empty one, which is a success (N1). C returns the two numbers through
+the `*outBegIdx` / `*outNBElement` out-parameters; the other three carry them as
+one `OutRange` value. Appendix A has where it arrives, per backend and per tier.
+
+**`MAX_INDEX`.** The addressable index ceiling, 100 000 000, identical in all
+four backends.
 
 ---
 
@@ -92,8 +99,8 @@ undefined are collected in Part 3.
 
 | Rule | Condition | Result |
 |---|---|---|
-| N1 | A **valid range shorter than the lookback** | Success, zero values produced, reported count `0`. Never an error. |
-| N2 | Anywhere outside the reported output range | Not written. The library never pads, and never emits a fill value. |
+| N1 | A **valid range shorter than the lookback** | Success, zero values produced, an empty `OutRange`. Never an error. |
+| N2 | Anywhere outside the reported `OutRange` | Untouched. The library never pads, and never emits a fill value: only the reported `OutRange` is written. |
 | N3 | An optional parameter set to its **default sentinel** | The documented default is substituted, then validated like any other value. |
 | N4 | An output buffer that **is** an input buffer (whole-buffer, in place) | Allowed, in the batch tier. Several bodies are written for it. |
 | N5 | A **negative** candlestick `factor` | Legal. It does not "never match" — it makes the comparison unconditionally true. |
@@ -504,6 +511,20 @@ C and Rust report a code; Java and C# raise. Stated here once so no rule has to.
 | `TA_INSUFFICIENT_HISTORY` | `Err(RetCode::InsufficientHistory)` | `InsufficientHistoryException` | `InsufficientHistoryException` |
 | `TA_ALLOC_ERR` | `Err(RetCode::AllocErr)` | `IllegalStateException` | `InvalidOperationException` |
 | `TA_INTERNAL_ERROR` | `Err(RetCode::InternalError)` | `IllegalStateException` | `InvalidOperationException` |
+
+**Where the `OutRange` arrives** differs by tier as well as by backend:
+
+| Tier | C | Rust | Java | C# |
+|---|---|---|---|---|
+| batch | `*outBegIdx`, `*outNBElement` | `Ok(OutRange)` | returns `OutRange` | returns `OutRange` |
+| `OpenAndFill` | the same two out-parameters | `Ok((Stream, OutRange))` | on the handle, `fillRange()` | on the handle, `FillRange` |
+
+`fillRange()` / `FillRange` is an `OutRange` like any other — Java and C# keep it
+on the handle rather than returning it, and it is the empty range on a handle
+that came from a plain `Open`, which fills nothing. `Open`, `Update` and `Peek`
+produce one value rather than a range, in all four backends. The range's two
+members are named for each language: `beg_idx` / `count` in Rust, `begIdx` /
+`count` in Java, `BegIdx` / `Count` in C#.
 
 **One condition has no RetCode**, and raises where a code cannot be returned:
 
