@@ -217,8 +217,8 @@ public class StreamSmokeTest {
      *
      * <p>What is deliberately NOT pinned: the warm-up history handed to
      * {@code Open}/{@code OpenAndFill}. It is an input array, and the library
-     * does not scan input arrays — see {@code docs/error-handling-spec.md} rule
-     * N-5. Passing a non-finite one is undefined behaviour.
+     * does not scan input arrays — see {@code docs/error-handling-spec.md},
+     * "Non-finite input". Passing a non-finite one is undefined behaviour.
      *
      * <p>Coverage is by stream TIER, not by function count: the check is emitted
      * from one place, but into the entry points of five different tiers. SMA is

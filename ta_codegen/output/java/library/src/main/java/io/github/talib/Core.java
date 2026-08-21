@@ -267,7 +267,7 @@ public final class Core {
    }
 
    /**
-    * Rules B-1 and B-2, ahead of everything else the wrapper checks.
+    * Rules B1 and B2, ahead of everything else the wrapper checks.
     *
     * <p>The core makes the same two tests and answers the same two codes; this
     * runs first only to fix the ORDER. The specification lists the index rules
@@ -290,7 +290,7 @@ public final class Core {
    }
 
    /**
-    * Rule B-3 for an argument that is not a buffer — today, an enum parameter.
+    * Rule B3 for an argument that is not a buffer — today, an enum parameter.
     *
     * <p>Java is the only backend where this can happen: C# enums are value
     * types, C's are integers, and Rust's cannot be absent. A null one used to

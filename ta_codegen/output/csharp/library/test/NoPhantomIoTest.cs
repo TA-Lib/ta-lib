@@ -404,7 +404,7 @@ public static class NoPhantomIoTest
     /// <para>This sweep works by handing a function ZERO-LENGTH buffers and
     /// reading what happens: silence means no I/O, a fault means the detector is
     /// live. Since #236 step 3 the transcribed body calls its callee's PUBLIC
-    /// overload, and the callee's input bound (rule B-5a) requires
+    /// overload, and the callee's input bound (rule B5a) requires
     /// <c>endIdx + 1</c> elements — deliberately without the sub-lookback escape
     /// the OUTPUT bound takes. A function that forwards on a range shorter than
     /// its own lookback therefore answers <c>BadParam</c> before touching a

@@ -621,7 +621,7 @@ public static class StreamApiTest
     /// <para>The warm-up history handed to <c>Open</c>/<c>OpenAndFill</c> is
     /// deliberately NOT checked: it is an input array, and the library does not
     /// scan input arrays. Passing a non-finite one is undefined behaviour — see
-    /// <c>docs/error-handling-spec.md</c> rule N-5.</para>
+    /// <c>docs/error-handling-spec.md</c>, "Non-finite input".</para>
     /// <para>Coverage is by stream TIER, not by function count. The check is emitted
     /// from one place, but into the entry points of five different tiers: SMA is
     /// the loop tier, MINUS_DI dual-mode, MA the dispatch tier (including its
@@ -655,7 +655,7 @@ public static class StreamApiTest
         {
             /* --- Update / Peek, and the handle-unchanged property. --------- */
             /* Clean warm-up series: nothing here poisons an input ARRAY, which
-               the library does not scan (rule N-5). Only the per-bar values
+               the library does not scan. Only the per-bar values
                below carry a non-finite value. */
             var c = closes[..warm].ToArray();
             var h = highs[..warm].ToArray();

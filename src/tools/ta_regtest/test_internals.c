@@ -151,7 +151,7 @@ ErrorNumber test_internals( void )
    return TA_TEST_PASS; /* Success. */
 }
 
-/* Rule S-6: a stream opened on fewer than `lookback + 1` bars reports
+/* Rule S6: a stream opened on fewer than `lookback + 1` bars reports
  * TA_INSUFFICIENT_HISTORY -- the library's one RECOVERABLE condition.
  *
  * It is worth its own code, and its own probe, because it is the only failure a
@@ -310,7 +310,7 @@ static ErrorNumber testStreamShortHistory( void )
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb, &v ),
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb + 1, &v ),
                 /* No optional parameter to spoil: an empty history is the other
-                 * rejection this tier owns (rule S-2), and it is still the
+                 * rejection this tier owns (rule S2), and it is still the
                  * catch-all. */
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, 0, &v ),
                 TA_CDLDOJI_Close( st ) );
@@ -369,7 +369,7 @@ static ErrorNumber testStreamShortHistory( void )
                 TA_SMA_Close( st ) );
    }
 
-   printf( "  Streaming short history (S-6): %d rejection(s) reporting "
+   printf( "  Streaming short history (S6): %d rejection(s) reporting "
            "TA_INSUFFICIENT_HISTORY, %d control(s)\n", shShort, shControl );
 
    /* Literal floors, not derived from the cases above: a count computed from the

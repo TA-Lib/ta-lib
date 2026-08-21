@@ -50,12 +50,11 @@
  *
  * An input ARRAY is never scanned, in either tier: keeping one free of NaN and
  * +/-Inf is the caller's responsibility, and passing a non-finite one is
- * undefined behaviour (docs/error-handling-spec.md, rule N-5). A scan is a whole
- * extra
- * pass over caller memory the main loop is about to walk again -- measured at a
- * corpus median of 22% of Open -- and folding it into that loop instead would
- * buy a worse contract: a rejection partway through a fill, output half
- * written.
+ * undefined behaviour (docs/error-handling-spec.md, "Non-finite input"). A
+ * scan is a whole extra pass over caller memory the main loop is about to walk
+ * again -- measured at a corpus median of 22% of Open -- and folding it into
+ * that loop instead would buy a worse contract: a rejection partway through a
+ * fill, output half written.
  *
  * A SINGLE VALUE is always checked, because it is one comparison. For the
  * streaming tier that matters more than for batch, because a handle RETAINS

@@ -533,7 +533,7 @@ public class NoPhantomIoTest {
      * <p>The sweep works by handing a core ZERO-LENGTH arrays and reading what
      * happens: silence means no I/O, a fault means the detector is live. Since
      * #236 step 3 a transcribed body calls its callee's PUBLIC entry point, and
-     * the callee's input bound (rule B-5a) requires {@code endIdx + 1} elements —
+     * the callee's input bound (rule B5a) requires {@code endIdx + 1} elements —
      * deliberately without the sub-lookback escape the OUTPUT bound takes. A core
      * that forwards on a range shorter than its own lookback therefore answers
      * before touching an array, and the probe cannot tell "read nothing" from

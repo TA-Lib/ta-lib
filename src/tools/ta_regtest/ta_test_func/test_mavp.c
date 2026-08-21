@@ -205,8 +205,9 @@ ErrorNumber test_func_mavp( TA_History *history )
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* Shape: periods too large for an int. FINITE, so inside the documented
-    * input domain -- N-5's "undefined" covers non-finite elements only, and
-    * these are ordinary doubles the caller may legitimately pass.
+    * input domain -- the spec's "Non-finite input" section leaves only
+    * non-finite elements undefined, and these are ordinary doubles the caller
+    * may legitimately pass.
     *
     * This is the shape that pins the clamp ORDER. Narrowing before clamping is
     * undefined in C and on x86 delivers INT_MIN for any value that does not
