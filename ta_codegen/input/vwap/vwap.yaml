@@ -1,0 +1,12 @@
+name: VWAP
+group: Volume Indicators
+hint: Volume Weighted Average Price
+flags: [overlap, stream, path_dependent]
+inputs:
+  - name: inPriceHLCV
+    type: price
+    price_components: [high, low, close, volume]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

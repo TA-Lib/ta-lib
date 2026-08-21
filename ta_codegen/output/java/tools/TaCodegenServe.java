@@ -141627,6 +141627,797 @@ class Core {
      *  MF       Mario Fortier
      *  CC       Claude Code (AI assistant)
      *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  082126 MF,CC  First version (issue #237).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#VWAP} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int VWAP_Lookback( )
+       {
+          /* Cumulative from the first bar of the requested range, so the very
+           * first bar already has a complete answer and nothing is consumed
+           * before it. Same shape as ta_AD.c and ta_OBV.c.
+           */
+          return 0 ;
+
+       }
+       RetCode VWAP_Impl( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          double inVolume[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+       {
+          double sumPV = 0;
+          double sumV = 0;
+          double typPrice = 0;
+          double volume = 0;
+          double tempReal = 0;
+          double vwap = 0;
+          int outIdx = 0;
+          int i = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          /* Volume Weighted Average Price: the average typical price paid per
+           * unit of volume, accumulated from the first bar of the range.
+           *
+           *    VWAP = sum( TYPPRICE * Volume ) / sum( Volume )
+           *
+           * Every charting package anchors this to a trading session and resets
+           * the two sums at each session boundary. TA-Lib takes no timestamp on
+           * any function, so the anchor is the caller's choice of range: pass one
+           * session's slice of bars to get that session's VWAP. This is how AD
+           * and OBV, the other two cumulative volume functions, are already used
+           * across session boundaries (issue #237).
+           */
+          sumPV = 0.0;
+          sumV = 0.0;
+          vwap = 0.0;
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             /* The typical price is written exactly as in ta_TYPPRICE.c so that the
+              * two agree bit for bit and this stays a true composite of it.
+              */
+             typPrice = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
+             volume = inVolume[i];
+             /* A bar is weighted only if both of its terms are real numbers. That is
+              * the whole condition: a NaN or an infinity in the price or the volume
+              * is the only way a bar cannot be weighted, and every other bar --
+              * including one that traded nothing -- is weighted normally.
+              *
+              * The test gates BOTH adds. Letting the volume in without its matching
+              * price term would leave a weight in the divisor that nothing paid for,
+              * biasing every later value: a NaN close with a good volume would drag
+              * the next value 25% low.
+              *
+              * Skipping the bar is what makes this recoverable. These are CUMULATIVE
+              * sums with no trailing term to subtract anything back out, so a single
+              * non-finite bar allowed in would leave both sums non-finite for the
+              * REST of the call -- the line would repeat one stale value on every
+              * later bar however clean it was, silently, and looking like a plausible
+              * price the whole way. Skipping keeps the state usable, so the average
+              * resumes on the very next bar that can be weighted.
+              *
+              * Testing the two INPUTS, not the product and not the candidate sums, is
+              * a measured choice:
+              *
+              *   - The candidate sums would have to be committed conditionally, which
+              *     puts four cmovs in the loop-carried dependency chain and costs
+              *     +60% on this loop. Both forms below leave the adds unconditional
+              *     inside a predicted branch and measure free.
+              *   - The product alone would also detect every unusable bar, one test
+              *     instead of two, and measures the same. But it would additionally
+              *     drop a WELL-FORMED bar whose price and volume are both finite and
+              *     whose product merely overflows -- silently, and taking that bar's
+              *     volume out of the divisor with it. Testing the inputs leaves that
+              *     case exactly as it was before this guard existed: the overflow
+              *     reaches the sum and the call reports Inf, which is the documented
+              *     `double` overflow class rather than an indicator defect, and is
+              *     louder than a freeze.
+              *
+              * So this changes behaviour for one thing only: a bar whose price or
+              * volume is not a finite number. On finite data the test is always true
+              * and no value the function has ever produced moves. Only the batch path
+              * needs it -- the streaming Update/Peek entry points reject a non-finite
+              * bar with TA_BAD_PARAM before it reaches any accumulator.
+              */
+             /* The product is kept in its own statement so no compiler may contract it
+              * into an FMA. Contracting here would make the C output disagree with the
+              * Rust, Java and C# backends under the cross-language bitwise gate. Same
+              * reason as in ta_codegen/input/vwma/vwma.c.
+              *
+              * Computed before the guard rather than inside it, and unconditionally,
+              * so it stays a per-bar temporary. Assigned only on the taken arm it
+              * would instead be live across bars, and the streaming tier would carry
+              * it as a fourth state field in every handle -- 8 bytes to hold a value
+              * no later bar reads. The multiply on a skipped bar is discarded.
+              */
+             tempReal = typPrice * volume;
+             if( (Double.isFinite(typPrice)) && (Double.isFinite(volume)) ) {
+                sumPV += tempReal;
+                sumV += volume;
+             }
+             /* Bars that traded nothing carry no weight, so a zero-volume bar in
+              * the middle of a series leaves both sums untouched and repeats the
+              * previous value on its own -- no arm needed for that. A bar skipped
+              * by the guard above repeats it for the same reason.
+              *
+              * The arm below is for the one case the ratio cannot express: a
+              * leading run of bars before any volume has traded, where there are
+              * no weights at all and the weighted mean is undefined. The last
+              * value computed is carried forward instead, which is 0.0 until the
+              * first bar with volume. Volume is non-negative, so once the divisor
+              * leaves zero it never returns and this arm cannot fire again.
+              *
+              * A successful call therefore never emits NaN or Inf (issue #112),
+              * which is the divergence from pandas-ta-classic and from
+              * trading-signals: the first emits NaN there, the second no bar at
+              * all. Testing sumV rather than the bar's own volume also keeps a
+              * negative divisor -- which no non-negative volume series can
+              * produce -- out of a price-scale output, as ta_CMF.c does.
+              */
+             if( sumV > 0.0 ) {
+                vwap = sumPV / sumV;
+             }
+             outReal[outIdx++] = vwap;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode VWAP_Impl( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          float inVolume[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+       {
+          double sumPV = 0;
+          double sumV = 0;
+          double typPrice = 0;
+          double volume = 0;
+          double tempReal = 0;
+          double vwap = 0;
+          int outIdx = 0;
+          int i = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          sumPV = 0.0;
+          sumV = 0.0;
+          vwap = 0.0;
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             typPrice = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3.0;
+             volume = (double)inVolume[i];
+             tempReal = typPrice * volume;
+             if( (Double.isFinite(typPrice)) && (Double.isFinite(volume)) ) {
+                sumPV += tempReal;
+                sumV += volume;
+             }
+             if( sumV > 0.0 ) {
+                vwap = sumPV / sumV;
+             }
+             outReal[outIdx++] = vwap;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * Volume Weighted Average Price: the average price paid per unit of volume
+        * traded, accumulated from the first bar of the range onward. Because every
+        * bar is weighted by the volume that traded on it, VWAP tracks where the
+        * bulk of the money actually changed hands rather than where the last trade
+        * printed. Price above VWAP is read as buyers paying up relative to the
+        * session's average cost, price below it as the reverse, which is why
+        * execution desks quote fills against it. VWAP is a running mean, not a
+        * moving average: it has no window and no decay, so each new bar carries a
+        * smaller share of the total and the line grows steadily more sluggish the
+        * further it runs from its anchor. It stays within the range of the typical
+        * prices it averages, but over a long trending range it can sit far from the
+        * current price.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Volume ), both sums running from the first bar of the range
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The sums run from the first bar of the range and are never reset. Charting packages anchor VWAP to a trading session and restart it at each session boundary; no TA-Lib function takes a timestamp or a session boundary, so the anchor is the range the caller asks for — pass one session's bars to get that session's VWAP. This is how AD and OBV, the other cumulative volume functions, are already used across sessions.</li>
+        * <li>Volume is expected to be non-negative. A zero-volume bar carries no weight, so one occurring after volume has traded leaves the average exactly where it was. Before *any* volume has traded there are no weights at all and the weighted mean is undefined; those bars carry the previous value forward, which is 0 until the first bar with volume. A successful call never emits NaN or ±Inf. Other implementations differ here: pandas-ta-classic divides through and emits NaN, and trading-signals emits no value for the bar at all.</li>
+        * <li>A bar whose price or volume is not a finite number cannot be weighted, so it is left out of the average entirely and repeats the previous value. It is skipped, not absorbed: the running average stays usable and resumes on the next bar that can be weighted, rather than being held at one stale value for the remainder of the range.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#VWAP_Lookback} is a <b>success with
+        * no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param inVolume Volume of each bar.
+        * @param outReal Volume weighted average price, cumulative from the first
+        *        bar of the range. Must hold at least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
+        *
+        * @see Core#AD
+        * @see Core#OBV
+        * @see Core#TYPPRICE
+        * @see Core#VWMA
+        */
+       public OutRange VWAP( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             double inVolume[],
+                             double outReal[] )
+       {
+          requireIndexRange("VWAP", startIdx, endIdx);
+          int guardStart = clampedStart(startIdx, endIdx, VWAP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("VWAP", "inHigh", inHigh, guardInLen);
+          requireLength("VWAP", "inLow", inLow, guardInLen);
+          requireLength("VWAP", "inClose", inClose, guardInLen);
+          requireLength("VWAP", "inVolume", inVolume, guardInLen);
+          requireLength("VWAP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = VWAP_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("VWAP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Volume Weighted Average Price: the average price paid per unit of volume
+        * traded, accumulated from the first bar of the range onward. Because every
+        * bar is weighted by the volume that traded on it, VWAP tracks where the
+        * bulk of the money actually changed hands rather than where the last trade
+        * printed. Price above VWAP is read as buyers paying up relative to the
+        * session's average cost, price below it as the reverse, which is why
+        * execution desks quote fills against it. VWAP is a running mean, not a
+        * moving average: it has no window and no decay, so each new bar carries a
+        * smaller share of the total and the line grows steadily more sluggish the
+        * further it runs from its anchor. It stays within the range of the typical
+        * prices it averages, but over a long trending range it can sit far from the
+        * current price.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Volume ), both sums running from the first bar of the range
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The sums run from the first bar of the range and are never reset. Charting packages anchor VWAP to a trading session and restart it at each session boundary; no TA-Lib function takes a timestamp or a session boundary, so the anchor is the range the caller asks for — pass one session's bars to get that session's VWAP. This is how AD and OBV, the other cumulative volume functions, are already used across sessions.</li>
+        * <li>Volume is expected to be non-negative. A zero-volume bar carries no weight, so one occurring after volume has traded leaves the average exactly where it was. Before *any* volume has traded there are no weights at all and the weighted mean is undefined; those bars carry the previous value forward, which is 0 until the first bar with volume. A successful call never emits NaN or ±Inf. Other implementations differ here: pandas-ta-classic divides through and emits NaN, and trading-signals emits no value for the bar at all.</li>
+        * <li>A bar whose price or volume is not a finite number cannot be weighted, so it is left out of the average entirely and repeats the previous value. It is skipped, not absorbed: the running average stays usable and resumes on the next bar that can be weighted, rather than being held at one stale value for the remainder of the range.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#VWAP_Lookback} is a <b>success with
+        * no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param inVolume Volume of each bar.
+        * @param outReal Volume weighted average price, cumulative from the first
+        *        bar of the range. Must hold at least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
+        *
+        * @see Core#AD
+        * @see Core#OBV
+        * @see Core#TYPPRICE
+        * @see Core#VWMA
+        */
+       public OutRange VWAP( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             float inVolume[],
+                             double outReal[] )
+       {
+          requireIndexRange("VWAP", startIdx, endIdx);
+          int guardStart = clampedStart(startIdx, endIdx, VWAP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("VWAP", "inHigh", inHigh, guardInLen);
+          requireLength("VWAP", "inLow", inLow, guardInLen);
+          requireLength("VWAP", "inClose", inClose, guardInLen);
+          requireLength("VWAP", "inVolume", inVolume, guardInLen);
+          requireLength("VWAP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = VWAP_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("VWAP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live VWAP stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#VWAP} over the same series.
+        * Open with {@link Core#VWAP_Open}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code copy} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code copy} never write the handle and may be called
+        * concurrently after safe publication. Independent handles (including
+        * {@code copy()} results) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class VWAP_Stream {
+          Core core;
+          double sumPV;
+          double sumV;
+          double vwap;
+          double cur_outReal;
+          OutRange fillRange = OutRange.EMPTY;
+
+          VWAP_Stream( Core core ) { this.core = core; }
+
+          /**
+           * The range filled by {@link Core#VWAP_OpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
+           */
+          public OutRange fillRange() { return fillRange; }
+
+          VWAP_Stream( VWAP_Stream other ) {
+             this.core = other.core;
+             this.sumPV = other.sumPV;
+             this.sumV = other.sumV;
+             this.vwap = other.vwap;
+             this.cur_outReal = other.cur_outReal;
+             this.fillRange = other.fillRange;
+          }
+
+          void copyFrom( VWAP_Stream other ) {
+             this.core = other.core;
+             this.sumPV = other.sumPV;
+             this.sumV = other.sumV;
+             this.vwap = other.vwap;
+             this.cur_outReal = other.cur_outReal;
+             this.fillRange = other.fillRange;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the handle is left exactly as it was —
+           * the stream stays usable, so skip the bar or re-open on a clean
+           * history. This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public double update( double inHigh, double inLow, double inClose, double inVolume ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
+                throw new TaLibArgumentException("VWAP update: BadParam", RetCode.BadParam);
+             core.VWAP_StreamStep(this, inHigh, inLow, inClose, inVolume);
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return (it is the same
+           * generated code, run on a copy). Never writes this handle, so peeks may
+           * run concurrently with each other. It runs on a throwaway copy, which for this
+           * handle's shape is cheaper than reusing one.
+           */
+          public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
+                throw new TaLibArgumentException("VWAP peek: BadParam", RetCode.BadParam);
+             VWAP_Stream scratch = new VWAP_Stream(this);
+             core.VWAP_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+             return scratch.cur_outReal;
+          }
+
+          /**
+           * The value at the most recently committed bar — the last history bar
+           * right after open, then whatever the latest {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent deep copy of this stream: both evolve separately from
+           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           */
+          public VWAP_Stream copy() {
+             return new VWAP_Stream(this);
+          }
+       }
+       void VWAP_StreamStep( VWAP_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+       {
+          double typPrice = 0.0;
+          double volume = 0.0;
+          double tempReal = 0.0;
+          /* The typical price is written exactly as in ta_TYPPRICE.c so that the
+           * two agree bit for bit and this stays a true composite of it.
+           */
+          typPrice = (inHigh + inLow + inClose) / 3.0;
+          volume = inVolume;
+          /* A bar is weighted only if both of its terms are real numbers. That is
+           * the whole condition: a NaN or an infinity in the price or the volume
+           * is the only way a bar cannot be weighted, and every other bar --
+           * including one that traded nothing -- is weighted normally.
+           *
+           * The test gates BOTH adds. Letting the volume in without its matching
+           * price term would leave a weight in the divisor that nothing paid for,
+           * biasing every later value: a NaN close with a good volume would drag
+           * the next value 25% low.
+           *
+           * Skipping the bar is what makes this recoverable. These are CUMULATIVE
+           * sums with no trailing term to subtract anything back out, so a single
+           * non-finite bar allowed in would leave both sums non-finite for the
+           * REST of the call -- the line would repeat one stale value on every
+           * later bar however clean it was, silently, and looking like a plausible
+           * price the whole way. Skipping keeps the state usable, so the average
+           * resumes on the very next bar that can be weighted.
+           *
+           * Testing the two INPUTS, not the product and not the candidate sums, is
+           * a measured choice:
+           *
+           *   - The candidate sums would have to be committed conditionally, which
+           *     puts four cmovs in the loop-carried dependency chain and costs
+           *     +60% on this loop. Both forms below leave the adds unconditional
+           *     inside a predicted branch and measure free.
+           *   - The product alone would also detect every unusable bar, one test
+           *     instead of two, and measures the same. But it would additionally
+           *     drop a WELL-FORMED bar whose price and volume are both finite and
+           *     whose product merely overflows -- silently, and taking that bar's
+           *     volume out of the divisor with it. Testing the inputs leaves that
+           *     case exactly as it was before this guard existed: the overflow
+           *     reaches the sum and the call reports Inf, which is the documented
+           *     `double` overflow class rather than an indicator defect, and is
+           *     louder than a freeze.
+           *
+           * So this changes behaviour for one thing only: a bar whose price or
+           * volume is not a finite number. On finite data the test is always true
+           * and no value the function has ever produced moves. Only the batch path
+           * needs it -- the streaming Update/Peek entry points reject a non-finite
+           * bar with TA_BAD_PARAM before it reaches any accumulator.
+           */
+          /* The product is kept in its own statement so no compiler may contract it
+           * into an FMA. Contracting here would make the C output disagree with the
+           * Rust, Java and C# backends under the cross-language bitwise gate. Same
+           * reason as in ta_codegen/input/vwma/vwma.c.
+           *
+           * Computed before the guard rather than inside it, and unconditionally,
+           * so it stays a per-bar temporary. Assigned only on the taken arm it
+           * would instead be live across bars, and the streaming tier would carry
+           * it as a fourth state field in every handle -- 8 bytes to hold a value
+           * no later bar reads. The multiply on a skipped bar is discarded.
+           */
+          tempReal = typPrice * volume;
+          if( (Double.isFinite(typPrice)) && (Double.isFinite(volume)) ) {
+             sp.sumPV += tempReal;
+             sp.sumV += volume;
+          }
+          /* Bars that traded nothing carry no weight, so a zero-volume bar in
+           * the middle of a series leaves both sums untouched and repeats the
+           * previous value on its own -- no arm needed for that. A bar skipped
+           * by the guard above repeats it for the same reason.
+           *
+           * The arm below is for the one case the ratio cannot express: a
+           * leading run of bars before any volume has traded, where there are
+           * no weights at all and the weighted mean is undefined. The last
+           * value computed is carried forward instead, which is 0.0 until the
+           * first bar with volume. Volume is non-negative, so once the divisor
+           * leaves zero it never returns and this arm cannot fire again.
+           *
+           * A successful call therefore never emits NaN or Inf (issue #112),
+           * which is the divergence from pandas-ta-classic and from
+           * trading-signals: the first emits NaN there, the second no bar at
+           * all. Testing sumV rather than the bar's own volume also keeps a
+           * negative divisor -- which no non-negative volume series can
+           * produce -- out of a price-scale output, as ta_CMF.c does.
+           */
+          if( sp.sumV > 0.0 ) {
+             sp.vwap = sp.sumPV / sp.sumV;
+          }
+          sp.cur_outReal = sp.vwap;
+       }
+       private RetCode VWAP_OpenPass( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double sumPV = 0;
+          double sumV = 0;
+          double typPrice = 0;
+          double volume = 0;
+          double tempReal = 0;
+          double vwap = 0;
+          int outIdx = 0;
+          int i = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
+             return RetCode.BadParam;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          /* Volume Weighted Average Price: the average typical price paid per
+           * unit of volume, accumulated from the first bar of the range.
+           *
+           *    VWAP = sum( TYPPRICE * Volume ) / sum( Volume )
+           *
+           * Every charting package anchors this to a trading session and resets
+           * the two sums at each session boundary. TA-Lib takes no timestamp on
+           * any function, so the anchor is the caller's choice of range: pass one
+           * session's slice of bars to get that session's VWAP. This is how AD
+           * and OBV, the other two cumulative volume functions, are already used
+           * across session boundaries (issue #237).
+           */
+          sumPV = 0.0;
+          sumV = 0.0;
+          vwap = 0.0;
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             /* The typical price is written exactly as in ta_TYPPRICE.c so that the
+              * two agree bit for bit and this stays a true composite of it.
+              */
+             typPrice = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
+             volume = inVolume[i];
+             /* A bar is weighted only if both of its terms are real numbers. That is
+              * the whole condition: a NaN or an infinity in the price or the volume
+              * is the only way a bar cannot be weighted, and every other bar --
+              * including one that traded nothing -- is weighted normally.
+              *
+              * The test gates BOTH adds. Letting the volume in without its matching
+              * price term would leave a weight in the divisor that nothing paid for,
+              * biasing every later value: a NaN close with a good volume would drag
+              * the next value 25% low.
+              *
+              * Skipping the bar is what makes this recoverable. These are CUMULATIVE
+              * sums with no trailing term to subtract anything back out, so a single
+              * non-finite bar allowed in would leave both sums non-finite for the
+              * REST of the call -- the line would repeat one stale value on every
+              * later bar however clean it was, silently, and looking like a plausible
+              * price the whole way. Skipping keeps the state usable, so the average
+              * resumes on the very next bar that can be weighted.
+              *
+              * Testing the two INPUTS, not the product and not the candidate sums, is
+              * a measured choice:
+              *
+              *   - The candidate sums would have to be committed conditionally, which
+              *     puts four cmovs in the loop-carried dependency chain and costs
+              *     +60% on this loop. Both forms below leave the adds unconditional
+              *     inside a predicted branch and measure free.
+              *   - The product alone would also detect every unusable bar, one test
+              *     instead of two, and measures the same. But it would additionally
+              *     drop a WELL-FORMED bar whose price and volume are both finite and
+              *     whose product merely overflows -- silently, and taking that bar's
+              *     volume out of the divisor with it. Testing the inputs leaves that
+              *     case exactly as it was before this guard existed: the overflow
+              *     reaches the sum and the call reports Inf, which is the documented
+              *     `double` overflow class rather than an indicator defect, and is
+              *     louder than a freeze.
+              *
+              * So this changes behaviour for one thing only: a bar whose price or
+              * volume is not a finite number. On finite data the test is always true
+              * and no value the function has ever produced moves. Only the batch path
+              * needs it -- the streaming Update/Peek entry points reject a non-finite
+              * bar with TA_BAD_PARAM before it reaches any accumulator.
+              */
+             /* The product is kept in its own statement so no compiler may contract it
+              * into an FMA. Contracting here would make the C output disagree with the
+              * Rust, Java and C# backends under the cross-language bitwise gate. Same
+              * reason as in ta_codegen/input/vwma/vwma.c.
+              *
+              * Computed before the guard rather than inside it, and unconditionally,
+              * so it stays a per-bar temporary. Assigned only on the taken arm it
+              * would instead be live across bars, and the streaming tier would carry
+              * it as a fourth state field in every handle -- 8 bytes to hold a value
+              * no later bar reads. The multiply on a skipped bar is discarded.
+              */
+             tempReal = typPrice * volume;
+             if( (Double.isFinite(typPrice)) && (Double.isFinite(volume)) ) {
+                sumPV += tempReal;
+                sumV += volume;
+             }
+             /* Bars that traded nothing carry no weight, so a zero-volume bar in
+              * the middle of a series leaves both sums untouched and repeats the
+              * previous value on its own -- no arm needed for that. A bar skipped
+              * by the guard above repeats it for the same reason.
+              *
+              * The arm below is for the one case the ratio cannot express: a
+              * leading run of bars before any volume has traded, where there are
+              * no weights at all and the weighted mean is undefined. The last
+              * value computed is carried forward instead, which is 0.0 until the
+              * first bar with volume. Volume is non-negative, so once the divisor
+              * leaves zero it never returns and this arm cannot fire again.
+              *
+              * A successful call therefore never emits NaN or Inf (issue #112),
+              * which is the divergence from pandas-ta-classic and from
+              * trading-signals: the first emits NaN there, the second no bar at
+              * all. Testing sumV rather than the bar's own volume also keeps a
+              * negative divisor -- which no non-negative volume series can
+              * produce -- out of a price-scale output, as ta_CMF.c does.
+              */
+             if( sumV > 0.0 ) {
+                vwap = sumPV / sumV;
+             }
+             outReal[outIdx++ * outStride] = vwap;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          sp.sumPV = sumPV;
+          sp.sumV = sumV;
+          sp.vwap = vwap;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.Success;
+       }
+       private RetCode VWAP_OpenImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
+       {
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          return VWAP_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+       }
+       private RetCode VWAP_OpenAndFillImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+             return RetCode.BadParam;
+          }
+          return VWAP_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
+       }
+       private RetCode VWAP_OpenAndFillInternalImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          return VWAP_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+       }
+       /* VWAP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       VWAP_Stream VWAP_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          VWAP_Stream sp = new VWAP_Stream(this);
+          RetCode retCode = VWAP_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("VWAP openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("VWAP openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("VWAP openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind VWAP_Open (composition seam). */
+       VWAP_Stream VWAP_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
+       {
+          VWAP_Stream sp = new VWAP_Stream(this);
+          RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("VWAP open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("VWAP open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("VWAP open: " + retCode, retCode);
+       }
+       /**
+        * Open a live VWAP stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#VWAP} at that bar.
+        * <p>The history must hold at least {@code VWAP_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API).
+        */
+       public VWAP_Stream VWAP_Open( double inHigh[], double inLow[], double inClose[], double inVolume[] )
+       {
+          return VWAP_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
+       }
+       /**
+        * {@link Core#VWAP_Open} that also fills the output array(s) bit-identically
+        * to {@link Core#VWAP} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values.
+        * <p>The range written is on the returned handle:
+        * {@link VWAP_Stream#fillRange()}.
+        */
+       public VWAP_Stream VWAP_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
+       {
+          VWAP_Stream sp = new VWAP_Stream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = VWAP_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+          sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("VWAP openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("VWAP openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("VWAP openAndFill: " + retCode, retCode);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
      *
      * Change history:
      *
@@ -146066,6 +146857,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Nb of deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("VWAP", new AbsFunc("VWAP", "Volume Indicators", "Volume Weighted Average Price", 587202560,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("VWMA", new AbsFunc("VWMA", "Overlap Studies", "Volume Weighted Moving Average", 1124073473,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(0,"inPriceV",16) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
@@ -146382,6 +147177,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_TYPPRICE\"")) return handle_TYPPRICE(json);
         else if (json.contains("\"TA_ULTOSC\"")) return handle_ULTOSC(json);
         else if (json.contains("\"TA_VAR\"")) return handle_VAR(json);
+        else if (json.contains("\"TA_VWAP\"")) return handle_VWAP(json);
         else if (json.contains("\"TA_VWMA\"")) return handle_VWMA(json);
         else if (json.contains("\"TA_WAD\"")) return handle_WAD(json);
         else if (json.contains("\"TA_WCLPRICE\"")) return handle_WCLPRICE(json);
@@ -146728,6 +147524,8 @@ public class TaCodegenServe {
             sb.append("\"TA_ULTOSC\"");
             sb.append(",");
             sb.append("\"TA_VAR\"");
+            sb.append(",");
+            sb.append("\"TA_VWAP\"");
             sb.append(",");
             sb.append("\"TA_VWMA\"");
             sb.append(",");
@@ -169060,6 +169858,146 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_VWAP(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+            System.arraycopy(refVolume, 0, inVolume, 0, refN);
+        } else {
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
+            inVolume = _tmp_inVolume;
+        }
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec Part 3 item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.VWAP_Lookback();
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            try {
+                rc = core.VWAP_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        } else {
+            try {
+                OutRange _pr = core.VWAP(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
+        else { try {
+            if (bench_mode == 1) {
+                core.VWAP_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume);
+            } else {
+                core.VWAP_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            try {
+                OutRange _fr = core.VWAP(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_VWMA(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -188600,6 +189538,110 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_VWAP(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.VWAP_Impl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.VWAP_Lookback();
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.VWAP_Open(fz_h, fz_l, fz_c, fz_v); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.VWAP_Stream _fh = c2.VWAP_OpenAndFill(fz_h, fz_l, fz_c, fz_v, f0);
+                OutRange _fr = _fh.fillRange();
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.VWAP_OpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.VWAP_Stream st;
+                try { st = c2.VWAP_Open(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    if (t % 7 == 0) {
+                        double pk = st.peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        double up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        if (svBne(pk, up)) peekAll = false;
+                        if (svBne(st.value(), up)) allOk = false;
+                        if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                    } else {
+                        double up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                    }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.VWAP_Stream sA = c2.VWAP_Open(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        Core.VWAP_Stream sB = sA.copy();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.VWAP_Open(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_VWMA(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -189331,6 +190373,7 @@ public class TaCodegenServe {
         case "TA_TYPPRICE": return sv_TYPPRICE(json);
         case "TA_ULTOSC": return sv_ULTOSC(json);
         case "TA_VAR": return sv_VAR(json);
+        case "TA_VWAP": return sv_VWAP(json);
         case "TA_VWMA": return sv_VWMA(json);
         case "TA_WAD": return sv_WAD(json);
         case "TA_WCLPRICE": return sv_WCLPRICE(json);

@@ -209,3 +209,4 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [OBV](/functions/obv.md) — On Balance Volume
 - [PVI](/functions/pvi.md) — Positive Volume Index
 - [PVO](/functions/pvo.md) — Percentage Volume Oscillator
+- [VWAP](/functions/vwap.md) — Volume Weighted Average Price

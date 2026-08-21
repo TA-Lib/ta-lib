@@ -9358,6 +9358,58 @@ TA_LIB_API TA_RetCode TA_VAR_Close( TA_VAR_Stream *stream );
 TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_VWAP - Volume Weighted Average Price
+ * 
+ * Input  = High, Low, Close, Volume
+ * Output = double
+ * 
+ */
+TA_LIB_API TA_RetCode TA_VWAP( int    startIdx,
+                               int    endIdx,
+                                          const double inHigh[],
+                                          const double inLow[],
+                                          const double inClose[],
+                                          const double inVolume[],
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_VWAP( int    startIdx,
+                                 int    endIdx,
+                                            const float  inHigh[],
+                                            const float  inLow[],
+                                            const float  inClose[],
+                                            const float  inVolume[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API int TA_VWAP_Lookback( void );
+
+
+
+/*
+ * Streaming API for TA_VWAP — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_VWAP_Stream TA_VWAP_Stream;
+
+TA_LIB_API TA_RetCode TA_VWAP_Open( TA_VWAP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, double *outReal );
+
+TA_LIB_API TA_RetCode TA_VWAP_Update( TA_VWAP_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_VWAP_Peek( const TA_VWAP_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_VWAP_Close( TA_VWAP_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_VWAP( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_VWAP_OpenAndFill( TA_VWAP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_VWMA - Volume Weighted Moving Average
  * 
  * Input  = double, Volume

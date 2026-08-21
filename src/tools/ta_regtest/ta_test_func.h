@@ -32,6 +32,7 @@ ErrorNumber test_func_composite1( TA_History *history );
 ErrorNumber test_func_composite2( TA_History *history );
 ErrorNumber test_func_marketfi( TA_History *history );
 ErrorNumber test_func_cmf     ( TA_History *history );
+ErrorNumber test_func_vwap    ( TA_History *history );
 ErrorNumber test_func_cmou    ( TA_History *history );
 ErrorNumber test_func_variants( TA_History *history );
 ErrorNumber test_candle_precision( TA_History *history );

@@ -258,6 +258,7 @@ public final class Functions {
       put(m, f_TYPPRICE());
       put(m, f_ULTOSC());
       put(m, f_VAR());
+      put(m, f_VWAP());
       put(m, f_VWMA());
       put(m, f_WAD());
       put(m, f_WCLPRICE());
@@ -3064,6 +3065,18 @@ public final class Functions {
                -3e37, 3e37, 2, -2.0, 2.0, 0.2,
                0, 0, 0, 0, 0, null)
          ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_VWAP() {
+      return new FunctionInfo(
+         "VWAP", "Volume Indicators", "Volume Weighted Average Price", 0x23000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLCV", 0x0000001E)
+         ),
+         List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
