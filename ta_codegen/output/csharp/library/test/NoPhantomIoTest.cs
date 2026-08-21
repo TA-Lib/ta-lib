@@ -398,22 +398,30 @@ public static class NoPhantomIoTest
         return kept;
     }
 
-    /// <summary>The composed functions whose sub-lookback probe #236 step 3 put
-    /// out of reach.</summary>
+    /// <summary>The one function whose sub-lookback probe is out of reach, and
+    /// why it is one.</summary>
     /// <remarks>
     /// <para>This sweep works by handing a function ZERO-LENGTH buffers and
     /// reading what happens: silence means no I/O, a fault means the detector is
-    /// live. That works only against a tier that checks nothing. Since step 3 the
-    /// transcribed body calls its callee's PUBLIC overload, and the callee's input
-    /// bound (rule B-5a) requires <c>endIdx + 1</c> elements — deliberately
-    /// without the sub-lookback escape the OUTPUT bound takes — so these ten
-    /// answer <c>BadParam</c> before reaching any buffer. The probe cannot tell
-    /// "read nothing" from "never ran".</para>
+    /// live. Since #236 step 3 the transcribed body calls its callee's PUBLIC
+    /// overload, and the callee's input bound (rule B-5a) requires
+    /// <c>endIdx + 1</c> elements — deliberately without the sub-lookback escape
+    /// the OUTPUT bound takes. A function that forwards on a range shorter than
+    /// its own lookback therefore answers <c>BadParam</c> before touching a
+    /// buffer, and the probe cannot tell "read nothing" from "never ran".</para>
     /// <para>Nothing about the PUBLIC API moved: reached through the caller's own
     /// wrapper the callee's check is provably redundant, same <c>endIdx</c>, same
-    /// buffer. What is lost is this sweep's reach into the C-shaped tier for these
-    /// ten, until #236 settles whether the input bound keeps its stricter reading
-    /// or the composed bodies gain the #235 "nothing to produce" early return.</para>
+    /// buffer.</para>
+    /// <para><b>The fix is an early return, and every other function that needed
+    /// one has it.</b> <c>apo</c>, <c>bbands</c>, <c>ppo</c>, <c>pvo</c> and now
+    /// <c>stddev</c> return <c>0,0</c> before forwarding when the range is shorter
+    /// than their lookback; the rest never forwarded on such a range. <c>ma</c> is
+    /// the holdout because it is a DISPATCH function: the generator admits only
+    /// decls, comments, the identity path, one switch and a final return at the
+    /// top level of a dispatch body — the shape the stream planner is built on —
+    /// so a guard there is a generator change, not an edit to <c>ma.c</c>. The
+    /// other way out is #236 deciding the input bound does not keep its stricter
+    /// reading.</para>
     /// <para>An explicit list, not a symptom test: a function that starts
     /// answering <c>BadParam</c> here for any other reason is still a hard
     /// failure. The size is asserted, so the debt can be paid down but not quietly
@@ -421,8 +429,7 @@ public static class NoPhantomIoTest
     /// </remarks>
     private static readonly HashSet<string> CrossCallGuarded = new()
     {
-        "ADXR", "APO", "MA", "MACDEXT", "PPO", "PVO", "SAR", "SAREXT", "STDDEV",
-        "STOCHRSI",
+        "MA",
     };
 
     /* -------------------------------------------------- sweep 1: sub-lookback */
@@ -467,6 +474,20 @@ public static class NoPhantomIoTest
                 RetCode rc = control.TryInvoke(0, d.Lookback, out OutRange _);
                 if (AnySentinelGone(controlBuffers))
                 {
+                    live.Add(f.Name);
+                }
+                else if (rc == RetCode.BadParam)
+                {
+                    // A rejection counts as liveness, and only here. The vector is
+                    // this function's own defaults on a range that produces, so its
+                    // parameters are valid; the thunk binds NAME_Impl, which has no
+                    // length check. So a BadParam can only be a CALLEE's public-tier
+                    // length guard, converted by TryInvoke -- which means this
+                    // function reached a callee, which is equally a proof that it
+                    // still computes. It is the only proof available for a composed
+                    // function since #236 step 3 routed cross-calls through the
+                    // public callee. Java asserts the same thing on the exception
+                    // type, which it still has because its cores throw.
                     live.Add(f.Name);
                 }
                 else

@@ -528,39 +528,47 @@ public class NoPhantomIoTest {
     }
 
     /**
-     * The composed cores whose sub-lookback probe #236 step 3 put out of reach.
+     * The one core whose sub-lookback probe is out of reach, and why it is one.
      *
-     * <p>Both sweeps below work by handing a core ZERO-LENGTH arrays and reading
-     * what happens: silence means no I/O, a fault means the detector is live.
-     * That works only against a tier that checks nothing. Since step 3 the
-     * transcribed body calls its callee's PUBLIC entry point, and the callee's
-     * input bound (rule B-5a) requires {@code endIdx + 1} elements — deliberately
-     * without the sub-lookback escape the OUTPUT bound takes — so these ten
-     * answer {@code BadParam} before reaching any array. The probe cannot tell
-     * "read nothing" from "never ran".
+     * <p>The sweep works by handing a core ZERO-LENGTH arrays and reading what
+     * happens: silence means no I/O, a fault means the detector is live. Since
+     * #236 step 3 a transcribed body calls its callee's PUBLIC entry point, and
+     * the callee's input bound (rule B-5a) requires {@code endIdx + 1} elements —
+     * deliberately without the sub-lookback escape the OUTPUT bound takes. A core
+     * that forwards on a range shorter than its own lookback therefore answers
+     * before touching an array, and the probe cannot tell "read nothing" from
+     * "never ran".
      *
      * <p>Nothing about the PUBLIC API moved: reached through the caller's own
      * wrapper the callee's check is provably redundant, same {@code endIdx}, same
-     * array. What is lost is this sweep's reach into the C-shaped tier for these
-     * ten, and it is lost until #236 settles whether the input bound keeps its
-     * stricter reading or the composed bodies gain the #235 "nothing to produce"
-     * early return.
+     * array.
+     *
+     * <p><b>The fix for this is an early return, and eight of the original ten
+     * already have it.</b> {@code apo}, {@code bbands}, {@code ppo}, {@code pvo}
+     * and now {@code stddev} return {@code 0,0} before forwarding when the range
+     * is shorter than their lookback; the rest never forwarded on such a range to
+     * begin with. {@code ma} is the holdout, and not for want of trying: it is a
+     * DISPATCH function, and the generator admits only decls, comments, the
+     * identity path, one switch and a final return at the top level of a dispatch
+     * body — the shape the stream planner is built on. A guard there is a
+     * generator change, not a one-line edit to {@code ma.c}.
+     *
+     * <p>The other way out is #236 deciding the input bound does not keep its
+     * stricter reading. Either route empties this list.
      *
      * <p>An explicit list, not a symptom test: a core that starts answering
      * {@code BadParam} here for any other reason is still a hard failure. The
      * size is asserted, so the debt can be paid down but not quietly grown.
      *
      * <p><b>Paying it down has a second edge.</b> The mechanism that withholds
-     * these ten — a composed body cross-calling its callee's public tier — is
+     * {@code ma} — a composed body cross-calling its callee's public tier — is
      * the only thing that makes C#'s {@code FunctionCall.TryInvoke} catch
      * reachable, since its thunks call the body, which answers a code. Route
      * cross-calls to {@code _Impl} and this list empties, but that catch goes
      * dead and {@code TryInvoke} silently stops converting anything. The two
      * move together; change them together.
      */
-    private static final java.util.Set<String> CROSS_CALL_GUARDED = java.util.Set.of(
-        "ADXR", "APO", "MA", "MACDEXT", "PPO", "PVO", "SAR", "SAREXT", "STDDEV",
-        "STOCHRSI");
+    private static final java.util.Set<String> CROSS_CALL_GUARDED = java.util.Set.of("MA");
 
     /* -------------------------------------------------- sweep 1: sub-lookback */
 
@@ -613,11 +621,27 @@ public class NoPhantomIoTest {
                     + "sweep could not detect I/O for it");
                 violations++;
             } catch (InvocationTargetException ite) {
-                if (ite.getCause() instanceof IndexOutOfBoundsException) {
+                // Two kinds count, and the KIND is the whole signal -- the same
+                // discipline the Rust port applies to panics.
+                //
+                // An IndexOutOfBoundsException is this core indexing a
+                // zero-length array: it computed.
+                //
+                // A TaLibArgumentException is a LENGTH check, and the core under
+                // test is NAME_Impl, which has none. So it can only have come from
+                // a callee's public tier, which this core reached by cross-calling
+                // it -- which is equally a proof that the core still computes, and
+                // is the only proof available for a composed function since #236
+                // step 3 routed cross-calls through the public callee. Anything
+                // else is a core that stopped computing, and its silence in the
+                // sweep below would read as compliance.
+                Throwable cause = ite.getCause();
+                if (cause instanceof IndexOutOfBoundsException
+                        || cause instanceof TaLibArgumentException) {
                     live.add(sig.name);
                 } else {
                     violation(tier + " " + sig.name + " at endIdx == lookback threw "
-                        + ite.getCause());
+                        + cause);
                     violations++;
                 }
             } catch (ReflectiveOperationException ex) {

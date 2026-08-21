@@ -130,6 +130,19 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
         let mut tempReal: f64 = 0.0_f64;
+        // Nothing to produce: the range is shorter than the lookback. Return before
+        // touching anything.
+        //
+        // Same shape as the guard in apo and bbands: the variance below runs on the
+        // same range and its lookback IS stddev's, so it declines and yields 0,0
+        // without reading. Observably identical, but it makes "a range shorter than
+        // the lookback reads nothing" true of stddev itself rather than only of var.
+        // Pinned by the zero-length no-I/O probe over every guarded core.
+        if self.STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return RetCode::Success;
+        }
         // Calculate the variance.
         retCode = self.VAR_Impl(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
@@ -372,6 +385,19 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
         let mut tempReal: f64 = 0.0_f64;
+        // Nothing to produce: the range is shorter than the lookback. Return before
+        // touching anything.
+        //
+        // Same shape as the guard in apo and bbands: the variance below runs on the
+        // same range and its lookback IS stddev's, so it declines and yields 0,0
+        // without reading. Observably identical, but it makes "a range shorter than
+        // the lookback reads nothing" true of stddev itself rather than only of var.
+        // Pinned by the zero-length no-I/O probe over every guarded core.
+        if self.STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::InsufficientHistory);
+        }
         // Calculate the variance.
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).

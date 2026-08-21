@@ -32,6 +32,22 @@ TA_RetCode stddev(int startIdx, int endIdx,
    TA_RetCode retCode;
    double tempReal;
 
+   /* Nothing to produce: the range is shorter than the lookback. Return before
+    * touching anything.
+    *
+    * Same shape as the guard in apo and bbands: the variance below runs on the
+    * same range and its lookback IS stddev's, so it declines and yields 0,0
+    * without reading. Observably identical, but it makes "a range shorter than
+    * the lookback reads nothing" true of stddev itself rather than only of var.
+    * Pinned by the zero-length no-I/O probe over every guarded core.
+    */
+   if( stddev_lookback( optInTimePeriod, optInNbDev ) > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+
    /* Calculate the variance. */
    retCode = var( startIdx, endIdx,
       inReal, optInTimePeriod, 1.0,

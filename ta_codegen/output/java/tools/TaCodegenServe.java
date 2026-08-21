@@ -127461,6 +127461,20 @@ class Core {
           } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
              return RetCode.BadParam;
           }
+          /* Nothing to produce: the range is shorter than the lookback. Return before
+           * touching anything.
+           *
+           * Same shape as the guard in apo and bbands: the variance below runs on the
+           * same range and its lookback IS stddev's, so it declines and yields 0,0
+           * without reading. Observably identical, but it makes "a range shorter than
+           * the lookback reads nothing" true of stddev itself rather than only of var.
+           * Pinned by the zero-length no-I/O probe over every guarded core.
+           */
+          if( STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
           /* Calculate the variance. */
           OutRange _xr0 = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
           outBegIdx.value = _xr0.begIdx();
@@ -127522,6 +127536,11 @@ class Core {
              optInNbDev = 1e0;
           } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
              return RetCode.BadParam;
+          }
+          if( STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
           }
           OutRange _xr0 = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
           outBegIdx.value = _xr0.begIdx();
@@ -127845,6 +127864,20 @@ class Core {
              return RetCode.InsufficientHistory;
           }
           double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+          /* Nothing to produce: the range is shorter than the lookback. Return before
+           * touching anything.
+           *
+           * Same shape as the guard in apo and bbands: the variance below runs on the
+           * same range and its lookback IS stddev's, so it declines and yields 0,0
+           * without reading. Observably identical, but it makes "a range shorter than
+           * the lookback reads nothing" true of stddev itself rather than only of var.
+           * Pinned by the zero-length no-I/O probe over every guarded core.
+           */
+          if( STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory ;
+          }
           /* Calculate the variance. */
           /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
