@@ -29,6 +29,11 @@
 //! silently; generating it makes `regen-check` the thing that keeps the corpus
 //! complete.
 
+// An integer parameter's `range:` and `default:` are integers that the IR
+// carries as `f64`, so narrowing them back is exact by construction -- the same
+// reason `rust_abstract` allows it.
+#![allow(clippy::cast_possible_truncation)]
+
 use crate::ir::{EnumDef, FuncDef, OptInput, ParamType};
 use std::collections::HashMap;
 use std::fmt::Write as _;
@@ -134,7 +139,7 @@ fn vectors(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Vec<Vector> {
         for variant in &def.variants {
             let member = format!("{enum_name}::{}", variant.name);
             let mut v = defaults.clone();
-            v[k] = member.clone();
+            v[k].clone_from(&member);
             out.push(Vector { label: format!("{}={}", opt.name, variant.name), values: v });
             if any_raised {
                 let mut w = raised.clone();
