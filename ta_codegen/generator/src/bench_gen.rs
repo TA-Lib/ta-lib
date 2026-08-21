@@ -222,7 +222,7 @@ fn generate_bench_func(s: &mut String, funcs: &[FuncDef]) {
 pub fn write_c_bench(funcs: &[FuncDef], output_dir: &Path) {
     let content = generate_c_bench(funcs);
     let path = output_dir.join("ta_bench_cg.c");
-    std::fs::write(&path, &content).unwrap_or_else(|e| {
+    crate::emit::write_if_changed(&path, &content).unwrap_or_else(|e| {
         panic!("Failed to write {}: {e}", path.display());
     });
     eprintln!("  C bench -> {}", path.display());
@@ -620,7 +620,7 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
 pub fn write_c_stream_bench(funcs: &[FuncDef], output_dir: &Path) {
     let content = generate_c_stream_bench(funcs);
     let path = output_dir.join("ta_bench_stream.c");
-    std::fs::write(&path, &content).unwrap_or_else(|e| {
+    crate::emit::write_if_changed(&path, &content).unwrap_or_else(|e| {
         panic!("Failed to write {}: {e}", path.display());
     });
     eprintln!("  C stream bench -> {}", path.display());

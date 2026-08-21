@@ -1,4 +1,5 @@
 use ta_codegen_lib::backends;
+use ta_codegen_lib::emit::{copy_if_changed, write_if_changed};
 use ta_codegen_lib::formatter;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
@@ -199,7 +200,7 @@ fn format_inputs(
             continue;
         }
         if !check_only {
-            std::fs::write(path, &formatted)
+            write_if_changed(path, &formatted)
                 .map_err(|e| format!("cannot write {}: {e}", path.display()))?;
         }
         changed.push(path.strip_prefix(root).unwrap_or(path).to_path_buf());
@@ -399,7 +400,7 @@ fn seed_streaming_flag(yaml_path: &Path) -> Result<(), String> {
     out.push_str("flags: [");
     out.push_str(&new_inner);
     out.push_str(&content[line_end..]);
-    std::fs::write(yaml_path, out).map_err(|e| e.to_string())
+    write_if_changed(yaml_path, out).map_err(|e| e.to_string())
 }
 
 fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
@@ -564,30 +565,33 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         &generated_funcs
     };
 
-    // Clean stale per-function output files, immediately before the writes and
-    // AFTER every gate above has had its say. This prevents generate-servers from
-    // picking up outdated artifacts (e.g. stale Core_*.java generated with old
-    // code). Only when generating all functions (no filter), so a --func run
-    // cannot remove files for functions it is not regenerating.
-    //
-    // Ordering is load-bearing, not incidental. Phase 1 only parses and
-    // validates -- it writes nothing -- so every gate that can call
-    // `process::exit` (naming, docs, and the per-function streaming gate inside
-    // the loop) now runs while the tree is still intact. It used to sit above
-    // Phase 1, which meant a gate firing there aborted with 174 files per
-    // backend already deleted, `src/ta_func/*.c` among them: a rejected input
-    // left the shipped library gutted. Adding a gate to Phase 1 must not
-    // reintroduce that, so keep this below the loop.
-    if func_filter.is_none() {
-        for backend in &backends_to_run {
-            clean_generated_files(&out_base, backend);
-        }
-    }
-
     // Phase 2: Generate output for each backend
     for func_def in &generated_funcs {
         for backend in &backends_to_run {
             generate_backend(func_def, backend, &enums, &registry, &helper_registry, &out_base);
+        }
+    }
+
+    // Drop per-function files for indicators that no longer exist. Only when
+    // generating all functions (no filter), so a --func run cannot remove files
+    // for functions it is not regenerating.
+    //
+    // Ordering is load-bearing at both ends. It sits BELOW Phase 1, which only
+    // parses and validates: every gate that can `process::exit` (naming, docs,
+    // the per-function streaming gate) runs while the tree is still intact. It
+    // used to sit above Phase 1, and a gate firing there aborted with 174 files
+    // per backend already deleted, `src/ta_func/*.c` among them -- a rejected
+    // input left the shipped library gutted. And it sits ABOVE the server
+    // generation, which splices per-function fragments off disk: a fragment for
+    // a dropped indicator has to be gone before anything reads that directory.
+    //
+    // It also sits below Phase 2 rather than above it, which is what lets an
+    // unchanged file keep its mtime -- see `emit::write_if_changed`. Deleting
+    // first and rewriting told cargo, CMake and the gcc server build that all
+    // 175 indicators had changed on every run.
+    if func_filter.is_none() {
+        for backend in &backends_to_run {
+            remove_stale_generated_files(&out_base, backend, &generated_funcs);
         }
     }
 
@@ -637,7 +641,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
             let src = c_lib_src.join(filename);
             if src.exists() {
                 let dest = c_dir.join(filename);
-                std::fs::copy(&src, &dest).unwrap();
+                copy_if_changed(&src, &dest).unwrap();
                 println!("  Copied {filename} -> {}", dest.display());
             }
         }
@@ -652,7 +656,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // superseded so a stale copy cannot satisfy an include.
         let stream_h = server_gen::generate_c_stream_private_header(all_funcs);
         let stream_path = root.join("src/ta_func").join("ta_func_stream_private.h");
-        std::fs::write(&stream_path, &stream_h).unwrap();
+        write_if_changed(&stream_path, &stream_h).unwrap();
         println!("  ta_func_stream_private.h -> {}", stream_path.display());
         for stale in [
             root.join("include").join("ta_func_unguarded.h"),
@@ -1904,7 +1908,7 @@ fn check_java_doc_examples(src_root: &Path, jar_path: &Path, bin_dir: &Path) -> 
              }}\n"
         );
         let f = dir.join(format!("DocExample{n}.java"));
-        if std::fs::write(&f, src).is_err() {
+        if write_if_changed(&f, src).is_err() {
             println!("FAILED (cannot write {})", f.display());
             return false;
         }
@@ -2308,13 +2312,13 @@ fn generate_rust_crate_scaffolding(
     let license_text = std::fs::read_to_string(repo_root.join("LICENSE")).unwrap_or_else(|e| {
         panic!("cannot read {}: {e}", repo_root.join("LICENSE").display())
     });
-    std::fs::write(lib_dir.join("LICENSE"), &license_text).unwrap();
+    write_if_changed(lib_dir.join("LICENSE"), &license_text).unwrap();
     println!("  Scaffolding -> {}", lib_dir.join("LICENSE").display());
 
     // --- workspace Cargo.toml (virtual manifest — profiles apply at the root) ---
     let workspace_toml = "[workspace]\nmembers = [\"dispatch\", \"library\", \"tools\"]\nresolver = \"2\"\n\n\
         [profile.release]\nlto = \"thin\"\ncodegen-units = 1\n";
-    std::fs::write(rust_dir.join("Cargo.toml"), workspace_toml).unwrap();
+    write_if_changed(rust_dir.join("Cargo.toml"), workspace_toml).unwrap();
 
     // --- dispatch/ (issue #156): the runtime FMA-dispatch macro crate ---
     // The one `unsafe` in the Rust workspace lives here, next to the CPU-feature
@@ -2324,7 +2328,7 @@ fn generate_rust_crate_scaffolding(
     let dispatch_dir = rust_dir.join("dispatch");
     let dispatch_src = dispatch_dir.join("src");
     std::fs::create_dir_all(&dispatch_src).unwrap();
-    std::fs::write(dispatch_dir.join("LICENSE"), &license_text).unwrap();
+    write_if_changed(dispatch_dir.join("LICENSE"), &license_text).unwrap();
     let dispatch_toml = format!(
         "[package]\nname = \"ta-lib-dispatch\"\nversion = \"{DISPATCH_VERSION}\"\nedition = \"2021\"\nrust-version = \"1.86\"\n\
         description = \"Runtime CPU-feature dispatch macro for the ta-lib crate (internal support crate).\"\n\
@@ -2334,7 +2338,7 @@ fn generate_rust_crate_scaffolding(
         categories = [\"hardware-support\", \"mathematics\"]\n\n\
         [lib]\nname = \"ta_lib_dispatch\"\npath = \"src/lib.rs\"\n"
     );
-    std::fs::write(dispatch_dir.join("Cargo.toml"), dispatch_toml).unwrap();
+    write_if_changed(dispatch_dir.join("Cargo.toml"), dispatch_toml).unwrap();
     let dispatch_readme = r#"# ta-lib-dispatch
 
 [![crates.io](https://img.shields.io/crates/v/ta-lib-dispatch.svg)](https://crates.io/crates/ta-lib-dispatch) [![docs.rs](https://docs.rs/ta-lib-dispatch/badge.svg)](https://docs.rs/ta-lib-dispatch)
@@ -2374,7 +2378,7 @@ public API.
 BSD-3-Clause — see
 [LICENSE](https://github.com/TA-Lib/ta-lib/blob/main/LICENSE).
 "#;
-    std::fs::write(dispatch_dir.join("README.md"), dispatch_readme).unwrap();
+    write_if_changed(dispatch_dir.join("README.md"), dispatch_readme).unwrap();
     let dispatch_lib = r#"// Crate docs = README.md verbatim (single source for crates.io + docs.rs;
 // see README.md for the actual text).
 #![doc = include_str!("../README.md")]
@@ -2402,7 +2406,7 @@ macro_rules! dispatch_fma {
     };
 }
 "#;
-    std::fs::write(dispatch_src.join("lib.rs"), dispatch_lib).unwrap();
+    write_if_changed(dispatch_src.join("lib.rs"), dispatch_lib).unwrap();
     println!("  Scaffolding -> {}", dispatch_dir.join("Cargo.toml").display());
     println!("  Scaffolding -> {}", dispatch_dir.join("README.md").display());
 
@@ -2445,7 +2449,7 @@ path = "src/lib.rs"
         "ta-lib-dispatch = {{ path = \"../dispatch\", version = \"={DISPATCH_VERSION}\" }}\n"
     );
     let lib_cargo_path = lib_dir.join("Cargo.toml");
-    std::fs::write(
+    write_if_changed(
         &lib_cargo_path,
         format!("{lib_toml_head}{lib_toml_tail}{lib_toml_dep}"),
     )
@@ -2475,7 +2479,7 @@ path = "src/lib.rs"
          serde_json = {{ version = \"1\", features = [\"arbitrary_precision\"] }}\n"
     );
     let tools_cargo_path = tools_dir.join("Cargo.toml");
-    std::fs::write(&tools_cargo_path, tools_toml).unwrap();
+    write_if_changed(&tools_cargo_path, tools_toml).unwrap();
     println!("  Scaffolding -> {}", tools_cargo_path.display());
 
     // --- .cargo/config.toml ---
@@ -2488,7 +2492,7 @@ path = "src/lib.rs"
 # Opt into native tuning explicitly: RUSTFLAGS="-C target-cpu=native"
 [build]
 "#;
-    std::fs::write(cargo_config_dir.join("config.toml"), cargo_config).unwrap();
+    write_if_changed(cargo_config_dir.join("config.toml"), cargo_config).unwrap();
 
     // --- src/lib.rs ---
     let lib_rs = r#"//! # TA-Lib: Technical Analysis Library
@@ -2581,7 +2585,7 @@ pub mod abstract_api;
 pub use ta_func::*;
 "#;
     let lib_path = src_dir.join("lib.rs");
-    std::fs::write(&lib_path, fill(lib_rs)).unwrap();
+    write_if_changed(&lib_path, fill(lib_rs)).unwrap();
     println!("  Scaffolding -> {}", lib_path.display());
 
     // --- README.md (crates.io / GitHub front page for the crate) ---
@@ -2668,7 +2672,7 @@ indicator calls) without locking. To change a setting, build a new `Core`.
 BSD-3-Clause — see [LICENSE](https://github.com/TA-Lib/ta-lib/blob/main/LICENSE).
 "#;
     let readme_path = lib_dir.join("README.md");
-    std::fs::write(&readme_path, fill(readme)).unwrap();
+    write_if_changed(&readme_path, fill(readme)).unwrap();
     println!("  Scaffolding -> {}", readme_path.display());
 
     // --- Copy the hand-written modules from ta_codegen/generator/templates/rust/ ---
@@ -2676,7 +2680,7 @@ BSD-3-Clause — see [LICENSE](https://github.com/TA-Lib/ta-lib/blob/main/LICENS
         let src = templates.join(format!("{module}.rs"));
         if src.exists() {
             let dest = ta_func_dir.join(format!("{module}.rs"));
-            std::fs::copy(&src, &dest).unwrap();
+            copy_if_changed(&src, &dest).unwrap();
             println!("  Copied {module}.rs -> {}", dest.display());
         }
     }
@@ -2743,7 +2747,7 @@ pub use types::*;
     }
 
     let mod_path = ta_func_dir.join("mod.rs");
-    std::fs::write(&mod_path, &mod_rs).unwrap();
+    write_if_changed(&mod_path, &mod_rs).unwrap();
     println!("  Scaffolding -> {}", mod_path.display());
 
     // --- src/bin/ta_codegen_serve.rs (placeholder) ---
@@ -2754,7 +2758,7 @@ pub use types::*;
     let bin_path = bin_dir.join("ta_codegen_serve.rs");
     // Only write placeholder if the server binary doesn't already exist
     if !bin_path.exists() {
-        std::fs::write(&bin_path, placeholder_bin).unwrap();
+        write_if_changed(&bin_path, placeholder_bin).unwrap();
         println!("  Scaffolding -> {} (placeholder)", bin_path.display());
     }
 
@@ -2763,7 +2767,7 @@ pub use types::*;
 
 /// Remove per-function generated files for a backend so stale artifacts
 /// from a previous run cannot leak into `generate-servers`.
-fn clean_generated_files(out_base: &Path, backend: &str) {
+fn remove_stale_generated_files(out_base: &Path, backend: &str, funcs: &[ir::FuncDef]) {
     let Some(backend) = backends::get(backend) else {
         return;
     };
@@ -2778,11 +2782,20 @@ fn clean_generated_files(out_base: &Path, backend: &str) {
     let (prefix, suffix) = backend.clean_glob();
     // Hand-written / scaffolding files (types.rs, mod.rs, ...) are preserved.
     let keep = backend.clean_keep();
+    // `generate_backend` writes exactly one file per function, named by
+    // `file_name`, so this is the complete set this run is entitled to leave
+    // behind. Anything else matching the glob belonged to an indicator that is
+    // gone.
+    let written: std::collections::BTreeSet<String> =
+        funcs.iter().map(|f| backend.file_name(f)).collect();
     let mut count = 0;
     if let Ok(entries) = std::fs::read_dir(&dir) {
         for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().to_string();
-            if name.starts_with(prefix) && name.ends_with(suffix) && !keep.contains(&name.as_str())
+            if name.starts_with(prefix)
+                && name.ends_with(suffix)
+                && !keep.contains(&name.as_str())
+                && !written.contains(&name)
             {
                 std::fs::remove_file(entry.path()).ok();
                 count += 1;
@@ -2791,7 +2804,7 @@ fn clean_generated_files(out_base: &Path, backend: &str) {
     }
     if count > 0 {
         println!(
-            "  Cleaned {count} stale {} files from {}",
+            "  Removed {count} stale {} file(s) from {}",
             backend.name(),
             dir.display()
         );
@@ -2818,6 +2831,6 @@ fn generate_backend(
     let dir = backend.lib_output_dir(out_base);
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join(backend.file_name(func_def));
-    std::fs::write(&path, &output).unwrap();
+    write_if_changed(&path, &output).unwrap();
     println!("  {} -> {}", func_def.name, path.display());
 }
