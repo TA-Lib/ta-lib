@@ -449,7 +449,13 @@ enforcing it its own way:
 - **C.** Documented, as an extension of the existing batch-tier caveat:
   calling `TA_SetCompatibility`/`TA_SetCandleSettings` while streams are open
   is undefined (CDL\* warm-up and ring sizes are derived from the settings in
-  effect at `open`; values read them per bar). Streams add no *new* hazard —
+  effect at `open`). Where a candle range is BUFFERED — every trailing ring,
+  and since #229 the rescan-window reads routed into one — its value is the one
+  the range type produced when that bar was pushed, up to `back` bars earlier;
+  everything else still reads the settings per bar. That sits inside the
+  undefined region above, and it is the more self-consistent of the two: a bar
+  now enters and leaves a running total as the identical double, so the sum
+  telescopes exactly. Streams add no *new* hazard —
   the C batch tier already requires that nothing calls `TA_SetX` during
   concurrent calls. Distinct handles are otherwise fully independent; a
   single handle is **single-writer**: driving one handle from two threads
@@ -781,7 +787,14 @@ claim in *Motivation* gets measured, not asserted).
    `cap = lag + back + 1`, current bar pre-written at `pos`), fixed-size
    array locals as carried state, ternary-index normalization
    (`in[c ? a : b]` → `c ? in[a] : in[b]`), widest-literal merge for
-   multi-bound rescan counters. CDLHIKKAKE/CDLHIKKAKEMOD (which save bar
+   multi-bound rescan counters. Those rings hold ONE derived scalar per bar
+   rather than one buffer per input column, and the rescan window beside them
+   holds nothing at all: where every read through the counter is a shape the
+   ring already stores, the read is routed into the ring at a cursor-relative
+   offset (#229). Four windows keep their own buffer, for two different reasons:
+   AVGDEV and IMI are bounded by a parameter rather than a literal, so the ring
+   depth has nothing to compare against; HT_TRENDLINE and HT_TRENDMODE read raw
+   columns, which no derived ring holds. CDLHIKKAKE/CDLHIKKAKEMOD (which save bar
    indices — absolute-index recall beyond the extrema automaton) later joined
    via a bit-exact countdown + cached-value refactor, so all 61 CDL patterns
    stream.

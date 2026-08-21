@@ -490,18 +490,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         std::process::exit(1);
     }
 
-    // Clean stale per-function output files before generating.
-    // This prevents generate-servers from picking up outdated artifacts
-    // (e.g., stale Core_*.java files that were generated with old code).
-    // Only clean when generating all functions (no filter) to avoid
-    // accidentally removing files for functions not being regenerated.
     let out_base = root.join("ta_codegen/output");
-
-    if func_filter.is_none() {
-        for backend in &backends_to_run {
-            clean_generated_files(&out_base, backend);
-        }
-    }
 
     // Phase 1: Load all FuncDefs
     let mut generated_funcs: Vec<ir::FuncDef> = Vec::new();
@@ -574,6 +563,26 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     } else {
         &generated_funcs
     };
+
+    // Clean stale per-function output files, immediately before the writes and
+    // AFTER every gate above has had its say. This prevents generate-servers from
+    // picking up outdated artifacts (e.g. stale Core_*.java generated with old
+    // code). Only when generating all functions (no filter), so a --func run
+    // cannot remove files for functions it is not regenerating.
+    //
+    // Ordering is load-bearing, not incidental. Phase 1 only parses and
+    // validates -- it writes nothing -- so every gate that can call
+    // `process::exit` (naming, docs, and the per-function streaming gate inside
+    // the loop) now runs while the tree is still intact. It used to sit above
+    // Phase 1, which meant a gate firing there aborted with 174 files per
+    // backend already deleted, `src/ta_func/*.c` among them: a rejected input
+    // left the shipped library gutted. Adding a gate to Phase 1 must not
+    // reintroduce that, so keep this below the loop.
+    if func_filter.is_none() {
+        for backend in &backends_to_run {
+            clean_generated_files(&out_base, backend);
+        }
+    }
 
     // Phase 2: Generate output for each backend
     for func_def in &generated_funcs {

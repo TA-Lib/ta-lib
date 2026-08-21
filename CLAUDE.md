@@ -58,11 +58,28 @@ transcribed numerics, package-private in Java and `internal` in C#, keeping C's
 `RetCode` + out-param shape. There is no third, catch-and-convert tier; #236
 step 5 deleted it.
 
+**Three suffixes, one meaning each** (#236 settled this; the names were three
+words for two concepts before):
+
+| suffix | means |
+|---|---|
+| `_Impl` | the numerics — a transcribed body, nothing else |
+| `_Internal` | a **variant** of an entry point, not a tier: the `startIdx`-anchored composition seams `_OpenInternal` / `_OpenAndFillInternal` |
+| `_OpenPass` | the single whole-history transcription the whole `_Open*` family shares |
+
+The two axes are independent, so they compose: `<N>_OpenAndFillInternalImpl` is
+the numerics *of* the anchored `_OpenAndFill` variant, and both halves are
+load-bearing — `<N>_OpenAndFillInternal` is a real declared function that calls
+it. It is the one name where both axes appear at once, which makes it look like
+a stack of synonyms; it is not, and it has been queried twice. `Core` and
+`Body` were rejected: `Core` is the struct a caller holds and the documented
+contrast with the Streaming API, and `Body` reads as markup.
+
 A cross-call inside a body calls the callee's *public* tier and lets its
 rejection throw, so the callers that need a code back convert it themselves:
 the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`. That conversion is
 live only while cross-calls go through the public tier — the same fact that
-withholds ten cores from `NoPhantomIoTest`'s sweep — so the two move together.
+withholds `MA` from `NoPhantomIoTest`'s sweep — so the two move together.
 
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source

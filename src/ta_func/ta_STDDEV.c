@@ -104,6 +104,21 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
+   /* Nothing to produce: the range is shorter than the lookback. Return before
+    * touching anything.
+    *
+    * Same shape as the guard in apo and bbands: the variance below runs on the
+    * same range and its lookback IS stddev's, so it declines and yields 0,0
+    * without reading. Observably identical, but it makes "a range shorter than
+    * the lookback reads nothing" true of stddev itself rather than only of var.
+    * Pinned by the zero-length no-I/O probe over every guarded core.
+    */
+   if( TA_STDDEV_Lookback(optInTimePeriod,optInNbDev) > endIdx )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_SUCCESS;
+   }
    /* Calculate the variance. */
    retCode = TA_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
@@ -176,6 +191,12 @@ TA_RetCode TA_S_STDDEV( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
+   if( TA_STDDEV_Lookback(optInTimePeriod,optInNbDev) > endIdx )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_SUCCESS;
+   }
    retCode = TA_S_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,outBegIdx,outNBElement,outReal);
    if( retCode != TA_SUCCESS )
    {
@@ -308,6 +329,22 @@ static TA_RetCode TA_STDDEV_OpenPass( struct TA_STDDEV_Stream **stream, const do
       int i;
       TA_RetCode retCode;
       double tempReal;
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Same shape as the guard in apo and bbands: the variance below runs on the
+       * same range and its lookback IS stddev's, so it declines and yields 0,0
+       * without reading. Observably identical, but it makes "a range shorter than
+       * the lookback reads nothing" true of stddev itself rather than only of var.
+       * Pinned by the zero-length no-I/O probe over every guarded core.
+       */
+      if( TA_STDDEV_Lookback(optInTimePeriod,optInNbDev) > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
+         return TA_INSUFFICIENT_HISTORY;
+      }
       /* Calculate the variance. */
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
