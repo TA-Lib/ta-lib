@@ -77,7 +77,7 @@ Numbers/ranges/defaults are **injected from YAML** at render — never restate t
 | `## Implementation` | yes | A **TA-Lib Definition:** line (input `<name>.c` · `.yaml`), then a **Native** table of the generated **C / Rust / Java** files, then a pointer to language wrappers. |
 | `## Aliases` | optional | Abbreviation expansions / alternative names for SEO, comma-separated. Drop any alias that merely repeats the function name — omit the whole section when nothing else qualifies (e.g. AROON, FLOOR). Feeds rustdoc `#[doc(alias)]` / site search. |
 | `## See Also` | optional | Related TA-Lib function names (` · ` separated) → rustdoc intra-doc links / site links. |
-| `## References` | optional | Books / sites, at the **bottom** of the file. |
+| `## References` | optional | Books / sites, at the **bottom** of the file. A URL must be written as `[label](url)`, never bare: the prose is rendered verbatim into the rustdoc, where a bare URL trips `rustdoc::bare_urls` and fails the crate's warning-free `cargo doc` gate. `generate` rejects one. |
 
 The two **textual** sections are `## Summary` and `## Notes`; every other section is a brief
 formula, a name→meaning list, or a link/name table. There is **no frontmatter**, **no

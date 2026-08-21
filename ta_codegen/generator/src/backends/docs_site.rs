@@ -538,12 +538,79 @@ pub fn validate_docs(funcs: &[FuncDef], root: &Path) -> Result<(), Vec<String>> 
         if let Err(e) = validate_inputs(&body, f) {
             errors.push(e);
         }
+        if let Err(e) = validate_no_bare_urls(&body, f) {
+            errors.push(e);
+        }
     }
     if errors.is_empty() {
         Ok(())
     } else {
         Err(errors)
     }
+}
+
+/// Reject a bare `http(s)://` URL in the authored prose.
+///
+/// Every rendering target takes this prose verbatim, and one of them lints it: rustdoc's
+/// `bare_urls` warns on a URL that is not a hyperlink, so a plain URL in `## References`
+/// — the most natural thing to write — turns the crate's warning-free `cargo doc` gate
+/// red, pointing at a generated `.rs` the author never edited and would not think to
+/// connect back to their `.md`. Catch it here, where the fix is obvious.
+///
+/// The whole corpus already writes `[label](url)`; this makes the habit a rule. Autolinks
+/// (`<url>`) are accepted too — rustdoc is happy with them — but the link form is what the
+/// site and the Javadoc want, so the message names that one.
+///
+/// Code spans and fenced blocks are exempt: a URL quoted as code is not rendered as prose
+/// and rustdoc does not lint it.
+///
+/// # Errors
+/// One message naming the first offending line.
+fn validate_no_bare_urls(body: &str, func: &FuncDef) -> Result<(), String> {
+    let mut fenced = false;
+    for (n, line) in body.lines().enumerate() {
+        if line.trim_start().starts_with("```") {
+            fenced = !fenced;
+            continue;
+        }
+        if fenced {
+            continue;
+        }
+        // Keep only the segments outside backtick code spans: splitting on '`' puts
+        // prose at the even indices and code at the odd ones.
+        for prose in line.split('`').step_by(2) {
+            for (at, _) in prose.match_indices("://") {
+                // Walk back over the scheme by CHARACTER, not by byte: this prose is full
+                // of em dashes and `Σ`, and `byte_index + 1` lands mid-character on one,
+                // which would panic the slice below instead of reporting anything.
+                let before = prose[..at]
+                    .char_indices()
+                    .rev()
+                    .find(|&(_, c)| !c.is_ascii_alphabetic());
+                let start = before.map_or(0, |(i, c)| i + c.len_utf8());
+                if !matches!(&prose[start..at], "http" | "https") {
+                    continue;
+                }
+                // A `<` before it makes it an autolink. A `(` alone does NOT make it a
+                // link -- `Foo (https://x)` is prose in brackets, and rustdoc lints it
+                // exactly like any other bare URL. Only `](` is a Markdown link target.
+                match before {
+                    Some((_, '<')) => continue,
+                    Some((i, '(')) if prose[..i].ends_with(']') => continue,
+                    _ => {}
+                }
+                return Err(format!(
+                    "{}: {}.md line {} has a bare URL — write it as `[label](url)`. \
+                     Rendered verbatim into the rustdoc, a bare URL trips \
+                     `rustdoc::bare_urls` and fails the warning-free `cargo doc` gate.",
+                    func.name,
+                    func.name.to_lowercase(),
+                    n + 1
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Check that `## Inputs` names the arrays the function is actually called with.
@@ -1421,5 +1488,56 @@ mod tests {
             vec![opt("optInTimePeriod", ParamType::Integer, Some((1.0, 9.0)), 3.0)],
         );
         inject_parameters("# X\n\n## Inputs\n\n- `inReal` — Series\n", &f, &HashMap::new());
+    }
+
+    #[test]
+    fn bare_url_is_rejected() {
+        let f = func("X", vec![]);
+        // The natural thing to write, and what rustdoc's `bare_urls` lint refuses.
+        let err = validate_no_bare_urls("## References\n\n- https://example.com/x\n", &f)
+            .unwrap_err();
+        assert!(err.contains("bare URL"), "{err}");
+        assert!(err.contains("line 3"), "{err}");
+    }
+
+    #[test]
+    fn linked_and_quoted_urls_are_accepted() {
+        let f = func("X", vec![]);
+        // Markdown link, autolink, inline code span, fenced block. None of these is bare.
+        let body = "- [example](https://example.com/x)\n\
+                    - <https://example.com/y>\n\
+                    - the endpoint `https://example.com/z` is quoted\n\
+                    ```\n\
+                    https://example.com/w\n\
+                    ```\n";
+        assert!(validate_no_bare_urls(body, &f).is_ok());
+    }
+
+    #[test]
+    fn a_parenthesised_url_is_still_bare() {
+        let f = func("X", vec![]);
+        // `Foo (https://x)` is prose in brackets, not a Markdown link: rustdoc lints it.
+        let err =
+            validate_no_bare_urls("- StockCharts (https://stockcharts.com/x)\n", &f).unwrap_err();
+        assert!(err.contains("bare URL"), "{err}");
+        // The real link form -- `](` -- is what makes the `(` a target.
+        assert!(validate_no_bare_urls("- [StockCharts](https://stockcharts.com/x)\n", &f).is_ok());
+    }
+
+    #[test]
+    fn a_multibyte_char_before_the_url_does_not_panic() {
+        let f = func("X", vec![]);
+        // An em dash is three bytes: walking back a byte at a time lands mid-character.
+        let err = validate_no_bare_urls("- Alan Hull —https://example.com/x\n", &f).unwrap_err();
+        assert!(err.contains("bare URL"), "{err}");
+        // Same character immediately before a LINKED url must still be accepted.
+        assert!(validate_no_bare_urls("- Σ—[x](https://example.com/x)\n", &f).is_ok());
+    }
+
+    #[test]
+    fn a_scheme_like_word_is_not_a_url() {
+        let f = func("X", vec![]);
+        // `://` with no http(s) scheme in front of it must not trip the check.
+        assert!(validate_no_bare_urls("- see ftp://host/path\n", &f).is_ok());
     }
 }
