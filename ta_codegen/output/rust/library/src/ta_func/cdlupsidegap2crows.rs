@@ -402,12 +402,16 @@ impl Core {
 /// Live CDLUPSIDEGAP2CROWS stream: one value per closed bar, bit-identical to [`Core::CDLUPSIDEGAP2CROWS`]
 /// over the same series. Open with [`Core::CDLUPSIDEGAP2CROWS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
+///
+/// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLUPSIDEGAP2CROWS_Stream")]
 pub struct CDLUPSIDEGAP2CROWS_Stream {
     core: Core,
     state: CDLUPSIDEGAP2CROWS_StreamState,
+    /// The bars this handle has produced a value for — see [`Self::out_range`].
+    out: OutRange,
 }
 
 #[allow(dead_code)]
@@ -417,6 +421,7 @@ impl CDLUPSIDEGAP2CROWS_Stream {
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
+        self.out = src.out;
     }
 }
 
@@ -860,7 +865,7 @@ impl Core {
             ringCap_BodyShortTrailingIdx: cap_BodyShortTrailingIdx as usize,
             ring_BodyShortTrailingIdx_derived,
         };
-        Ok(CDLUPSIDEGAP2CROWS_Stream { core: self.clone(), state })
+        Ok(CDLUPSIDEGAP2CROWS_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::CDLUPSIDEGAP2CROWS_Open`] (composition seam).
@@ -897,8 +902,12 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.CDLUPSIDEGAP2CROWS_Open(&open, &high, &low, &close).expect("enough history");
+    /// let r0 = s.out_range();
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().beg_idx, r0.beg_idx);
+    /// assert_eq!(s.out_range().count, r0.count + 1);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLUPSIDEGAP2CROWS_Open")]
@@ -959,6 +968,9 @@ impl CDLUPSIDEGAP2CROWS_Stream {
         }
         let mut outInteger: i32 = 0_i32;
         self.core.CDLUPSIDEGAP2CROWS_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        if self.out.count < Core::MAX_INDEX {
+            self.out.count += 1;
+        }
         Ok(outInteger)
     }
 
@@ -984,6 +996,19 @@ impl CDLUPSIDEGAP2CROWS_Stream {
             cell.set(Some(scratch));
             value
         })
+    }
+
+    /// The bars this stream has produced a value for, in the input series'
+    /// coordinates: `[beg_idx, beg_idx + count)`.
+    ///
+    /// It is what [`Core::CDLUPSIDEGAP2CROWS`] reports over the same bars: the opener sets it
+    /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one
+    /// to the count, `peek` leaves it alone, and a clone carries it verbatim.
+    /// A plain `Open` hands back only the last value, a subset of this range,
+    /// because the caller chose not to take the fill.
+    #[doc(alias = "TA_StreamOutRange")]
+    pub fn out_range(&self) -> OutRange {
+        self.out
     }
 }
 

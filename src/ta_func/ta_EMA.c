@@ -279,6 +279,10 @@ TA_RetCode TA_S_EMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_EMA_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double optInK_1;
    double prevMA;
@@ -320,13 +324,14 @@ static TA_RetCode TA_EMA_OpenPass( struct TA_EMA_Stream **stream, const double i
 
    if( optInTimePeriod == 1 )
    {
-      if( historyLen < TA_EMA_Lookback( optInTimePeriod ) + 1 ) return TA_INSUFFICIENT_HISTORY;
+      int fillLb = TA_EMA_Lookback( optInTimePeriod );
+      if( startIdx > fillLb ) fillLb = startIdx;
+      if( historyLen < fillLb + 1 ) return TA_INSUFFICIENT_HISTORY;
       sp = (struct TA_EMA_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       {
-         int fillLb = TA_EMA_Lookback( optInTimePeriod );
          int fillIdx;
          *outBegIdx = fillLb;
          *outNBElement = historyLen - fillLb;
@@ -342,6 +347,8 @@ static TA_RetCode TA_EMA_OpenPass( struct TA_EMA_Stream **stream, const double i
             outReal[0] = inReal[historyLen - 1];
          }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -429,6 +436,8 @@ static TA_RetCode TA_EMA_OpenPass( struct TA_EMA_Stream **stream, const double i
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInK_1 = optInK_1;
       sp->prevMA = prevMA;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -482,6 +491,7 @@ TA_LIB_API TA_RetCode TA_EMA_Update( TA_EMA_Stream *stream, double inReal, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_EMA_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

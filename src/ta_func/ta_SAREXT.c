@@ -765,6 +765,10 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_SAREXT_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double optInStartValue;
    double optInOffsetOnReverse;
    double optInAccelerationInitLong;
@@ -1329,6 +1333,8 @@ static TA_RetCode TA_SAREXT_OpenPass( struct TA_SAREXT_Stream **stream, const do
       sp->afShort = afShort;
       sp->ep = ep;
       sp->sar = sar;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1382,6 +1388,7 @@ TA_LIB_API TA_RetCode TA_SAREXT_Update( TA_SAREXT_Stream *stream, double inHigh,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    TA_SAREXT_StepInternal( stream, inHigh, inLow, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

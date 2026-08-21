@@ -647,18 +647,22 @@
       double cur_outFastD;
       Value cachedValue;
       MA_Stream sub0;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       STOCHF_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#STOCHF_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#STOCHF} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       STOCHF_Stream( STOCHF_Stream other ) {
          this.core = other.core;
@@ -681,7 +685,8 @@
          this.cur_outFastD = other.cur_outFastD;
          this.cachedValue = other.cachedValue;
          this.sub0 = new MA_Stream(other.sub0);
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( STOCHF_Stream other ) {
@@ -721,7 +726,8 @@
          } else {
             this.sub0.copyFrom(other.sub0);
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
@@ -756,6 +762,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
          core.STOCHF_StreamStep(this, inHigh, inLow, inClose);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
          return this.cachedValue;
       }
@@ -1139,7 +1146,10 @@
       MInteger outNBElement = new MInteger();
       double[] sink_outFastK = new double[1];
       double[] sink_outFastD = new double[1];
-      return STOCHF_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0 );
+      RetCode retCode = STOCHF_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode STOCHF_OpenAndFillImpl( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
    {
@@ -1157,6 +1167,8 @@
    {
       STOCHF_Stream sp = new STOCHF_Stream(this);
       RetCode retCode = STOCHF_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1205,7 +1217,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link STOCHF_Stream#fillRange()}.
+    * {@link STOCHF_Stream#outRange()}.
     */
    public STOCHF_Stream STOCHF_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
    {
@@ -1213,7 +1225,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = STOCHF_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

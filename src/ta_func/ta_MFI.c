@@ -430,6 +430,10 @@ TA_RetCode TA_S_MFI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MFI_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double posSumMF;
    double negSumMF;
@@ -699,6 +703,8 @@ static TA_RetCode TA_MFI_OpenPass( struct TA_MFI_Stream **stream, const double i
       if( !sp->cbMirror_mflow_negative ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_mflow_negative, mflow_negative, sizeof(double) * (size_t)sp->cbSize_mflow );
       if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); 
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -752,6 +758,7 @@ TA_LIB_API TA_RetCode TA_MFI_Update( TA_MFI_Stream *stream, double inHigh, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_MFI_StepInternal( stream, inHigh, inLow, inClose, inVolume, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

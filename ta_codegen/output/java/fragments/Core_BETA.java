@@ -511,18 +511,22 @@
       double[] ring_trailingIdx_inReal0;
       double[] ring_trailingIdx_inReal1;
       double cur_outReal;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       BETA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#BETA_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#BETA} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       BETA_Stream( BETA_Stream other ) {
          this.core = other.core;
@@ -543,7 +547,8 @@
          this.ring_trailingIdx_inReal0 = other.ring_trailingIdx_inReal0.clone();
          this.ring_trailingIdx_inReal1 = other.ring_trailingIdx_inReal1.clone();
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( BETA_Stream other ) {
@@ -573,7 +578,8 @@
             this.ring_trailingIdx_inReal1 = other.ring_trailingIdx_inReal1.clone();
          }
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
@@ -595,6 +601,7 @@
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("BETA update: BadParam", RetCode.BadParam);
          core.BETA_StreamStep(this, inReal0, inReal1);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
 
@@ -896,7 +903,10 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return BETA_OpenPass( sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      RetCode retCode = BETA_OpenPass( sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode BETA_OpenAndFillImpl( BETA_Stream sp, double inReal0[], double inReal1[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
@@ -914,6 +924,8 @@
    {
       BETA_Stream sp = new BETA_Stream(this);
       RetCode retCode = BETA_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -962,7 +974,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link BETA_Stream#fillRange()}.
+    * {@link BETA_Stream#outRange()}.
     */
    public BETA_Stream BETA_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
@@ -970,7 +982,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = BETA_OpenAndFillImpl(sp, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

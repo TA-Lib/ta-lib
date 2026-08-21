@@ -1751,6 +1751,8 @@ typedef struct {
     int               streamFillFunctions; /* funcs whose OpenAndFill == batch(0,n-1) bitwise */
     int               streamStateFunctions; /* funcs whose handle state matched Open(n) (#240) */
     int               streamStateLegs;      /* legs that compared handle state (#240) */
+    int               streamRangeFunctions; /* funcs whose handle OutRange matched batch (#241) */
+    int               streamRangeLegs;      /* legs that compared the handle's OutRange (#241) */
     long long         streamBenign;        /* cross-tier +0.0/-0.0 pairs (#147) — never a failure */
 } ForEachFuncContext;
 
@@ -3256,6 +3258,8 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int stateChecked = 0;  /* set once any leg reports the state-equivalence compare */
     int stateLegs = 0;     /* how many legs actually compared handle state */
     int stateOfLegs = 0;   /* value legs in the requests that reported it */
+    int rangeChecked = 0;  /* set once any leg reports the OutRange compare (#241) */
+    int rangeLegs = 0;     /* how many legs actually compared a handle's OutRange */
     long long benign = 0;  /* signed-zero cases this function's legs reported */
     int isUnstable;
 
@@ -3443,6 +3447,31 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     return;
                 }
             }
+            /* Range leg (#241): the handle's OutRange must equal what the batch
+             * call reports over the same bars — for the OpenAndFill handle, for
+             * Open(P) plus the updates that carry it to bar n-1, and for the
+             * startIdx-anchored open. It ties the streaming tier to the batch
+             * tier through one number pair, which no value leg does: every one
+             * of those compares outputs, and an output is the same whether the
+             * handle knows how many of them it has produced. Checked before the
+             * generic ok flag so the failure names the leg; folded into ok
+             * server-side too. */
+            if( stream_flag(ctx->responseBuf, "\"range_checked\":") == 1 )
+            {
+                rangeChecked = 1;
+                rangeLegs += stream_flag(ctx->responseBuf, "\"range_legs\":");
+                if( stream_flag(ctx->responseBuf, "\"range_ok\":") != 1 )
+                {
+                    printf("STREAM RANGE MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                           "  a handle's OutRange != the batch range over the same bars\n"
+                           "  request:  %s\n  response: %s\n",
+                           funcInfo->name, v, K, compat,
+                           ctx->requestBuf, ctx->responseBuf);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
+            }
             if( stream_flag(ctx->responseBuf, "\"ok\":") != 1 ||
                 stream_flag(ctx->responseBuf, "\"peek_ok\":") != 1 )
             {
@@ -3492,6 +3521,8 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     record_stream_counters(funcInfo->name, ctx->langIndex, legs, benign);
     if( fillChecked ) ctx->streamFillFunctions++;
     if( stateChecked ) ctx->streamStateFunctions++;
+    if( rangeChecked ) ctx->streamRangeFunctions++;
+    ctx->streamRangeLegs += rangeLegs;
     /* Per-leg, not per-function: a function counts as covered as soon as ONE of
      * its legs compares, so without this a reference open that quietly failed
      * on 15 of 16 legs would still read as full coverage. Every leg that
@@ -4245,6 +4276,8 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamFillFunctions = 0;
             ctx.streamStateFunctions = 0;
             ctx.streamStateLegs     = 0;
+            ctx.streamRangeFunctions = 0;
+            ctx.streamRangeLegs     = 0;
             ctx.streamBenign        = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
             /* The benign total is printed unconditionally, zero included: the
@@ -4256,10 +4289,13 @@ static ErrorNumber test_codegen_for_language(
                    "%lld benign signed-zero\n"
                    "  OpenAndFill verify: %d functions, filled array == batch(0,n-1) bitwise\n"
                    "  State-equivalence verify: %d functions, %d legs, handle after "
-                   "Open(P)+updates == handle after Open(n) bitwise\n",
+                   "Open(P)+updates == handle after Open(n) bitwise\n"
+                   "  OutRange verify: %d functions, %d legs, the handle's range == "
+                   "the batch range over the same bars\n",
                    ctx.streamFunctions, ctx.streamLegs, ctx.streamRejectArms,
                    ctx.streamSkipped, ctx.streamBenign, ctx.streamFillFunctions,
-                   ctx.streamStateFunctions, ctx.streamStateLegs);
+                   ctx.streamStateFunctions, ctx.streamStateLegs,
+                   ctx.streamRangeFunctions, ctx.streamRangeLegs);
             /* Coverage ratchet: every function with a server stream must ALSO
              * verify OpenAndFill (the emit side and this verify side both gate on
              * the same has_open_and_fill, so they cannot desync silently — but if
@@ -4299,6 +4335,28 @@ static ErrorNumber test_codegen_for_language(
                 printf("STREAM STATE VACUOUS: the %s server offers the "
                        "state-equivalence leg but reported it for 0 of %d "
                        "streaming functions\n", lang->name, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            /* The range leg's ratchet (#241). Unlike the state leg this one is
+             * offered by EVERY server — the range is public API in all four
+             * backends — so the floor is unconditional: any streaming function
+             * that did not report it is a tier whose emitter was missed, and a
+             * count of 0 is a server that stopped answering the leg entirely.
+             * Both read as full coverage without this. */
+            if( ctx.error == TA_TEST_PASS &&
+                ctx.streamRangeFunctions != ctx.streamFunctions )
+            {
+                printf("STREAM RANGE VACUOUS: only %d of %d streaming functions "
+                       "compared the handle's OutRange against the batch range\n",
+                       ctx.streamRangeFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            if( ctx.error == TA_TEST_PASS && ctx.streamFunctions > 0 &&
+                ctx.streamRangeLegs < ctx.streamFunctions )
+            {
+                printf("STREAM RANGE VACUOUS: %d range legs over %d streaming "
+                       "functions — fewer than one each\n",
+                       ctx.streamRangeLegs, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
         }

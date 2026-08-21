@@ -678,10 +678,14 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
         "/// Live {n} stream: one value per closed bar, bit-identical to [`Core::{sn}`]\n\
          /// over the same series. Open with [`Core::{sn}_Open`]; dropping the handle\n\
          /// closes the stream. Cloning it forks an independent stream.\n\
+         ///\n\
+         /// [`Self::out_range`] reports the bars it has produced a value for.\n\
          #[must_use = \"a stream does nothing unless updated; dropping it closes the stream\"]\n\
          #[derive(Debug, Clone)]\n\
          #[doc(alias = \"TA_{n}_Stream\")]\n\
-         pub struct {handle} {{\n    core: Core,\n    state: {state},\n}}\n"
+         pub struct {handle} {{\n    core: Core,\n    state: {state},\n\
+         \x20   /// The bars this handle has produced a value for — see [`Self::out_range`].\n\
+         \x20   out: OutRange,\n}}\n"
     );
     // The handle's half of the scratch restore: only a handle embedded in
     // another handle's state (a composed sub, a dispatch arm, a period bank
@@ -694,6 +698,7 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
          \x20   pub(crate) fn restore_from(&mut self, src: &Self) {{\n\
          \x20       self.core.clone_from(&src.core);\n\
          \x20       self.state.restore_from(&src.state);\n\
+         \x20       self.out = src.out;\n\
          \x20   }}\n}}\n"
     );
 }
@@ -1503,7 +1508,7 @@ fn emit_capture_and_publish(
     let _ = writeln!(o, "\n        // Capture the live batch state into the handle.");
     emit_capture(o, func, model, scalars, typing, registry, helpers, counter, extra_fields);
     // The core publishes only the handle; the scalar wrapper reads its sink.
-    let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
+    let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
 }
 
 
@@ -1644,9 +1649,15 @@ fn emit_identity_fast_path(
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let lb_call = format!("self.{sn}_Lookback({})", lb_args.join(", "));
     let _ = writeln!(o, "        if {cond} {{");
+    // batch( startIdx, .. ) begins at max(startIdx, lookback), and the anchored
+    // `_Open*Internal` variants are the batch call over that same range. The
+    // public entry points pass 0, so the clamp is a no-op for them — it is the
+    // composition seams that were reporting (and filling) from the raw lookback.
+    let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
+    let _ = writeln!(o, "            let fillLb = if startIdx > fillLb {{ startIdx }} else {{ fillLb }};");
     let _ = writeln!(
         o,
-        "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
+        "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
     );
     // Identity state: params captured, everything else deterministic defaults
     // (1-slot buffers keep the transition's cap-0 guard well-defined).
@@ -1660,7 +1671,6 @@ fn emit_identity_fast_path(
     // run would be CORRECT (every iteration rewrites slot 0, the last one leaves
     // the right value) but would make the scalar Open O(history) where it is
     // O(1). `outStride` is a literal at both call sites, so the branch folds.
-    let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
     let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
     let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
     let _ = writeln!(o, "            if outStride == 0 {{");
@@ -1678,7 +1688,7 @@ fn emit_identity_fast_path(
     let _ = writeln!(o, "            }}");
     let _ = writeln!(
         o,
-        "            return Ok({handle} {{ core: self.clone(), state }});"
+        "            return Ok({handle} {{ core: self.clone(), state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }});"
     );
     let _ = writeln!(o, "        }}");
 }
@@ -2069,14 +2079,21 @@ fn stream_doctest(
         "let (mut s, _last) = core.{sn}_Open({}).expect(\"enough history\");",
         args.join(", ")
     ));
+    // The range the handle reports, before and after one committed bar. Fields
+    // rather than the whole struct, so the example needs no extra `use` line
+    // (`example_use_line` builds that from the enum imports alone).
+    lines.push("let r0 = s.out_range();".to_string());
     lines.push(format!(
         "let peeked = s.peek({}).expect(\"a finite bar\");",
         bar_args.join(", ")
     ));
+    lines.push("assert_eq!(s.out_range().count, r0.count); // a peek commits nothing".to_string());
     lines.push(format!(
         "let updated = s.update({}).expect(\"a finite bar\");",
         bar_args.join(", ")
     ));
+    lines.push("assert_eq!(s.out_range().beg_idx, r0.beg_idx);".to_string());
+    lines.push("assert_eq!(s.out_range().count, r0.count + 1);".to_string());
     // peek == update, bit-for-bit (it is the same code on a throwaway clone).
     let n_outs = func.outputs.len();
     let int_out = func
@@ -2191,6 +2208,15 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
         o,
         "        self.core.{sn}_step_internal(&mut self.state, {fwd_bars}{out_refs}){step_try};"
     );
+    // After the step, so a rejected bar (non-finite here, or a sub-stream's
+    // reject through `?`) leaves the range exactly where it was. `peek` runs the
+    // same step on a copy and so never reaches this.
+    let _ = writeln!(
+        o,
+        "        if self.out.count < Core::MAX_INDEX {{\n\
+         \x20           self.out.count += 1;\n\
+         \x20       }}"
+    );
     let _ = writeln!(o, "        Ok({ret})");
     let _ = writeln!(o, "    }}\n");
     let alloc_note = if reuse {
@@ -2251,7 +2277,26 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
         let _ = writeln!(o, "        let mut scratch = self.clone();");
         let _ = writeln!(o, "        scratch.update({fwd_bars})");
     }
-    let _ = writeln!(o, "    }}\n}}\n");
+    let _ = writeln!(o, "    }}\n");
+    // The range accessor. Rust's `OpenAndFill` keeps returning the range beside
+    // the handle (#179 C15) — this is the same pair, and the only way to read it
+    // after an update or off a plain `Open`.
+    let _ = writeln!(
+        o,
+        "    /// The bars this stream has produced a value for, in the input series'\n\
+         \x20   /// coordinates: `[beg_idx, beg_idx + count)`.\n\
+         \x20   ///\n\
+         \x20   /// It is what [`Core::{sn}`] reports over the same bars: the opener sets it\n\
+         \x20   /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one\n\
+         \x20   /// to the count, `peek` leaves it alone, and a clone carries it verbatim.\n\
+         \x20   /// A plain `Open` hands back only the last value, a subset of this range,\n\
+         \x20   /// because the caller chose not to take the fill.\n\
+         \x20   #[doc(alias = \"TA_StreamOutRange\")]\n\
+         \x20   pub fn out_range(&self) -> OutRange {{\n\
+         \x20       self.out\n\
+         \x20   }}"
+    );
+    let _ = writeln!(o, "}}\n");
 }
 
 /// `outReal` / `(outA, outB, ...)` — the update return expression.
@@ -2734,12 +2779,18 @@ fn emit_dispatch(
                 o,
                 "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
             );
+            // The identity arm produces its whole range in every mode — only the
+            // fills go on to write the caller's arrays with it — so `fillLb` is
+            // emitted unconditionally.
+            let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
+            if mode != OutMode::Fill {
+                // batch( startIdx, .. ) begins at max(startIdx, lookback); the
+                // public entry points anchor at 0, so only the startIdx-carrying
+                // variants clamp.
+                let _ = writeln!(o, "            let fillLb = if startIdx > fillLb {{ startIdx }} else {{ fillLb }};");
+            }
             if mode != OutMode::Scalar {
-                let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
                 if mode == OutMode::FillInternal {
-                    // batch( startIdx, .. ) begins at max(startIdx, lookback); the
-                    // public entry point's startIdx is 0, so only this variant clamps.
-                    let _ = writeln!(o, "            let fillLb = if startIdx > fillLb {{ startIdx }} else {{ fillLb }};");
                     let _ = writeln!(
                         o,
                         "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
@@ -2776,17 +2827,17 @@ fn emit_dispatch(
                     };
                     let _ = writeln!(
                         o,
-                        "            return Ok(({handle} {{ core: self.clone(), state }}, {value}));"
+                        "            return Ok(({handle} {{ core: self.clone(), state, out: OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }} }}, {value}));"
                     );
                 }
                 OutMode::Fill => {
                     let _ = writeln!(
                         o,
-                        "            return Ok(({handle} {{ core: self.clone(), state }}, OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }}));"
+                        "            return Ok(({handle} {{ core: self.clone(), state, out: OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }} }}, OutRange {{ beg_idx: fillLb, count: historyLen - fillLb }}));"
                     );
                 }
                 OutMode::FillInternal => {
-                    let _ = writeln!(o, "            return Ok({handle} {{ core: self.clone(), state }});");
+                    let _ = writeln!(o, "            return Ok({handle} {{ core: self.clone(), state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }});");
                 }
             }
             let _ = writeln!(o, "        }}");
@@ -2796,7 +2847,7 @@ fn emit_dispatch(
         // the caller's arrays.
         let binding = match mode {
             OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
-            OutMode::Scalar => "let (sub, value)",
+            OutMode::Scalar => "let (sub, value, subRange)",
             // Exactly one arm runs, so the callee's own `OutRange` IS this
             // call's — carry it out of the match rather than round-tripping it
             // through a pair of locals (#179 C15).
@@ -2847,9 +2898,13 @@ fn emit_dispatch(
                                 format!("({})", parts.join(", "))
                             }
                         };
+                        // The arm's handle already resolved the range; read it
+                        // before `sub` moves into the enum. Scalar has no out-meta
+                        // pair to read it from instead.
+                        let _ = writeln!(o, "                let subRange = sub.out_range();");
                         let _ = writeln!(
                             o,
-                            "                ({sub_enum}::{}(sub), {value_expr})",
+                            "                ({sub_enum}::{}(sub), {value_expr}, subRange)",
                             callee_variant(&arm.callee)
                         );
                         let _ = writeln!(o, "            }}");
@@ -2918,13 +2973,13 @@ fn emit_dispatch(
         match mode {
             OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
             OutMode::Scalar => {
-                let _ = writeln!(o, "        Ok(({handle} {{ core: self.clone(), state }}, value))");
+                let _ = writeln!(o, "        Ok(({handle} {{ core: self.clone(), state, out: subRange }}, value))");
             }
             OutMode::Fill => {
-                let _ = writeln!(o, "        Ok(({handle} {{ core: self.clone(), state }}, fillRange))");
+                let _ = writeln!(o, "        Ok(({handle} {{ core: self.clone(), state, out: fillRange }}, fillRange))");
             }
             OutMode::FillInternal => {
-                let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
+                let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
             }
         }
         let _ = writeln!(o, "    }}\n");
@@ -3063,7 +3118,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        let state = {state} {{ {params_join}, bank }};");
     let _ = writeln!(
         o,
-        "        Ok(({handle} {{ core: self.clone(), state }}, lastValue_{out}))"
+        "        Ok(({handle} {{ core: self.clone(), state, out: OutRange {{ beg_idx: subStart, count: historyLen - subStart }} }}, lastValue_{out}))"
     );
     let _ = writeln!(o, "    }}\n");
 
@@ -3113,7 +3168,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        let state = {state} {{ {params_join}, bank }};");
     let _ = writeln!(
         o,
-        "        Ok(({handle} {{ core: self.clone(), state }}, OutRange {{ beg_idx: lookbackTotal, count: historyLen - lookbackTotal }}))"
+        "        Ok(({handle} {{ core: self.clone(), state, out: OutRange {{ beg_idx: lookbackTotal, count: historyLen - lookbackTotal }} }}, OutRange {{ beg_idx: lookbackTotal, count: historyLen - lookbackTotal }}))"
     );
     let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
@@ -3793,7 +3848,7 @@ fn emit_composed_open(
                     let _ = writeln!(o, "        }}");
                 }
             }
-            let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
+            let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
         }
     }
     let _ = writeln!(o, "    }}\n");

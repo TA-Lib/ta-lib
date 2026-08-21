@@ -852,18 +852,22 @@
       double cur_outSMI;
       double cur_outSMISignal;
       Value cachedValue;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       SMI_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#SMI_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#SMI} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       SMI_Stream( SMI_Stream other ) {
          this.core = other.core;
@@ -897,7 +901,8 @@
          this.cur_outSMI = other.cur_outSMI;
          this.cur_outSMISignal = other.cur_outSMISignal;
          this.cachedValue = other.cachedValue;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( SMI_Stream other ) {
@@ -944,7 +949,8 @@
          this.cur_outSMI = other.cur_outSMI;
          this.cur_outSMISignal = other.cur_outSMISignal;
          this.cachedValue = other.cachedValue;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
@@ -979,6 +985,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
          core.SMI_StreamStep(this, inHigh, inLow, inClose);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
          return this.cachedValue;
       }
@@ -1431,7 +1438,10 @@
       MInteger outNBElement = new MInteger();
       double[] sink_outSMI = new double[1];
       double[] sink_outSMISignal = new double[1];
-      return SMI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outSMI, sink_outSMISignal, 0 );
+      RetCode retCode = SMI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outSMI, sink_outSMISignal, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode SMI_OpenAndFillImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
    {
@@ -1449,6 +1459,8 @@
    {
       SMI_Stream sp = new SMI_Stream(this);
       RetCode retCode = SMI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1497,7 +1509,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link SMI_Stream#fillRange()}.
+    * {@link SMI_Stream#outRange()}.
     */
    public SMI_Stream SMI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outSMI[], double outSMISignal[] )
    {
@@ -1505,7 +1517,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = SMI_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

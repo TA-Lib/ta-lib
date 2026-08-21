@@ -287,6 +287,10 @@ TA_RetCode TA_S_VWMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_VWMA_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double sumPV;
    double sumV;
@@ -375,7 +379,9 @@ static TA_RetCode TA_VWMA_OpenPass( struct TA_VWMA_Stream **stream, const double
 
    if( optInTimePeriod == 1 )
    {
-      if( historyLen < TA_VWMA_Lookback( optInTimePeriod ) + 1 ) return TA_INSUFFICIENT_HISTORY;
+      int fillLb = TA_VWMA_Lookback( optInTimePeriod );
+      if( startIdx > fillLb ) fillLb = startIdx;
+      if( historyLen < fillLb + 1 ) return TA_INSUFFICIENT_HISTORY;
       sp = (struct TA_VWMA_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
@@ -395,7 +401,6 @@ static TA_RetCode TA_VWMA_OpenPass( struct TA_VWMA_Stream **stream, const double
       }
       sp->ringPos_trailingIdx = 0;
       {
-         int fillLb = TA_VWMA_Lookback( optInTimePeriod );
          int fillIdx;
          *outBegIdx = fillLb;
          *outNBElement = historyLen - fillLb;
@@ -411,6 +416,8 @@ static TA_RetCode TA_VWMA_OpenPass( struct TA_VWMA_Stream **stream, const double
             outReal[0] = inReal[historyLen - 1];
          }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -519,6 +526,8 @@ static TA_RetCode TA_VWMA_OpenPass( struct TA_VWMA_Stream **stream, const double
         memcpy( sp->ring_trailingIdx_inVolume, inVolume + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -572,6 +581,7 @@ TA_LIB_API TA_RetCode TA_VWMA_Update( TA_VWMA_Stream *stream, double inReal, dou
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_VWMA_StepInternal( stream, inReal, inVolume, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

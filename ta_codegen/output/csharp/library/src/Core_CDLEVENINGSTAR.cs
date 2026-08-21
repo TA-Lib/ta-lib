@@ -472,18 +472,22 @@ public partial class Core
       internal int cs_BodyShort_avgPeriod;
       internal double cs_BodyShort_factor;
       internal int cur_outInteger;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal CDLEVENINGSTAR_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>CDLEVENINGSTAR_OpenAndFill</c> filled, or
-      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
-      /// (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.CDLEVENINGSTAR</c> reports over the same bars: the
+      /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
+      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
+      /// last value, a subset of this range, because the caller chose not to take
+      /// the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal CDLEVENINGSTAR_Stream( CDLEVENINGSTAR_Stream other )
       {
@@ -516,7 +520,8 @@ public partial class Core
          this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
          this.cs_BodyShort_factor = other.cs_BodyShort_factor;
          this.cur_outInteger = other.cur_outInteger;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( CDLEVENINGSTAR_Stream other )
@@ -554,7 +559,8 @@ public partial class Core
          this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
          this.cs_BodyShort_factor = other.cs_BodyShort_factor;
          this.cur_outInteger = other.cur_outInteger;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -580,6 +586,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLEVENINGSTAR", "update", RetCode.BadParam);
          core.CDLEVENINGSTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
 
@@ -834,7 +841,10 @@ public partial class Core
    private RetCode CDLEVENINGSTAR_OpenImpl( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       int[] sink_outInteger = new int[1];
-      return CDLEVENINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out _, out _, sink_outInteger, 0 );
+      RetCode retCode = CDLEVENINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode CDLEVENINGSTAR_OpenAndFillImpl( CDLEVENINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
@@ -854,6 +864,8 @@ public partial class Core
    {
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
       RetCode retCode = CDLEVENINGSTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -912,7 +924,7 @@ public partial class Core
    /// outputs and then reads the input tail to seed its rings, so the batch
    /// tier's in-place allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="CDLEVENINGSTAR_Stream.FillRange"/>.</para>
+   /// <see cref="CDLEVENINGSTAR_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
@@ -937,7 +949,8 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
       RetCode retCode = CDLEVENINGSTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

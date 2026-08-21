@@ -310,6 +310,10 @@ TA_RetCode TA_S_AO( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_AO_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInFastPeriod;
    int optInSlowPeriod;
    double sumFast;
@@ -553,6 +557,8 @@ static TA_RetCode TA_AO_OpenPass( struct TA_AO_Stream **stream, const double inH
         }
       }
       sp->ringPos_trailingSlowIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -606,6 +612,7 @@ TA_LIB_API TA_RetCode TA_AO_Update( TA_AO_Stream *stream, double inHigh, double 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    TA_AO_StepInternal( stream, inHigh, inLow, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

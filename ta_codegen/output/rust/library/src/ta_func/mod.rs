@@ -80,6 +80,8 @@ impl TryFrom<i32> for MAType {
 mod scratch_election;
 #[cfg(test)]
 mod stream_finite;
+#[cfg(test)]
+mod stream_out_range;
 
 // Generated indicator modules:
 mod ac;

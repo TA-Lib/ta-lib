@@ -525,18 +525,22 @@
       double cur_outMACDSignal;
       double cur_outMACDHist;
       Value cachedValue;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       MACDFIX_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#MACDFIX_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#MACDFIX} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       MACDFIX_Stream( MACDFIX_Stream other ) {
          this.core = other.core;
@@ -551,7 +555,8 @@
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
          this.cachedValue = other.cachedValue;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( MACDFIX_Stream other ) {
@@ -567,7 +572,8 @@
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
          this.cachedValue = other.cachedValue;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /**
@@ -600,6 +606,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
          core.MACDFIX_StreamStep(this, inReal);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
       }
@@ -844,7 +851,10 @@
       double[] sink_outMACD = new double[1];
       double[] sink_outMACDSignal = new double[1];
       double[] sink_outMACDHist = new double[1];
-      return MACDFIX_OpenPass( sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0 );
+      RetCode retCode = MACDFIX_OpenPass( sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode MACDFIX_OpenAndFillImpl( MACDFIX_Stream sp, double inReal[], int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
@@ -862,6 +872,8 @@
    {
       MACDFIX_Stream sp = new MACDFIX_Stream(this);
       RetCode retCode = MACDFIX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -910,7 +922,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MACDFIX_Stream#fillRange()}.
+    * {@link MACDFIX_Stream#outRange()}.
     */
    public MACDFIX_Stream MACDFIX_OpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
@@ -918,7 +930,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MACDFIX_OpenAndFillImpl(sp, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

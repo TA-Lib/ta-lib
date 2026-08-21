@@ -715,6 +715,10 @@ TA_RetCode TA_S_SMI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_SMI_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    int optInFastPeriod;
    int optInSlowPeriod;
@@ -1222,6 +1226,8 @@ static TA_RetCode TA_SMI_OpenPass( struct TA_SMI_Stream **stream, const double i
            sp->x_inClose[fillJ & sp->xMask] = inClose[fillJ];
         }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1277,6 +1283,7 @@ TA_LIB_API TA_RetCode TA_SMI_Update( TA_SMI_Stream *stream, double inHigh, doubl
    if( !stream || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_SMI_StepInternal( stream, inHigh, inLow, inClose, outSMI, outSMISignal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

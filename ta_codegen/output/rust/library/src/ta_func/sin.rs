@@ -190,12 +190,16 @@ impl Core {
 /// Live SIN stream: one value per closed bar, bit-identical to [`Core::SIN`]
 /// over the same series. Open with [`Core::SIN_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
+///
+/// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SIN_Stream")]
 pub struct SIN_Stream {
     core: Core,
     state: SIN_StreamState,
+    /// The bars this handle has produced a value for — see [`Self::out_range`].
+    out: OutRange,
 }
 
 #[allow(dead_code)]
@@ -205,6 +209,7 @@ impl SIN_Stream {
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
+        self.out = src.out;
     }
 }
 
@@ -264,7 +269,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = SIN_StreamState {
         };
-        Ok(SIN_Stream { core: self.clone(), state })
+        Ok(SIN_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::SIN_Open`] (composition seam).
@@ -294,8 +299,12 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.SIN_Open(&data).expect("enough history");
+    /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
     /// let updated = s.update(100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().beg_idx, r0.beg_idx);
+    /// assert_eq!(s.out_range().count, r0.count + 1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SIN_Open")]
@@ -348,6 +357,9 @@ impl SIN_Stream {
         }
         let mut outReal: f64 = 0.0_f64;
         self.core.SIN_step_internal(&mut self.state, inReal, &mut outReal);
+        if self.out.count < Core::MAX_INDEX {
+            self.out.count += 1;
+        }
         Ok(outReal)
     }
 
@@ -368,6 +380,19 @@ impl SIN_Stream {
         }
         let mut scratch = self.clone();
         scratch.update(inReal)
+    }
+
+    /// The bars this stream has produced a value for, in the input series'
+    /// coordinates: `[beg_idx, beg_idx + count)`.
+    ///
+    /// It is what [`Core::SIN`] reports over the same bars: the opener sets it
+    /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one
+    /// to the count, `peek` leaves it alone, and a clone carries it verbatim.
+    /// A plain `Open` hands back only the last value, a subset of this range,
+    /// because the caller chose not to take the fill.
+    #[doc(alias = "TA_StreamOutRange")]
+    pub fn out_range(&self) -> OutRange {
+        self.out
     }
 }
 

@@ -240,6 +240,10 @@ TA_RetCode TA_S_MAXINDEX( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MAXINDEX_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double highest;
    int trailingIdx;
@@ -419,6 +423,8 @@ static TA_RetCode TA_MAXINDEX_OpenPass( struct TA_MAXINDEX_Stream **stream, cons
            sp->x_inReal[fillJ & sp->xMask] = inReal[fillJ];
         }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -472,6 +478,7 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Update( TA_MAXINDEX_Stream *stream, double inR
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_MAXINDEX_StepInternal( stream, inReal, outInteger );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

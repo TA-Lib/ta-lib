@@ -419,18 +419,22 @@ public partial class Core
       internal int ringCap_trailingIdx;
       internal double[] ring_trailingIdx_inReal = [];
       internal double cur_outReal;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal LINEARREG_ANGLE_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>LINEARREG_ANGLE_OpenAndFill</c> filled, or
-      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
-      /// (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.LINEARREG_ANGLE</c> reports over the same bars: the
+      /// opener sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
+      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
+      /// last value, a subset of this range, because the caller chose not to take
+      /// the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal LINEARREG_ANGLE_Stream( LINEARREG_ANGLE_Stream other )
       {
@@ -446,7 +450,8 @@ public partial class Core
          this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
          Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( LINEARREG_ANGLE_Stream other )
@@ -465,7 +470,8 @@ public partial class Core
          }
          Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
@@ -485,6 +491,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG_ANGLE", "update", RetCode.BadParam);
          core.LINEARREG_ANGLE_StreamStep(this, inReal);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -664,7 +671,10 @@ public partial class Core
    private RetCode LINEARREG_ANGLE_OpenImpl( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return LINEARREG_ANGLE_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      RetCode retCode = LINEARREG_ANGLE_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode LINEARREG_ANGLE_OpenAndFillImpl( LINEARREG_ANGLE_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
@@ -687,6 +697,8 @@ public partial class Core
    {
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
       RetCode retCode = LINEARREG_ANGLE_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -740,7 +752,7 @@ public partial class Core
    /// outputs and then reads the input tail to seed its rings, so the batch
    /// tier's in-place allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="LINEARREG_ANGLE_Stream.FillRange"/>.</para>
+   /// <see cref="LINEARREG_ANGLE_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input series to regress. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="LINEARREG_ANGLE_Lookback"/> for its
@@ -760,7 +772,8 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
       RetCode retCode = LINEARREG_ANGLE_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -280,29 +280,35 @@
    public static final class MARKETFI_Stream {
       Core core;
       double cur_outReal;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       MARKETFI_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#MARKETFI_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#MARKETFI} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       MARKETFI_Stream( MARKETFI_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( MARKETFI_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /**
@@ -321,6 +327,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
          core.MARKETFI_StreamStep(this, inHigh, inLow, inVolume);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
 
@@ -429,7 +436,10 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      RetCode retCode = MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode MARKETFI_OpenAndFillImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
@@ -447,6 +457,8 @@
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
       RetCode retCode = MARKETFI_OpenAndFillInternalImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -495,7 +507,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MARKETFI_Stream#fillRange()}.
+    * {@link MARKETFI_Stream#outRange()}.
     */
    public MARKETFI_Stream MARKETFI_OpenAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] )
    {
@@ -503,7 +515,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MARKETFI_OpenAndFillImpl(sp, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

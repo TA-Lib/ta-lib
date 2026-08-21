@@ -1019,18 +1019,22 @@
       double cur_outMAMA;
       double cur_outFAMA;
       Value cachedValue;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       MAMA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#MAMA_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#MAMA} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       MAMA_Stream( MAMA_Stream other ) {
          this.core = other.core;
@@ -1096,7 +1100,8 @@
          this.cur_outMAMA = other.cur_outMAMA;
          this.cur_outFAMA = other.cur_outFAMA;
          this.cachedValue = other.cachedValue;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( MAMA_Stream other ) {
@@ -1199,7 +1204,8 @@
          this.cur_outMAMA = other.cur_outMAMA;
          this.cur_outFAMA = other.cur_outFAMA;
          this.cachedValue = other.cachedValue;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
@@ -1234,6 +1240,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
          core.MAMA_StreamStep(this, inReal);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
          return this.cachedValue;
       }
@@ -1922,7 +1929,10 @@
       MInteger outNBElement = new MInteger();
       double[] sink_outMAMA = new double[1];
       double[] sink_outFAMA = new double[1];
-      return MAMA_OpenPass( sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, sink_outMAMA, sink_outFAMA, 0 );
+      RetCode retCode = MAMA_OpenPass( sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, sink_outMAMA, sink_outFAMA, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode MAMA_OpenAndFillImpl( MAMA_Stream sp, double inReal[], double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
    {
@@ -1940,6 +1950,8 @@
    {
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1988,7 +2000,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MAMA_Stream#fillRange()}.
+    * {@link MAMA_Stream#outRange()}.
     */
    public MAMA_Stream MAMA_OpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
    {
@@ -1996,7 +2008,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MAMA_OpenAndFillImpl(sp, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

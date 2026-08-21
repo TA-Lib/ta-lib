@@ -273,6 +273,10 @@ TA_RetCode TA_S_PVO( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_PVO_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInFastPeriod;
    int optInSlowPeriod;
    TA_MAType optInMAType;
@@ -483,6 +487,8 @@ static TA_RetCode TA_PVO_OpenPass( struct TA_PVO_Stream **stream, const double i
       *outNBElement = dummyNBElement;
       if( !outStride ) outReal[0] = sc_outReal[dummyNBElement - 1];
       if( !outStride ) TA_Free( sc_outReal );
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -533,9 +539,14 @@ TA_RetCode TA_PVO_OpenAndFillInternal( struct TA_PVO_Stream **stream, const doub
 
 TA_LIB_API TA_RetCode TA_PVO_Update( TA_PVO_Stream *stream, double inVolume, double *outReal )
 {
+   TA_RetCode retCode;
+
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   return TA_PVO_StepInternal( stream, inVolume, outReal );
+   retCode = TA_PVO_StepInternal( stream, inVolume, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_PVO_Peek( const TA_PVO_Stream *stream, double inVolume, double *outReal )

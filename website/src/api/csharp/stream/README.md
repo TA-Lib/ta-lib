@@ -20,7 +20,7 @@ Each streamable function adds two factory methods on `Core` and a handful of mem
 | `handle.Peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 | `handle.Value` | any time | the most recently committed value |
 | `handle.Clone()` | any time | an independent deep copy of the handle |
-| `handle.FillRange` | any time | the range `OpenAndFill` wrote (`OutRange.Empty` after a plain `Open`) |
+| `handle.OutRange` | any time | the bars this handle has a value for — the batch range over the same bars |
 
 There is **no `Dispose`**: a handle owns only managed state — its arrays, its sub-handles and a `Core` reference — so an unreferenced handle is simply collected. The handle types deliberately do not implement `IDisposable`.
 
@@ -64,7 +64,7 @@ var outReal = new double[history.Length];
 
 Core.SMA_Stream s = core.SMA_OpenAndFill(history, 30, outReal);
 
-OutRange r = s.FillRange;   // where the filled values start, and how many
+OutRange r = s.OutRange;    // the bars it has a value for
 // outReal[0 .. r.Count - 1] == what core.SMA(0, history.Length - 1, ...) writes
 // ...and s is live, ready for Update.
 ```

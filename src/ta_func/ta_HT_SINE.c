@@ -905,6 +905,10 @@ TA_RetCode TA_S_HT_SINE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_HT_SINE_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int i;
    double tempReal;
    double tempReal2;
@@ -1732,6 +1736,8 @@ static TA_RetCode TA_HT_SINE_OpenPass( struct TA_HT_SINE_Stream **stream, const 
       if( !sp->cbMirror_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_SINE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_smoothPrice, smoothPrice, sizeof(double) * (size_t)sp->cbSize_smoothPrice );
       if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); 
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1787,6 +1793,7 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Update( TA_HT_SINE_Stream *stream, double inRea
    if( !stream || !outSine || !outLeadSine ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_HT_SINE_StepInternal( stream, inReal, outSine, outLeadSine );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

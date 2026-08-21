@@ -620,6 +620,10 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ULTOSC_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod1;
    int optInTimePeriod2;
    int optInTimePeriod3;
@@ -1045,6 +1049,8 @@ static TA_RetCode TA_ULTOSC_OpenPass( struct TA_ULTOSC_Stream **stream, const do
       if( !sp->cbMirror_term_trueRange ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_term_trueRange, term_trueRange, sizeof(double) * (size_t)sp->cbSize_term );
       if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); 
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1098,6 +1104,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Update( TA_ULTOSC_Stream *stream, double inHigh,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_ULTOSC_StepInternal( stream, inHigh, inLow, inClose, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

@@ -252,6 +252,20 @@ pub fn generate_c_stream_private_header(funcs: &[FuncDef]) -> String {
     s.push_str("   #include \"ta_defs.h\"\n");
     s.push_str("#endif\n\n");
 
+    // The range head every generated stream struct leads with (issue #241).
+    // TA_StreamOutRange reads a handle through this type, which is what lets ONE
+    // public accessor serve every stream instead of one typed accessor per
+    // function. Rendered from the same field list the structs are, so the two
+    // cannot drift.
+    s.push_str("/* The leading members of every struct TA_<N>_Stream, in order: the range of\n");
+    s.push_str(" * bars the handle has produced a value for. TA_StreamOutRange (ta_utility.c)\n");
+    s.push_str(" * copies a handle's head out through this type. */\n");
+    s.push_str("typedef struct\n{\n");
+    for decl in crate::backends::c_stream::RANGE_HEAD_FIELDS {
+        s.push_str(&format!("   {decl}\n"));
+    }
+    s.push_str("} TA_StreamRangeHead;\n\n");
+
     // TA_<N>_OpenInternal is the startIdx-aware worker behind the public
     // TA_<N>_Open (a thin wrapper passing startIdx=0). Only generated code — a
     // composed function opening a sub-stream — calls it, and it does so cross-TU,
@@ -1599,6 +1613,38 @@ fn generate_c_state_eq(
 /// The leg's per-function locals: one reference handle over the whole history,
 /// plus the verdict it produces. Reopened per candle round, because the
 /// settings a round installs are part of what the state encodes.
+/// The range leg (issue #241): a handle's `OutRange` must equal what the batch
+/// call reports over the same bars, whichever opener produced it and however
+/// many updates followed. Unlike the state leg this needs no private struct and
+/// no second reference handle — the range is public API in all four backends and
+/// the batch pair is already in scope — so it runs in every language server.
+fn emit_sv_range_decls(s: &mut String) {
+    s.push_str("        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;\n");
+    s.push_str("        int rB = 0, rN = 0;\n");
+}
+
+/// One comparison: `handle`'s range against the `(beg, nb)` the batch reported
+/// for the same bars. `guard` is the leg's own success condition — a leg that
+/// already failed has a handle short of the bars it was supposed to consume.
+fn emit_sv_range_check(s: &mut String, indent: &str, handle: &str, guard: &str, beg: &str, nb: &str) {
+    let _ = writeln!(s, "{indent}if( {guard} )");
+    let _ = writeln!(s, "{indent}{{");
+    let _ = writeln!(s, "{indent}    rangeChecked = 1; rangeLegs++;");
+    let _ = writeln!(s, "{indent}    rB = -1; rN = -1;");
+    let _ = writeln!(
+        s,
+        "{indent}    if( TA_StreamOutRange( {handle}, &rB, &rN ) != TA_SUCCESS || rB != {beg} || rN != {nb} ) rangeOk = 0;"
+    );
+    let _ = writeln!(s, "{indent}}}");
+}
+
+/// Folded into `ok` like the fill and state legs, so a driver check that ever
+/// regresses still fails the run.
+fn emit_sv_range_report(s: &mut String) {
+    s.push_str("        if( rangeChecked && !rangeOk ) allOk = 0;\n");
+    s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"range_checked\\\":%d,\\\"range_legs\\\":%d,\\\"range_ok\\\":%d\", rangeChecked, rangeLegs, rangeOk);\n");
+}
+
 fn emit_sv_state_decls(s: &mut String, name: &str, steq: bool) {
     if !steq {
         return;
@@ -1800,6 +1846,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;\n");
         s.push_str("        int fillOk = 1, fillChecked = 0;\n");
         emit_sv_state_decls(&mut s, name, steq);
+        emit_sv_range_decls(&mut s);
         // Benign +/-0 cases across every cross-tier compare in this request.
         s.push_str("        int svZsign = 0;\n");
         s.push_str("        int pref[4]; int pc[4];\n");
@@ -1967,6 +2014,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             // buffer at full history and reads only [0, nb), so a write past
             // `nb` lands in `lookback` elements of unread space.
             s.push_str(&c_canary_check(&fbuf, &out_is_int));
+            emit_sv_range_check(&mut s, "            ", "stf", "frc == TA_SUCCESS && stf", "svBeg", "svNb");
             s.push_str(&format!("            if( stf ) TA_{name}_Close(stf);\n"));
             s.push_str("        }\n");
 
@@ -2099,6 +2147,9 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_compare(&mut s, &out_is_int, &bbuf, "                ", "t - svBeg", "t", "");
         s.push_str("            }\n");
         emit_sv_state_compare(&mut s, name, steq);
+        // Open(P) + (svN - P) updates: whatever P was, the handle has consumed
+        // svN bars and must report exactly what batch(0, svN-1) did.
+        emit_sv_range_check(&mut s, "            ", "st", "ok && st", "svBeg", "svNb");
         s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
         if candle {
             s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
@@ -2145,6 +2196,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             ));
             s.push_str("                    if( arc != TA_SUCCESS || !stA ) ok = 0;\n");
             emit_sv_compare(&mut s, &out_is_int, &bbuf, "                    ", "(svN - 1) - svBegS", "svN - 1", "ok &&");
+            emit_sv_range_check(&mut s, "                    ", "stA", "ok && stA", "svBegS", "svNbS");
             s.push_str(&format!("                    if( stA ) TA_{name}_Close(stA);\n"));
             s.push_str("                    if( !ok ) allOk = 0;\n");
             s.push_str("                    (void)badBar; (void)badOut; (void)bv; (void)sv;\n");
@@ -2162,6 +2214,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // even if the driver's fill check ever regresses.
         s.push_str("        if( fillChecked && !fillOk ) allOk = 0;\n");
         emit_sv_state_report(&mut s, steq);
+        emit_sv_range_report(&mut s);
         if candle {
             s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);\n");
         } else {
@@ -5988,6 +6041,10 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(&bdecls);
 
     s.push_str("    let mut legs = 0i64;\n    let mut all_ok = true;\n    let mut peek_all = true;\n    let mut fill_checked = 0i32;\n    let mut fill_ok = true;\n    let mut beg = 0usize;\n    let mut nb = 0usize;\n    let mut diag = String::new();\n");
+    // The range leg (#241): a handle's OutRange against what batch reported for
+    // the same bars. Public API in every backend, so unlike the state leg this
+    // one is not C-only.
+    s.push_str("    let mut range_checked = 0i32;\n    let mut range_ok = true;\n    let mut range_legs = 0i64;\n");
     // Benign +/-0 cases across every cross-tier compare in this request. `mut`
     // only when an output can reach sv_xtier_ne: an all-integer function (every
     // CDL*, MIN/MAX/MINMAXINDEX, HT_TRENDMODE) compares with `!=` and only ever
@@ -6077,7 +6134,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         "        match c2.{fname}_OpenAndFill({full_ins}{opts_tail}{fargs}) {{"
     );
     s.push_str("            Err(_) => { fill_ok = false; }\n");
-    s.push_str("            Ok((_h, fr)) => {\n                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }\n                else {\n");
+    s.push_str("            Ok((_h, fr)) => {\n                range_checked = 1; range_legs += 1;\n                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }\n                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }\n                else {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         if *is_int {
             let _ = writeln!(s, "                    for i in 0..nb {{ if f{i}[i] != b{i}[i] {{ fill_ok = false; }} }}");
@@ -6154,7 +6211,16 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         }
     }
     s.push_str("                        }\n");
-    s.push_str("                    }\n                }\n            }\n        }\n");
+    s.push_str("                    }\n");
+    // Open(p) + (svN - p) updates: whatever p was, the handle has consumed svN
+    // bars and must report exactly what batch(0, svN-1) did.
+    // Only when the value leg passed: its update loop breaks on a rejected bar,
+    // which leaves the handle short of the bars it was supposed to consume.
+    s.push_str("                    if all_ok {\n");
+    s.push_str("                        range_checked = 1; range_legs += 1;\n");
+    s.push_str("                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }\n");
+    s.push_str("                    }\n");
+    s.push_str("                }\n            }\n        }\n");
 
     // Short-history reject leg: at `lb` bars no output is defined for ANY
     // configuration, so open must reject. (The seed-boundary bar `lb+1` is NOT
@@ -6176,7 +6242,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("    }\n");
     // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
     // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
-    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)\n");
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
     s.push_str("}\n\n");
     s
 }
@@ -6418,6 +6484,10 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(&bdecls);
 
     s.push_str("        long legs = 0;\n        boolean allOk = true;\n        boolean peekAll = true;\n        int fillChecked = 0;\n        boolean fillOk = true;\n        MInteger beg = new MInteger();\n        MInteger nb = new MInteger();\n        String diag = \"\";\n");
+    // The range leg (#241): a handle's outRange() against what batch reported
+    // for the same bars. Public API in every backend, so unlike the state leg
+    // this one is not C-only.
+    s.push_str("        int rangeChecked = 0;\n        boolean rangeOk = true;\n        long rangeLegs = 0;\n");
     // Benign +/-0 cases across every cross-tier compare in this request. A
     // one-element array, not a static: the server answers many requests per
     // process and a static would carry one function's count into the next.
@@ -6497,7 +6567,9 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         s,
         "                Core.{class} _fh = c2.{base}_OpenAndFill({full_ins}{opts_tail}{fargs});"
     );
-    s.push_str("                OutRange _fr = _fh.fillRange();\n");
+    s.push_str("                OutRange _fr = _fh.outRange();\n");
+    s.push_str("                rangeChecked = 1; rangeLegs++;\n");
+    s.push_str("                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;\n");
     s.push_str("                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;\n                else {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         if *is_int {
@@ -6638,6 +6710,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     emit_up_compares(&mut s, "                        ");
     s.push_str("                    }\n");
     s.push_str("                }\n");
+    // Open(p) + (svN - p) updates: whatever p was, the handle has consumed svN
+    // bars and must report exactly what batch(0, svN-1) did. Only when the value
+    // leg passed — otherwise the handle is short of the bars it was to consume.
+    s.push_str("                if (allOk) {\n");
+    s.push_str("                    rangeChecked = 1; rangeLegs++;\n");
+    s.push_str("                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;\n");
+    s.push_str("                }\n");
     s.push_str("            }\n");
 
     // copy() independence leg: open at the earliest prefix, advance to mid,
@@ -6736,7 +6815,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
 
     s.push_str("        }\n");
     // fill_ok folds into ok as a safety net (mirrors the C/Rust gates).
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
@@ -7389,6 +7468,10 @@ fn emit_csharp_sv_func(
     s.push_str(&bdecls);
 
     s.push_str("        long legs = 0;\n        bool allOk = true;\n        bool peekAll = true;\n        int fillChecked = 0;\n        bool fillOk = true;\n        int beg = 0, nb = 0;\n        string diag = \"\";\n");
+    // The range leg (#241): a handle's OutRange against what batch reported for
+    // the same bars. Public API in every backend, so unlike the state leg this
+    // one is not C-only.
+    s.push_str("        int rangeChecked = 0;\n        bool rangeOk = true;\n        long rangeLegs = 0;\n");
     // RULE 7 -- the benign +/-0 accumulator is a REQUEST-SCOPED LOCAL, passed by
     // `ref`. One process answers many requests and a `static` would carry one
     // function's count into the next -- and the plan's Java<->C# `benign`
@@ -7548,9 +7631,11 @@ fn emit_csharp_sv_func(
         s,
         "                Core.{class} _fh = c2.{base}_OpenAndFill({full_ins}{opts_tail}{fargs});"
     );
-    // `FillRange` is a PROPERTY on the C# handle (Java spells it `fillRange()`),
+    // `OutRange` is a PROPERTY on the C# handle (Java spells it `outRange()`),
     // returning the shipped `OutRange` with `BegIdx` / `Count`.
-    s.push_str("                OutRange _fr = _fh.FillRange;\n");
+    s.push_str("                OutRange _fr = _fh.OutRange;\n");
+    s.push_str("                rangeChecked = 1; rangeLegs++;\n");
+    s.push_str("                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;\n");
     s.push_str("                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;\n                else {\n");
     for i in 0..n_out {
         let cmp = xtier_ne(&format!("f{i}[bi]"), &format!("b{i}[bi]"), i, "zsign");
@@ -7831,6 +7916,13 @@ fn emit_csharp_sv_func(
     emit_up_compares(&mut s, "                        ");
     s.push_str("                    }\n");
     s.push_str("                }\n");
+    // Open(p) + (svN - p) updates: whatever p was, the handle has consumed svN
+    // bars and must report exactly what batch(0, svN-1) did. Only when the value
+    // leg passed — otherwise the handle is short of the bars it was to consume.
+    s.push_str("                if (allOk) {\n");
+    s.push_str("                    rangeChecked = 1; rangeLegs++;\n");
+    s.push_str("                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;\n");
+    s.push_str("                }\n");
     s.push_str("            }\n");
 
     // ---- Clone() independence: open at the earliest prefix, advance to mid,
@@ -8053,7 +8145,7 @@ fn emit_csharp_sv_func(
     if candle {
         s.push_str("        extra += \",\\\"candleMut\\\":\" + candleMutRan + \",\\\"candleMutMoved\\\":\" + candleMutMoved + \",\\\"benignMut\\\":\" + zsignMut;\n");
     }
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign + extra + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign + extra + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }

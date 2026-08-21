@@ -532,17 +532,22 @@ public partial class Core
       internal double one_minus_fastk;
       internal double ad;
       internal double cur_outReal;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal ADOSC_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>ADOSC_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.ADOSC</c> reports over the same bars: the opener sets
+      /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
+      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
+      /// last value, a subset of this range, because the caller chose not to take
+      /// the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal ADOSC_Stream( ADOSC_Stream other )
       {
@@ -557,7 +562,8 @@ public partial class Core
          this.one_minus_fastk = other.one_minus_fastk;
          this.ad = other.ad;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( ADOSC_Stream other )
@@ -573,7 +579,8 @@ public partial class Core
          this.one_minus_fastk = other.one_minus_fastk;
          this.ad = other.ad;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
@@ -596,6 +603,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("ADOSC", "update", RetCode.BadParam);
          core.ADOSC_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -808,7 +816,10 @@ public partial class Core
    private RetCode ADOSC_OpenImpl( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
       double[] sink_outReal = new double[1];
-      return ADOSC_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out _, out _, sink_outReal, 0 );
+      RetCode retCode = ADOSC_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode ADOSC_OpenAndFillImpl( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
@@ -831,6 +842,8 @@ public partial class Core
    {
       ADOSC_Stream sp = new ADOSC_Stream(this);
       RetCode retCode = ADOSC_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -889,7 +902,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="ADOSC_Stream.FillRange"/>.</para>
+   /// <see cref="ADOSC_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -916,7 +929,8 @@ public partial class Core
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       ADOSC_Stream sp = new ADOSC_Stream(this);
       RetCode retCode = ADOSC_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

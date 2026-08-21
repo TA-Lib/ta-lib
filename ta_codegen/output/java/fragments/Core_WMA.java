@@ -400,18 +400,22 @@
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
       double cur_outReal;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       WMA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#WMA_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#WMA} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       WMA_Stream( WMA_Stream other ) {
          this.core = other.core;
@@ -424,7 +428,8 @@
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( WMA_Stream other ) {
@@ -442,7 +447,8 @@
             this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
          }
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /**
@@ -461,6 +467,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("WMA update: BadParam", RetCode.BadParam);
          core.WMA_StreamStep(this, inReal);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
 
@@ -555,7 +562,9 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < WMA_Lookback(optInTimePeriod) + 1 ) {
+         int fillLb = WMA_Lookback(optInTimePeriod);
+         if( startIdx > fillLb ) fillLb = startIdx;
+         if( historyLen < fillLb + 1 ) {
             return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
@@ -566,7 +575,6 @@
          sp.ringPos_trailingIdx = 0;
          sp.ringCap_trailingIdx = 0;
          sp.ring_trailingIdx_inReal = new double[1];
-         int fillLb = WMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          if( outStride == 0 ) {
@@ -684,7 +692,10 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return WMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      RetCode retCode = WMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode WMA_OpenAndFillImpl( WMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
@@ -702,6 +713,8 @@
    {
       WMA_Stream sp = new WMA_Stream(this);
       RetCode retCode = WMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -750,7 +763,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link WMA_Stream#fillRange()}.
+    * {@link WMA_Stream#outRange()}.
     */
    public WMA_Stream WMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
@@ -758,7 +771,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = WMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

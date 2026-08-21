@@ -272,30 +272,36 @@ public partial class Core
    {
       internal Core core;
       internal double cur_outReal;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal MULT_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>MULT_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.MULT</c> reports over the same bars: the opener sets it
+      /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
+      /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
+      /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
+      /// subset of this range, because the caller chose not to take the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal MULT_Stream( MULT_Stream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( MULT_Stream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
@@ -316,6 +322,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("MULT", "update", RetCode.BadParam);
          core.MULT_StreamStep(this, inReal0, inReal1);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -391,7 +398,10 @@ public partial class Core
    private RetCode MULT_OpenImpl( MULT_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return MULT_OpenPass( sp, inReal0, inReal1, startIdx, out _, out _, sink_outReal, 0 );
+      RetCode retCode = MULT_OpenPass( sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode MULT_OpenAndFillImpl( MULT_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, out int outBegIdx, out int outNBElement, Span<double> outReal )
@@ -414,6 +424,8 @@ public partial class Core
    {
       MULT_Stream sp = new MULT_Stream(this);
       RetCode retCode = MULT_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -464,7 +476,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MULT_Stream.FillRange"/>.</para>
+   /// <see cref="MULT_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal0">First operand series. The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Second operand series. The warm-up history, oldest bar first.</param>
@@ -483,7 +495,8 @@ public partial class Core
       if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       MULT_Stream sp = new MULT_Stream(this);
       RetCode retCode = MULT_OpenAndFillImpl(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

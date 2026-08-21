@@ -484,17 +484,22 @@ public partial class Core
       internal double[] x_inLow = [];
       internal double cur_outAroonDown;
       internal double cur_outAroonUp;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal AROON_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>AROON_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.AROON</c> reports over the same bars: the opener sets
+      /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
+      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
+      /// last value, a subset of this range, because the caller chose not to take
+      /// the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal AROON_Stream( AROON_Stream other )
       {
@@ -515,7 +520,8 @@ public partial class Core
          Array.Copy( other.x_inLow, this.x_inLow, other.x_inLow.Length );
          this.cur_outAroonDown = other.cur_outAroonDown;
          this.cur_outAroonUp = other.cur_outAroonUp;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( AROON_Stream other )
@@ -541,7 +547,8 @@ public partial class Core
          Array.Copy( other.x_inLow, this.x_inLow, other.x_inLow.Length );
          this.cur_outAroonDown = other.cur_outAroonDown;
          this.cur_outAroonUp = other.cur_outAroonUp;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -565,6 +572,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AROON", "update", RetCode.BadParam);
          core.AROON_StreamStep(this, inHigh, inLow);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new AROON_Value(cur_outAroonDown, cur_outAroonUp);
       }
 
@@ -808,7 +816,10 @@ public partial class Core
    {
       double[] sink_outAroonDown = new double[1];
       double[] sink_outAroonUp = new double[1];
-      return AROON_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outAroonDown, sink_outAroonUp, 0 );
+      RetCode retCode = AROON_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outAroonDown, sink_outAroonUp, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode AROON_OpenAndFillImpl( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp )
@@ -831,6 +842,8 @@ public partial class Core
    {
       AROON_Stream sp = new AROON_Stream(this);
       RetCode retCode = AROON_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -883,7 +896,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="AROON_Stream.FillRange"/>.</para>
+   /// <see cref="AROON_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -906,7 +919,8 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       AROON_Stream sp = new AROON_Stream(this);
       RetCode retCode = AROON_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -1153,18 +1153,22 @@
       int cbSize_smoothPrice;
       double[] cb_smoothPrice;
       int cur_outInteger;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       HT_TRENDMODE_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#HT_TRENDMODE_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#HT_TRENDMODE} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       HT_TRENDMODE_Stream( HT_TRENDMODE_Stream other ) {
          this.core = other.core;
@@ -1252,7 +1256,8 @@
          this.cbSize_smoothPrice = other.cbSize_smoothPrice;
          this.cb_smoothPrice = other.cb_smoothPrice.clone();
          this.cur_outInteger = other.cur_outInteger;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( HT_TRENDMODE_Stream other ) {
@@ -1385,7 +1390,8 @@
             this.cb_smoothPrice = other.cb_smoothPrice.clone();
          }
          this.cur_outInteger = other.cur_outInteger;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
@@ -1407,6 +1413,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
          core.HT_TRENDMODE_StreamStep(this, inReal);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
 
@@ -2294,7 +2301,10 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      return HT_TRENDMODE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
+      RetCode retCode = HT_TRENDMODE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode HT_TRENDMODE_OpenAndFillImpl( HT_TRENDMODE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
@@ -2312,6 +2322,8 @@
    {
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
       RetCode retCode = HT_TRENDMODE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2360,7 +2372,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link HT_TRENDMODE_Stream#fillRange()}.
+    * {@link HT_TRENDMODE_Stream#outRange()}.
     */
    public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( double inReal[], int outInteger[] )
    {
@@ -2368,7 +2380,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = HT_TRENDMODE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outInteger);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

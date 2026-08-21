@@ -327,6 +327,10 @@ TA_RetCode TA_S_AROONOSC( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_AROONOSC_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double lowest;
    double highest;
@@ -609,6 +613,8 @@ static TA_RetCode TA_AROONOSC_OpenPass( struct TA_AROONOSC_Stream **stream, cons
            sp->x_inLow[fillJ & sp->xMask] = inLow[fillJ];
         }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -662,6 +668,7 @@ TA_LIB_API TA_RetCode TA_AROONOSC_Update( TA_AROONOSC_Stream *stream, double inH
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    TA_AROONOSC_StepInternal( stream, inHigh, inLow, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

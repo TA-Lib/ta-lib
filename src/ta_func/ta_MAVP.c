@@ -743,6 +743,10 @@ TA_RetCode TA_S_MAVP( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MAVP_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInMinPeriod;
    int optInMaxPeriod;
    TA_MAType optInMAType;
@@ -810,6 +814,9 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
    else if( cpReal > optInMaxPeriod ) cp = optInMaxPeriod;
    else cp = (int)cpReal;
    *outReal = sp->scratch[cp - optInMinPeriod];
+
+   sp->outRangeBegIdx = subStart;
+   sp->outRangeCount = historyLen - subStart;
 
    *stream = sp;
    return TA_SUCCESS;
@@ -898,6 +905,8 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
 
    *outBegIdx = lookbackTotal;
    *outNBElement = historyLen - lookbackTotal;
+   sp->outRangeBegIdx = *outBegIdx;
+   sp->outRangeCount = *outNBElement;
    *stream = sp;
    return TA_SUCCESS;
 }
@@ -915,6 +924,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, dou
    else if( cpReal > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
    else cp = (int)cpReal;
    *outReal = stream->scratch[cp - stream->optInMinPeriod];
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

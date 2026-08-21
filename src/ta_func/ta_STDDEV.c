@@ -235,6 +235,10 @@ TA_RetCode TA_S_STDDEV( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_STDDEV_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double optInNbDev;
    /* Peek runs the SAME step body on a scratch copy; sub handles are
@@ -407,6 +411,8 @@ static TA_RetCode TA_STDDEV_OpenPass( struct TA_STDDEV_Stream **stream, const do
       *outNBElement = dummyNBElement;
       if( !outStride ) outReal[0] = sc_outReal[dummyNBElement - 1];
       if( !outStride ) TA_Free( sc_outReal );
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -457,9 +463,14 @@ TA_RetCode TA_STDDEV_OpenAndFillInternal( struct TA_STDDEV_Stream **stream, cons
 
 TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal, double *outReal )
 {
+   TA_RetCode retCode;
+
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   return TA_STDDEV_StepInternal( stream, inReal, outReal );
+   retCode = TA_STDDEV_StepInternal( stream, inReal, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_STDDEV_Peek( const TA_STDDEV_Stream *stream, double inReal, double *outReal )

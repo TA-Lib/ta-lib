@@ -527,6 +527,10 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_STOCHF_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInFastK_Period;
    int optInFastD_Period;
    TA_MAType optInFastD_MAType;
@@ -993,6 +997,8 @@ static TA_RetCode TA_STOCHF_OpenPass( struct TA_STOCHF_Stream **stream, const do
       if( !outStride ) outFastD[0] = sc_outFastD[dummyNBElement - 1];
       if( !outStride ) TA_Free( sc_outFastK );
       if( !outStride ) TA_Free( sc_outFastD );
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1045,9 +1051,14 @@ TA_RetCode TA_STOCHF_OpenAndFillInternal( struct TA_STOCHF_Stream **stream, cons
 
 TA_LIB_API TA_RetCode TA_STOCHF_Update( TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )
 {
+   TA_RetCode retCode;
+
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   return TA_STOCHF_StepInternal( stream, inHigh, inLow, inClose, outFastK, outFastD );
+   retCode = TA_STOCHF_StepInternal( stream, inHigh, inLow, inClose, outFastK, outFastD );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_STOCHF_Peek( const TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )

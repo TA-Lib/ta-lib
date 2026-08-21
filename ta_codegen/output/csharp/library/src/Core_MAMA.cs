@@ -1085,17 +1085,21 @@ public partial class Core
       internal double[] ring_trailingWMAIdx_inReal = [];
       internal double cur_outMAMA;
       internal double cur_outFAMA;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal MAMA_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>MAMA_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.MAMA</c> reports over the same bars: the opener sets it
+      /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
+      /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
+      /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
+      /// subset of this range, because the caller chose not to take the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal MAMA_Stream( MAMA_Stream other )
       {
@@ -1170,7 +1174,8 @@ public partial class Core
          Array.Copy( other.ring_trailingWMAIdx_inReal, this.ring_trailingWMAIdx_inReal, other.ring_trailingWMAIdx_inReal.Length );
          this.cur_outMAMA = other.cur_outMAMA;
          this.cur_outFAMA = other.cur_outFAMA;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( MAMA_Stream other )
@@ -1264,7 +1269,8 @@ public partial class Core
          Array.Copy( other.ring_trailingWMAIdx_inReal, this.ring_trailingWMAIdx_inReal, other.ring_trailingWMAIdx_inReal.Length );
          this.cur_outMAMA = other.cur_outMAMA;
          this.cur_outFAMA = other.cur_outFAMA;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -1287,6 +1293,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAMA", "update", RetCode.BadParam);
          core.MAMA_StreamStep(this, inReal);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new MAMA_Value(cur_outMAMA, cur_outFAMA);
       }
 
@@ -1976,7 +1983,10 @@ public partial class Core
    {
       double[] sink_outMAMA = new double[1];
       double[] sink_outFAMA = new double[1];
-      return MAMA_OpenPass( sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out _, out _, sink_outMAMA, sink_outFAMA, 0 );
+      RetCode retCode = MAMA_OpenPass( sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, sink_outMAMA, sink_outFAMA, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode MAMA_OpenAndFillImpl( MAMA_Stream sp, ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA )
@@ -1999,6 +2009,8 @@ public partial class Core
    {
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2051,7 +2063,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MAMA_Stream.FillRange"/>.</para>
+   /// <see cref="MAMA_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Price series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
@@ -2074,7 +2086,8 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenAndFillImpl(sp, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

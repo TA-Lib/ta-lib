@@ -262,30 +262,36 @@ public partial class Core
    {
       internal Core core;
       internal double cur_outReal;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal LN_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>LN_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.LN</c> reports over the same bars: the opener sets it
+      /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
+      /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
+      /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
+      /// subset of this range, because the caller chose not to take the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal LN_Stream( LN_Stream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( LN_Stream other )
       {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
@@ -305,6 +311,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LN", "update", RetCode.BadParam);
          core.LN_StreamStep(this, inReal);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -375,7 +382,10 @@ public partial class Core
    private RetCode LN_OpenImpl( LN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return LN_OpenPass( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+      RetCode retCode = LN_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode LN_OpenAndFillImpl( LN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
@@ -398,6 +408,8 @@ public partial class Core
    {
       LN_Stream sp = new LN_Stream(this);
       RetCode retCode = LN_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -446,7 +458,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="LN_Stream.FillRange"/>.</para>
+   /// <see cref="LN_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Input value series. The warm-up history, oldest bar first.</param>
    /// <param name="outReal">Natural log of each input value. Must hold at least <c>historyLen -
@@ -463,7 +475,8 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       LN_Stream sp = new LN_Stream(this);
       RetCode retCode = LN_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

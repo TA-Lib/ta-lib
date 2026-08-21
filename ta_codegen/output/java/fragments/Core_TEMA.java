@@ -470,18 +470,22 @@
       double prevEMA3;
       double optInK_1;
       double cur_outReal;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       TEMA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#TEMA_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#TEMA} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       TEMA_Stream( TEMA_Stream other ) {
          this.core = other.core;
@@ -491,7 +495,8 @@
          this.prevEMA3 = other.prevEMA3;
          this.optInK_1 = other.optInK_1;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( TEMA_Stream other ) {
@@ -502,7 +507,8 @@
          this.prevEMA3 = other.prevEMA3;
          this.optInK_1 = other.optInK_1;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /**
@@ -521,6 +527,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TEMA update: BadParam", RetCode.BadParam);
          core.TEMA_StreamStep(this, inReal);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
 
@@ -593,7 +600,9 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < TEMA_Lookback(optInTimePeriod) + 1 ) {
+         int fillLb = TEMA_Lookback(optInTimePeriod);
+         if( startIdx > fillLb ) fillLb = startIdx;
+         if( historyLen < fillLb + 1 ) {
             return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
@@ -601,7 +610,6 @@
          sp.prevEMA2 = 0.0;
          sp.prevEMA3 = 0.0;
          sp.optInK_1 = 0.0;
-         int fillLb = TEMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          if( outStride == 0 ) {
@@ -757,7 +765,10 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return TEMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      RetCode retCode = TEMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode TEMA_OpenAndFillImpl( TEMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
@@ -775,6 +786,8 @@
    {
       TEMA_Stream sp = new TEMA_Stream(this);
       RetCode retCode = TEMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -823,7 +836,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link TEMA_Stream#fillRange()}.
+    * {@link TEMA_Stream#outRange()}.
     */
    public TEMA_Stream TEMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
@@ -831,7 +844,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = TEMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

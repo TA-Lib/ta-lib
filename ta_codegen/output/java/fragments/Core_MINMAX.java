@@ -531,18 +531,22 @@
       double cur_outMin;
       double cur_outMax;
       Value cachedValue;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       MINMAX_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#MINMAX_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#MINMAX} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       MINMAX_Stream( MINMAX_Stream other ) {
          this.core = other.core;
@@ -561,7 +565,8 @@
          this.cur_outMin = other.cur_outMin;
          this.cur_outMax = other.cur_outMax;
          this.cachedValue = other.cachedValue;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( MINMAX_Stream other ) {
@@ -585,7 +590,8 @@
          this.cur_outMin = other.cur_outMin;
          this.cur_outMax = other.cur_outMax;
          this.cachedValue = other.cachedValue;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /**
@@ -617,6 +623,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAX update: BadParam", RetCode.BadParam);
          core.MINMAX_StreamStep(this, inReal);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
          return this.cachedValue;
       }
@@ -852,7 +859,10 @@
       MInteger outNBElement = new MInteger();
       double[] sink_outMin = new double[1];
       double[] sink_outMax = new double[1];
-      return MINMAX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMin, sink_outMax, 0 );
+      RetCode retCode = MINMAX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMin, sink_outMax, 0 );
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      return retCode;
    }
    private RetCode MINMAX_OpenAndFillImpl( MINMAX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
    {
@@ -870,6 +880,8 @@
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
       RetCode retCode = MINMAX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -918,7 +930,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MINMAX_Stream#fillRange()}.
+    * {@link MINMAX_Stream#outRange()}.
     */
    public MINMAX_Stream MINMAX_OpenAndFill( double inReal[], int optInTimePeriod, double outMin[], double outMax[] )
    {
@@ -926,7 +938,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MINMAX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -822,6 +822,10 @@ TA_RetCode TA_S_HT_TRENDLINE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_HT_TRENDLINE_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int i;
    double tempReal;
    double tempReal2;
@@ -1578,6 +1582,8 @@ static TA_RetCode TA_HT_TRENDLINE_OpenPass( struct TA_HT_TRENDLINE_Stream **stre
       if( !sp->winMirror_i_inReal ) { TA_HT_TRENDLINE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inReal, inReal + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
       sp->winPos_i = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1631,6 +1637,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Update( TA_HT_TRENDLINE_Stream *stream, do
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_HT_TRENDLINE_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

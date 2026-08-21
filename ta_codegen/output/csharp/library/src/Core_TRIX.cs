@@ -469,17 +469,21 @@ public partial class Core
       internal double prevEMA3;
       internal double optInK_1;
       internal double cur_outReal;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal TRIX_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>TRIX_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.TRIX</c> reports over the same bars: the opener sets it
+      /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
+      /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
+      /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
+      /// subset of this range, because the caller chose not to take the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal TRIX_Stream( TRIX_Stream other )
       {
@@ -490,7 +494,8 @@ public partial class Core
          this.prevEMA3 = other.prevEMA3;
          this.optInK_1 = other.optInK_1;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( TRIX_Stream other )
@@ -502,7 +507,8 @@ public partial class Core
          this.prevEMA3 = other.prevEMA3;
          this.optInK_1 = other.optInK_1;
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
@@ -522,6 +528,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TRIX", "update", RetCode.BadParam);
          core.TRIX_StreamStep(this, inReal);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -711,7 +718,10 @@ public partial class Core
    private RetCode TRIX_OpenImpl( TRIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return TRIX_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      RetCode retCode = TRIX_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode TRIX_OpenAndFillImpl( TRIX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
@@ -734,6 +744,8 @@ public partial class Core
    {
       TRIX_Stream sp = new TRIX_Stream(this);
       RetCode retCode = TRIX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -784,7 +796,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="TRIX_Stream.FillRange"/>.</para>
+   /// <see cref="TRIX_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="TRIX_Lookback"/> for its default and
@@ -803,7 +815,8 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       TRIX_Stream sp = new TRIX_Stream(this);
       RetCode retCode = TRIX_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

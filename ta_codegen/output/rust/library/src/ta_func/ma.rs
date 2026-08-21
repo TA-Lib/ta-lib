@@ -334,12 +334,16 @@ impl Core {
 /// Live MA stream: one value per closed bar, bit-identical to [`Core::MA`]
 /// over the same series. Open with [`Core::MA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
+///
+/// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MA_Stream")]
 pub struct MA_Stream {
     core: Core,
     state: MA_StreamState,
+    /// The bars this handle has produced a value for — see [`Self::out_range`].
+    out: OutRange,
 }
 
 #[allow(dead_code)]
@@ -349,6 +353,7 @@ impl MA_Stream {
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
+        self.out = src.out;
     }
 }
 
@@ -485,54 +490,66 @@ impl Core {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
+            let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
+            let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok((MA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
+            return Ok((MA_Stream { core: self.clone(), state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, inReal[historyLen - 1]));
         }
-        let (sub, value) = match optInMAType {
+        let (sub, value, subRange) = match optInMAType {
             MAType::SMA => {
                 let (sub, subValue) = self.SMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
-                (MA_Sub::SMA(sub), subValue)
+                let subRange = sub.out_range();
+                (MA_Sub::SMA(sub), subValue, subRange)
             }
             MAType::EMA => {
                 let (sub, subValue) = self.EMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
-                (MA_Sub::EMA(sub), subValue)
+                let subRange = sub.out_range();
+                (MA_Sub::EMA(sub), subValue, subRange)
             }
             MAType::WMA => {
                 let (sub, subValue) = self.WMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
-                (MA_Sub::WMA(sub), subValue)
+                let subRange = sub.out_range();
+                (MA_Sub::WMA(sub), subValue, subRange)
             }
             MAType::DEMA => {
                 let (sub, subValue) = self.DEMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
-                (MA_Sub::DEMA(sub), subValue)
+                let subRange = sub.out_range();
+                (MA_Sub::DEMA(sub), subValue, subRange)
             }
             MAType::TEMA => {
                 let (sub, subValue) = self.TEMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
-                (MA_Sub::TEMA(sub), subValue)
+                let subRange = sub.out_range();
+                (MA_Sub::TEMA(sub), subValue, subRange)
             }
             MAType::TRIMA => {
                 let (sub, subValue) = self.TRIMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
-                (MA_Sub::TRIMA(sub), subValue)
+                let subRange = sub.out_range();
+                (MA_Sub::TRIMA(sub), subValue, subRange)
             }
             MAType::KAMA => {
                 let (sub, subValue) = self.KAMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
-                (MA_Sub::KAMA(sub), subValue)
+                let subRange = sub.out_range();
+                (MA_Sub::KAMA(sub), subValue, subRange)
             }
             MAType::MAMA => {
                 let (sub, subValue) = self.MAMA_OpenInternal(inReal, startIdx, 0.5, 0.05)?;
-                (MA_Sub::MAMA(sub), subValue.0)
+                let subRange = sub.out_range();
+                (MA_Sub::MAMA(sub), subValue.0, subRange)
             }
             MAType::T3 => {
                 let (sub, subValue) = self.T3_OpenInternal(inReal, startIdx, optInTimePeriod, 0.7)?;
-                (MA_Sub::T3(sub), subValue)
+                let subRange = sub.out_range();
+                (MA_Sub::T3(sub), subValue, subRange)
             }
             MAType::HMA => {
                 let (sub, subValue) = self.HMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
-                (MA_Sub::HMA(sub), subValue)
+                let subRange = sub.out_range();
+                (MA_Sub::HMA(sub), subValue, subRange)
             }
             _ => return Err(RetCode::BadParam),
         };
         let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok((MA_Stream { core: self.clone(), state }, value))
+        Ok((MA_Stream { core: self.clone(), state, out: subRange }, value))
     }
 
     /// Open a live MA stream over the warm-up history; returns the handle and
@@ -551,8 +568,12 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.MA_Open(&data, 30, MAType::SMA).expect("enough history");
+    /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
     /// let updated = s.update(100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().beg_idx, r0.beg_idx);
+    /// assert_eq!(s.out_range().count, r0.count + 1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MA_Open")]
@@ -594,7 +615,7 @@ impl Core {
                 fillIdx += 1;
             }
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok((MA_Stream { core: self.clone(), state }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
+            return Ok((MA_Stream { core: self.clone(), state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
         }
         let (sub, fillRange) = match optInMAType {
             MAType::SMA => {
@@ -640,7 +661,7 @@ impl Core {
             _ => return Err(RetCode::BadParam),
         };
         let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok((MA_Stream { core: self.clone(), state }, fillRange))
+        Ok((MA_Stream { core: self.clone(), state, out: fillRange }, fillRange))
     }
 
     /// [`Core::MA_OpenAndFill`] anchored at `startIdx` — the composed-open
@@ -680,7 +701,7 @@ impl Core {
                 fillIdx += 1;
             }
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok(MA_Stream { core: self.clone(), state });
+            return Ok(MA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let sub = match optInMAType {
             MAType::SMA => MA_Sub::SMA(
@@ -716,7 +737,7 @@ impl Core {
             _ => return Err(RetCode::BadParam),
         };
         let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok(MA_Stream { core: self.clone(), state })
+        Ok(MA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
 }
@@ -742,6 +763,9 @@ impl MA_Stream {
         }
         let mut outReal: f64 = 0.0_f64;
         self.core.MA_step_internal(&mut self.state, inReal, &mut outReal)?;
+        if self.out.count < Core::MAX_INDEX {
+            self.out.count += 1;
+        }
         Ok(outReal)
     }
 
@@ -764,6 +788,19 @@ impl MA_Stream {
         }
         let mut scratch = self.clone();
         scratch.update(inReal)
+    }
+
+    /// The bars this stream has produced a value for, in the input series'
+    /// coordinates: `[beg_idx, beg_idx + count)`.
+    ///
+    /// It is what [`Core::MA`] reports over the same bars: the opener sets it
+    /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one
+    /// to the count, `peek` leaves it alone, and a clone carries it verbatim.
+    /// A plain `Open` hands back only the last value, a subset of this range,
+    /// because the caller chose not to take the fill.
+    #[doc(alias = "TA_StreamOutRange")]
+    pub fn out_range(&self) -> OutRange {
+        self.out
     }
 }
 

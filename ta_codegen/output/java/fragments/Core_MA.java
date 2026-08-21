@@ -486,18 +486,22 @@
       double cur_outReal;
       // Sub-stream, tagged by optInMAType; null on the identity path.
       Object sub;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       MA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#MA_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#MA} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       MA_Stream( MA_Stream other ) {
          this.core = other.core;
@@ -543,7 +547,8 @@
                throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
             }
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( MA_Stream other ) {
@@ -630,7 +635,8 @@
                throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
             }
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
@@ -652,6 +658,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MA update: BadParam", RetCode.BadParam);
          core.MA_StreamStep(this, inReal);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
 
@@ -776,66 +783,90 @@
          sp.optInMAType = optInMAType;
          sp.sub = null;
          sp.cur_outReal = inReal[historyLen - 1];
+         int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
+         if( startIdx > fillLb ) fillLb = startIdx;
+         sp.outRangeBegIdx = fillLb;
+         sp.outRangeCount = historyLen - fillLb;
          return RetCode.Success;
       }
       switch( optInMAType )
       {
       case SMA: {
          SMA_Stream sub = SMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case EMA: {
          EMA_Stream sub = EMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case WMA: {
          WMA_Stream sub = WMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case DEMA: {
          DEMA_Stream sub = DEMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case TEMA: {
          TEMA_Stream sub = TEMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case TRIMA: {
          TRIMA_Stream sub = TRIMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case KAMA: {
          KAMA_Stream sub = KAMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAMA: {
          MAMA_Stream sub = MAMA_OpenInternal(inReal, startIdx, 0.5, 0.05);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outMAMA;
          break;
       }
       case T3: {
          T3_Stream sub = T3_OpenInternal(inReal, startIdx, optInTimePeriod, 0.7);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case HMA: {
          HMA_Stream sub = HMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
@@ -890,80 +921,80 @@
       {
       case SMA: {
          SMA_Stream sub = SMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case EMA: {
          EMA_Stream sub = EMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case WMA: {
          WMA_Stream sub = WMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case DEMA: {
          DEMA_Stream sub = DEMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case TEMA: {
          TEMA_Stream sub = TEMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case TRIMA: {
          TRIMA_Stream sub = TRIMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case KAMA: {
          KAMA_Stream sub = KAMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAMA: {
          MAMA_Stream sub = MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, new double[historyLen]);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outMAMA;
          break;
       }
       case T3: {
          T3_Stream sub = T3_OpenAndFill(inReal, optInTimePeriod, 0.7, outReal);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case HMA: {
          HMA_Stream sub = HMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx.value = sub.fillRange().begIdx();
-         outNBElement.value = sub.fillRange().count();
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
@@ -1121,7 +1152,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MA_Stream#fillRange()}.
+    * {@link MA_Stream#outRange()}.
     */
    public MA_Stream MA_OpenAndFill( double inReal[], int optInTimePeriod, MAType optInMAType, double outReal[] )
    {
@@ -1129,7 +1160,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MA_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1146,6 +1178,8 @@
    {
       MA_Stream sp = new MA_Stream(this);
       RetCode retCode = MA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

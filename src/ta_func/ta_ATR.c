@@ -393,6 +393,10 @@ TA_RetCode TA_S_ATR( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ATR_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double prevATR;
    double val3;
@@ -617,6 +621,8 @@ static TA_RetCode TA_ATR_OpenPass( struct TA_ATR_Stream **stream, const double i
       sp->prevATR = prevATR;
       sp->val3 = val3;
       sp->lag1_inClose = inClose[historyLen - 1];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -670,6 +676,7 @@ TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_ATR_StepInternal( stream, inHigh, inLow, inClose, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

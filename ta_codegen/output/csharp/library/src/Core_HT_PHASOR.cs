@@ -938,18 +938,22 @@ public partial class Core
       internal double[] ring_trailingWMAIdx_inReal = [];
       internal double cur_outInPhase;
       internal double cur_outQuadrature;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal HT_PHASOR_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>HT_PHASOR_OpenAndFill</c> filled, or
-      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
-      /// (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.HT_PHASOR</c> reports over the same bars: the opener
+      /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
+      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
+      /// last value, a subset of this range, because the caller chose not to take
+      /// the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal HT_PHASOR_Stream( HT_PHASOR_Stream other )
       {
@@ -1019,7 +1023,8 @@ public partial class Core
          Array.Copy( other.ring_trailingWMAIdx_inReal, this.ring_trailingWMAIdx_inReal, other.ring_trailingWMAIdx_inReal.Length );
          this.cur_outInPhase = other.cur_outInPhase;
          this.cur_outQuadrature = other.cur_outQuadrature;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( HT_PHASOR_Stream other )
@@ -1108,7 +1113,8 @@ public partial class Core
          Array.Copy( other.ring_trailingWMAIdx_inReal, this.ring_trailingWMAIdx_inReal, other.ring_trailingWMAIdx_inReal.Length );
          this.cur_outInPhase = other.cur_outInPhase;
          this.cur_outQuadrature = other.cur_outQuadrature;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -1131,6 +1137,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_PHASOR", "update", RetCode.BadParam);
          core.HT_PHASOR_StreamStep(this, inReal);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new HT_PHASOR_Value(cur_outInPhase, cur_outQuadrature);
       }
 
@@ -1737,7 +1744,10 @@ public partial class Core
    {
       double[] sink_outInPhase = new double[1];
       double[] sink_outQuadrature = new double[1];
-      return HT_PHASOR_OpenPass( sp, inReal, startIdx, out _, out _, sink_outInPhase, sink_outQuadrature, 0 );
+      RetCode retCode = HT_PHASOR_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outInPhase, sink_outQuadrature, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode HT_PHASOR_OpenAndFillImpl( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
@@ -1760,6 +1770,8 @@ public partial class Core
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       RetCode retCode = HT_PHASOR_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1810,7 +1822,7 @@ public partial class Core
    /// and then reads the input tail to seed its rings, so the batch tier's
    /// in-place allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="HT_PHASOR_Stream.FillRange"/>.</para>
+   /// <see cref="HT_PHASOR_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
    /// <param name="outInPhase">In-phase component (detrender delayed 3 bars) Must hold at least
@@ -1829,7 +1841,8 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       RetCode retCode = HT_PHASOR_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

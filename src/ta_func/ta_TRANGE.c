@@ -220,6 +220,10 @@ TA_RetCode TA_S_TRANGE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_TRANGE_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double val3;
    double lag1_inClose;
 };
@@ -339,6 +343,8 @@ static TA_RetCode TA_TRANGE_OpenPass( struct TA_TRANGE_Stream **stream, const do
       memset( sp, 0, sizeof(*sp) );
       sp->val3 = val3;
       sp->lag1_inClose = inClose[historyLen - 1];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -392,6 +398,7 @@ TA_LIB_API TA_RetCode TA_TRANGE_Update( TA_TRANGE_Stream *stream, double inHigh,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_TRANGE_StepInternal( stream, inHigh, inLow, inClose, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

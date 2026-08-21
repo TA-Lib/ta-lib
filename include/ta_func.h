@@ -9677,6 +9677,23 @@ TA_LIB_API TA_RetCode TA_WMA_Close( TA_WMA_Stream *stream );
  */
 TA_LIB_API TA_RetCode TA_WMA_OpenAndFill( TA_WMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
+/* The range of bars a live stream has produced a value for, in the
+ * input series' coordinates: [*outBegIdx, *outBegIdx + *outNBElement).
+ *
+ * It is what the batch call over the same bars reports. A handle opened
+ * over `historyLen` bars starts at (lookback, historyLen - lookback) and
+ * each accepted Update adds one; Peek changes nothing. So after a handle
+ * has been fed nbBar bars, by any mix of Open and Update, this reports
+ * what the batch call over ( 0, nbBar-1 ) does. The count saturates at
+ * TA_MAX_INDEX.
+ *
+ * Takes any TA_<N>_Stream *; there is one accessor, not one per
+ * function. Returns TA_BAD_PARAM on a NULL argument.
+ */
+TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream,
+                                 int *outBegIdx,
+                                 int *outNBElement );
+
 /* Some TA functions takes a certain amount of input data
  * before stabilizing and outputing meaningful data. This is
  * a behavior pertaining to the algo of some TA functions and

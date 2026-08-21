@@ -220,6 +220,10 @@ TA_RetCode TA_S_ROCR100( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ROCR100_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
@@ -368,6 +372,8 @@ static TA_RetCode TA_ROCR100_OpenPass( struct TA_ROCR100_Stream **stream, const 
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -421,6 +427,7 @@ TA_LIB_API TA_RetCode TA_ROCR100_Update( TA_ROCR100_Stream *stream, double inRea
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_ROCR100_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

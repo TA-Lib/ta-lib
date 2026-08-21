@@ -524,18 +524,22 @@ public partial class Core
       internal double cur_outRealUpperBand;
       internal double cur_outRealMiddleBand;
       internal double cur_outRealLowerBand;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal ACCBANDS_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>ACCBANDS_OpenAndFill</c> filled, or
-      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
-      /// (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.ACCBANDS</c> reports over the same bars: the opener
+      /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
+      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
+      /// last value, a subset of this range, because the caller chose not to take
+      /// the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal ACCBANDS_Stream( ACCBANDS_Stream other )
       {
@@ -558,7 +562,8 @@ public partial class Core
          this.cur_outRealUpperBand = other.cur_outRealUpperBand;
          this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
          this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( ACCBANDS_Stream other )
@@ -588,7 +593,8 @@ public partial class Core
          this.cur_outRealUpperBand = other.cur_outRealUpperBand;
          this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
          this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -613,6 +619,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ACCBANDS", "update", RetCode.BadParam);
          core.ACCBANDS_StreamStep(this, inHigh, inLow, inClose);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new ACCBANDS_Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 
@@ -860,7 +867,10 @@ public partial class Core
       double[] sink_outRealUpperBand = new double[1];
       double[] sink_outRealMiddleBand = new double[1];
       double[] sink_outRealLowerBand = new double[1];
-      return ACCBANDS_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out _, out _, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
+      RetCode retCode = ACCBANDS_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode ACCBANDS_OpenAndFillImpl( ACCBANDS_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
@@ -883,6 +893,8 @@ public partial class Core
    {
       ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
       RetCode retCode = ACCBANDS_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -938,7 +950,7 @@ public partial class Core
    /// and then reads the input tail to seed its rings, so the batch tier's
    /// in-place allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="ACCBANDS_Stream.FillRange"/>.</para>
+   /// <see cref="ACCBANDS_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -965,7 +977,8 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
       RetCode retCode = ACCBANDS_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

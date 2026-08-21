@@ -504,17 +504,21 @@ public partial class Core
       internal int ringCap_trailingSlowIdx;
       internal double[] ring_trailingSlowIdx_derived = [];
       internal double cur_outReal;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal AO_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>AO_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.AO</c> reports over the same bars: the opener sets it
+      /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
+      /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
+      /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
+      /// subset of this range, because the caller chose not to take the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal AO_Stream( AO_Stream other )
       {
@@ -533,7 +537,8 @@ public partial class Core
          this.ring_trailingSlowIdx_derived = new double[other.ring_trailingSlowIdx_derived.Length];
          Array.Copy( other.ring_trailingSlowIdx_derived, this.ring_trailingSlowIdx_derived, other.ring_trailingSlowIdx_derived.Length );
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( AO_Stream other )
@@ -557,7 +562,8 @@ public partial class Core
          }
          Array.Copy( other.ring_trailingSlowIdx_derived, this.ring_trailingSlowIdx_derived, other.ring_trailingSlowIdx_derived.Length );
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -581,6 +587,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AO", "update", RetCode.BadParam);
          core.AO_StreamStep(this, inHigh, inLow);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -827,7 +834,10 @@ public partial class Core
    private RetCode AO_OpenImpl( AO_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
       double[] sink_outReal = new double[1];
-      return AO_OpenPass( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, out _, out _, sink_outReal, 0 );
+      RetCode retCode = AO_OpenPass( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode AO_OpenAndFillImpl( AO_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
@@ -850,6 +860,8 @@ public partial class Core
    {
       AO_Stream sp = new AO_Stream(this);
       RetCode retCode = AO_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -904,7 +916,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="AO_Stream.FillRange"/>.</para>
+   /// <see cref="AO_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -927,7 +939,8 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       AO_Stream sp = new AO_Stream(this);
       RetCode retCode = AO_OpenAndFillImpl(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -264,6 +264,10 @@ TA_RetCode TA_S_APO( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_APO_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInFastPeriod;
    int optInSlowPeriod;
    TA_MAType optInMAType;
@@ -458,6 +462,8 @@ static TA_RetCode TA_APO_OpenPass( struct TA_APO_Stream **stream, const double i
       *outNBElement = dummyNBElement;
       if( !outStride ) outReal[0] = sc_outReal[dummyNBElement - 1];
       if( !outStride ) TA_Free( sc_outReal );
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -508,9 +514,14 @@ TA_RetCode TA_APO_OpenAndFillInternal( struct TA_APO_Stream **stream, const doub
 
 TA_LIB_API TA_RetCode TA_APO_Update( TA_APO_Stream *stream, double inReal, double *outReal )
 {
+   TA_RetCode retCode;
+
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   return TA_APO_StepInternal( stream, inReal, outReal );
+   retCode = TA_APO_StepInternal( stream, inReal, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_APO_Peek( const TA_APO_Stream *stream, double inReal, double *outReal )

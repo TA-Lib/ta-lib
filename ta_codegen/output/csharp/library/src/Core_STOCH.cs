@@ -785,17 +785,22 @@ public partial class Core
       internal double cur_outSlowD;
       internal MA_Stream sub0 = null!;
       internal MA_Stream sub1 = null!;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal STOCH_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>STOCH_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.STOCH</c> reports over the same bars: the opener sets
+      /// it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
+      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
+      /// last value, a subset of this range, because the caller chose not to take
+      /// the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal STOCH_Stream( STOCH_Stream other )
       {
@@ -824,7 +829,8 @@ public partial class Core
          this.cur_outSlowD = other.cur_outSlowD;
          this.sub0 = new MA_Stream(other.sub0);
          this.sub1 = new MA_Stream(other.sub1);
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( STOCH_Stream other )
@@ -868,7 +874,8 @@ public partial class Core
          } else {
             this.sub1.CopyFrom(other.sub1);
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -893,6 +900,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("STOCH", "update", RetCode.BadParam);
          core.STOCH_StreamStep(this, inHigh, inLow, inClose);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new STOCH_Value(cur_outSlowK, cur_outSlowD);
       }
 
@@ -1315,7 +1323,10 @@ public partial class Core
    {
       double[] sink_outSlowK = new double[1];
       double[] sink_outSlowD = new double[1];
-      return STOCH_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, sink_outSlowK, sink_outSlowD, 0 );
+      RetCode retCode = STOCH_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, sink_outSlowK, sink_outSlowD, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode STOCH_OpenAndFillImpl( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD )
@@ -1338,6 +1349,8 @@ public partial class Core
    {
       STOCH_Stream sp = new STOCH_Stream(this);
       RetCode retCode = STOCH_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1400,7 +1413,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="STOCH_Stream.FillRange"/>.</para>
+   /// <see cref="STOCH_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
@@ -1433,7 +1446,8 @@ public partial class Core
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       STOCH_Stream sp = new STOCH_Stream(this);
       RetCode retCode = STOCH_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

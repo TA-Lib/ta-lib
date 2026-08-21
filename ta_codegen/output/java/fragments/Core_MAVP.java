@@ -721,18 +721,22 @@
       double cur_outReal;
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
       MA_Stream[] bank;
-      OutRange fillRange = OutRange.EMPTY;
+      int outRangeBegIdx;
+      int outRangeCount;
 
       MAVP_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#MAVP_OpenAndFill}, or
-       * {@link OutRange#EMPTY} when this handle came from a plain
-       * {@code open} (which fills nothing). Never {@code null}; a
-       * successful {@code openAndFill} always writes at least one value,
-       * so {@link OutRange#isEmpty()} tells the two apart.
+       * The bars this stream has produced a value for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#MAVP} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * it alone, and {@code copy()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
        */
-      public OutRange fillRange() { return fillRange; }
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
       MAVP_Stream( MAVP_Stream other ) {
          this.core = other.core;
@@ -744,7 +748,8 @@
          for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
             this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       void copyFrom( MAVP_Stream other ) {
@@ -763,7 +768,8 @@
                this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
             }
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
@@ -785,6 +791,7 @@
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
             throw new TaLibArgumentException("MAVP update: BadParam", RetCode.BadParam);
          core.MAVP_StreamStep(this, inReal, inPeriods);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
 
@@ -896,6 +903,8 @@
       sp.optInMAType = optInMAType;
       sp.bank = bank;
       sp.cur_outReal = bank[cp - optInMinPeriod].cur_outReal;
+      sp.outRangeBegIdx = subStart;
+      sp.outRangeCount = historyLen - subStart;
       return RetCode.Success;
    }
    private RetCode MAVP_OpenAndFillImpl( MAVP_Stream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1007,7 +1016,7 @@
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MAVP_Stream#fillRange()}.
+    * {@link MAVP_Stream#outRange()}.
     */
    public MAVP_Stream MAVP_OpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
    {
@@ -1015,7 +1024,8 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MAVP_OpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }

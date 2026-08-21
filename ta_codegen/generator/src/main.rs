@@ -2233,11 +2233,13 @@ fn csharp_test_tfms(test_dir: &Path) -> Vec<String> {
 /// a `#[cfg(test)]`-only module holding the value gate for the batch bodies'
 /// scratch-buffer election (issue #146). Both are listed in the Rust backend's
 /// `clean_keep`, so `generate` never deletes them.
-const RUST_TEMPLATE_MODULES: &[&str] = &["types", "scratch_election", "stream_finite"];
+const RUST_TEMPLATE_MODULES: &[&str] =
+    &["types", "scratch_election", "stream_finite", "stream_out_range"];
 
 /// Of [`RUST_TEMPLATE_MODULES`], the ones that exist only for `cargo test` and so
 /// are declared `#[cfg(test)]` in the generated `mod.rs`.
-const RUST_TEST_ONLY_MODULES: &[&str] = &["scratch_election", "stream_finite"];
+const RUST_TEST_ONLY_MODULES: &[&str] =
+    &["scratch_election", "stream_finite", "stream_out_range"];
 
 /// Version of the `ta-lib-dispatch` support crate — deliberately decoupled from
 /// the repo `VERSION` the other three members track, because it changes only

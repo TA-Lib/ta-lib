@@ -479,7 +479,13 @@ fn emit_open_body_scalar_wrapper(o: &mut String, func: &FuncDef) {
         args.push(format!("sink_{}", out.name));
     }
     args.push("0".to_string());
-    let _ = writeln!(o, "      return {base}_OpenPass( {} );", args.join(", "));
+    // The transcribed body reports its range through the pair whatever the
+    // stride, so the plain open gets the same numbers `openAndFill` would —
+    // read back rather than re-derived from the lookback (issue #241).
+    let _ = writeln!(o, "      RetCode retCode = {base}_OpenPass( {} );", args.join(", "));
+    let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
+    let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
+    let _ = writeln!(o, "      return retCode;");
     let _ = writeln!(o, "   }}");
 }
 
@@ -712,23 +718,26 @@ fn emit_handle_class_with_members(
         let _ = writeln!(o, "      {jty} {name};");
     }
     o.push_str(extra_members);
-    // Set once, by openAndFill only — the range of the warm-up values that call
-    // wrote into the caller's output arrays. A plain open fills nothing and so
-    // keeps `EMPTY`, which cannot collide with a real fill: openAndFill returns
-    // InsufficientHistory (→ InsufficientHistoryException) when the history is
-    // shorter than lookback + 1, so a successful one always writes ≥ 1 value.
-    let _ = writeln!(o, "      OutRange fillRange = OutRange.EMPTY;");
+    // The bars this handle has produced a value for (issue #241). Two ints
+    // rather than an `OutRange`: `update` runs on every bar and the emitted
+    // javadoc promises it never allocates handle state, so the record is built
+    // in the accessor instead of replaced per bar.
+    let _ = writeln!(o, "      int outRangeBegIdx;");
+    let _ = writeln!(o, "      int outRangeCount;");
     let _ = writeln!(o, "\n      {class}( Core core ) {{ this.core = core; }}");
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * The range filled by {{@link Core#{base}_OpenAndFill}}, or\n\
-         \x20      * {{@link OutRange#EMPTY}} when this handle came from a plain\n\
-         \x20      * {{@code open}} (which fills nothing). Never {{@code null}}; a\n\
-         \x20      * successful {{@code openAndFill}} always writes at least one value,\n\
-         \x20      * so {{@link OutRange#isEmpty()}} tells the two apart.\n\
+         \x20      * The bars this stream has produced a value for, in the input series'\n\
+         \x20      * coordinates: {{@code [begIdx, begIdx + count)}}.\n\
+         \x20      * <p>It is what {{@link Core#{base}}} reports over the same bars: the\n\
+         \x20      * opener sets it to {{@code (lookback, historyLen - lookback)}}, every\n\
+         \x20      * accepted {{@code update}} adds one to the count, {{@code peek}} leaves\n\
+         \x20      * it alone, and {{@code copy()}} carries it verbatim. A plain\n\
+         \x20      * {{@code open}} hands back only the last value, a subset of this range,\n\
+         \x20      * because the caller chose not to take the fill.\n\
          \x20      */\n\
-         \x20     public OutRange fillRange() {{ return fillRange; }}",
+         \x20     public OutRange outRange() {{ return new OutRange(outRangeBegIdx, outRangeCount); }}",
         base = base_name(func)
     );
 
@@ -745,9 +754,9 @@ fn emit_handle_class_with_members(
         }
     }
     o.push_str(&subs.copy);
-    // OutRange is immutable, so the copy shares it — a fork describes the same
-    // warm-up fill as the handle it was taken from.
-    let _ = writeln!(o, "         this.fillRange = other.fillRange;");
+    // The fork starts from the same produced range and diverges from there.
+    let _ = writeln!(o, "         this.outRangeBegIdx = other.outRangeBegIdx;");
+    let _ = writeln!(o, "         this.outRangeCount = other.outRangeCount;");
     let _ = writeln!(o, "      }}");
 
     // The copy constructor's in-place twin: same result, but it overwrites
@@ -774,7 +783,8 @@ fn emit_handle_class_with_members(
         }
     }
     o.push_str(&subs.restore);
-    let _ = writeln!(o, "         this.fillRange = other.fillRange;");
+    let _ = writeln!(o, "         this.outRangeBegIdx = other.outRangeBegIdx;");
+    let _ = writeln!(o, "         this.outRangeCount = other.outRangeCount;");
     let _ = writeln!(o, "      }}");
 
     // What `peek` trades away by reusing a scratch is a `ThreadLocal.get()`,
@@ -934,6 +944,11 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
     let _ = writeln!(o, "      public {vt} update( {sig_bars} ) {{");
     o.push_str(&finite_bar_check(func, "         ", "update"));
     let _ = writeln!(o, "         core.{base}_StreamStep(this, {fwd_bars});");
+    // After the step and after the finite-bar reject, so a rejected bar leaves
+    // the range where it was. `peek` runs the same step on a scratch copy and so
+    // never reaches this. Saturating: nothing bounds how many bars a live stream
+    // is fed, and past MAX_INDEX it has left the batch index domain anyway.
+    let _ = writeln!(o, "         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;");
     if has_value_class(func) {
         let _ = writeln!(o, "         this.cachedValue = {};", fresh_value_expr(func, "this"));
         let _ = writeln!(o, "         return this.cachedValue;");
@@ -1550,7 +1565,13 @@ fn emit_identity_fast_path(
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let lb_call = format!("{base}_Lookback({})", lb_args.join(", "));
     let _ = writeln!(o, "      if( {cond} ) {{");
-    let _ = writeln!(o, "         if( historyLen < {lb_call} + 1 ) {{");
+    // batch( startIdx, .. ) begins at max(startIdx, lookback), and the anchored
+    // `_Open*Internal` variants are the batch call over that same range. The
+    // public entry points pass 0, so the clamp is a no-op for them — it is the
+    // composition seams that were reporting (and filling) from the raw lookback.
+    let _ = writeln!(o, "         int fillLb = {lb_call};");
+    let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
+    let _ = writeln!(o, "         if( historyLen < fillLb + 1 ) {{");
     let _ = writeln!(o, "            return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "         }}");
     // Identity state: params captured, everything else deterministic defaults
@@ -1569,7 +1590,6 @@ fn emit_identity_fast_path(
     // identity param. Stride 0 short-circuits to the last bar — letting the loop
     // run would be CORRECT but would make the scalar Open O(history) where it is
     // O(1), and here there is no inliner guarantee: a cold Open runs it in full.
-    let _ = writeln!(o, "         int fillLb = {lb_call};");
     let _ = writeln!(o, "         outBegIdx.value = fillLb;");
     let _ = writeln!(o, "         outNBElement.value = historyLen - fillLb;");
     let _ = writeln!(o, "         if( outStride == 0 ) {{");
@@ -1953,7 +1973,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "   }}");
 
     // Public openAndFill. The filled range is reported on the handle
-    // (`fillRange()`), not through a pair of caller-supplied out-params.
+    // (`outRange()`), not through a pair of caller-supplied out-params.
     let mut fill_sig: Vec<String> = in_sig.clone();
     for p in &opt_sig {
         fill_sig.push(p.clone());
@@ -1977,7 +1997,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
          \x20   * not alias the inputs or each other, and must hold\n\
          \x20   * {{@code historyLen - lookback}} values.\n\
          \x20   * <p>The range written is on the returned handle:\n\
-         \x20   * {{@link {class}#fillRange()}}.\n\
+         \x20   * {{@link {class}#outRange()}}.\n\
          \x20   */"
     );
     let _ = writeln!(
@@ -1993,10 +2013,8 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         "      RetCode retCode = {base}_OpenAndFillImpl(sp, {});",
         fill_fwd.join(", ")
     );
-    let _ = writeln!(
-        o,
-        "      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);"
-    );
+    let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
+    let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
     emit_reject_conversion(o, func, "openAndFill");
     let _ = writeln!(o, "   }}");
 }
@@ -2383,6 +2401,12 @@ fn emit_dispatch(
                     for (out, inp) in &idp.pairs {
                         let _ = writeln!(o, "         sp.cur_{out} = {inp}[historyLen - 1];");
                     }
+                    // No out-meta pair on this mode, so the range is resolved the
+                    // way the batch resolves it (issue #241).
+                    let _ = writeln!(o, "         int fillLb = {lb_call};");
+                    let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
+                    let _ = writeln!(o, "         sp.outRangeBegIdx = fillLb;");
+                    let _ = writeln!(o, "         sp.outRangeCount = historyLen - fillLb;");
                 }
                 OutMode::Fill | OutMode::FillInternal => {
                     let _ = writeln!(o, "         int fillLb = {lb_call};");
@@ -2439,6 +2463,10 @@ fn emit_dispatch(
                             o,
                             "         {cls} sub = {callee_base}_OpenInternal({bar_args}, startIdx{opts});"
                         );
+                        // The arm's handle already resolved the range; this mode has
+                        // no out-meta pair to read it from instead.
+                        let _ = writeln!(o, "         sp.outRangeBegIdx = sub.outRangeBegIdx;");
+                        let _ = writeln!(o, "         sp.outRangeCount = sub.outRangeCount;");
                     }
                     OutMode::Fill | OutMode::FillInternal => {
                         // OutSlot-mapped fill tail: Forward(k) passes the
@@ -2466,7 +2494,7 @@ fn emit_dispatch(
                         // the MInteger pair, so copy it back out.
                         if mode == OutMode::FillInternal {
                             // The internal variant takes the out-meta directly,
-                            // so there is no fillRange to copy back.
+                            // so there is no range to copy back.
                             let _ = writeln!(
                                 o,
                                 "         {cls} sub = {callee_base}_OpenAndFillInternal({bar_args}, startIdx, {opts}outBegIdx, outNBElement, {fill_outs});"
@@ -2480,10 +2508,10 @@ fn emit_dispatch(
                             o,
                             "         {cls} sub = {callee_base}_OpenAndFill({bar_args}, {opts}{fill_outs});"
                         );
-                        let _ = writeln!(o, "         outBegIdx.value = sub.fillRange().begIdx();");
+                        let _ = writeln!(o, "         outBegIdx.value = sub.outRangeBegIdx;");
                         let _ = writeln!(
                             o,
-                            "         outNBElement.value = sub.fillRange().count();"
+                            "         outNBElement.value = sub.outRangeCount;"
                         );
                     }
                 }
@@ -2644,6 +2672,10 @@ fn emit_period_bank(
     }
     let _ = writeln!(o, "      sp.bank = bank;");
     let _ = writeln!(o, "      sp.cur_{out} = bank[cp - {min}].cur_{callee_out0};");
+    // `subStart` is the resolved max(startIdx, lookback) the whole bank was
+    // opened at, which is the range's start by definition (issue #241).
+    let _ = writeln!(o, "      sp.outRangeBegIdx = subStart;");
+    let _ = writeln!(o, "      sp.outRangeCount = historyLen - subStart;");
     let _ = writeln!(o, "      return RetCode.Success;");
     let _ = writeln!(o, "   }}");
 
@@ -3453,6 +3485,10 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
         "      RetCode retCode = {base}_OpenAndFillInternalImpl({});",
         fi_args.join(", ")
     );
+    // The caller's pair holds the range the fill wrote — the same one every
+    // composed sub-handle is opened through (issue #241).
+    let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
+    let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
     emit_reject_conversion(o, func, "openAndFill");
     let _ = writeln!(o, "   }}");
 }

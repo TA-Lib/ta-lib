@@ -405,6 +405,10 @@ TA_RetCode TA_S_MAX( int    startIdx,
 /* Using max_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 struct TA_MAX_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double highest;
    int trailingIdx;
@@ -594,6 +598,8 @@ static TA_RetCode TA_MAX_OpenPass( struct TA_MAX_Stream **stream, const double i
            sp->x_inReal[fillJ & sp->xMask] = inReal[fillJ];
         }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -647,6 +653,7 @@ TA_LIB_API TA_RetCode TA_MAX_Update( TA_MAX_Stream *stream, double inReal, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_MAX_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

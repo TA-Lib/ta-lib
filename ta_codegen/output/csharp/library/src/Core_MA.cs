@@ -527,17 +527,21 @@ public partial class Core
       internal double cur_outReal;
       // Sub-stream, tagged by optInMAType; null on the identity path.
       internal object? sub;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal MA_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>MA_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.MA</c> reports over the same bars: the opener sets it
+      /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
+      /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
+      /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
+      /// subset of this range, because the caller chose not to take the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal MA_Stream( MA_Stream other )
       {
@@ -584,7 +588,8 @@ public partial class Core
                throw new InvalidOperationException("unreachable: open rejects arms without a sub-stream");
             }
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( MA_Stream other )
@@ -672,7 +677,8 @@ public partial class Core
                throw new InvalidOperationException("unreachable: open rejects arms without a sub-stream");
             }
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -695,6 +701,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MA", "update", RetCode.BadParam);
          core.MA_StreamStep(this, inReal);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -823,66 +830,90 @@ public partial class Core
          sp.optInMAType = optInMAType;
          sp.sub = null;
          sp.cur_outReal = inReal[historyLen - 1];
+         int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
+         if( startIdx > fillLb ) fillLb = startIdx;
+         sp.outRangeBegIdx = fillLb;
+         sp.outRangeCount = historyLen - fillLb;
          return RetCode.Success;
       }
       switch( optInMAType )
       {
       case MAType.SMA: {
          SMA_Stream sub = SMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.EMA: {
          EMA_Stream sub = EMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.WMA: {
          WMA_Stream sub = WMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.DEMA: {
          DEMA_Stream sub = DEMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.TEMA: {
          TEMA_Stream sub = TEMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.TRIMA: {
          TRIMA_Stream sub = TRIMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.KAMA: {
          KAMA_Stream sub = KAMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.MAMA: {
          MAMA_Stream sub = MAMA_OpenInternal(inReal, startIdx, 0.5, 0.05);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outMAMA;
          break;
       }
       case MAType.T3: {
          T3_Stream sub = T3_OpenInternal(inReal, startIdx, optInTimePeriod, 0.7);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.HMA: {
          HMA_Stream sub = HMA_OpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
@@ -942,80 +973,80 @@ public partial class Core
       {
       case MAType.SMA: {
          SMA_Stream sub = SMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.EMA: {
          EMA_Stream sub = EMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.WMA: {
          WMA_Stream sub = WMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.DEMA: {
          DEMA_Stream sub = DEMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.TEMA: {
          TEMA_Stream sub = TEMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.TRIMA: {
          TRIMA_Stream sub = TRIMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.KAMA: {
          KAMA_Stream sub = KAMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.MAMA: {
          MAMA_Stream sub = MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, new double[historyLen]);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outMAMA;
          break;
       }
       case MAType.T3: {
          T3_Stream sub = T3_OpenAndFill(inReal, optInTimePeriod, 0.7, outReal);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
       case MAType.HMA: {
          HMA_Stream sub = HMA_OpenAndFill(inReal, optInTimePeriod, outReal);
-         outBegIdx = sub.FillRange.BegIdx;
-         outNBElement = sub.FillRange.Count;
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
@@ -1188,7 +1219,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MA_Stream.FillRange"/>.</para>
+   /// <see cref="MA_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Series to average. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="MA_Lookback"/> for its default and
@@ -1209,7 +1240,8 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MA_Stream sp = new MA_Stream(this);
       RetCode retCode = MA_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1221,6 +1253,8 @@ public partial class Core
    {
       MA_Stream sp = new MA_Stream(this);
       RetCode retCode = MA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -574,18 +574,22 @@ public partial class Core
       internal int xMask;
       internal double[] x_inReal = [];
       internal double cur_outReal;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal MIDPOINT_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>MIDPOINT_OpenAndFill</c> filled, or
-      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
-      /// (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.MIDPOINT</c> reports over the same bars: the opener
+      /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
+      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
+      /// last value, a subset of this range, because the caller chose not to take
+      /// the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal MIDPOINT_Stream( MIDPOINT_Stream other )
       {
@@ -604,7 +608,8 @@ public partial class Core
          this.x_inReal = new double[other.x_inReal.Length];
          Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( MIDPOINT_Stream other )
@@ -626,7 +631,8 @@ public partial class Core
          }
          Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
          this.cur_outReal = other.cur_outReal;
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
@@ -646,6 +652,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MIDPOINT", "update", RetCode.BadParam);
          core.MIDPOINT_StreamStep(this, inReal);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -886,7 +893,10 @@ public partial class Core
    private RetCode MIDPOINT_OpenImpl( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return MIDPOINT_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      RetCode retCode = MIDPOINT_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode MIDPOINT_OpenAndFillImpl( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
@@ -909,6 +919,8 @@ public partial class Core
    {
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
       RetCode retCode = MIDPOINT_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -961,7 +973,7 @@ public partial class Core
    /// and then reads the input tail to seed its rings, so the batch tier's
    /// in-place allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MIDPOINT_Stream.FillRange"/>.</para>
+   /// <see cref="MIDPOINT_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Series to compute the midpoint over. The warm-up history, oldest bar
    /// first.</param>
@@ -981,7 +993,8 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
       RetCode retCode = MIDPOINT_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

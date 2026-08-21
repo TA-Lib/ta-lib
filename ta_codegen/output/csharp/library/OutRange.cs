@@ -66,8 +66,9 @@ public readonly struct OutRange
     public bool IsEmpty => Count == 0;
 
     /// <summary>The range that wrote nothing.</summary>
-    /// <remarks>A plain <c>Open</c> fills no output, so its
-    /// <c>FillRange</c> is this; <c>OpenAndFill</c>'s is not. Equal to
-    /// <c>default(OutRange)</c> — named so that reads say what they mean.</remarks>
+    /// <remarks>A valid range shorter than the indicator's lookback produces
+    /// no values, and that is this. Equal to <c>default(OutRange)</c> — named so
+    /// that reads say what they mean. A live stream never reports it: a
+    /// successful open has already produced at least one value.</remarks>
     public static OutRange Empty => default;
 }

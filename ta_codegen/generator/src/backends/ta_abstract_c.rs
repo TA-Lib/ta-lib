@@ -2893,6 +2893,30 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
         emit_func_h_block(&mut o, func, &ref_lookup);
     }
 
+    // The one accessor shared by every stream handle (issue #241). It is not
+    // per-function on purpose: the range is two ints at a fixed offset in every
+    // TA_<N>_Stream, so 172 typed accessors would add 172 public entry points
+    // for the same pair.
+    o.push_str(
+        "/* The range of bars a live stream has produced a value for, in the\n\
+         \x20* input series' coordinates: [*outBegIdx, *outBegIdx + *outNBElement).\n\
+         \x20*\n\
+         \x20* It is what the batch call over the same bars reports. A handle opened\n\
+         \x20* over `historyLen` bars starts at (lookback, historyLen - lookback) and\n\
+         \x20* each accepted Update adds one; Peek changes nothing. So after a handle\n\
+         \x20* has been fed nbBar bars, by any mix of Open and Update, this reports\n\
+         \x20* what the batch call over ( 0, nbBar-1 ) does. The count saturates at\n\
+         \x20* TA_MAX_INDEX.\n\
+         \x20*\n\
+         \x20* Takes any TA_<N>_Stream *; there is one accessor, not one per\n\
+         \x20* function. Returns TA_BAD_PARAM on a NULL argument.\n\
+         \x20*/\n\
+         TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream,\n\
+         \x20                                int *outBegIdx,\n\
+         \x20                                int *outNBElement );\n\
+         \n",
+    );
+
     // Utility function section (unstable period, compatibility, candle settings).
     o.push_str(
         "/* Some TA functions takes a certain amount of input data\n\

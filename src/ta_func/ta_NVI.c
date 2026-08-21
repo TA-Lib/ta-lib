@@ -194,6 +194,10 @@ TA_RetCode TA_S_NVI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_NVI_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double prevNVI;
    double prevClose;
    double prevVolume;
@@ -314,6 +318,8 @@ static TA_RetCode TA_NVI_OpenPass( struct TA_NVI_Stream **stream, const double i
       sp->prevClose = prevClose;
       sp->prevVolume = prevVolume;
       sp->tempNVI = tempNVI;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -367,6 +373,7 @@ TA_LIB_API TA_RetCode TA_NVI_Update( TA_NVI_Stream *stream, double inClose, doub
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_NVI_StepInternal( stream, inClose, inVolume, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

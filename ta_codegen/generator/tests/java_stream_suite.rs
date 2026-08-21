@@ -94,9 +94,36 @@ fn test_java_sma_ring_stream_section() {
     // out == in compiles) and the batch output tail.
     assert!(s.contains("(Object)outReal == (Object)inReal"));
     assert!(s.contains("public SMA_Stream SMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )"));
-    // The filled range rides on the handle instead of a pair of out-params.
-    assert!(s.contains("public OutRange fillRange() { return fillRange; }"));
-    assert!(s.contains("sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);"));
+    // The range rides on the handle instead of a pair of out-params, and it is
+    // the whole produced range, not one call's fill (#241): seeded by EVERY
+    // opener — the plain one included, which wrote nothing before — and extended
+    // by each committed bar. The accessor builds the record, so `update` keeps
+    // its "never allocates handle state" promise.
+    assert!(s.contains("int outRangeBegIdx;") && s.contains("int outRangeCount;"));
+    assert!(s.contains(
+        "public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }"
+    ));
+    assert!(!s.contains("fillRange"), "fillRange is gone, not aliased");
+    let scalar = s
+        .split("private RetCode SMA_OpenImpl(")
+        .nth(1)
+        .expect("SMA_OpenImpl")
+        .split("\n   }")
+        .next()
+        .unwrap()
+        .to_string();
+    assert!(
+        scalar.contains("sp.outRangeBegIdx = outBegIdx.value;")
+            && scalar.contains("sp.outRangeCount = outNBElement.value;"),
+        "the plain open reads the range back off the body it just ran:\n{scalar}"
+    );
+    assert!(
+        s.contains("if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;"),
+        "update advances the count, saturating"
+    );
+    // Both copy paths carry it: the copy constructor and peek's in-place restore.
+    assert_eq!(s.matches("this.outRangeBegIdx = other.outRangeBegIdx;").count(), 2);
+    assert_eq!(s.matches("this.outRangeCount = other.outRangeCount;").count(), 2);
     // Composition seam is package-private with a startIdx anchor.
     assert!(s.contains("SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )"));
 }

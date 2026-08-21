@@ -195,6 +195,10 @@ TA_RetCode TA_S_AVGDEV( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_AVGDEV_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    int winPos_i;
    int winCap_i;
@@ -313,6 +317,8 @@ static TA_RetCode TA_AVGDEV_OpenPass( struct TA_AVGDEV_Stream **stream, const do
       if( !sp->winMirror_i_inReal ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inReal, inReal + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
       sp->winPos_i = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -366,6 +372,7 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Update( TA_AVGDEV_Stream *stream, double inReal,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_AVGDEV_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

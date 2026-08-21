@@ -205,6 +205,10 @@ TA_RetCode TA_S_CDL3OUTSIDE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDL3OUTSIDE_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double lag1_inOpen;
    double lag2_inOpen;
    double lag1_inClose;
@@ -311,6 +315,8 @@ static TA_RetCode TA_CDL3OUTSIDE_OpenPass( struct TA_CDL3OUTSIDE_Stream **stream
       sp->lag2_inOpen = inOpen[historyLen - 2];
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->lag2_inClose = inClose[historyLen - 2];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -364,6 +370,7 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Update( TA_CDL3OUTSIDE_Stream *stream, doub
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_CDL3OUTSIDE_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

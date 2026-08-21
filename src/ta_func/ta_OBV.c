@@ -162,6 +162,10 @@ TA_RetCode TA_S_OBV( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_OBV_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double prevReal;
    double prevOBV;
 };
@@ -232,6 +236,8 @@ static TA_RetCode TA_OBV_OpenPass( struct TA_OBV_Stream **stream, const double i
       memset( sp, 0, sizeof(*sp) );
       sp->prevReal = prevReal;
       sp->prevOBV = prevOBV;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -285,6 +291,7 @@ TA_LIB_API TA_RetCode TA_OBV_Update( TA_OBV_Stream *stream, double inReal, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_OBV_StepInternal( stream, inReal, inVolume, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

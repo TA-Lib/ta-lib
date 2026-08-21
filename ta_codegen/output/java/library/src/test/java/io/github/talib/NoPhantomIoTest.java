@@ -948,7 +948,7 @@ public class NoPhantomIoTest {
 
     /**
      * {@code NAME_OpenAndFill} over a history of {@code lookback + 5} bars, with
-     * each output sized to exactly the {@code fillRange} the handle reports.
+     * each output sized to exactly the {@code outRange} the handle reports.
      *
      * <p>This is the streaming tier's only array-shaped promise. {@code update}
      * and {@code peek} take one scalar per leg, so there is no array to size, and
@@ -958,7 +958,7 @@ public class NoPhantomIoTest {
      * claim with, until now, nothing holding it.
      *
      * <p>Public methods and public handles, so no reflection into internals: the
-     * fill count is read off {@code fillRange()} exactly as a caller would.
+     * fill count is read off {@code outRange()} exactly as a caller would.
      */
     private static void openAndFillSweep(Map<String, Sig> cores) {
         final int PAD = 16;
@@ -1058,7 +1058,7 @@ public class NoPhantomIoTest {
                 OutRange filled;
                 try {
                     Object handle = fill.invoke(sig.on, args);
-                    filled = (OutRange) handle.getClass().getMethod("fillRange")
+                    filled = (OutRange) handle.getClass().getMethod("outRange")
                                               .invoke(handle);
                 } catch (InvocationTargetException ite) {
                     violation(sig.name + "_OpenAndFill[" + v.label + "] threw on a "
@@ -1096,7 +1096,7 @@ public class NoPhantomIoTest {
                     Throwable t = ite.getCause();
                     violation(sig.name + "_OpenAndFill[" + v.label + "] over "
                         + historyLen + " bars wrote outside the " + filled.count()
-                        + " values its fillRange reports: "
+                        + " values its outRange reports: "
                         + t.getClass().getSimpleName() + ": " + t.getMessage());
                     violations++;
                 } catch (ReflectiveOperationException ex) {
@@ -1219,12 +1219,12 @@ public class NoPhantomIoTest {
             history[i] = bar("inReal", i);
         }
         int fillCount = core.SMA_OpenAndFill(history, 30, new double[history.length])
-                            .fillRange().count();
+                            .outRange().count();
         check(fillCount == history.length - lookback,
               "openAndFill fills historyLen - lookback (" + fillCount + " of "
               + (history.length - lookback) + ")");
         check(throwsOob(() -> core.SMA_OpenAndFill(history, 30, new double[fillCount - 1])),
-              "an openAndFill output one short of fillRange throws, so sweep 4 can fail");
+              "an openAndFill output one short of outRange throws, so sweep 4 can fail");
     }
 
     private static boolean throwsOob(Runnable body) {

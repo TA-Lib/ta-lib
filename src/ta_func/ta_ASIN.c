@@ -121,7 +121,10 @@ TA_RetCode TA_S_ASIN( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ASIN_Stream {
-   int unused; /* T1: stateless map */
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
 };
 
 /* Private function, not in public API. */
@@ -163,6 +166,8 @@ static TA_RetCode TA_ASIN_OpenPass( struct TA_ASIN_Stream **stream, const double
       sp = (struct TA_ASIN_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -216,6 +221,7 @@ TA_LIB_API TA_RetCode TA_ASIN_Update( TA_ASIN_Stream *stream, double inReal, dou
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_ASIN_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

@@ -245,9 +245,9 @@ public static class StreamApiTest
         var filled = new double[closes.Length];
         Core.SMA_Stream s = core.SMA_OpenAndFill(closes, period, filled);
 
-        Check(s.FillRange.BegIdx == br.BegIdx && s.FillRange.Count == br.Count,
-              "FillRange equals the batch OutRange");
-        Check(!s.FillRange.IsEmpty, "a filled range is not empty");
+        Check(s.OutRange.BegIdx == br.BegIdx && s.OutRange.Count == br.Count,
+              "OutRange equals the batch OutRange");
+        Check(!s.OutRange.IsEmpty, "a filled range is not empty");
 
         bool same = true;
         for (int i = 0; i < br.Count; i++)
@@ -259,10 +259,54 @@ public static class StreamApiTest
         }
         Check(same, "the filled array is bit-identical to batch(0, n-1)");
 
-        // A plain open fills nothing, and says so.
+        // A plain open fills nothing, but it warmed over the same bars — so it
+        // reports the same range (issue #241). Nothing a stream can produce is
+        // empty any more; a successful open writes at least one value.
         Core.SMA_Stream plain = core.SMA_Open(closes, period);
-        Check(plain.FillRange.IsEmpty, "a plain Open reports an empty FillRange");
+        Check(plain.OutRange.BegIdx == br.BegIdx && plain.OutRange.Count == br.Count,
+              "a plain Open reports the range it warmed over");
         Check(Bits(plain.Value) == Bits(s.Value), "both openers agree on the current value");
+    }
+
+    /// <summary>#241: feed a stream N bars by any mixture of opener and updates
+    /// and its <c>OutRange</c> is the batch range over those same N bars.</summary>
+    private static void OutRangeTracksTheBatchRange()
+    {
+        var core = new Core();
+        double[] closes = Closes(200);
+        const int period = 20;
+        int lb = core.SMA_Lookback(period);
+
+        // Every warm-up length from the shortest legal one up, each brought to
+        // the full series by Update: the range must not depend on where the
+        // opener stopped and the updates took over.
+        foreach (int warm in new[] { lb + 1, lb + 7, closes.Length / 2, closes.Length })
+        {
+            var batch = new double[closes.Length];
+            OutRange br = core.SMA(0, closes.Length - 1, closes, period, batch);
+            Core.SMA_Stream s = core.SMA_Open(closes[..warm], period);
+            Check(s.OutRange.BegIdx == lb && s.OutRange.Count == warm - lb,
+                  $"Open({warm}) reports (lookback, {warm} - lookback)");
+            for (int t = warm; t < closes.Length; t++)
+            {
+                OutRange before = s.OutRange;
+                s.Peek(closes[t]);
+                Check(s.OutRange.Count == before.Count, "Peek does not commit a bar");
+                s.Update(closes[t]);
+                Check(s.OutRange.BegIdx == before.BegIdx && s.OutRange.Count == before.Count + 1,
+                      "Update adds exactly one to Count and leaves BegIdx alone");
+            }
+            Check(s.OutRange.BegIdx == br.BegIdx && s.OutRange.Count == br.Count,
+                  $"Open({warm}) + updates == the batch range");
+        }
+
+        // A clone forks: its own updates extend only itself.
+        Core.SMA_Stream a = core.SMA_Open(closes, period);
+        Core.SMA_Stream b = a.Clone();
+        Check(b.OutRange.BegIdx == a.OutRange.BegIdx && b.OutRange.Count == a.OutRange.Count,
+              "Clone carries the range verbatim");
+        b.Update(closes[^1]);
+        Check(b.OutRange.Count == a.OutRange.Count + 1, "the clone's update extends only the clone");
     }
 
     /// <summary>The documented rejections, with the documented types.</summary>
@@ -544,7 +588,7 @@ public static class StreamApiTest
                     return;
                 }
             }
-            foreach (string prop in new[] { "Value", "FillRange" })
+            foreach (string prop in new[] { "Value", "OutRange" })
             {
                 if (t.GetProperty(prop, BindingFlags.Public | BindingFlags.Instance) == null)
                 {
@@ -752,6 +796,7 @@ public static class StreamApiTest
         PeekDoesNotCommit();
         CloneIsAnIndependentDeepCopy();
         OpenAndFillMatchesBatch();
+        OutRangeTracksTheBatchRange();
         MisuseThrowsTheDocumentedException();
         OpenAndFillRejectsAliasing();
         NullArgumentsAreNamed();

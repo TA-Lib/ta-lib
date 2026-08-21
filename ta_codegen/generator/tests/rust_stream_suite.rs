@@ -231,8 +231,12 @@ fn test_rust_dx_out_feedback_carried() {
 fn test_rust_identity_fast_path_t3() {
     let s = rust_stream_section("t3");
     // param==1 identity short-circuit before the transcribed body: min-history
-    // check via lookback, passthrough value, default state.
-    assert!(s.contains("if historyLen < self.T3_Lookback(optInTimePeriod, optInVFactor) + 1 {"));
+    // check via lookback, passthrough value, default state. The anchor is
+    // max(startIdx, lookback), like the batch call this path stands in for —
+    // a no-op for the public openers, which pass 0 (#241).
+    assert!(s.contains("let fillLb: usize = self.T3_Lookback(optInTimePeriod, optInVFactor);"));
+    assert!(s.contains("let fillLb = if startIdx > fillLb { startIdx } else { fillLb };"));
+    assert!(s.contains("if historyLen < fillLb + 1 {"));
     // Stride 0 short-circuits to the last bar; only the fill arm loops. Letting
     // the loop run at stride 0 is correct but makes the scalar Open O(history).
     assert!(s.contains("if outStride == 0 {"), "identity arm short-circuits at stride 0");
@@ -405,8 +409,14 @@ fn rust_dispatch_open_modes_differ_only_where_intended() {
     assert!(!scalar.contains("outBegIdx"), "the scalar open has no out-meta:\n{scalar}");
     assert!(!fill.contains("outBegIdx"), "the public fill carries no out-meta pair:\n{fill}");
     assert!(
-        fill.contains("Ok((MA_Stream { core: self.clone(), state }, fillRange))"),
-        "the public fill returns the arm's own range beside the handle:\n{fill}"
+        fill.contains("Ok((MA_Stream { core: self.clone(), state, out: fillRange }, fillRange))"),
+        "the public fill returns the arm's own range beside the handle, and keeps it \
+         on the handle too (#241):\n{fill}"
+    );
+    assert!(
+        scalar.contains("let subRange = sub.out_range();")
+            && scalar.contains("out: subRange"),
+        "the scalar open has no out-meta, so it inherits the arm's own range:\n{scalar}"
     );
     assert!(
         internal.contains("(*outBegIdx) = fillLb;"),

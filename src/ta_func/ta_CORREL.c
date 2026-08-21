@@ -302,6 +302,10 @@ TA_RetCode TA_S_CORREL( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CORREL_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double sumXY;
    double sumX;
@@ -526,6 +530,8 @@ static TA_RetCode TA_CORREL_OpenPass( struct TA_CORREL_Stream **stream, const do
         memcpy( sp->ring_trailingIdx_inReal1, inReal1 + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -579,6 +585,7 @@ TA_LIB_API TA_RetCode TA_CORREL_Update( TA_CORREL_Stream *stream, double inReal0
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
    TA_CORREL_StepInternal( stream, inReal0, inReal1, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

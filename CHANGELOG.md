@@ -9,6 +9,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ## [0.8.1] Not Released Yet
 ### Added
 - New Streaming API. See https://ta-lib.org/api/stream/
+- (#241) Every stream handle reports the bars it has produced a value for, as the same
+  `OutRange` the batch API returns: `TA_StreamOutRange` in C (one accessor, for a handle
+  of any function), `out_range()` in Rust, `outRange()` in Java, `OutRange` in C#. Feed a
+  stream N bars by any mixture of opener and updates and it equals what the batch call
+  over those same N bars reports — the opener sets it, each committed bar adds one, a
+  peek leaves it alone, a copy carries it.
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !

@@ -705,17 +705,21 @@ public partial class Core
       internal double[] ring_trailingIdxHalf_inReal = [];
       internal int cbSize_dRing;
       internal double[] cb_dRing = [];
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal HMA_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>HMA_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.HMA</c> reports over the same bars: the opener sets it
+      /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
+      /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
+      /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
+      /// subset of this range, because the caller chose not to take the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal HMA_Stream( HMA_Stream other )
       {
@@ -752,7 +756,8 @@ public partial class Core
          this.cbSize_dRing = other.cbSize_dRing;
          this.cb_dRing = new double[other.cb_dRing.Length];
          Array.Copy( other.cb_dRing, this.cb_dRing, other.cb_dRing.Length );
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( HMA_Stream other )
@@ -796,7 +801,8 @@ public partial class Core
             this.cb_dRing = new double[other.cb_dRing.Length];
          }
          Array.Copy( other.cb_dRing, this.cb_dRing, other.cb_dRing.Length );
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -819,6 +825,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HMA", "update", RetCode.BadParam);
          core.HMA_StreamStep(this, inReal);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -951,7 +958,9 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < HMA_Lookback(optInTimePeriod) + 1 ) {
+         int fillLb = HMA_Lookback(optInTimePeriod);
+         if( startIdx > fillLb ) fillLb = startIdx;
+         if( historyLen < fillLb + 1 ) {
             return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
@@ -982,7 +991,6 @@ public partial class Core
          sp.ring_trailingIdxHalf_inReal = new double[1];
          sp.cbSize_dRing = 0;
          sp.cb_dRing = new double[1];
-         int fillLb = HMA_Lookback(optInTimePeriod);
          outBegIdx = fillLb;
          outNBElement = historyLen - fillLb;
          if( outStride == 0 ) {
@@ -1377,7 +1385,10 @@ public partial class Core
    private RetCode HMA_OpenImpl( HMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return HMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      RetCode retCode = HMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode HMA_OpenAndFillImpl( HMA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
@@ -1400,6 +1411,8 @@ public partial class Core
    {
       HMA_Stream sp = new HMA_Stream(this);
       RetCode retCode = HMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1451,7 +1464,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="HMA_Stream.FillRange"/>.</para>
+   /// <see cref="HMA_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source price series, close by convention. The warm-up history, oldest bar
    /// first.</param>
@@ -1471,7 +1484,8 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       HMA_Stream sp = new HMA_Stream(this);
       RetCode retCode = HMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

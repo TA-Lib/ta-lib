@@ -239,6 +239,10 @@ TA_RetCode TA_S_ADXR( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ADXR_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    /* Peek runs the SAME step body on a scratch copy; sub handles are
     * heap pointers a struct copy cannot clone, so the copy carries this
@@ -407,6 +411,8 @@ static TA_RetCode TA_ADXR_OpenPass( struct TA_ADXR_Stream **stream, const double
       *outNBElement = dummyNBElement;
       if( !outStride ) outReal[0] = sc_outReal[dummyNBElement - 1];
       if( !outStride ) TA_Free( sc_outReal );
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -457,9 +463,14 @@ TA_RetCode TA_ADXR_OpenAndFillInternal( struct TA_ADXR_Stream **stream, const do
 
 TA_LIB_API TA_RetCode TA_ADXR_Update( TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
+   TA_RetCode retCode;
+
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   return TA_ADXR_StepInternal( stream, inHigh, inLow, inClose, outReal );
+   retCode = TA_ADXR_StepInternal( stream, inHigh, inLow, inClose, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_ADXR_Peek( const TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

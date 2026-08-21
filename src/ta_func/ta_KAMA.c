@@ -430,6 +430,10 @@ TA_RetCode TA_S_KAMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_KAMA_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double constMax;
    double constDiff;
@@ -530,7 +534,9 @@ static TA_RetCode TA_KAMA_OpenPass( struct TA_KAMA_Stream **stream, const double
 
    if( optInTimePeriod == 1 )
    {
-      if( historyLen < TA_KAMA_Lookback( optInTimePeriod ) + 1 ) return TA_INSUFFICIENT_HISTORY;
+      int fillLb = TA_KAMA_Lookback( optInTimePeriod );
+      if( startIdx > fillLb ) fillLb = startIdx;
+      if( historyLen < fillLb + 1 ) return TA_INSUFFICIENT_HISTORY;
       sp = (struct TA_KAMA_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
@@ -545,7 +551,6 @@ static TA_RetCode TA_KAMA_OpenPass( struct TA_KAMA_Stream **stream, const double
       }
       sp->ringPos_trailingIdx = 0;
       {
-         int fillLb = TA_KAMA_Lookback( optInTimePeriod );
          int fillIdx;
          *outBegIdx = fillLb;
          *outNBElement = historyLen - fillLb;
@@ -561,6 +566,8 @@ static TA_RetCode TA_KAMA_OpenPass( struct TA_KAMA_Stream **stream, const double
             outReal[0] = inReal[historyLen - 1];
          }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -739,6 +746,8 @@ static TA_RetCode TA_KAMA_OpenPass( struct TA_KAMA_Stream **stream, const double
       }
       sp->ringPos_trailingIdx = 0;
       sp->lag1_inReal = inReal[historyLen - 1];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -792,6 +801,7 @@ TA_LIB_API TA_RetCode TA_KAMA_Update( TA_KAMA_Stream *stream, double inReal, dou
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_KAMA_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

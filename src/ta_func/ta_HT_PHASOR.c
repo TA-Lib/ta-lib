@@ -751,6 +751,10 @@ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_HT_PHASOR_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double tempReal;
    double tempReal2;
    double period;
@@ -1405,6 +1409,8 @@ static TA_RetCode TA_HT_PHASOR_OpenPass( struct TA_HT_PHASOR_Stream **stream, co
         memcpy( sp->ring_trailingWMAIdx_inReal, inReal + (historyLen - sp->ringCap_trailingWMAIdx), sizeof(double) * (size_t)sp->ringCap_trailingWMAIdx );
       }
       sp->ringPos_trailingWMAIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1460,6 +1466,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Update( TA_HT_PHASOR_Stream *stream, double i
    if( !stream || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_HT_PHASOR_StepInternal( stream, inReal, outInPhase, outQuadrature );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

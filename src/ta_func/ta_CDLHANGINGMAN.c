@@ -340,6 +340,10 @@ TA_RetCode TA_S_CDLHANGINGMAN( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLHANGINGMAN_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double BodyPeriodTotal;
    double ShadowLongPeriodTotal;
    double ShadowVeryShortPeriodTotal;
@@ -638,6 +642,8 @@ static TA_RetCode TA_CDLHANGINGMAN_OpenPass( struct TA_CDLHANGINGMAN_Stream **st
       sp->lag1_inHigh = inHigh[historyLen - 1];
       sp->lag1_inLow = inLow[historyLen - 1];
       sp->lag1_inClose = inClose[historyLen - 1];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -691,6 +697,7 @@ TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_Update( TA_CDLHANGINGMAN_Stream *stream, 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_CDLHANGINGMAN_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

@@ -542,6 +542,10 @@ TA_RetCode TA_S_HMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_HMA_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double dividerFull;
    double periodSubFull;
@@ -700,7 +704,9 @@ static TA_RetCode TA_HMA_OpenPass( struct TA_HMA_Stream **stream, const double i
 
    if( optInTimePeriod == 1 )
    {
-      if( historyLen < TA_HMA_Lookback( optInTimePeriod ) + 1 ) return TA_INSUFFICIENT_HISTORY;
+      int fillLb = TA_HMA_Lookback( optInTimePeriod );
+      if( startIdx > fillLb ) fillLb = startIdx;
+      if( historyLen < fillLb + 1 ) return TA_INSUFFICIENT_HISTORY;
       sp = (struct TA_HMA_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
@@ -715,7 +721,6 @@ static TA_RetCode TA_HMA_OpenPass( struct TA_HMA_Stream **stream, const double i
       }
       sp->ringPos_trailingIdxFull = 0;
       {
-         int fillLb = TA_HMA_Lookback( optInTimePeriod );
          int fillIdx;
          *outBegIdx = fillLb;
          *outNBElement = historyLen - fillLb;
@@ -731,6 +736,8 @@ static TA_RetCode TA_HMA_OpenPass( struct TA_HMA_Stream **stream, const double i
             outReal[0] = inReal[historyLen - 1];
          }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -858,6 +865,8 @@ static TA_RetCode TA_HMA_OpenPass( struct TA_HMA_Stream **stream, const double i
         memcpy( sp->ring_trailingIdxFull_inReal, inReal + (historyLen - sp->ringCap_trailingIdxFull), sizeof(double) * (size_t)sp->ringCap_trailingIdxFull );
       }
       sp->ringPos_trailingIdxFull = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1112,6 +1121,8 @@ static TA_RetCode TA_HMA_OpenPass( struct TA_HMA_Stream **stream, const double i
       if( !sp->cbMirror_dRing ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_dRing, dRing, sizeof(double) * (size_t)sp->cbSize_dRing );
       if( dRing != &local_dRing[0] ) TA_Free( dRing ); 
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1168,6 +1179,7 @@ TA_LIB_API TA_RetCode TA_HMA_Update( TA_HMA_Stream *stream, double inReal, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_HMA_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

@@ -272,7 +272,7 @@ impl LanguageBackend for RustBackend {
     fn clean_keep(&self) -> &'static [&'static str] {
         // Hand-written modules copied from `templates/rust/` (see
         // `RUST_TEMPLATE_MODULES`) plus the generated `mod.rs`.
-        &["types.rs", "scratch_election.rs", "stream_finite.rs", "mod.rs"]
+        &["types.rs", "scratch_election.rs", "stream_finite.rs", "stream_out_range.rs", "mod.rs"]
     }
     fn reserved_words(&self) -> &'static [&'static str] {
         rust_lang::RESERVED_WORDS

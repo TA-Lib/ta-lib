@@ -700,6 +700,10 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_BBANDS_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double optInNbDevUp;
    double optInNbDevDn;
@@ -974,6 +978,8 @@ static TA_RetCode TA_BBANDS_OpenPass( struct TA_BBANDS_Stream **stream, const do
       if( !outStride ) TA_Free( sc_outRealUpperBand );
       if( !outStride ) TA_Free( sc_outRealMiddleBand );
       if( !outStride ) TA_Free( sc_outRealLowerBand );
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1028,9 +1034,14 @@ TA_RetCode TA_BBANDS_OpenAndFillInternal( struct TA_BBANDS_Stream **stream, cons
 
 TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
+   TA_RetCode retCode;
+
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   return TA_BBANDS_StepInternal( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   retCode = TA_BBANDS_StepInternal( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_BBANDS_Peek( const TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )

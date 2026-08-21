@@ -320,6 +320,10 @@ TA_RetCode TA_S_AROON( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_AROON_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double lowest;
    double highest;
@@ -577,6 +581,8 @@ static TA_RetCode TA_AROON_OpenPass( struct TA_AROON_Stream **stream, const doub
            sp->x_inLow[fillJ & sp->xMask] = inLow[fillJ];
         }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -632,6 +638,7 @@ TA_LIB_API TA_RetCode TA_AROON_Update( TA_AROON_Stream *stream, double inHigh, d
    if( !stream || !outAroonDown || !outAroonUp ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    TA_AROON_StepInternal( stream, inHigh, inLow, outAroonDown, outAroonUp );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

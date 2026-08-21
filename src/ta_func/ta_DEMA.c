@@ -370,6 +370,10 @@ TA_RetCode TA_S_DEMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_DEMA_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double prevEMA1;
    double prevEMA2;
@@ -413,13 +417,14 @@ static TA_RetCode TA_DEMA_OpenPass( struct TA_DEMA_Stream **stream, const double
 
    if( optInTimePeriod == 1 )
    {
-      if( historyLen < TA_DEMA_Lookback( optInTimePeriod ) + 1 ) return TA_INSUFFICIENT_HISTORY;
+      int fillLb = TA_DEMA_Lookback( optInTimePeriod );
+      if( startIdx > fillLb ) fillLb = startIdx;
+      if( historyLen < fillLb + 1 ) return TA_INSUFFICIENT_HISTORY;
       sp = (struct TA_DEMA_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       {
-         int fillLb = TA_DEMA_Lookback( optInTimePeriod );
          int fillIdx;
          *outBegIdx = fillLb;
          *outNBElement = historyLen - fillLb;
@@ -435,6 +440,8 @@ static TA_RetCode TA_DEMA_OpenPass( struct TA_DEMA_Stream **stream, const double
             outReal[0] = inReal[historyLen - 1];
          }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -586,6 +593,8 @@ static TA_RetCode TA_DEMA_OpenPass( struct TA_DEMA_Stream **stream, const double
       sp->prevEMA1 = prevEMA1;
       sp->prevEMA2 = prevEMA2;
       sp->optInK_1 = optInK_1;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -639,6 +648,7 @@ TA_LIB_API TA_RetCode TA_DEMA_Update( TA_DEMA_Stream *stream, double inReal, dou
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_DEMA_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

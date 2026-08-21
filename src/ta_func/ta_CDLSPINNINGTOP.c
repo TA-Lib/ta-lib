@@ -234,6 +234,10 @@ TA_RetCode TA_S_CDLSPINNINGTOP( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLSPINNINGTOP_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double BodyPeriodTotal;
    int ringPos_BodyTrailingIdx;
    int ringCap_BodyTrailingIdx;
@@ -376,6 +380,8 @@ static TA_RetCode TA_CDLSPINNINGTOP_OpenPass( struct TA_CDLSPINNINGTOP_Stream **
         }
       }
       sp->ringPos_BodyTrailingIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -429,6 +435,7 @@ TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Update( TA_CDLSPINNINGTOP_Stream *stream
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_CDLSPINNINGTOP_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

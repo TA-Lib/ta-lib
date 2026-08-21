@@ -331,6 +331,10 @@ TA_RetCode TA_S_CCI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CCI_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double tempReal;
    double tempReal2;
@@ -542,6 +546,8 @@ static TA_RetCode TA_CCI_OpenPass( struct TA_CCI_Stream **stream, const double i
       if( !sp->cbMirror_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_circBuffer, circBuffer, sizeof(double) * (size_t)sp->cbSize_circBuffer );
       if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); 
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -595,6 +601,7 @@ TA_LIB_API TA_RetCode TA_CCI_Update( TA_CCI_Stream *stream, double inHigh, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_CCI_StepInternal( stream, inHigh, inLow, inClose, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

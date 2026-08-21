@@ -257,6 +257,10 @@ TA_RetCode TA_S_LINEARREG_SLOPE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_LINEARREG_SLOPE_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double SumX;
    double SumXY;
@@ -424,6 +428,8 @@ static TA_RetCode TA_LINEARREG_SLOPE_OpenPass( struct TA_LINEARREG_SLOPE_Stream 
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -477,6 +483,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Update( TA_LINEARREG_SLOPE_Stream *stre
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_LINEARREG_SLOPE_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

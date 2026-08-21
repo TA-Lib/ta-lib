@@ -239,6 +239,10 @@ TA_RetCode TA_S_QSTICK( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_QSTICK_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double periodTotal;
    double tempReal;
@@ -393,6 +397,8 @@ static TA_RetCode TA_QSTICK_OpenPass( struct TA_QSTICK_Stream **stream, const do
         }
       }
       sp->ringPos_trailingIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -446,6 +452,7 @@ TA_LIB_API TA_RetCode TA_QSTICK_Update( TA_QSTICK_Stream *stream, double inOpen,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_QSTICK_StepInternal( stream, inOpen, inClose, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

@@ -417,12 +417,16 @@ impl Core {
 /// Live TEMA stream: one value per closed bar, bit-identical to [`Core::TEMA`]
 /// over the same series. Open with [`Core::TEMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
+///
+/// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TEMA_Stream")]
 pub struct TEMA_Stream {
     core: Core,
     state: TEMA_StreamState,
+    /// The bars this handle has produced a value for — see [`Self::out_range`].
+    out: OutRange,
 }
 
 #[allow(dead_code)]
@@ -432,6 +436,7 @@ impl TEMA_Stream {
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
+        self.out = src.out;
     }
 }
 
@@ -498,7 +503,9 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            if historyLen < self.TEMA_Lookback(optInTimePeriod) + 1 {
+            let fillLb: usize = self.TEMA_Lookback(optInTimePeriod);
+            let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
+            if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = TEMA_StreamState {
@@ -508,7 +515,6 @@ impl Core {
                 prevEMA3: 0.0_f64,
                 optInK_1: 0.0_f64,
             };
-            let fillLb: usize = self.TEMA_Lookback(optInTimePeriod);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
             if outStride == 0 {
@@ -520,7 +526,7 @@ impl Core {
                     fillIdx += 1;
                 }
             }
-            return Ok(TEMA_Stream { core: self.clone(), state });
+            return Ok(TEMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let mut prevEMA1: f64 = 0.0_f64;
         let mut prevEMA2: f64 = 0.0_f64;
@@ -677,7 +683,7 @@ impl Core {
             prevEMA3,
             optInK_1,
         };
-        Ok(TEMA_Stream { core: self.clone(), state })
+        Ok(TEMA_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::TEMA_Open`] (composition seam).
@@ -707,8 +713,12 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.TEMA_Open(&data, 30).expect("enough history");
+    /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
     /// let updated = s.update(100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().beg_idx, r0.beg_idx);
+    /// assert_eq!(s.out_range().count, r0.count + 1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TEMA_Open")]
@@ -761,6 +771,9 @@ impl TEMA_Stream {
         }
         let mut outReal: f64 = 0.0_f64;
         self.core.TEMA_step_internal(&mut self.state, inReal, &mut outReal);
+        if self.out.count < Core::MAX_INDEX {
+            self.out.count += 1;
+        }
         Ok(outReal)
     }
 
@@ -781,6 +794,19 @@ impl TEMA_Stream {
         }
         let mut scratch = self.clone();
         scratch.update(inReal)
+    }
+
+    /// The bars this stream has produced a value for, in the input series'
+    /// coordinates: `[beg_idx, beg_idx + count)`.
+    ///
+    /// It is what [`Core::TEMA`] reports over the same bars: the opener sets it
+    /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one
+    /// to the count, `peek` leaves it alone, and a clone carries it verbatim.
+    /// A plain `Open` hands back only the last value, a subset of this range,
+    /// because the caller chose not to take the fill.
+    #[doc(alias = "TA_StreamOutRange")]
+    pub fn out_range(&self) -> OutRange {
+        self.out
     }
 }
 

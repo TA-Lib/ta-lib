@@ -404,6 +404,10 @@ TA_RetCode TA_S_MIN( int    startIdx,
 /* Using min_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 struct TA_MIN_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double lowest;
    int trailingIdx;
@@ -591,6 +595,8 @@ static TA_RetCode TA_MIN_OpenPass( struct TA_MIN_Stream **stream, const double i
            sp->x_inReal[fillJ & sp->xMask] = inReal[fillJ];
         }
       }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -644,6 +650,7 @@ TA_LIB_API TA_RetCode TA_MIN_Update( TA_MIN_Stream *stream, double inReal, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_MIN_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

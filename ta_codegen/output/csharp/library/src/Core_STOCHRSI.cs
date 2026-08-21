@@ -515,18 +515,22 @@ public partial class Core
       internal double cur_outFastD;
       internal RSI_Stream sub0 = null!;
       internal STOCHF_Stream sub1 = null!;
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal STOCHRSI_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>STOCHRSI_OpenAndFill</c> filled, or
-      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
-      /// (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.STOCHRSI</c> reports over the same bars: the opener
+      /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
+      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
+      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
+      /// last value, a subset of this range, because the caller chose not to take
+      /// the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal STOCHRSI_Stream( STOCHRSI_Stream other )
       {
@@ -539,7 +543,8 @@ public partial class Core
          this.cur_outFastD = other.cur_outFastD;
          this.sub0 = new RSI_Stream(other.sub0);
          this.sub1 = new STOCHF_Stream(other.sub1);
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( STOCHRSI_Stream other )
@@ -561,7 +566,8 @@ public partial class Core
          } else {
             this.sub1.CopyFrom(other.sub1);
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -584,6 +590,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STOCHRSI", "update", RetCode.BadParam);
          core.STOCHRSI_StreamStep(this, inReal);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new STOCHRSI_Value(cur_outFastK, cur_outFastD);
       }
 
@@ -770,7 +777,10 @@ public partial class Core
    {
       double[] sink_outFastK = new double[1];
       double[] sink_outFastD = new double[1];
-      return STOCHRSI_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, sink_outFastK, sink_outFastD, 0 );
+      RetCode retCode = STOCHRSI_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, sink_outFastK, sink_outFastD, 0 );
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
+      return retCode;
    }
 
    private RetCode STOCHRSI_OpenAndFillImpl( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
@@ -793,6 +803,8 @@ public partial class Core
    {
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
       RetCode retCode = STOCHRSI_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -851,7 +863,7 @@ public partial class Core
    /// and then reads the input tail to seed its rings, so the batch tier's
    /// in-place allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="STOCHRSI_Stream.FillRange"/>.</para>
+   /// <see cref="STOCHRSI_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series fed into the RSI calculation. The warm-up history, oldest
    /// bar first.</param>
@@ -879,7 +891,8 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
       RetCode retCode = STOCHRSI_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -350,12 +350,21 @@ public class StreamSmokeTest {
         int lb = core.SMA_Lookback(14);
         Core.SMA_Stream s = core.SMA_Open(java.util.Arrays.copyOf(close, lb + 1), 14);
         check(bitEq(s.value(), batch[0]), "open value == first batch output");
+        /* The handle's range is the batch range over the bars it has been fed
+         * (issue #241) — checked at every bar, so an increment that fires on the
+         * wrong side of a reject or skips a tier shows up at the bar it happens
+         * rather than only at the end. */
+        check(s.outRange().equals(new OutRange(lb, 1)),
+              "a plain open over lookback + 1 bars reports (lookback, 1)");
         for (int t = lb + 1; t < n; t++) {
             double peeked = s.peek(close[t]);
+            check(s.outRange().equals(new OutRange(lb, t - lb)), "peek does not move outRange @" + t);
             double updated = s.update(close[t]);
             check(bitEq(peeked, updated), "peek == update @" + t);
             check(bitEq(s.value(), updated), "value() == update @" + t);
             check(bitEq(updated, batch[t - batchRange.begIdx()]), "update == batch @" + t);
+            check(s.outRange().equals(new OutRange(lb, t - lb + 1)),
+                  "update adds one to outRange.count @" + t);
         }
 
         /* peek does not commit; copy() forks independently. */
@@ -369,18 +378,26 @@ public class StreamSmokeTest {
         b.update(111.0);
         check(bitEq(a.value(), b.value()), "copy is equivalent (same input, same bits)");
 
-        /* fillRange() is never null: a plain open leaves it empty, and a
-         * successful openAndFill always writes at least one value (a history
-         * shorter than lookback + 1 throws instead), so isEmpty() separates the
-         * two without a null check. */
-        check(s.fillRange() != null && s.fillRange().isEmpty(),
-              "plain open leaves fillRange empty, never null");
+        /* The invariant #241 exists for: feed a stream n bars by ANY mixture of
+         * opener and updates and its outRange is the batch range over those same
+         * n bars. `s` above was opened over lookback + 1 bars and updated to the
+         * end of the series; `f` takes the whole history in one openAndFill.
+         * Neither is ever empty — a successful open writes at least one value —
+         * so OutRange.EMPTY no longer separates the two openers. */
+        check(s.outRange().equals(batchRange),
+              "open + updates over n bars == the batch range over n bars");
         double[] warm = new double[batchRange.count()];
         Core.SMA_Stream f = core.SMA_OpenAndFill(close, 14, warm);
-        check(f.fillRange().equals(batchRange), "openAndFill fillRange == the batch range");
+        check(f.outRange().equals(batchRange), "openAndFill outRange == the batch range");
         check(bitEq(warm[batchRange.count() - 1], f.value()),
               "last filled value == the handle's value");
-        check(f.copy().fillRange().equals(batchRange), "copy carries the fill range");
+        check(f.copy().outRange().equals(batchRange), "copy carries the range");
+        /* A fork diverges: the copy's count only grows with ITS updates. */
+        Core.SMA_Stream g = f.copy();
+        g.update(close[n - 1]);
+        check(g.outRange().equals(new OutRange(batchRange.begIdx(), batchRange.count() + 1)),
+              "a copy's own update extends only the copy");
+        check(f.outRange().equals(batchRange), "the original is untouched by the copy's update");
 
         /* Exceptions: typed insufficient history; plain IAE for bad params;
          * aliasing rejection on openAndFill; update/peek never throw. */

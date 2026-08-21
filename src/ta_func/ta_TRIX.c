@@ -372,6 +372,10 @@ TA_RetCode TA_S_TRIX( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_TRIX_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double prevEMA1;
    double prevEMA2;
@@ -572,6 +576,8 @@ static TA_RetCode TA_TRIX_OpenPass( struct TA_TRIX_Stream **stream, const double
       sp->prevEMA2 = prevEMA2;
       sp->prevEMA3 = prevEMA3;
       sp->optInK_1 = optInK_1;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -625,6 +631,7 @@ TA_LIB_API TA_RetCode TA_TRIX_Update( TA_TRIX_Stream *stream, double inReal, dou
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_TRIX_StepInternal( stream, inReal, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

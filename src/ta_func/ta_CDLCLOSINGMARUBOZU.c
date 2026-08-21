@@ -267,6 +267,10 @@ TA_RetCode TA_S_CDLCLOSINGMARUBOZU( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLCLOSINGMARUBOZU_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double BodyLongPeriodTotal;
    double ShadowVeryShortPeriodTotal;
    int ringPos_BodyLongTrailingIdx;
@@ -455,6 +459,8 @@ static TA_RetCode TA_CDLCLOSINGMARUBOZU_OpenPass( struct TA_CDLCLOSINGMARUBOZU_S
         }
       }
       sp->ringPos_ShadowVeryShortTrailingIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -508,6 +514,7 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_Update( TA_CDLCLOSINGMARUBOZU_Stream
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_CDLCLOSINGMARUBOZU_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

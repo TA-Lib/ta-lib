@@ -606,12 +606,16 @@ impl Core {
 /// Live SMI stream: one value per closed bar, bit-identical to [`Core::SMI`]
 /// over the same series. Open with [`Core::SMI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
+///
+/// [`Self::out_range`] reports the bars it has produced a value for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SMI_Stream")]
 pub struct SMI_Stream {
     core: Core,
     state: SMI_StreamState,
+    /// The bars this handle has produced a value for — see [`Self::out_range`].
+    out: OutRange,
 }
 
 #[allow(dead_code)]
@@ -621,6 +625,7 @@ impl SMI_Stream {
     pub(crate) fn restore_from(&mut self, src: &Self) {
         self.core.clone_from(&src.core);
         self.state.restore_from(&src.state);
+        self.out = src.out;
     }
 }
 
@@ -1103,7 +1108,7 @@ impl Core {
             x_inLow,
             x_inClose,
         };
-        Ok(SMI_Stream { core: self.clone(), state })
+        Ok(SMI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
     /// Internal startIdx-anchored open behind [`Core::SMI_Open`] (composition seam).
@@ -1138,8 +1143,12 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.SMI_Open(&high, &low, &close, 13, 2, 25, 9).expect("enough history");
+    /// let r0 = s.out_range();
     /// let peeked = s.peek(101.4, 99.1, 100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
     /// let updated = s.update(101.4, 99.1, 100.9).expect("a finite bar");
+    /// assert_eq!(s.out_range().beg_idx, r0.beg_idx);
+    /// assert_eq!(s.out_range().count, r0.count + 1);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
@@ -1205,6 +1214,9 @@ impl SMI_Stream {
         let mut outSMI: f64 = 0.0_f64;
         let mut outSMISignal: f64 = 0.0_f64;
         self.core.SMI_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outSMI, &mut outSMISignal);
+        if self.out.count < Core::MAX_INDEX {
+            self.out.count += 1;
+        }
         Ok((outSMI, outSMISignal))
     }
 
@@ -1230,6 +1242,19 @@ impl SMI_Stream {
             cell.set(Some(scratch));
             value
         })
+    }
+
+    /// The bars this stream has produced a value for, in the input series'
+    /// coordinates: `[beg_idx, beg_idx + count)`.
+    ///
+    /// It is what [`Core::SMI`] reports over the same bars: the opener sets it
+    /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one
+    /// to the count, `peek` leaves it alone, and a clone carries it verbatim.
+    /// A plain `Open` hands back only the last value, a subset of this range,
+    /// because the caller chose not to take the fill.
+    #[doc(alias = "TA_StreamOutRange")]
+    pub fn out_range(&self) -> OutRange {
+        self.out
     }
 }
 

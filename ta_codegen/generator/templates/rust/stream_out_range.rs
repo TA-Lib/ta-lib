@@ -1,0 +1,276 @@
+//! The range a stream handle carries: `out_range()` against the batch tier.
+//!
+//! Hand-written, not generated: this file lives in
+//! `ta_codegen/generator/templates/rust/stream_out_range.rs` and is copied
+//! verbatim into the crate by `generate` (the Rust backend's `clean_keep` holds
+//! it, so `generate` never deletes it). It is declared `#[cfg(test)]` in
+//! `mod.rs`, so nothing here ships in a release build. Run it with
+//! `cargo test --lib -p ta-lib`.
+//!
+//! The invariant (issue #241):
+//!
+//! > Feed a stream `N` bars, by any mixture of openers and updates, and its
+//! > `OutRange` equals the batch `OutRange` over the same `N` bars.
+//!
+//! Unconditional — no dependence on which opener was used or on the warm-up
+//! length. That is what ties the streaming tier to the batch tier through one
+//! number pair, which the value gates do not do: they compare outputs, and an
+//! output is the same whether or not the handle knows how many it has produced.
+//!
+//! Coverage is by stream TIER, not by function count. The seeding is emitted
+//! from one place per tier and the tiers do not share it — three read the range
+//! back off the transcribed body, dispatch inherits its arm's, the period bank
+//! derives it from the anchor the whole bank was opened at — so the functions
+//! here are chosen to reach every one:
+//!
+//! | function   | tier                                                          |
+//! |------------|---------------------------------------------------------------|
+//! | `SMA`      | loop                                                          |
+//! | `MINUS_DI` | dual-mode                                                     |
+//! | `MA`       | dispatch — including the identity arm, which opens no sub      |
+//! | `MAVP`     | period-bank                                                   |
+//! | `BBANDS`   | composed, multi-output                                        |
+//!
+//! The corpus-wide form of this lives in `stream_verify`'s range leg, which
+//! runs it for every function in all four language servers. What is here is the
+//! part that leg cannot see: `peek` leaving the count alone, and a clone's
+//! updates extending only the clone.
+
+use crate::ta_func::types::{Core, OutRange, RetCode};
+use crate::MAType;
+
+const WARM: usize = 60;
+const N: usize = 90;
+
+fn series(n: usize) -> (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>) {
+    let mut high = Vec::with_capacity(n);
+    let mut low = Vec::with_capacity(n);
+    let mut close = Vec::with_capacity(n);
+    let mut volume = Vec::with_capacity(n);
+    let mut periods = Vec::with_capacity(n);
+    for i in 0..n {
+        let c = 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.013 * i as f64;
+        close.push(c);
+        high.push(c + (1.3 * i as f64).sin().abs());
+        low.push(c - (1.7 * i as f64).sin().abs());
+        volume.push(1000.0 + 7.0 * i as f64);
+        periods.push(5.0 + ((i % 11) as f64));
+    }
+    (high, low, close, volume, periods)
+}
+
+/// One tier's check: open over `warm` bars, drive to `N` by `update`, and
+/// compare against what the batch call reports for the same `N`.
+///
+/// `open` and `step` are closures so the same body serves every signature.
+/// `lookback` comes from the function's own `_Lookback`, not from a literal:
+/// a wrong lookback would otherwise be written into both sides of the compare.
+fn range_tracks_batch<H>(
+    what: &str,
+    lookback: usize,
+    batch: OutRange,
+    open: impl Fn(usize) -> Result<H, RetCode>,
+    range: impl Fn(&H) -> OutRange,
+    peek: impl Fn(&H, usize),
+    step: impl Fn(&mut H, usize),
+) {
+    for warm in [lookback + 1, lookback + 7, N / 2, N] {
+        assert!(warm <= N, "{what}: warm-up {warm} past the series");
+        let mut h = open(warm).unwrap_or_else(|e| panic!("{what}: open({warm}) failed: {e:?}"));
+        assert_eq!(
+            range(&h),
+            OutRange { beg_idx: lookback, count: warm - lookback },
+            "{what}: Open({warm}) must report (lookback, {warm} - lookback)"
+        );
+        for t in warm..N {
+            let before = range(&h);
+            peek(&h, t);
+            assert_eq!(range(&h), before, "{what}: peek committed a bar at {t}");
+            step(&mut h, t);
+            assert_eq!(
+                range(&h),
+                OutRange { beg_idx: before.beg_idx, count: before.count + 1 },
+                "{what}: update must add exactly one to count at bar {t}"
+            );
+        }
+        assert_eq!(
+            range(&h),
+            batch,
+            "{what}: Open({warm}) + updates to {N} bars != the batch range over {N} bars"
+        );
+    }
+}
+
+#[test]
+fn every_tier_reports_the_batch_range() {
+    let core = Core::new();
+    let (high, low, close, volume, periods) = series(N);
+    let _ = volume;
+    let mut out0 = vec![0.0_f64; N];
+    let mut out1 = vec![0.0_f64; N];
+    let mut out2 = vec![0.0_f64; N];
+
+    // Loop tier.
+    let batch = core.SMA(0, N - 1, &close, 14, &mut out0).expect("batch SMA");
+    range_tracks_batch(
+        "SMA (loop)",
+        core.SMA_Lookback(14),
+        batch,
+        |w| core.SMA_Open(&close[..w], 14).map(|(h, _)| h),
+        |h| h.out_range(),
+        |h, t| {
+            h.peek(close[t]).expect("finite bar");
+        },
+        |h, t| {
+            h.update(close[t]).expect("finite bar");
+        },
+    );
+
+    // Dual-mode tier.
+    let batch = core.MINUS_DI(0, N - 1, &high, &low, &close, 14, &mut out0).expect("batch MINUS_DI");
+    range_tracks_batch(
+        "MINUS_DI (dual-mode)",
+        core.MINUS_DI_Lookback(14),
+        batch,
+        |w| core.MINUS_DI_Open(&high[..w], &low[..w], &close[..w], 14).map(|(h, _)| h),
+        |h| h.out_range(),
+        |h, t| {
+            h.peek(high[t], low[t], close[t]).expect("finite bar");
+        },
+        |h, t| {
+            h.update(high[t], low[t], close[t]).expect("finite bar");
+        },
+    );
+
+    // Dispatch tier, an arm that opens a sub-stream.
+    let batch = core.MA(0, N - 1, &close, 14, MAType::EMA, &mut out0).expect("batch MA");
+    range_tracks_batch(
+        "MA (dispatch, EMA arm)",
+        core.MA_Lookback(14, MAType::EMA),
+        batch,
+        |w| core.MA_Open(&close[..w], 14, MAType::EMA).map(|(h, _)| h),
+        |h| h.out_range(),
+        |h, t| {
+            h.peek(close[t]).expect("finite bar");
+        },
+        |h, t| {
+            h.update(close[t]).expect("finite bar");
+        },
+    );
+
+    // Dispatch tier, the identity arm: period 1 opens no sub-stream at all and
+    // copies the bar straight out, so it seeds the range from its own lookback.
+    let batch = core.MA(0, N - 1, &close, 1, MAType::SMA, &mut out0).expect("batch MA(1)");
+    range_tracks_batch(
+        "MA (dispatch, identity arm)",
+        core.MA_Lookback(1, MAType::SMA),
+        batch,
+        |w| core.MA_Open(&close[..w], 1, MAType::SMA).map(|(h, _)| h),
+        |h| h.out_range(),
+        |h, t| {
+            h.peek(close[t]).expect("finite bar");
+        },
+        |h, t| {
+            h.update(close[t]).expect("finite bar");
+        },
+    );
+
+    // Period-bank tier.
+    let batch = core
+        .MAVP(0, N - 1, &close, &periods, 2, 30, MAType::SMA, &mut out0)
+        .expect("batch MAVP");
+    range_tracks_batch(
+        "MAVP (period bank)",
+        core.MAVP_Lookback(2, 30, MAType::SMA),
+        batch,
+        |w| core.MAVP_Open(&close[..w], &periods[..w], 2, 30, MAType::SMA).map(|(h, _)| h),
+        |h| h.out_range(),
+        |h, t| {
+            h.peek(close[t], periods[t]).expect("finite bar");
+        },
+        |h, t| {
+            h.update(close[t], periods[t]).expect("finite bar");
+        },
+    );
+
+    // Composed tier, multi-output.
+    let batch = core
+        .BBANDS(0, N - 1, &close, 20, 2.0, 2.0, MAType::SMA, &mut out0, &mut out1, &mut out2)
+        .expect("batch BBANDS");
+    range_tracks_batch(
+        "BBANDS (composed)",
+        core.BBANDS_Lookback(20, 2.0, 2.0, MAType::SMA),
+        batch,
+        |w| core.BBANDS_Open(&close[..w], 20, 2.0, 2.0, MAType::SMA).map(|(h, _)| h),
+        |h| h.out_range(),
+        |h, t| {
+            h.peek(close[t]).expect("finite bar");
+        },
+        |h, t| {
+            h.update(close[t]).expect("finite bar");
+        },
+    );
+}
+
+/// `OpenAndFill` reports the range twice — beside the handle, as it always has
+/// (#179 C15), and now on the handle. The two must be the same pair, or a caller
+/// reading one gets a different answer from a caller reading the other.
+#[test]
+fn open_and_fill_agrees_with_the_handle_it_returns() {
+    let core = Core::new();
+    let (_, _, close, _, _) = series(N);
+    let mut out = vec![0.0_f64; N];
+    let mut batch = vec![0.0_f64; N];
+
+    let br = core.SMA(0, N - 1, &close, 14, &mut batch).expect("batch SMA");
+    let (h, fr) = core.SMA_OpenAndFill(&close, 14, &mut out).expect("openAndFill");
+    assert_eq!(fr, br, "the returned range is the batch range");
+    assert_eq!(h.out_range(), fr, "the handle reports the same pair it returned");
+
+    // And it keeps growing from there, exactly as a plain open's would.
+    let mut h = h;
+    h.update(close[N - 1]).expect("finite bar");
+    assert_eq!(h.out_range(), OutRange { beg_idx: br.beg_idx, count: br.count + 1 });
+}
+
+/// A clone forks: its updates extend only itself. Cheap to get wrong — the
+/// range lives on the handle, and `restore_from` (peek's scratch path) copies
+/// the state field by field.
+#[test]
+fn a_clone_carries_the_range_and_then_diverges() {
+    let core = Core::new();
+    let (_, _, close, _, _) = series(N);
+
+    let (a, _) = core.SMA_Open(&close, 14).expect("open");
+    let mut b = a.clone();
+    assert_eq!(b.out_range(), a.out_range(), "a clone carries the range verbatim");
+    b.update(close[N - 1]).expect("finite bar");
+    assert_eq!(
+        b.out_range(),
+        OutRange { beg_idx: a.out_range().beg_idx, count: a.out_range().count + 1 },
+        "the clone's own update extends only the clone"
+    );
+    assert_eq!(
+        a.out_range(),
+        OutRange { beg_idx: 13, count: N - 13 },
+        "the original is untouched by the clone's update"
+    );
+}
+
+/// A rejected bar must leave the range where it was — the same property the
+/// non-finite gate asserts about the rest of the handle, for the one field that
+/// gate cannot see (it compares the next value, and a moved count changes none).
+#[test]
+fn a_rejected_bar_does_not_advance_the_range() {
+    let core = Core::new();
+    let (_, _, close, _, _) = series(N);
+
+    let (mut s, _) = core.SMA_Open(&close[..WARM], 14).expect("open");
+    let before = s.out_range();
+    for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+        assert!(matches!(s.update(bad), Err(RetCode::BadParam)), "a non-finite bar is rejected");
+        assert_eq!(s.out_range(), before, "a rejected bar must not advance the count");
+    }
+    s.update(close[WARM]).expect("finite bar");
+    assert_eq!(s.out_range(), OutRange { beg_idx: before.beg_idx, count: before.count + 1 });
+}

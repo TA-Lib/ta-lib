@@ -214,6 +214,10 @@ TA_RetCode TA_S_IMI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_IMI_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    int winPos_i;
    int winCap_i;
@@ -354,6 +358,8 @@ static TA_RetCode TA_IMI_OpenPass( struct TA_IMI_Stream **stream, const double i
       if( !sp->winMirror_i_inClose ) { TA_IMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inClose, inClose + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
       sp->winPos_i = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -407,6 +413,7 @@ TA_LIB_API TA_RetCode TA_IMI_Update( TA_IMI_Stream *stream, double inOpen, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_IMI_StepInternal( stream, inOpen, inClose, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

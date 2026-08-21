@@ -238,6 +238,10 @@ TA_RetCode TA_S_CDLMATCHINGLOW( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLMATCHINGLOW_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double EqualPeriodTotal;
    double lag1_inOpen;
    double lag1_inHigh;
@@ -396,6 +400,8 @@ static TA_RetCode TA_CDLMATCHINGLOW_OpenPass( struct TA_CDLMATCHINGLOW_Stream **
       sp->lag1_inHigh = inHigh[historyLen - 1];
       sp->lag1_inLow = inLow[historyLen - 1];
       sp->lag1_inClose = inClose[historyLen - 1];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -449,6 +455,7 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Update( TA_CDLMATCHINGLOW_Stream *stream
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_CDLMATCHINGLOW_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

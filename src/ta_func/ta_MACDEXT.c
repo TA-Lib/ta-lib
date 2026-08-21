@@ -474,6 +474,10 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MACDEXT_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInFastPeriod;
    TA_MAType optInFastMAType;
    int optInSlowPeriod;
@@ -800,6 +804,8 @@ static TA_RetCode TA_MACDEXT_OpenPass( struct TA_MACDEXT_Stream **stream, const 
       if( !outStride ) TA_Free( sc_outMACD );
       if( !outStride ) TA_Free( sc_outMACDSignal );
       if( !outStride ) TA_Free( sc_outMACDHist );
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -854,9 +860,14 @@ TA_RetCode TA_MACDEXT_OpenAndFillInternal( struct TA_MACDEXT_Stream **stream, co
 
 TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
+   TA_RetCode retCode;
+
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   return TA_MACDEXT_StepInternal( stream, inReal, outMACD, outMACDSignal, outMACDHist );
+   retCode = TA_MACDEXT_StepInternal( stream, inReal, outMACD, outMACDSignal, outMACDHist );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_MACDEXT_Peek( const TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )

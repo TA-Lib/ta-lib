@@ -396,6 +396,10 @@ TA_RetCode TA_S_CMF( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CMF_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double sumMFV;
    double sumVol;
@@ -649,6 +653,8 @@ static TA_RetCode TA_CMF_OpenPass( struct TA_CMF_Stream **stream, const double i
       if( !sp->cbMirror_mfv_volume ) { if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); TA_CMF_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_mfv_volume, mfv_volume, sizeof(double) * (size_t)sp->cbSize_mfv );
       if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); 
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -702,6 +708,7 @@ TA_LIB_API TA_RetCode TA_CMF_Update( TA_CMF_Stream *stream, double inHigh, doubl
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_CMF_StepInternal( stream, inHigh, inLow, inClose, inVolume, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

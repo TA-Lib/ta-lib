@@ -20,6 +20,7 @@ Each streamable function adds two factory methods on `Core` and a handful of met
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 | `stream.value()` | any time | the most recently committed value |
 | `stream.copy()` | any time | an independent copy of the stream |
+| `stream.outRange()` | any time | the bars this stream has a value for — the batch range over the same bars |
 
 There is no `close` — a stream is ordinary heap state, so an unreferenced stream is simply garbage-collected.
 
@@ -61,13 +62,13 @@ import io.github.talib.OutRange;
 double[] warmup = new double[history.length];
 
 Core.SMA_Stream s = core.SMA_OpenAndFill(history, 30, warmup);
-OutRange r = s.fillRange();                     // what was written, on the handle
+OutRange r = s.outRange();                      // the bars it has a value for
 
 // warmup[0 .. r.count() - 1] is the SMA over all of history; then stream on:
 double v = s.update(newClose);
 ```
 
-The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The filled range is reported on the returned handle as `fillRange()` rather than through out-parameters — never `null`, and `OutRange.EMPTY` after a plain `Open`, which fills nothing. A successful `OpenAndFill` always writes at least one value, so `fillRange().isEmpty()` tells the two apart. The output arrays must not alias the input or each other.
+The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned handle as `outRange()` rather than through out-parameters. That accessor is on every stream, not just a filled one: it holds the bars the handle has a value for, which is what the batch call over the same bars reports — `(lookback, historyLen - lookback)` at open, one more per `update`, unchanged by `peek`. The output arrays must not alias the input or each other.
 
 ## Multi-input / multi-output
 

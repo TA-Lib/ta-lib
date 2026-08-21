@@ -635,6 +635,10 @@ TA_RetCode TA_S_DX( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_DX_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInTimePeriod;
    double prevHigh;
    double prevLow;
@@ -1062,6 +1066,8 @@ static TA_RetCode TA_DX_OpenPass( struct TA_DX_Stream **stream, const double inH
       sp->diffM = diffM;
       sp->minusDI = minusDI;
       sp->plusDI = plusDI;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1115,6 +1121,7 @@ TA_LIB_API TA_RetCode TA_DX_Update( TA_DX_Stream *stream, double inHigh, double 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_DX_StepInternal( stream, inHigh, inLow, inClose, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

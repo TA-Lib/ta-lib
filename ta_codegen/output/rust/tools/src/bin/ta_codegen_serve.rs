@@ -21066,6 +21066,9 @@ fn sv_ac(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21087,6 +21090,8 @@ fn sv_ac(core: &Core, params: &Value) -> String {
         match c2.AC_OpenAndFill(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21117,6 +21122,10 @@ fn sv_ac(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21124,7 +21133,7 @@ fn sv_ac(core: &Core, params: &Value) -> String {
             if c2.AC_Open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_accbands(core: &Core, params: &Value) -> String {
@@ -21160,6 +21169,9 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21183,6 +21195,8 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
         match c2.ACCBANDS_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21225,6 +21239,10 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21232,7 +21250,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
             if c2.ACCBANDS_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_acos(core: &Core, params: &Value) -> String {
@@ -21265,6 +21283,9 @@ fn sv_acos(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21286,6 +21307,8 @@ fn sv_acos(core: &Core, params: &Value) -> String {
         match c2.ACOS_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21316,6 +21339,10 @@ fn sv_acos(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21323,7 +21350,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
             if c2.ACOS_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ad(core: &Core, params: &Value) -> String {
@@ -21356,6 +21383,9 @@ fn sv_ad(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21377,6 +21407,8 @@ fn sv_ad(core: &Core, params: &Value) -> String {
         match c2.AD_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21407,6 +21439,10 @@ fn sv_ad(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21414,7 +21450,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
             if c2.AD_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_add(core: &Core, params: &Value) -> String {
@@ -21447,6 +21483,9 @@ fn sv_add(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21468,6 +21507,8 @@ fn sv_add(core: &Core, params: &Value) -> String {
         match c2.ADD_OpenAndFill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21498,6 +21539,10 @@ fn sv_add(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21505,7 +21550,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
             if c2.ADD_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_adosc(core: &Core, params: &Value) -> String {
@@ -21540,6 +21585,9 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21562,6 +21610,8 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
         match c2.ADOSC_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21592,6 +21642,10 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21599,7 +21653,7 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
             if c2.ADOSC_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_adx(core: &Core, params: &Value) -> String {
@@ -21633,6 +21687,9 @@ fn sv_adx(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21655,6 +21712,8 @@ fn sv_adx(core: &Core, params: &Value) -> String {
         match c2.ADX_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21685,6 +21744,10 @@ fn sv_adx(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21692,7 +21755,7 @@ fn sv_adx(core: &Core, params: &Value) -> String {
             if c2.ADX_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_adxr(core: &Core, params: &Value) -> String {
@@ -21726,6 +21789,9 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21748,6 +21814,8 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
         match c2.ADXR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21778,6 +21846,10 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21785,7 +21857,7 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
             if c2.ADXR_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ao(core: &Core, params: &Value) -> String {
@@ -21820,6 +21892,9 @@ fn sv_ao(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21841,6 +21916,8 @@ fn sv_ao(core: &Core, params: &Value) -> String {
         match c2.AO_OpenAndFill(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21871,6 +21948,10 @@ fn sv_ao(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21878,7 +21959,7 @@ fn sv_ao(core: &Core, params: &Value) -> String {
             if c2.AO_Open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_apo(core: &Core, params: &Value) -> String {
@@ -21918,6 +21999,9 @@ fn sv_apo(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -21943,6 +22027,8 @@ fn sv_apo(core: &Core, params: &Value) -> String {
         match c2.APO_OpenAndFill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -21973,6 +22059,10 @@ fn sv_apo(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -21980,7 +22070,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
             if c2.APO_Open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_aroon(core: &Core, params: &Value) -> String {
@@ -22015,6 +22105,9 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22037,6 +22130,8 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
         match c2.AROON_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22073,6 +22168,10 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22080,7 +22179,7 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
             if c2.AROON_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_aroonosc(core: &Core, params: &Value) -> String {
@@ -22114,6 +22213,9 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22135,6 +22237,8 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
         match c2.AROONOSC_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22165,6 +22269,10 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22172,7 +22280,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
             if c2.AROONOSC_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_asin(core: &Core, params: &Value) -> String {
@@ -22205,6 +22313,9 @@ fn sv_asin(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22226,6 +22337,8 @@ fn sv_asin(core: &Core, params: &Value) -> String {
         match c2.ASIN_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22256,6 +22369,10 @@ fn sv_asin(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22263,7 +22380,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
             if c2.ASIN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_atan(core: &Core, params: &Value) -> String {
@@ -22296,6 +22413,9 @@ fn sv_atan(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22317,6 +22437,8 @@ fn sv_atan(core: &Core, params: &Value) -> String {
         match c2.ATAN_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22347,6 +22469,10 @@ fn sv_atan(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22354,7 +22480,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
             if c2.ATAN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_atr(core: &Core, params: &Value) -> String {
@@ -22388,6 +22514,9 @@ fn sv_atr(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22410,6 +22539,8 @@ fn sv_atr(core: &Core, params: &Value) -> String {
         match c2.ATR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22440,6 +22571,10 @@ fn sv_atr(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22447,7 +22582,7 @@ fn sv_atr(core: &Core, params: &Value) -> String {
             if c2.ATR_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_avgdev(core: &Core, params: &Value) -> String {
@@ -22481,6 +22616,9 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22502,6 +22640,8 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
         match c2.AVGDEV_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22532,6 +22672,10 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22539,7 +22683,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
             if c2.AVGDEV_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_avgprice(core: &Core, params: &Value) -> String {
@@ -22572,6 +22716,9 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22593,6 +22740,8 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
         match c2.AVGPRICE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22623,6 +22772,10 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22630,7 +22783,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
             if c2.AVGPRICE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_bbands(core: &Core, params: &Value) -> String {
@@ -22673,6 +22826,9 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22700,6 +22856,8 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
         match c2.BBANDS_OpenAndFill(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22742,6 +22900,10 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22749,7 +22911,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
             if c2.BBANDS_Open(&fz_c[..lb], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_beta(core: &Core, params: &Value) -> String {
@@ -22783,6 +22945,9 @@ fn sv_beta(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22804,6 +22969,8 @@ fn sv_beta(core: &Core, params: &Value) -> String {
         match c2.BETA_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22834,6 +23001,10 @@ fn sv_beta(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22841,7 +23012,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
             if c2.BETA_Open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_bop(core: &Core, params: &Value) -> String {
@@ -22874,6 +23045,9 @@ fn sv_bop(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22895,6 +23069,8 @@ fn sv_bop(core: &Core, params: &Value) -> String {
         match c2.BOP_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -22925,6 +23101,10 @@ fn sv_bop(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -22932,7 +23112,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
             if c2.BOP_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cci(core: &Core, params: &Value) -> String {
@@ -22966,6 +23146,9 @@ fn sv_cci(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -22987,6 +23170,8 @@ fn sv_cci(core: &Core, params: &Value) -> String {
         match c2.CCI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -23017,6 +23202,10 @@ fn sv_cci(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23024,7 +23213,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
             if c2.CCI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl2crows(core: &Core, params: &Value) -> String {
@@ -23058,6 +23247,9 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23082,6 +23274,8 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
         match c2.CDL2CROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23112,6 +23306,10 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23119,7 +23317,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             if c2.CDL2CROWS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
@@ -23153,6 +23351,9 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23177,6 +23378,8 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
         match c2.CDL3BLACKCROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23207,6 +23410,10 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23214,7 +23421,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             if c2.CDL3BLACKCROWS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3inside(core: &Core, params: &Value) -> String {
@@ -23248,6 +23455,9 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23272,6 +23482,8 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
         match c2.CDL3INSIDE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23302,6 +23514,10 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23309,7 +23525,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             if c2.CDL3INSIDE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
@@ -23343,6 +23559,9 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23367,6 +23586,8 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
         match c2.CDL3LINESTRIKE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23397,6 +23618,10 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23404,7 +23629,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             if c2.CDL3LINESTRIKE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3outside(core: &Core, params: &Value) -> String {
@@ -23438,6 +23663,9 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23462,6 +23690,8 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
         match c2.CDL3OUTSIDE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23492,6 +23722,10 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23499,7 +23733,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             if c2.CDL3OUTSIDE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
@@ -23533,6 +23767,9 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23557,6 +23794,8 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
         match c2.CDL3STARSINSOUTH_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23587,6 +23826,10 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23594,7 +23837,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             if c2.CDL3STARSINSOUTH_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
@@ -23628,6 +23871,9 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23652,6 +23898,8 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
         match c2.CDL3WHITESOLDIERS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23682,6 +23930,10 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23689,7 +23941,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             if c2.CDL3WHITESOLDIERS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
@@ -23724,6 +23976,9 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23748,6 +24003,8 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
         match c2.CDLABANDONEDBABY_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23778,6 +24035,10 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23785,7 +24046,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             if c2.CDLABANDONEDBABY_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
@@ -23819,6 +24080,9 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23843,6 +24107,8 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
         match c2.CDLADVANCEBLOCK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23873,6 +24139,10 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23880,7 +24150,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             if c2.CDLADVANCEBLOCK_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
@@ -23914,6 +24184,9 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -23938,6 +24211,8 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
         match c2.CDLBELTHOLD_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -23968,6 +24243,10 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -23975,7 +24254,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             if c2.CDLBELTHOLD_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
@@ -24009,6 +24288,9 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24033,6 +24315,8 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
         match c2.CDLBREAKAWAY_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24063,6 +24347,10 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24070,7 +24358,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             if c2.CDLBREAKAWAY_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
@@ -24104,6 +24392,9 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24128,6 +24419,8 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
         match c2.CDLCLOSINGMARUBOZU_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24158,6 +24451,10 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24165,7 +24462,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             if c2.CDLCLOSINGMARUBOZU_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
@@ -24199,6 +24496,9 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24223,6 +24523,8 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
         match c2.CDLCONCEALBABYSWALL_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24253,6 +24555,10 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24260,7 +24566,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             if c2.CDLCONCEALBABYSWALL_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
@@ -24294,6 +24600,9 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24318,6 +24627,8 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
         match c2.CDLCOUNTERATTACK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24348,6 +24659,10 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24355,7 +24670,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             if c2.CDLCOUNTERATTACK_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
@@ -24390,6 +24705,9 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24414,6 +24732,8 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
         match c2.CDLDARKCLOUDCOVER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24444,6 +24764,10 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24451,7 +24775,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             if c2.CDLDARKCLOUDCOVER_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdldoji(core: &Core, params: &Value) -> String {
@@ -24485,6 +24809,9 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24509,6 +24836,8 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
         match c2.CDLDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24539,6 +24868,10 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24546,7 +24879,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
             if c2.CDLDOJI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdldojistar(core: &Core, params: &Value) -> String {
@@ -24580,6 +24913,9 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24604,6 +24940,8 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
         match c2.CDLDOJISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24634,6 +24972,10 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24641,7 +24983,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             if c2.CDLDOJISTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
@@ -24675,6 +25017,9 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24699,6 +25044,8 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
         match c2.CDLDRAGONFLYDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24729,6 +25076,10 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24736,7 +25087,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             if c2.CDLDRAGONFLYDOJI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
@@ -24770,6 +25121,9 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24794,6 +25148,8 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
         match c2.CDLENGULFING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24824,6 +25180,10 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24831,7 +25191,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             if c2.CDLENGULFING_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
@@ -24866,6 +25226,9 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24890,6 +25253,8 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
         match c2.CDLEVENINGDOJISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -24920,6 +25285,10 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -24927,7 +25296,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             if c2.CDLEVENINGDOJISTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
@@ -24962,6 +25331,9 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -24986,6 +25358,8 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
         match c2.CDLEVENINGSTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25016,6 +25390,10 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25023,7 +25401,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             if c2.CDLEVENINGSTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
@@ -25057,6 +25435,9 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25081,6 +25462,8 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
         match c2.CDLGAPSIDESIDEWHITE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25111,6 +25494,10 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25118,7 +25505,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             if c2.CDLGAPSIDESIDEWHITE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
@@ -25152,6 +25539,9 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25176,6 +25566,8 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
         match c2.CDLGRAVESTONEDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25206,6 +25598,10 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25213,7 +25609,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             if c2.CDLGRAVESTONEDOJI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhammer(core: &Core, params: &Value) -> String {
@@ -25247,6 +25643,9 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25271,6 +25670,8 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
         match c2.CDLHAMMER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25301,6 +25702,10 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25308,7 +25713,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             if c2.CDLHAMMER_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
@@ -25342,6 +25747,9 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25366,6 +25774,8 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
         match c2.CDLHANGINGMAN_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25396,6 +25806,10 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25403,7 +25817,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             if c2.CDLHANGINGMAN_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlharami(core: &Core, params: &Value) -> String {
@@ -25437,6 +25851,9 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25461,6 +25878,8 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
         match c2.CDLHARAMI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25491,6 +25910,10 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25498,7 +25921,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
             if c2.CDLHARAMI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
@@ -25532,6 +25955,9 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25556,6 +25982,8 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
         match c2.CDLHARAMICROSS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25586,6 +26014,10 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25593,7 +26025,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             if c2.CDLHARAMICROSS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
@@ -25627,6 +26059,9 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25651,6 +26086,8 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
         match c2.CDLHIGHWAVE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25681,6 +26118,10 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25688,7 +26129,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             if c2.CDLHIGHWAVE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
@@ -25722,6 +26163,9 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25746,6 +26190,8 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
         match c2.CDLHIKKAKE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25776,6 +26222,10 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25783,7 +26233,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             if c2.CDLHIKKAKE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
@@ -25817,6 +26267,9 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25841,6 +26294,8 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
         match c2.CDLHIKKAKEMOD_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25871,6 +26326,10 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25878,7 +26337,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             if c2.CDLHIKKAKEMOD_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
@@ -25912,6 +26371,9 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -25936,6 +26398,8 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
         match c2.CDLHOMINGPIGEON_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -25966,6 +26430,10 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -25973,7 +26441,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             if c2.CDLHOMINGPIGEON_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
@@ -26007,6 +26475,9 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26031,6 +26502,8 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
         match c2.CDLIDENTICAL3CROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26061,6 +26534,10 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26068,7 +26545,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             if c2.CDLIDENTICAL3CROWS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlinneck(core: &Core, params: &Value) -> String {
@@ -26102,6 +26579,9 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26126,6 +26606,8 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
         match c2.CDLINNECK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26156,6 +26638,10 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26163,7 +26649,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             if c2.CDLINNECK_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
@@ -26197,6 +26683,9 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26221,6 +26710,8 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
         match c2.CDLINVERTEDHAMMER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26251,6 +26742,10 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26258,7 +26753,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             if c2.CDLINVERTEDHAMMER_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlkicking(core: &Core, params: &Value) -> String {
@@ -26292,6 +26787,9 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26316,6 +26814,8 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
         match c2.CDLKICKING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26346,6 +26846,10 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26353,7 +26857,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             if c2.CDLKICKING_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
@@ -26387,6 +26891,9 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26411,6 +26918,8 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
         match c2.CDLKICKINGBYLENGTH_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26441,6 +26950,10 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26448,7 +26961,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             if c2.CDLKICKINGBYLENGTH_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
@@ -26482,6 +26995,9 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26506,6 +27022,8 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
         match c2.CDLLADDERBOTTOM_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26536,6 +27054,10 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26543,7 +27065,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             if c2.CDLLADDERBOTTOM_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
@@ -26577,6 +27099,9 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26601,6 +27126,8 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
         match c2.CDLLONGLEGGEDDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26631,6 +27158,10 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26638,7 +27169,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             if c2.CDLLONGLEGGEDDOJI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdllongline(core: &Core, params: &Value) -> String {
@@ -26672,6 +27203,9 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26696,6 +27230,8 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
         match c2.CDLLONGLINE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26726,6 +27262,10 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26733,7 +27273,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
             if c2.CDLLONGLINE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
@@ -26767,6 +27307,9 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26791,6 +27334,8 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
         match c2.CDLMARUBOZU_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26821,6 +27366,10 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26828,7 +27377,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             if c2.CDLMARUBOZU_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
@@ -26862,6 +27411,9 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26886,6 +27438,8 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
         match c2.CDLMATCHINGLOW_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -26916,6 +27470,10 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -26923,7 +27481,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             if c2.CDLMATCHINGLOW_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmathold(core: &Core, params: &Value) -> String {
@@ -26958,6 +27516,9 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -26982,6 +27543,8 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
         match c2.CDLMATHOLD_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27012,6 +27575,10 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27019,7 +27586,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             if c2.CDLMATHOLD_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
@@ -27054,6 +27621,9 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27078,6 +27648,8 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
         match c2.CDLMORNINGDOJISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27108,6 +27680,10 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27115,7 +27691,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             if c2.CDLMORNINGDOJISTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
@@ -27150,6 +27726,9 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27174,6 +27753,8 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
         match c2.CDLMORNINGSTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27204,6 +27785,10 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27211,7 +27796,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             if c2.CDLMORNINGSTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlonneck(core: &Core, params: &Value) -> String {
@@ -27245,6 +27830,9 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27269,6 +27857,8 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
         match c2.CDLONNECK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27299,6 +27889,10 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27306,7 +27900,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             if c2.CDLONNECK_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
@@ -27340,6 +27934,9 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27364,6 +27961,8 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
         match c2.CDLPIERCING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27394,6 +27993,10 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27401,7 +28004,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             if c2.CDLPIERCING_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
@@ -27435,6 +28038,9 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27459,6 +28065,8 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
         match c2.CDLRICKSHAWMAN_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27489,6 +28097,10 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27496,7 +28108,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             if c2.CDLRICKSHAWMAN_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
@@ -27530,6 +28142,9 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27554,6 +28169,8 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
         match c2.CDLRISEFALL3METHODS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27584,6 +28201,10 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27591,7 +28212,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             if c2.CDLRISEFALL3METHODS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
@@ -27625,6 +28246,9 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27649,6 +28273,8 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
         match c2.CDLSEPARATINGLINES_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27679,6 +28305,10 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27686,7 +28316,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             if c2.CDLSEPARATINGLINES_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
@@ -27720,6 +28350,9 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27744,6 +28377,8 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
         match c2.CDLSHOOTINGSTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27774,6 +28409,10 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27781,7 +28420,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             if c2.CDLSHOOTINGSTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlshortline(core: &Core, params: &Value) -> String {
@@ -27815,6 +28454,9 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27839,6 +28481,8 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
         match c2.CDLSHORTLINE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27869,6 +28513,10 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27876,7 +28524,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             if c2.CDLSHORTLINE_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
@@ -27910,6 +28558,9 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -27934,6 +28585,8 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
         match c2.CDLSPINNINGTOP_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -27964,6 +28617,10 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -27971,7 +28628,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             if c2.CDLSPINNINGTOP_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
@@ -28005,6 +28662,9 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -28029,6 +28689,8 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
         match c2.CDLSTALLEDPATTERN_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -28059,6 +28721,10 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28066,7 +28732,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             if c2.CDLSTALLEDPATTERN_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
@@ -28100,6 +28766,9 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -28124,6 +28793,8 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
         match c2.CDLSTICKSANDWICH_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -28154,6 +28825,10 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28161,7 +28836,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             if c2.CDLSTICKSANDWICH_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdltakuri(core: &Core, params: &Value) -> String {
@@ -28195,6 +28870,9 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -28219,6 +28897,8 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
         match c2.CDLTAKURI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -28249,6 +28929,10 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28256,7 +28940,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             if c2.CDLTAKURI_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
@@ -28290,6 +28974,9 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -28314,6 +29001,8 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
         match c2.CDLTASUKIGAP_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -28344,6 +29033,10 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28351,7 +29044,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             if c2.CDLTASUKIGAP_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
@@ -28385,6 +29078,9 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -28409,6 +29105,8 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
         match c2.CDLTHRUSTING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -28439,6 +29137,10 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28446,7 +29148,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             if c2.CDLTHRUSTING_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdltristar(core: &Core, params: &Value) -> String {
@@ -28480,6 +29182,9 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -28504,6 +29209,8 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
         match c2.CDLTRISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -28534,6 +29241,10 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28541,7 +29252,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
             if c2.CDLTRISTAR_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
@@ -28575,6 +29286,9 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -28599,6 +29313,8 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
         match c2.CDLUNIQUE3RIVER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -28629,6 +29345,10 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28636,7 +29356,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             if c2.CDLUNIQUE3RIVER_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
@@ -28670,6 +29390,9 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -28694,6 +29417,8 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
         match c2.CDLUPSIDEGAP2CROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -28724,6 +29449,10 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28731,7 +29460,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             if c2.CDLUPSIDEGAP2CROWS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
@@ -28765,6 +29494,9 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = if candleLegs != 0 { 4 } else { 1 };
     for rd in 0..rounds {
@@ -28789,6 +29521,8 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
         match c2.CDLXSIDEGAP3METHODS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -28819,6 +29553,10 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28826,7 +29564,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             if c2.CDLXSIDEGAP3METHODS_Open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ceil(core: &Core, params: &Value) -> String {
@@ -28859,6 +29597,9 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -28880,6 +29621,8 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
         match c2.CEIL_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -28910,6 +29653,10 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -28917,7 +29664,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
             if c2.CEIL_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cmf(core: &Core, params: &Value) -> String {
@@ -28951,6 +29698,9 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -28972,6 +29722,8 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
         match c2.CMF_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29002,6 +29754,10 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29009,7 +29765,7 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
             if c2.CMF_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cmo(core: &Core, params: &Value) -> String {
@@ -29043,6 +29799,9 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29065,6 +29824,8 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
         match c2.CMO_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29095,6 +29856,10 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29102,7 +29867,7 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
             if c2.CMO_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cmou(core: &Core, params: &Value) -> String {
@@ -29136,6 +29901,9 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29157,6 +29925,8 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
         match c2.CMOU_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29187,6 +29957,10 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29194,7 +29968,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
             if c2.CMOU_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_correl(core: &Core, params: &Value) -> String {
@@ -29228,6 +30002,9 @@ fn sv_correl(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29249,6 +30026,8 @@ fn sv_correl(core: &Core, params: &Value) -> String {
         match c2.CORREL_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29279,6 +30058,10 @@ fn sv_correl(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29286,7 +30069,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
             if c2.CORREL_Open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cos(core: &Core, params: &Value) -> String {
@@ -29319,6 +30102,9 @@ fn sv_cos(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29340,6 +30126,8 @@ fn sv_cos(core: &Core, params: &Value) -> String {
         match c2.COS_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29370,6 +30158,10 @@ fn sv_cos(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29377,7 +30169,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
             if c2.COS_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cosh(core: &Core, params: &Value) -> String {
@@ -29410,6 +30202,9 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29431,6 +30226,8 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
         match c2.COSH_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29461,6 +30258,10 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29468,7 +30269,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
             if c2.COSH_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_dema(core: &Core, params: &Value) -> String {
@@ -29502,6 +30303,9 @@ fn sv_dema(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29524,6 +30328,8 @@ fn sv_dema(core: &Core, params: &Value) -> String {
         match c2.DEMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29554,6 +30360,10 @@ fn sv_dema(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29561,7 +30371,7 @@ fn sv_dema(core: &Core, params: &Value) -> String {
             if c2.DEMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_div(core: &Core, params: &Value) -> String {
@@ -29594,6 +30404,9 @@ fn sv_div(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29615,6 +30428,8 @@ fn sv_div(core: &Core, params: &Value) -> String {
         match c2.DIV_OpenAndFill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29645,6 +30460,10 @@ fn sv_div(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29652,7 +30471,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
             if c2.DIV_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_dx(core: &Core, params: &Value) -> String {
@@ -29686,6 +30505,9 @@ fn sv_dx(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29708,6 +30530,8 @@ fn sv_dx(core: &Core, params: &Value) -> String {
         match c2.DX_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29738,6 +30562,10 @@ fn sv_dx(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29745,7 +30573,7 @@ fn sv_dx(core: &Core, params: &Value) -> String {
             if c2.DX_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_efi(core: &Core, params: &Value) -> String {
@@ -29779,6 +30607,9 @@ fn sv_efi(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29800,6 +30631,8 @@ fn sv_efi(core: &Core, params: &Value) -> String {
         match c2.EFI_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29830,6 +30663,10 @@ fn sv_efi(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29837,7 +30674,7 @@ fn sv_efi(core: &Core, params: &Value) -> String {
             if c2.EFI_Open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ema(core: &Core, params: &Value) -> String {
@@ -29871,6 +30708,9 @@ fn sv_ema(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29893,6 +30733,8 @@ fn sv_ema(core: &Core, params: &Value) -> String {
         match c2.EMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -29923,6 +30765,10 @@ fn sv_ema(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -29930,7 +30776,7 @@ fn sv_ema(core: &Core, params: &Value) -> String {
             if c2.EMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_exp(core: &Core, params: &Value) -> String {
@@ -29963,6 +30809,9 @@ fn sv_exp(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -29984,6 +30833,8 @@ fn sv_exp(core: &Core, params: &Value) -> String {
         match c2.EXP_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30014,6 +30865,10 @@ fn sv_exp(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30021,7 +30876,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
             if c2.EXP_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_floor(core: &Core, params: &Value) -> String {
@@ -30054,6 +30909,9 @@ fn sv_floor(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30075,6 +30933,8 @@ fn sv_floor(core: &Core, params: &Value) -> String {
         match c2.FLOOR_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30105,6 +30965,10 @@ fn sv_floor(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30112,7 +30976,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
             if c2.FLOOR_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_hma(core: &Core, params: &Value) -> String {
@@ -30146,6 +31010,9 @@ fn sv_hma(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30167,6 +31034,8 @@ fn sv_hma(core: &Core, params: &Value) -> String {
         match c2.HMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30197,6 +31066,10 @@ fn sv_hma(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30204,7 +31077,7 @@ fn sv_hma(core: &Core, params: &Value) -> String {
             if c2.HMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
@@ -30237,6 +31110,9 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30259,6 +31135,8 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
         match c2.HT_DCPERIOD_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30289,6 +31167,10 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30296,7 +31178,7 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             if c2.HT_DCPERIOD_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
@@ -30329,6 +31211,9 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30351,6 +31236,8 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
         match c2.HT_DCPHASE_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30381,6 +31268,10 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30388,7 +31279,7 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             if c2.HT_DCPHASE_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_phasor(core: &Core, params: &Value) -> String {
@@ -30422,6 +31313,9 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30445,6 +31339,8 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
         match c2.HT_PHASOR_OpenAndFill(&fz_c, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30481,6 +31377,10 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30488,7 +31388,7 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             if c2.HT_PHASOR_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_sine(core: &Core, params: &Value) -> String {
@@ -30522,6 +31422,9 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30545,6 +31448,8 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
         match c2.HT_SINE_OpenAndFill(&fz_c, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30581,6 +31486,10 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30588,7 +31497,7 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
             if c2.HT_SINE_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_trendline(core: &Core, params: &Value) -> String {
@@ -30621,6 +31530,9 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30643,6 +31555,8 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
         match c2.HT_TRENDLINE_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30673,6 +31587,10 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30680,7 +31598,7 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             if c2.HT_TRENDLINE_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
@@ -30713,6 +31631,9 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30735,6 +31656,8 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
         match c2.HT_TRENDMODE_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -30765,6 +31688,10 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30772,7 +31699,7 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             if c2.HT_TRENDMODE_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_imi(core: &Core, params: &Value) -> String {
@@ -30806,6 +31733,9 @@ fn sv_imi(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30827,6 +31757,8 @@ fn sv_imi(core: &Core, params: &Value) -> String {
         match c2.IMI_OpenAndFill(&fz_o, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30857,6 +31789,10 @@ fn sv_imi(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30864,7 +31800,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
             if c2.IMI_Open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_kama(core: &Core, params: &Value) -> String {
@@ -30898,6 +31834,9 @@ fn sv_kama(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -30920,6 +31859,8 @@ fn sv_kama(core: &Core, params: &Value) -> String {
         match c2.KAMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -30950,6 +31891,10 @@ fn sv_kama(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -30957,7 +31902,7 @@ fn sv_kama(core: &Core, params: &Value) -> String {
             if c2.KAMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_linearreg(core: &Core, params: &Value) -> String {
@@ -30991,6 +31936,9 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31012,6 +31960,8 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
         match c2.LINEARREG_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31042,6 +31992,10 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31049,7 +32003,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
             if c2.LINEARREG_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
@@ -31083,6 +32037,9 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31104,6 +32061,8 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
         match c2.LINEARREG_ANGLE_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31134,6 +32093,10 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31141,7 +32104,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             if c2.LINEARREG_ANGLE_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
@@ -31175,6 +32138,9 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31196,6 +32162,8 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
         match c2.LINEARREG_INTERCEPT_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31226,6 +32194,10 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31233,7 +32205,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             if c2.LINEARREG_INTERCEPT_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
@@ -31267,6 +32239,9 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31288,6 +32263,8 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
         match c2.LINEARREG_SLOPE_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31318,6 +32295,10 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31325,7 +32306,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             if c2.LINEARREG_SLOPE_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ln(core: &Core, params: &Value) -> String {
@@ -31358,6 +32339,9 @@ fn sv_ln(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31379,6 +32363,8 @@ fn sv_ln(core: &Core, params: &Value) -> String {
         match c2.LN_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31409,6 +32395,10 @@ fn sv_ln(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31416,7 +32406,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
             if c2.LN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_log10(core: &Core, params: &Value) -> String {
@@ -31449,6 +32439,9 @@ fn sv_log10(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31470,6 +32463,8 @@ fn sv_log10(core: &Core, params: &Value) -> String {
         match c2.LOG10_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31500,6 +32495,10 @@ fn sv_log10(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31507,7 +32506,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
             if c2.LOG10_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ma(core: &Core, params: &Value) -> String {
@@ -31546,6 +32545,9 @@ fn sv_ma(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31571,6 +32573,8 @@ fn sv_ma(core: &Core, params: &Value) -> String {
         match c2.MA_OpenAndFill(&fz_c, optInTimePeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31601,6 +32605,10 @@ fn sv_ma(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31608,7 +32616,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
             if c2.MA_Open(&fz_c[..lb], optInTimePeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_macd(core: &Core, params: &Value) -> String {
@@ -31646,6 +32654,9 @@ fn sv_macd(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31670,6 +32681,8 @@ fn sv_macd(core: &Core, params: &Value) -> String {
         match c2.MACD_OpenAndFill(&fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31712,6 +32725,10 @@ fn sv_macd(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31719,7 +32736,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
             if c2.MACD_Open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_macdext(core: &Core, params: &Value) -> String {
@@ -31772,6 +32789,9 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31799,6 +32819,8 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         match c2.MACDEXT_OpenAndFill(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31841,6 +32863,10 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31848,7 +32874,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
             if c2.MACDEXT_Open(&fz_c[..lb], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_macdfix(core: &Core, params: &Value) -> String {
@@ -31884,6 +32910,9 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -31908,6 +32937,8 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
         match c2.MACDFIX_OpenAndFill(&fz_c, optInSignalPeriod, &mut f0, &mut f1, &mut f2) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -31950,6 +32981,10 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -31957,7 +32992,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
             if c2.MACDFIX_Open(&fz_c[..lb], optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mama(core: &Core, params: &Value) -> String {
@@ -31993,6 +33028,9 @@ fn sv_mama(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32016,6 +33054,8 @@ fn sv_mama(core: &Core, params: &Value) -> String {
         match c2.MAMA_OpenAndFill(&fz_c, optInFastLimit, optInSlowLimit, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -32052,6 +33092,10 @@ fn sv_mama(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32059,7 +33103,7 @@ fn sv_mama(core: &Core, params: &Value) -> String {
             if c2.MAMA_Open(&fz_c[..lb], optInFastLimit, optInSlowLimit).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_marketfi(core: &Core, params: &Value) -> String {
@@ -32092,6 +33136,9 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32113,6 +33160,8 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
         match c2.MARKETFI_OpenAndFill(&fz_h, &fz_l, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -32143,6 +33192,10 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32150,7 +33203,7 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
             if c2.MARKETFI_Open(&fz_h[..lb], &fz_l[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mavp(core: &Core, params: &Value) -> String {
@@ -32191,6 +33244,9 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32216,6 +33272,8 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
         match c2.MAVP_OpenAndFill(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -32246,6 +33304,10 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32253,7 +33315,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
             if c2.MAVP_Open(&fz_c[..lb], &fz_v[..lb], optInMinPeriod, optInMaxPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_max(core: &Core, params: &Value) -> String {
@@ -32287,6 +33349,9 @@ fn sv_max(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32308,6 +33373,8 @@ fn sv_max(core: &Core, params: &Value) -> String {
         match c2.MAX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -32338,6 +33405,10 @@ fn sv_max(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32345,7 +33416,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
             if c2.MAX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_maxindex(core: &Core, params: &Value) -> String {
@@ -32379,6 +33450,9 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32400,6 +33474,8 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
         match c2.MAXINDEX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -32430,6 +33506,10 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32437,7 +33517,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
             if c2.MAXINDEX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_medprice(core: &Core, params: &Value) -> String {
@@ -32470,6 +33550,9 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32491,6 +33574,8 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
         match c2.MEDPRICE_OpenAndFill(&fz_h, &fz_l, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -32521,6 +33606,10 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32528,7 +33617,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
             if c2.MEDPRICE_Open(&fz_h[..lb], &fz_l[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mfi(core: &Core, params: &Value) -> String {
@@ -32562,6 +33651,9 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32583,6 +33675,8 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
         match c2.MFI_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -32613,6 +33707,10 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32620,7 +33718,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
             if c2.MFI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_midpoint(core: &Core, params: &Value) -> String {
@@ -32654,6 +33752,9 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32675,6 +33776,8 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
         match c2.MIDPOINT_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -32705,6 +33808,10 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32712,7 +33819,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
             if c2.MIDPOINT_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_midprice(core: &Core, params: &Value) -> String {
@@ -32746,6 +33853,9 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32767,6 +33877,8 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
         match c2.MIDPRICE_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -32797,6 +33909,10 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32804,7 +33920,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
             if c2.MIDPRICE_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_min(core: &Core, params: &Value) -> String {
@@ -32838,6 +33954,9 @@ fn sv_min(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32859,6 +33978,8 @@ fn sv_min(core: &Core, params: &Value) -> String {
         match c2.MIN_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -32889,6 +34010,10 @@ fn sv_min(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32896,7 +34021,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
             if c2.MIN_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minindex(core: &Core, params: &Value) -> String {
@@ -32930,6 +34055,9 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -32951,6 +34079,8 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
         match c2.MININDEX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -32981,6 +34111,10 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -32988,7 +34122,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
             if c2.MININDEX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minmax(core: &Core, params: &Value) -> String {
@@ -33023,6 +34157,9 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33045,6 +34182,8 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
         match c2.MINMAX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -33081,6 +34220,10 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33088,7 +34231,7 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
             if c2.MINMAX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minmaxindex(core: &Core, params: &Value) -> String {
@@ -33123,6 +34266,9 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33145,6 +34291,8 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
         match c2.MINMAXINDEX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
@@ -33181,6 +34329,10 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
                             if up.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b1[t - beg], up.1); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33188,7 +34340,7 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             if c2.MINMAXINDEX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minus_di(core: &Core, params: &Value) -> String {
@@ -33222,6 +34374,9 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33244,6 +34399,8 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
         match c2.MINUS_DI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -33274,6 +34431,10 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33281,7 +34442,7 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
             if c2.MINUS_DI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minus_dm(core: &Core, params: &Value) -> String {
@@ -33315,6 +34476,9 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33337,6 +34501,8 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
         match c2.MINUS_DM_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -33367,6 +34533,10 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33374,7 +34544,7 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
             if c2.MINUS_DM_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mom(core: &Core, params: &Value) -> String {
@@ -33408,6 +34578,9 @@ fn sv_mom(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33429,6 +34602,8 @@ fn sv_mom(core: &Core, params: &Value) -> String {
         match c2.MOM_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -33459,6 +34634,10 @@ fn sv_mom(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33466,7 +34645,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
             if c2.MOM_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mult(core: &Core, params: &Value) -> String {
@@ -33499,6 +34678,9 @@ fn sv_mult(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33520,6 +34702,8 @@ fn sv_mult(core: &Core, params: &Value) -> String {
         match c2.MULT_OpenAndFill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -33550,6 +34734,10 @@ fn sv_mult(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33557,7 +34745,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
             if c2.MULT_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_natr(core: &Core, params: &Value) -> String {
@@ -33591,6 +34779,9 @@ fn sv_natr(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33613,6 +34804,8 @@ fn sv_natr(core: &Core, params: &Value) -> String {
         match c2.NATR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -33643,6 +34836,10 @@ fn sv_natr(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33650,7 +34847,7 @@ fn sv_natr(core: &Core, params: &Value) -> String {
             if c2.NATR_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_nvi(core: &Core, params: &Value) -> String {
@@ -33683,6 +34880,9 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33704,6 +34904,8 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
         match c2.NVI_OpenAndFill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -33734,6 +34936,10 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33741,7 +34947,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
             if c2.NVI_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_obv(core: &Core, params: &Value) -> String {
@@ -33774,6 +34980,9 @@ fn sv_obv(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33795,6 +35004,8 @@ fn sv_obv(core: &Core, params: &Value) -> String {
         match c2.OBV_OpenAndFill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -33825,6 +35036,10 @@ fn sv_obv(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33832,7 +35047,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
             if c2.OBV_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_plus_di(core: &Core, params: &Value) -> String {
@@ -33866,6 +35081,9 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33888,6 +35106,8 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
         match c2.PLUS_DI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -33918,6 +35138,10 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -33925,7 +35149,7 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
             if c2.PLUS_DI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_plus_dm(core: &Core, params: &Value) -> String {
@@ -33959,6 +35183,9 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -33981,6 +35208,8 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
         match c2.PLUS_DM_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34011,6 +35240,10 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34018,7 +35251,7 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
             if c2.PLUS_DM_Open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ppo(core: &Core, params: &Value) -> String {
@@ -34058,6 +35291,9 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34083,6 +35319,8 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
         match c2.PPO_OpenAndFill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34113,6 +35351,10 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34120,7 +35362,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
             if c2.PPO_Open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_pvi(core: &Core, params: &Value) -> String {
@@ -34153,6 +35395,9 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34174,6 +35419,8 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
         match c2.PVI_OpenAndFill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34204,6 +35451,10 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34211,7 +35462,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
             if c2.PVI_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_pvo(core: &Core, params: &Value) -> String {
@@ -34251,6 +35502,9 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34276,6 +35530,8 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
         match c2.PVO_OpenAndFill(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34306,6 +35562,10 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34313,7 +35573,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
             if c2.PVO_Open(&fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_qstick(core: &Core, params: &Value) -> String {
@@ -34347,6 +35607,9 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34368,6 +35631,8 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
         match c2.QSTICK_OpenAndFill(&fz_o, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34398,6 +35663,10 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34405,7 +35674,7 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
             if c2.QSTICK_Open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_roc(core: &Core, params: &Value) -> String {
@@ -34439,6 +35708,9 @@ fn sv_roc(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34460,6 +35732,8 @@ fn sv_roc(core: &Core, params: &Value) -> String {
         match c2.ROC_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34490,6 +35764,10 @@ fn sv_roc(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34497,7 +35775,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
             if c2.ROC_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_rocp(core: &Core, params: &Value) -> String {
@@ -34531,6 +35809,9 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34552,6 +35833,8 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
         match c2.ROCP_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34582,6 +35865,10 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34589,7 +35876,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
             if c2.ROCP_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_rocr(core: &Core, params: &Value) -> String {
@@ -34623,6 +35910,9 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34644,6 +35934,8 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
         match c2.ROCR_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34674,6 +35966,10 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34681,7 +35977,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
             if c2.ROCR_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_rocr100(core: &Core, params: &Value) -> String {
@@ -34715,6 +36011,9 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34736,6 +36035,8 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
         match c2.ROCR100_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34766,6 +36067,10 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34773,7 +36078,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
             if c2.ROCR100_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_rsi(core: &Core, params: &Value) -> String {
@@ -34807,6 +36112,9 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34829,6 +36137,8 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
         match c2.RSI_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34859,6 +36169,10 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34866,7 +36180,7 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
             if c2.RSI_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sar(core: &Core, params: &Value) -> String {
@@ -34901,6 +36215,9 @@ fn sv_sar(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -34922,6 +36239,8 @@ fn sv_sar(core: &Core, params: &Value) -> String {
         match c2.SAR_OpenAndFill(&fz_h, &fz_l, optInAcceleration, optInMaximum, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -34952,6 +36271,10 @@ fn sv_sar(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -34959,7 +36282,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
             if c2.SAR_Open(&fz_h[..lb], &fz_l[..lb], optInAcceleration, optInMaximum).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sarext(core: &Core, params: &Value) -> String {
@@ -35000,6 +36323,9 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35021,6 +36347,8 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
         match c2.SAREXT_OpenAndFill(&fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35051,6 +36379,10 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35058,7 +36390,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
             if c2.SAREXT_Open(&fz_h[..lb], &fz_l[..lb], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sin(core: &Core, params: &Value) -> String {
@@ -35091,6 +36423,9 @@ fn sv_sin(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35112,6 +36447,8 @@ fn sv_sin(core: &Core, params: &Value) -> String {
         match c2.SIN_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35142,6 +36479,10 @@ fn sv_sin(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35149,7 +36490,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
             if c2.SIN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sinh(core: &Core, params: &Value) -> String {
@@ -35182,6 +36523,9 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35203,6 +36547,8 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
         match c2.SINH_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35233,6 +36579,10 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35240,7 +36590,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
             if c2.SINH_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sma(core: &Core, params: &Value) -> String {
@@ -35274,6 +36624,9 @@ fn sv_sma(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35295,6 +36648,8 @@ fn sv_sma(core: &Core, params: &Value) -> String {
         match c2.SMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35325,6 +36680,10 @@ fn sv_sma(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35332,7 +36691,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
             if c2.SMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_smi(core: &Core, params: &Value) -> String {
@@ -35370,6 +36729,9 @@ fn sv_smi(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35393,6 +36755,8 @@ fn sv_smi(core: &Core, params: &Value) -> String {
         match c2.SMI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35429,6 +36793,10 @@ fn sv_smi(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35436,7 +36804,7 @@ fn sv_smi(core: &Core, params: &Value) -> String {
             if c2.SMI_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sqrt(core: &Core, params: &Value) -> String {
@@ -35469,6 +36837,9 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35490,6 +36861,8 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
         match c2.SQRT_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35520,6 +36893,10 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35527,7 +36904,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
             if c2.SQRT_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_stddev(core: &Core, params: &Value) -> String {
@@ -35562,6 +36939,9 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35583,6 +36963,8 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
         match c2.STDDEV_OpenAndFill(&fz_c, optInTimePeriod, optInNbDev, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35613,6 +36995,10 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35620,7 +37006,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
             if c2.STDDEV_Open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_stoch(core: &Core, params: &Value) -> String {
@@ -35667,6 +37053,9 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35693,6 +37082,8 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
         match c2.STOCH_OpenAndFill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35729,6 +37120,10 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35736,7 +37131,7 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
             if c2.STOCH_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_stochf(core: &Core, params: &Value) -> String {
@@ -35777,6 +37172,9 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35803,6 +37201,8 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
         match c2.STOCHF_OpenAndFill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35839,6 +37239,10 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35846,7 +37250,7 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
             if c2.STOCHF_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_stochrsi(core: &Core, params: &Value) -> String {
@@ -35888,6 +37292,9 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -35915,6 +37322,8 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
         match c2.STOCHRSI_OpenAndFill(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -35951,6 +37360,10 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -35958,7 +37371,7 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
             if c2.STOCHRSI_Open(&fz_c[..lb], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sub(core: &Core, params: &Value) -> String {
@@ -35991,6 +37404,9 @@ fn sv_sub(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36012,6 +37428,8 @@ fn sv_sub(core: &Core, params: &Value) -> String {
         match c2.SUB_OpenAndFill(&fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36042,6 +37460,10 @@ fn sv_sub(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36049,7 +37471,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
             if c2.SUB_Open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sum(core: &Core, params: &Value) -> String {
@@ -36083,6 +37505,9 @@ fn sv_sum(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36104,6 +37529,8 @@ fn sv_sum(core: &Core, params: &Value) -> String {
         match c2.SUM_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36134,6 +37561,10 @@ fn sv_sum(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36141,7 +37572,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
             if c2.SUM_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_t3(core: &Core, params: &Value) -> String {
@@ -36176,6 +37607,9 @@ fn sv_t3(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36198,6 +37632,8 @@ fn sv_t3(core: &Core, params: &Value) -> String {
         match c2.T3_OpenAndFill(&fz_c, optInTimePeriod, optInVFactor, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36228,6 +37664,10 @@ fn sv_t3(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36235,7 +37675,7 @@ fn sv_t3(core: &Core, params: &Value) -> String {
             if c2.T3_Open(&fz_c[..lb], optInTimePeriod, optInVFactor).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_tan(core: &Core, params: &Value) -> String {
@@ -36268,6 +37708,9 @@ fn sv_tan(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36289,6 +37732,8 @@ fn sv_tan(core: &Core, params: &Value) -> String {
         match c2.TAN_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36319,6 +37764,10 @@ fn sv_tan(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36326,7 +37775,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
             if c2.TAN_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_tanh(core: &Core, params: &Value) -> String {
@@ -36359,6 +37808,9 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36380,6 +37832,8 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
         match c2.TANH_OpenAndFill(&fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36410,6 +37864,10 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36417,7 +37875,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
             if c2.TANH_Open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_tema(core: &Core, params: &Value) -> String {
@@ -36451,6 +37909,9 @@ fn sv_tema(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36473,6 +37934,8 @@ fn sv_tema(core: &Core, params: &Value) -> String {
         match c2.TEMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36503,6 +37966,10 @@ fn sv_tema(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36510,7 +37977,7 @@ fn sv_tema(core: &Core, params: &Value) -> String {
             if c2.TEMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_trange(core: &Core, params: &Value) -> String {
@@ -36543,6 +38010,9 @@ fn sv_trange(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36564,6 +38034,8 @@ fn sv_trange(core: &Core, params: &Value) -> String {
         match c2.TRANGE_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36594,6 +38066,10 @@ fn sv_trange(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36601,7 +38077,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
             if c2.TRANGE_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_trima(core: &Core, params: &Value) -> String {
@@ -36635,6 +38111,9 @@ fn sv_trima(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36656,6 +38135,8 @@ fn sv_trima(core: &Core, params: &Value) -> String {
         match c2.TRIMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36686,6 +38167,10 @@ fn sv_trima(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36693,7 +38178,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
             if c2.TRIMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_trix(core: &Core, params: &Value) -> String {
@@ -36727,6 +38212,9 @@ fn sv_trix(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36749,6 +38237,8 @@ fn sv_trix(core: &Core, params: &Value) -> String {
         match c2.TRIX_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36779,6 +38269,10 @@ fn sv_trix(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36786,7 +38280,7 @@ fn sv_trix(core: &Core, params: &Value) -> String {
             if c2.TRIX_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_tsf(core: &Core, params: &Value) -> String {
@@ -36820,6 +38314,9 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36841,6 +38338,8 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
         match c2.TSF_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36871,6 +38370,10 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36878,7 +38381,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
             if c2.TSF_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_typprice(core: &Core, params: &Value) -> String {
@@ -36911,6 +38414,9 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -36932,6 +38438,8 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
         match c2.TYPPRICE_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -36962,6 +38470,10 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -36969,7 +38481,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
             if c2.TYPPRICE_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ultosc(core: &Core, params: &Value) -> String {
@@ -37005,6 +38517,9 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -37026,6 +38541,8 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
         match c2.ULTOSC_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -37056,6 +38573,10 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -37063,7 +38584,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
             if c2.ULTOSC_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_var(core: &Core, params: &Value) -> String {
@@ -37098,6 +38619,9 @@ fn sv_var(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -37119,6 +38643,8 @@ fn sv_var(core: &Core, params: &Value) -> String {
         match c2.VAR_OpenAndFill(&fz_c, optInTimePeriod, optInNbDev, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -37149,6 +38675,10 @@ fn sv_var(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -37156,7 +38686,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
             if c2.VAR_Open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_vwap(core: &Core, params: &Value) -> String {
@@ -37189,6 +38719,9 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -37210,6 +38743,8 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
         match c2.VWAP_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -37240,6 +38775,10 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -37247,7 +38786,7 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
             if c2.VWAP_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_vwma(core: &Core, params: &Value) -> String {
@@ -37281,6 +38820,9 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -37302,6 +38844,8 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
         match c2.VWMA_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -37332,6 +38876,10 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -37339,7 +38887,7 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
             if c2.VWMA_Open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_wad(core: &Core, params: &Value) -> String {
@@ -37372,6 +38920,9 @@ fn sv_wad(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -37393,6 +38944,8 @@ fn sv_wad(core: &Core, params: &Value) -> String {
         match c2.WAD_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -37423,6 +38976,10 @@ fn sv_wad(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -37430,7 +38987,7 @@ fn sv_wad(core: &Core, params: &Value) -> String {
             if c2.WAD_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_wclprice(core: &Core, params: &Value) -> String {
@@ -37463,6 +39020,9 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -37484,6 +39044,8 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
         match c2.WCLPRICE_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -37514,6 +39076,10 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -37521,7 +39087,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
             if c2.WCLPRICE_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_willr(core: &Core, params: &Value) -> String {
@@ -37555,6 +39121,9 @@ fn sv_willr(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -37576,6 +39145,8 @@ fn sv_willr(core: &Core, params: &Value) -> String {
         match c2.WILLR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -37606,6 +39177,10 @@ fn sv_willr(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -37613,7 +39188,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
             if c2.WILLR_Open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_wma(core: &Core, params: &Value) -> String {
@@ -37647,6 +39222,9 @@ fn sv_wma(core: &Core, params: &Value) -> String {
     let mut beg = 0usize;
     let mut nb = 0usize;
     let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
     let mut zsign = 0i64;
     let rounds = 1;
     for rd in 0..rounds {
@@ -37668,6 +39246,8 @@ fn sv_wma(core: &Core, params: &Value) -> String {
         match c2.WMA_OpenAndFill(&fz_c, optInTimePeriod, &mut f0) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
                 if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
@@ -37698,6 +39278,10 @@ fn sv_wma(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
                 }
             }
         }
@@ -37705,7 +39289,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
             if c2.WMA_Open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), i32::from(all_ok && fill_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn handle_stream_verify(core: &Core, params: &Value) -> String {

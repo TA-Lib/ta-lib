@@ -772,17 +772,21 @@ public partial class Core
       internal double cur_outReal;
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
       internal MA_Stream[] bank = [];
-      internal OutRange fillRange = OutRange.Empty;
+      internal int outRangeBegIdx;
+      internal int outRangeCount;
 
       internal MAVP_Stream( Core core ) { this.core = core; }
 
-      /// <summary>The range <c>MAVP_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
-      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <summary>The bars this stream has produced a value for, in the input series'
+      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
-      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
-      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// <para>It is what <c>Core.MAVP</c> reports over the same bars: the opener sets it
+      /// to <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c>
+      /// adds one to the count, <c>Peek</c> leaves it alone, and <c>Clone</c>
+      /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
+      /// subset of this range, because the caller chose not to take the fill.</para>
       /// </remarks>
-      public OutRange FillRange => fillRange;
+      public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
       internal MAVP_Stream( MAVP_Stream other )
       {
@@ -795,7 +799,8 @@ public partial class Core
          for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {
             this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       internal void CopyFrom( MAVP_Stream other )
@@ -815,7 +820,8 @@ public partial class Core
                this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
             }
          }
-         this.fillRange = other.fillRange;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
       }
 
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
@@ -839,6 +845,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inPeriods) ) throw Core.StreamFailure("MAVP", "update", RetCode.BadParam);
          core.MAVP_StreamStep(this, inReal, inPeriods);
+         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
 
@@ -956,6 +963,8 @@ public partial class Core
       sp.optInMAType = optInMAType;
       sp.bank = bank;
       sp.cur_outReal = bank[cp - optInMinPeriod].cur_outReal;
+      sp.outRangeBegIdx = subStart;
+      sp.outRangeCount = historyLen - subStart;
       return RetCode.Success;
    }
 
@@ -1087,7 +1096,7 @@ public partial class Core
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here.</para>
    /// <para>The range written is reported on the returned handle:
-   /// <see cref="MAVP_Stream.FillRange"/>.</para>
+   /// <see cref="MAVP_Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">series to be averaged. The warm-up history, oldest bar first.</param>
    /// <param name="inPeriods">per-bar desired MA period. The warm-up history, oldest bar first.</param>
@@ -1112,7 +1121,8 @@ public partial class Core
       if( inPeriods.IsEmpty ) throw new TaLibArgumentException("inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
       MAVP_Stream sp = new MAVP_Stream(this);
       RetCode retCode = MAVP_OpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
-      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }

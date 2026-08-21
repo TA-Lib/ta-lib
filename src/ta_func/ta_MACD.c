@@ -534,6 +534,10 @@ TA_RetCode TA_S_MACD( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MACD_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    int optInFastPeriod;
    int optInSlowPeriod;
    int optInSignalPeriod;
@@ -818,6 +822,8 @@ static TA_RetCode TA_MACD_OpenPass( struct TA_MACD_Stream **stream, const double
       sp->slowK = slowK;
       sp->fastK = fastK;
       sp->signalK = signalK;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -875,6 +881,7 @@ TA_LIB_API TA_RetCode TA_MACD_Update( TA_MACD_Stream *stream, double inReal, dou
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_MACD_StepInternal( stream, inReal, outMACD, outMACDSignal, outMACDHist );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

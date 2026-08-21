@@ -174,7 +174,10 @@ TA_RetCode TA_S_MARKETFI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MARKETFI_Stream {
-   int unused; /* T1: stateless map */
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
 };
 
 /* Private function, not in public API. */
@@ -263,6 +266,8 @@ static TA_RetCode TA_MARKETFI_OpenPass( struct TA_MARKETFI_Stream **stream, cons
       sp = (struct TA_MARKETFI_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -316,6 +321,7 @@ TA_LIB_API TA_RetCode TA_MARKETFI_Update( TA_MARKETFI_Stream *stream, double inH
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_MARKETFI_StepInternal( stream, inHigh, inLow, inVolume, outReal );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

@@ -875,6 +875,10 @@ TA_RetCode TA_S_MAMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MAMA_Stream {
+   /* The bars this handle has a value for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
    double optInFastLimit;
    double optInSlowLimit;
    double tempReal;
@@ -1632,6 +1636,8 @@ static TA_RetCode TA_MAMA_OpenPass( struct TA_MAMA_Stream **stream, const double
         memcpy( sp->ring_trailingWMAIdx_inReal, inReal + (historyLen - sp->ringCap_trailingWMAIdx), sizeof(double) * (size_t)sp->ringCap_trailingWMAIdx );
       }
       sp->ringPos_trailingWMAIdx = 0;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1687,6 +1693,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, dou
    if( !stream || !outMAMA ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_MAMA_StepInternal( stream, inReal, outMAMA, outFAMA );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
