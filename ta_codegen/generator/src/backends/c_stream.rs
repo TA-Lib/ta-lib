@@ -2036,24 +2036,23 @@ fn emit_dispatch_open(
             func.optional_inputs.iter().map(|p| p.name.clone()).collect();
         let lb_call = format!("TA_{n}_Lookback( {} )", lookback_args.join(", "));
         let _ = writeln!(o, "\n   if( {cond} )\n   {{");
+        // One anchor for every mode. batch( startIdx, .. ) begins at
+        // max(startIdx, lookback), so the two variants that carry a startIdx
+        // clamp to it — and then the history check has to be re-made against
+        // the CLAMPED anchor, or an anchor past the history publishes a handle
+        // whose count is negative (usize underflow in Rust). The public fill
+        // has no startIdx parameter to clamp with.
+        let _ = writeln!(o, "      int fillLb = {lb_call};");
+        if mode != DispatchOpen::Fill {
+            let _ = writeln!(o, "      if( startIdx > fillLb ) fillLb = startIdx;");
+        }
         let _ = writeln!(
             o,
-            "      if( historyLen < {lb_call} + 1 ) {{ TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }}"
+            "      if( historyLen < fillLb + 1 ) {{ TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }}"
         );
         if mode.fills() {
             let _ = writeln!(o, "      {{");
-            let _ = writeln!(o, "         int fillLb = {lb_call};");
             let _ = writeln!(o, "         int fillIdx;");
-            if mode == DispatchOpen::FillInternal {
-                // batch( startIdx, .. ) begins at max(startIdx, lookback); the
-                // public entry point's startIdx is 0, so only this variant has
-                // to clamp.
-                let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
-                let _ = writeln!(
-                    o,
-                    "         if( historyLen < fillLb + 1 ) {{ TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }}"
-                );
-            }
             let _ = writeln!(o, "         *outBegIdx = fillLb;");
             let _ = writeln!(o, "         *outNBElement = historyLen - fillLb;");
             let _ = writeln!(o, "         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )");
@@ -2071,12 +2070,10 @@ fn emit_dispatch_open(
         if mode.fills() {
             emit_range_head_capture(o, "      ");
         } else {
-            // Scalar has no out-param pair to copy, so the range is derived the
-            // way the batch resolves it: the lookback, moved up to `startIdx`
-            // when the caller anchored past it.
-            let _ = writeln!(o, "      sp->outRangeBegIdx = {lb_call};");
-            let _ = writeln!(o, "      if( startIdx > sp->outRangeBegIdx ) sp->outRangeBegIdx = startIdx;");
-            let _ = writeln!(o, "      sp->outRangeCount = historyLen - sp->outRangeBegIdx;");
+            // Scalar has no out-param pair to copy, so the range is the anchor
+            // resolved above — the same one the fills report.
+            let _ = writeln!(o, "      sp->outRangeBegIdx = fillLb;");
+            let _ = writeln!(o, "      sp->outRangeCount = historyLen - fillLb;");
         }
         let _ = writeln!(o, "      *stream = sp;");
         let _ = writeln!(o, "      return TA_SUCCESS;");
@@ -3185,6 +3182,10 @@ fn emit_period_bank(
         o,
         "   subStart = startIdx < lookbackTotal ? lookbackTotal : startIdx;"
     );
+    // The bank is opened at `subStart`, so the history has to reach it. Without
+    // this an anchor past the history publishes a negative count (and, where the
+    // count is unsigned, underflows).
+    let _ = writeln!(o, "   if( historyLen < subStart + 1 ) return TA_INSUFFICIENT_HISTORY;");
 
     let _ = writeln!(o, "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
     let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");

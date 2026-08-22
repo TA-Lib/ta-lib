@@ -94877,6 +94877,9 @@ public final class Core {
          sp.cur_outReal = inReal[historyLen - 1];
          int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
          if( startIdx > fillLb ) fillLb = startIdx;
+         if( historyLen < fillLb + 1 ) {
+            return RetCode.InsufficientHistory;
+         }
          sp.outRangeBegIdx = fillLb;
          sp.outRangeCount = historyLen - fillLb;
          return RetCode.Success;
@@ -101800,6 +101803,9 @@ public final class Core {
        * diverge for every period < maxPeriod. */
       int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       int subStart = (startIdx < lookbackTotal)? lookbackTotal : startIdx;
+      if( historyLen < subStart + 1 ) {
+         return RetCode.InsufficientHistory;
+      }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       MA_Stream[] bank = new MA_Stream[nBank];
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {

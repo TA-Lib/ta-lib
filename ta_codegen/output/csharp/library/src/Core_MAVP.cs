@@ -947,6 +947,9 @@ public partial class Core
        * diverge for every period < maxPeriod. */
       int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       int subStart = (startIdx < lookbackTotal)? lookbackTotal : startIdx;
+      if( historyLen < subStart + 1 ) {
+         return RetCode.InsufficientHistory;
+      }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       MA_Stream[] bank = new MA_Stream[nBank];
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {

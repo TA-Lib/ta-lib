@@ -274,3 +274,63 @@ fn a_rejected_bar_does_not_advance_the_range() {
     s.update(close[WARM]).expect("finite bar");
     assert_eq!(s.out_range(), OutRange { beg_idx: before.beg_idx, count: before.count + 1 });
 }
+
+/// The anchored openers: `<N>_OpenInternal` begins at `max(startIdx, lookback)`,
+/// and an anchor the history does not reach is `InsufficientHistory` — not a
+/// handle carrying a nonsense range.
+///
+/// This is the one surface the corpus-wide range leg cannot reach from outside
+/// the crate (`_OpenInternal` is `pub(crate)`), and it is where a real defect
+/// lived: the period==1 identity arms clamp their anchor up to `startIdx`, and
+/// the two that skipped the matching history re-check computed
+/// `historyLen - anchor` anyway. In Rust that is `usize`, so it underflowed —
+/// `MAVP_Open(.., optInMinPeriod = 1, ..)` on a short history PANICKED in a
+/// debug build, inside a crate that forbids unsafe, where every other opener
+/// returned `InsufficientHistory`. Both sites are covered below, plus the loop
+/// tier's identity arm, which had the re-check from the start.
+#[test]
+fn an_anchor_past_the_history_is_insufficient_history() {
+    let core = Core::new();
+    let (_, _, close, _, periods) = series(N);
+
+    // Dispatch tier, identity arm (period 1 opens no sub-stream at all).
+    assert!(
+        matches!(core.MA_OpenInternal(&close[..10], 30, 1, MAType::SMA), Err(RetCode::InsufficientHistory)),
+        "MA_OpenInternal anchored past the history must reject"
+    );
+    // The same arm reached the other way: DISABLED has lookback 0 at every period.
+    assert!(
+        matches!(core.MA_OpenInternal(&close[..10], 30, 5, MAType::DISABLED), Err(RetCode::InsufficientHistory)),
+        "MA_OpenInternal(DISABLED) anchored past the history must reject"
+    );
+    // Loop tier, identity arm.
+    assert!(
+        matches!(core.EMA_OpenInternal(&close[..10], 30, 1), Err(RetCode::InsufficientHistory)),
+        "EMA_OpenInternal anchored past the history must reject"
+    );
+    // Period bank: the bank is opened at `subStart`, and slot period 1 is the
+    // dispatch identity arm again — this is the shape that panicked.
+    assert!(
+        matches!(
+            core.MAVP_OpenInternal(&close[..10], &periods[..10], 30, 1, 1, MAType::SMA),
+            Err(RetCode::InsufficientHistory)
+        ),
+        "MAVP_OpenInternal anchored past the history must reject"
+    );
+    // And through the public opener, which is how the panic was reachable.
+    assert!(
+        matches!(core.MAVP_Open(&close[..10], &periods[..10], 1, 30, MAType::SMA), Err(RetCode::InsufficientHistory)),
+        "MAVP_Open on a history shorter than the bank's anchor must reject"
+    );
+
+    // The positive half, so this is not just a rejection sweep: a legitimate
+    // anchor reports max(startIdx, lookback) and the count that follows from it.
+    let lb = core.MA_Lookback(1, MAType::SMA);
+    assert_eq!(lb, 0, "the identity arm's lookback is 0, which is what makes startIdx the anchor");
+    let (h, _) = core.MA_OpenInternal(&close, 5, 1, MAType::SMA).expect("a reachable anchor");
+    assert_eq!(
+        h.out_range(),
+        OutRange { beg_idx: 5, count: N - 5 },
+        "an anchored open reports max(startIdx, lookback) and the bars after it"
+    );
+}

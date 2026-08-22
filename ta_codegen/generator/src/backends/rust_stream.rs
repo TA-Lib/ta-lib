@@ -2786,16 +2786,17 @@ fn emit_dispatch(
             if mode != OutMode::Fill {
                 // batch( startIdx, .. ) begins at max(startIdx, lookback); the
                 // public entry points anchor at 0, so only the startIdx-carrying
-                // variants clamp.
+                // variants clamp. The history check then has to be RE-MADE
+                // against the clamped anchor: `historyLen - fillLb` is usize
+                // here, so an anchor past the history underflows rather than
+                // going negative.
                 let _ = writeln!(o, "            let fillLb = if startIdx > fillLb {{ startIdx }} else {{ fillLb }};");
+                let _ = writeln!(
+                    o,
+                    "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
+                );
             }
             if mode != OutMode::Scalar {
-                if mode == OutMode::FillInternal {
-                    let _ = writeln!(
-                        o,
-                        "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::InsufficientHistory);\n            }}"
-                    );
-                }
                 if mode == OutMode::FillInternal {
                     let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
                     let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
@@ -3100,6 +3101,13 @@ fn emit_period_bank(
     let _ = writeln!(
         o,
         "        let subStart: usize = if startIdx < lookbackTotal {{ lookbackTotal }} else {{ startIdx }};"
+    );
+    // The bank is opened at `subStart`, so the history has to reach it. These
+    // are usize, so without this the count below underflows rather than going
+    // negative — a panic in debug, a nonsense count in release.
+    let _ = writeln!(
+        o,
+        "        if historyLen < subStart + 1 {{\n            return Err(RetCode::InsufficientHistory);\n        }}"
     );
     let _ = writeln!(o, "        let nBank: usize = ({max} - {min} + 1) as usize;");
     let _ = writeln!(o, "        let mut bank: Vec<{subty}> = Vec::with_capacity(nBank);");

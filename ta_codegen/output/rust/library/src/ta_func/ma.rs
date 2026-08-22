@@ -492,6 +492,9 @@ impl Core {
             }
             let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
+            if historyLen < fillLb + 1 {
+                return Err(RetCode::InsufficientHistory);
+            }
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
             return Ok((MA_Stream { core: self.clone(), state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, inReal[historyLen - 1]));
         }

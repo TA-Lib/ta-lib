@@ -7138,10 +7138,27 @@ fn test_c_ma_dispatch_stream_section() {
     assert!(c.contains("void *sub;"), "tagged sub-stream pointer");
     assert!(!c.contains("TA_MA_StepInternal"), "dispatch has no transition fn");
 
-    // Open: identity path first (mirrors batch order), then the dispatch.
+    // Open: identity path first (mirrors batch order), then the dispatch. The
+    // anchor is resolved ONCE per mode — the lookback, clamped up to `startIdx`
+    // on the two variants that carry one — and the min-history check is made
+    // against the CLAMPED anchor. Pinned as three consecutive lines because
+    // splitting them is what the bug was: the clamp landed without the
+    // re-check, and `historyLen - anchor` then went negative (and, in Rust,
+    // underflowed a usize) for an anchor the history does not reach.
     assert!(
-        c.contains("if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 )"),
-        "identity min-history check"
+        c.contains(concat!(
+            "      int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );\n",
+            "      if( startIdx > fillLb ) fillLb = startIdx;\n",
+            "      if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }\n",
+        )),
+        "identity anchor: resolve, clamp to startIdx, then re-check the history"
+    );
+    assert!(
+        c.contains(concat!(
+            "      sp->outRangeBegIdx = fillLb;\n",
+            "      sp->outRangeCount = historyLen - fillLb;\n",
+        )),
+        "the identity arm reports the anchor it actually used"
     );
     for (label, callee) in [
         ("Sma", "TA_SMA"),

@@ -18,6 +18,7 @@ Each streamable function adds two constructors on `Core` and a handful of method
 | `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar, returning `(stream, OutRange)` — see [below](#full-history-output-openandfill) |
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
+| `stream.out_range()` | any time | the bars this stream has a value for — the batch range over the same bars |
 
 There is no `Close` — dropping the stream closes it (RAII).
 

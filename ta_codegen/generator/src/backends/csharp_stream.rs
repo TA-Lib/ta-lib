@@ -2955,9 +2955,14 @@ fn emit_dispatch(
                         let _ = writeln!(o, "         sp.cur_{out} = {inp}[historyLen - 1];");
                     }
                     // No out-meta pair on this mode, so the range is resolved the
-                    // way the batch resolves it (issue #241).
+                    // way the batch resolves it (issue #241) — clamped to
+                    // startIdx, and then re-checked against the history, or an
+                    // anchor past it publishes a negative count.
                     let _ = writeln!(o, "         int fillLb = {lb_call};");
                     let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
+                    let _ = writeln!(o, "         if( historyLen < fillLb + 1 ) {{");
+                    let _ = writeln!(o, "            return RetCode.InsufficientHistory;");
+                    let _ = writeln!(o, "         }}");
                     let _ = writeln!(o, "         sp.outRangeBegIdx = fillLb;");
                     let _ = writeln!(o, "         sp.outRangeCount = historyLen - fillLb;");
                 }
@@ -3209,6 +3214,10 @@ fn emit_period_bank(
     );
     let _ = writeln!(o, "      int lookbackTotal = {callee_base}_Lookback({lb_args});");
     let _ = writeln!(o, "      int subStart = (startIdx < lookbackTotal)? lookbackTotal : startIdx;");
+    // The bank is opened at `subStart`, so the history has to reach it.
+    let _ = writeln!(o, "      if( historyLen < subStart + 1 ) {{");
+    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
+    let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int nBank = {max} - {min} + 1;");
     let _ = writeln!(o, "      {subty}[] bank = new {subty}[nBank];");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");

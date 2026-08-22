@@ -832,6 +832,9 @@ public partial class Core
          sp.cur_outReal = inReal[historyLen - 1];
          int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
          if( startIdx > fillLb ) fillLb = startIdx;
+         if( historyLen < fillLb + 1 ) {
+            return RetCode.InsufficientHistory;
+         }
          sp.outRangeBegIdx = fillLb;
          sp.outRangeCount = historyLen - fillLb;
          return RetCode.Success;

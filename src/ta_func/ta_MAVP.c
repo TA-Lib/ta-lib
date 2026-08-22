@@ -783,6 +783,7 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
    if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;
    lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );
    subStart = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( historyLen < subStart + 1 ) return TA_INSUFFICIENT_HISTORY;
 
    sp = (struct TA_MAVP_Stream *)TA_Malloc( sizeof(*sp) );
    if( !sp ) return TA_ALLOC_ERR;

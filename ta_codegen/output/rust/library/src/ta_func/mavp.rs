@@ -637,6 +637,9 @@ impl Core {
         // running-sum residue for stable ones).
         let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType);
         let subStart: usize = if startIdx < lookbackTotal { lookbackTotal } else { startIdx };
+        if historyLen < subStart + 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
         let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
         let mut bank: Vec<MA_Stream> = Vec::with_capacity(nBank);
         let mut scratch: Vec<f64> = Vec::with_capacity(nBank);

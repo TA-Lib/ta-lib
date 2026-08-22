@@ -19,6 +19,7 @@ Every TA function gets these calls:
 | `TA_<NAME>_Update` | once per **closed** bar             | commit one bar, return the new value |
 | `TA_<NAME>_Peek`   | any time on the **forming** bar     | evaluate a provisional bar **without** committing state |
 | `TA_<NAME>_Close`  | once                                | free the stream |
+| `TA_StreamOutRange` | any time                           | the bars this stream has a value for — the batch range over the same bars. One accessor, for a handle of any function |
 
 ## Example (SMA)
 

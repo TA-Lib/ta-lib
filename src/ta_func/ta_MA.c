@@ -330,11 +330,12 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
 
    if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
-      if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
+      int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
+      if( startIdx > fillLb ) fillLb = startIdx;
+      if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
       *outReal = inReal[historyLen - 1];
-      sp->outRangeBegIdx = TA_MA_Lookback( optInTimePeriod, optInMAType );
-      if( startIdx > sp->outRangeBegIdx ) sp->outRangeBegIdx = startIdx;
-      sp->outRangeCount = historyLen - sp->outRangeBegIdx;
+      sp->outRangeBegIdx = fillLb;
+      sp->outRangeCount = historyLen - fillLb;
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -465,9 +466,9 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
 
    if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
-      if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
+      int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
+      if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
       {
-         int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
          int fillIdx;
          *outBegIdx = fillLb;
          *outNBElement = historyLen - fillLb;
@@ -599,12 +600,11 @@ TA_RetCode TA_MA_OpenAndFillInternal( struct TA_MA_Stream **stream, const double
 
    if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
-      if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
+      int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
+      if( startIdx > fillLb ) fillLb = startIdx;
+      if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
       {
-         int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
          int fillIdx;
-         if( startIdx > fillLb ) fillLb = startIdx;
-         if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
          *outBegIdx = fillLb;
          *outNBElement = historyLen - fillLb;
          for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
