@@ -84,7 +84,9 @@ of the first value written, in the input series' coordinates, and how many value
 follow it. Only that range is written — see N2 — and a call that produces nothing
 reports an empty one, which is a success (N1). C returns the two numbers through
 the `*outBegIdx` / `*outNBElement` out-parameters; the other three carry them as
-one `OutRange` value. Appendix A has where it arrives, per backend and per tier.
+one `OutRange` value. A live stream handle carries one as well — the bars it has
+produced a value for, which is what the batch call over those same bars reports.
+Appendix A has where it arrives, per backend and per tier.
 
 **`MAX_INDEX`.** The addressable index ceiling, 100 000 000, identical in all
 four backends.
@@ -202,8 +204,8 @@ ceiling half of each rule is verified.
 **output** buffers only *after* B4, so a call with both a bad parameter and an
 absent output reports `TA_BAD_PARAM`. (ii) The index and count out-parameters are
 not checked at all — passing either as null segfaults. C's own `OpenAndFill`
-entry points do check exactly those two pointers, so this is an omission in the
-batch prologue rather than a considered position.
+entry points check exactly those two pointers, and so does `TA_StreamOutRange`,
+so this is an omission in the batch prologue rather than a considered position.
 
 [4] Slices cannot be null, and the index/count pair is returned rather than
 written through pointers.
@@ -367,9 +369,9 @@ panic in Rust.
 | U2 | The output was not supplied | `TA_BAD_PARAM` | ✅ | — | — | — |
 | U3 | Any bar is non-finite | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
 
-A rejected `Update` leaves the handle usable and unadvanced — that is the whole
-point of rejecting rather than computing. `Peek` never writes the handle under
-any outcome.
+A rejected `Update` leaves the handle usable and unadvanced, its `OutRange`
+included — that is the whole point of rejecting rather than computing. `Peek`
+never writes the handle under any outcome.
 
 **There is no value accessor in C or Rust**, so "read the current value" is a
 rule only two backends could carry, and it has no error surface in either: Java's
@@ -380,6 +382,11 @@ Rust through their return values — a caller who wants it later keeps it.
 U3 is checked with an explicit finite test, so it rejects NaN and both
 infinities alike. Verified: 174 of 174 `Update` and `Peek` entry points check
 their bar.
+
+**Reading the range** has an error surface in C alone, where it is a function
+rather than a field: `TA_StreamOutRange` answers `TA_BAD_PARAM` for a NULL
+handle **and** for either NULL out-parameter. The other three read a field on an
+object that cannot be absent.
 
 **One documented hole.** A composed function drives its sub-streams through their
 *public* entry points, so a sub-stream re-checks a value the library itself
@@ -517,14 +524,18 @@ C and Rust report a code; Java and C# raise. Stated here once so no rule has to.
 | Tier | C | Rust | Java | C# |
 |---|---|---|---|---|
 | batch | `*outBegIdx`, `*outNBElement` | `Ok(OutRange)` | returns `OutRange` | returns `OutRange` |
-| `OpenAndFill` | the same two out-parameters | `Ok((Stream, OutRange))` | on the handle, `fillRange()` | on the handle, `FillRange` |
+| `OpenAndFill` | the same two out-parameters | `Ok((Stream, OutRange))` | on the handle | on the handle |
+| any live stream | `TA_StreamOutRange(stream, &beg, &nb)` | `out_range()` | `outRange()` | `OutRange` |
 
-`fillRange()` / `FillRange` is an `OutRange` like any other — Java and C# keep it
-on the handle rather than returning it, and it is the empty range on a handle
-that came from a plain `Open`, which fills nothing. `Open`, `Update` and `Peek`
-produce one value rather than a range, in all four backends. The range's two
-members are named for each language: `beg_idx` / `count` in Rust, `begIdx` /
-`count` in Java, `BegIdx` / `Count` in C#.
+The stream accessor answers the same question in all four: the bars this handle
+has produced a value for. An open over `historyLen` bars starts at `(lookback,
+historyLen - lookback)`, each accepted `Update` adds one and saturates the count
+at `MAX_INDEX` rather than overflowing, and `Peek` — like a rejected bar —
+changes nothing. C has one accessor for every function, since every stream struct
+leads with the same two ints. `Open`, `Update` and `Peek` still hand back one
+value rather than a range. The range's two members are named for each language:
+`beg_idx` / `count` in Rust, `begIdx` / `count` in Java, `BegIdx` / `Count` in
+C#.
 
 **One condition has no RetCode**, and raises where a code cannot be returned:
 

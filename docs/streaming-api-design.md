@@ -55,6 +55,13 @@ Every stream, in every language, is the same lifecycle:
 3. **`close(handle)`.** Releases the stream — explicit in C, implicit
    in managed languages (Rust/Java).
 
+**The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
+it has produced a value for, in the input series' coordinates. An `open` over
+`historyLen` bars starts at `(lookback, historyLen - lookback)`, every accepted
+`update` adds one, and `peek` and a rejected bar change nothing. The accessor is
+`TA_StreamOutRange` in C — one function, any handle — `out_range()` in Rust,
+`outRange()` in Java, `OutRange` in C#.
+
 Parameters and history are fixed at `open`; changing a parameter means a new stream.
 
 The handle is opaque and tied to the library version that created it — don't
@@ -165,6 +172,10 @@ unstable period in effect at `open`.
 
 Notes that make this precise:
 
+- **The range matches batch too, not just the values.** After a handle has been
+  fed `N` bars, by any mixture of `open` / `openAndFill` and `update`, its
+  `OutRange` is what the batch call over those same bars reports. `stream_verify`
+  carries a range leg for this in all four servers.
 - **The history given to `open` defines bar 0.** The stream matches batch
   over exactly the series it has seen; for some seedings (e.g. EMA under
   Metastock compatibility) values depend on the whole history — by design.
@@ -288,6 +299,13 @@ TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream,
                                    double              *outReal );
 
 TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
+
+/* out_range: the bars this handle has produced a value for. One accessor for
+ * every function — it takes any TA_<N>_Stream *, because every stream struct
+ * leads with the same two ints. */
+TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream,
+                                         int        *outBegIdx,
+                                         int        *outNBElement );
 ```
 
 **Error model.** `Open` returns `TA_INSUFFICIENT_HISTORY` (`historyLen <
@@ -316,6 +334,8 @@ for &x in new_bars { let v = s.update(x)?; }       // &mut self; Err(BadParam)
 let provisional = s.peek(forming_bar_close)?;      // &self: runs the same
                                                   // transition on a reused
                                                   // scratch, never commits
+let r = s.out_range();                             // bars produced so far —
+                                                  // what batch reports for them
 ```
 
 Java/.NET: small handle objects with the same `open(history, params)` +
@@ -333,7 +353,8 @@ Core.SMA_Stream t = s.copy();                    // independent stream fork
 Core.MACD_Stream m = core.MACD_Open(history, 12, 26, 9);
 Core.MACD_Stream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
 Core.SMA_Stream s2 = core.SMA_OpenAndFill(history, 14, warmup);
-OutRange fr = s2.fillRange();                    // range written, on the handle
+OutRange r = s2.outRange();                      // bars produced so far, on the
+                                                 // handle — what batch reports
 ```
 
 - Handles are `public static final` classes **nested in `Core`** (`Core.SMA_Stream`),
