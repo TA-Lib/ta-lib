@@ -1,19 +1,28 @@
 ---
 title: "Williams' Accumulation/Distribution (WAD)"
-description: "Williams' Accumulation/Distribution: a cumulative line that measures each bar's close against the true range extreme — the previous close, whenever it…"
+description: "Williams' Accumulation/Distribution: a cumulative line built to expose the buying or selling pressure hiding underneath price action."
 ---
 
 ## Summary
 
-Williams' Accumulation/Distribution: a cumulative line that measures each bar's close against the *true range* extreme — the previous close, whenever it lies outside the current bar — rather than against the bar's own high and low. A close above the previous one accumulates the distance up from the true low; a close below it distributes the distance down from the true high; an unchanged close contributes nothing.
+Williams' Accumulation/Distribution: a cumulative line built to expose the buying or selling pressure hiding underneath price action. Larry Williams designed it primarily as a divergence tool — a line that keeps climbing while price stalls suggests buyers are still in control, and one that fails to confirm a fresh price high or low warns that the move may be running out of conviction.
 
 **It consumes no volume.** Larry Williams' original multiplies each move by that bar's volume; Steven Achelis published the modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the industry kept Williams' name on that no-volume form. That industry-wide decision is enough for TA-Lib to ship the same form under the same name. What remains once the multiplier is dropped is a signed close-to-close move measured on the true range, so it is grouped as a momentum indicator, not a volume one.
 
 ## Formula
 
-TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t > close_{t-1}, close_t - TRH_t if close_t < close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
+For each bar t:
 
-The first bar of the requested range has no previous close, so it contributes 0 and the line starts there — the same convention as AD, OBV, NVI and PVI. The accumulator restarts wherever the caller starts, so a different `startIdx` shifts the whole line by a constant.
+    TRH_t = max(close_{t-1}, high_t)
+    TRL_t = min(close_{t-1}, low_t)
+
+    if close_t > close_{t-1} then AD_t = close_t - TRL_t
+    if close_t < close_{t-1} then AD_t = close_t - TRH_t
+    otherwise                     AD_t = 0
+
+    WAD_t = WAD_{t-1} + AD_t
+
+The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
 
 ## Inputs
 
@@ -61,5 +70,5 @@ TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrap
 ## References
 
 - Larry Williams is the originator; Steven Achelis, *Technical Analysis from A to Z*, 2nd edition, page 368 publishes the no-volume form this ships, with the worked 12-bar example pinned in the test suite.
-- IncredibleCharts, *Williams Accumulation Distribution* — Williams' volume-weighted original, `AD = Price Move × Volume` over the same true-range price move.
-- IncredibleCharts, *Williams Accumulate Distribute* — the Achelis form under its disambiguating name, "not a volume indicator despite the name".
+- IncredibleCharts, [*Williams Accumulation Distribution*](https://www.incrediblecharts.com/indicators/williams_accumulation_distribution.php) — Williams' volume-weighted original, `AD = Price Move × Volume` over the same true-range price move.
+- IncredibleCharts, [*Williams Accumulate Distribute*](https://www.incrediblecharts.com/indicators/williams_accumulate_distribute.php) — the Achelis form under its disambiguating name, "not a volume indicator despite the name".

@@ -215,26 +215,31 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Williams' Accumulation/Distribution: a cumulative line that measures each
-   /// bar's close against the *true range* extreme — the previous close,
-   /// whenever it lies outside the current bar — rather than against the bar's
-   /// own high and low. A close above the previous one accumulates the distance
-   /// up from the true low; a close below it distributes the distance down from
-   /// the true high; an unchanged close contributes nothing. **It consumes no
-   /// volume.** Larry Williams' original multiplies each move by that bar's
-   /// volume; Steven Achelis published the modification that drops the
-   /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-   /// industry kept Williams' name on that no-volume form. That industry-wide
-   /// decision is enough for TA-Lib to ship the same form under the same name.
-   /// What remains once the multiplier is dropped is a signed close-to-close
-   /// move measured on the true range, so it is grouped as a momentum indicator,
-   /// not a volume one.
+   /// Williams' Accumulation/Distribution: a cumulative line built to expose the
+   /// buying or selling pressure hiding underneath price action. Larry Williams
+   /// designed it primarily as a divergence tool — a line that keeps climbing
+   /// while price stalls suggests buyers are still in control, and one that
+   /// fails to confirm a fresh price high or low warns that the move may be
+   /// running out of conviction. **It consumes no volume.** Larry Williams'
+   /// original multiplies each move by that bar's volume; Steven Achelis
+   /// published the modification that drops the multiplier (*Technical Analysis
+   /// from A to Z*, 2nd ed., p.368), and the industry kept Williams' name on
+   /// that no-volume form. That industry-wide decision is enough for TA-Lib to
+   /// ship the same form under the same name. What remains once the multiplier
+   /// is dropped is a signed close-to-close move measured on the true range, so
+   /// it is grouped as a momentum indicator, not a volume one.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t &gt; close_{t-1}, close_t - TRH_t if close_t &lt; close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
-   /// The first bar of the requested range has no previous close, so it contributes 0 and the line starts there — the same convention as AD, OBV, NVI and PVI. The accumulator restarts wherever the caller starts, so a different `startIdx` shifts the whole line by a constant.
+   /// For each bar t:
+   /// TRH_t = max(close_{t-1}, high_t)
+   /// TRL_t = min(close_{t-1}, low_t)
+   /// if close_t &gt; close_{t-1} then AD_t = close_t - TRL_t
+   /// if close_t &lt; close_{t-1} then AD_t = close_t - TRH_t
+   /// otherwise                     AD_t = 0
+   /// WAD_t = WAD_{t-1} + AD_t
+   /// The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
    /// </code>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -288,26 +293,31 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Williams' Accumulation/Distribution: a cumulative line that measures each
-   /// bar's close against the *true range* extreme — the previous close,
-   /// whenever it lies outside the current bar — rather than against the bar's
-   /// own high and low. A close above the previous one accumulates the distance
-   /// up from the true low; a close below it distributes the distance down from
-   /// the true high; an unchanged close contributes nothing. **It consumes no
-   /// volume.** Larry Williams' original multiplies each move by that bar's
-   /// volume; Steven Achelis published the modification that drops the
-   /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-   /// industry kept Williams' name on that no-volume form. That industry-wide
-   /// decision is enough for TA-Lib to ship the same form under the same name.
-   /// What remains once the multiplier is dropped is a signed close-to-close
-   /// move measured on the true range, so it is grouped as a momentum indicator,
-   /// not a volume one.
+   /// Williams' Accumulation/Distribution: a cumulative line built to expose the
+   /// buying or selling pressure hiding underneath price action. Larry Williams
+   /// designed it primarily as a divergence tool — a line that keeps climbing
+   /// while price stalls suggests buyers are still in control, and one that
+   /// fails to confirm a fresh price high or low warns that the move may be
+   /// running out of conviction. **It consumes no volume.** Larry Williams'
+   /// original multiplies each move by that bar's volume; Steven Achelis
+   /// published the modification that drops the multiplier (*Technical Analysis
+   /// from A to Z*, 2nd ed., p.368), and the industry kept Williams' name on
+   /// that no-volume form. That industry-wide decision is enough for TA-Lib to
+   /// ship the same form under the same name. What remains once the multiplier
+   /// is dropped is a signed close-to-close move measured on the true range, so
+   /// it is grouped as a momentum indicator, not a volume one.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t &gt; close_{t-1}, close_t - TRH_t if close_t &lt; close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
-   /// The first bar of the requested range has no previous close, so it contributes 0 and the line starts there — the same convention as AD, OBV, NVI and PVI. The accumulator restarts wherever the caller starts, so a different `startIdx` shifts the whole line by a constant.
+   /// For each bar t:
+   /// TRH_t = max(close_{t-1}, high_t)
+   /// TRL_t = min(close_{t-1}, low_t)
+   /// if close_t &gt; close_{t-1} then AD_t = close_t - TRL_t
+   /// if close_t &lt; close_{t-1} then AD_t = close_t - TRH_t
+   /// otherwise                     AD_t = 0
+   /// WAD_t = WAD_{t-1} + AD_t
+   /// The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
    /// </code>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
