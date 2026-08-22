@@ -1,5 +1,5 @@
 ---
-title: "Williams' Accumulation/Distribution (no volume) (WAD)"
+title: "Williams' Accumulation/Distribution (WAD)"
 description: "Williams' Accumulation/Distribution: a cumulative line that measures each bar's close against the true range extreme — the previous close, whenever it…"
 ---
 

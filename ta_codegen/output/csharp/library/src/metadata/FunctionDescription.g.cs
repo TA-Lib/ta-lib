@@ -7647,7 +7647,7 @@ public static class FunctionDescription
 	<!-- WAD -->
 	<FinancialFunction>
 		<Abbreviation>WAD</Abbreviation>
-		<ShortDescription>Williams&apos; Accumulation/Distribution (no volume)</ShortDescription>
+		<ShortDescription>Williams&apos; Accumulation/Distribution</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
