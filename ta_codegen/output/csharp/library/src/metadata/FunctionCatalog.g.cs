@@ -4609,7 +4609,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
     private static FunctionInfo MakeWad() => new(
         name: "WAD",
         group: FunctionGroup.MomentumIndicators,
-        hint: "Williams' Accumulation/Distribution (no volume)",
+        hint: "Williams' Accumulation/Distribution",
         flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
         unstableId: null,
         inputs:

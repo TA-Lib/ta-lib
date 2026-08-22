@@ -215,12 +215,13 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Williams' Accumulation/Distribution: a cumulative line that measures each
-   /// bar's close against the *true range* extreme — the previous close,
-   /// whenever it lies outside the current bar — rather than against the bar's
-   /// own high and low. A close above the previous one accumulates the distance
-   /// up from the true low; a close below it distributes the distance down from
-   /// the true high; an unchanged close contributes nothing. **It consumes no
+   /// Williams' Accumulation/Distribution: a cumulative line meant to expose
+   /// whether a security is quietly under accumulation (informed buying) or
+   /// distribution (informed selling) beneath the surface of price. Larry
+   /// Williams built it to catch that shift before price confirms it — traders
+   /// watch for the line to diverge from price, since a line that keeps rising
+   /// while price stalls or falls points to accumulation, and one that stalls
+   /// while price pushes to a new high points to distribution. **It consumes no
    /// volume.** Larry Williams' original multiplies each move by that bar's
    /// volume; Steven Achelis published the modification that drops the
    /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
@@ -233,8 +234,14 @@ public partial class Core
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t &gt; close_{t-1}, close_t - TRH_t if close_t &lt; close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
-   /// The first bar of the requested range has no previous close, so it contributes 0 and the line starts there — the same convention as AD, OBV, NVI and PVI. The accumulator restarts wherever the caller starts, so a different `startIdx` shifts the whole line by a constant.
+   /// For each bar t:
+   /// TRH_t = max(close_{t-1}, high_t)
+   /// TRL_t = min(close_{t-1}, low_t)
+   /// if close_t &gt; close_{t-1} then AD_t = close_t - TRL_t
+   /// if close_t &lt; close_{t-1} then AD_t = close_t - TRH_t
+   /// otherwise                     AD_t = 0
+   /// WAD_t = WAD_{t-1} + AD_t
+   /// The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
    /// </code>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -288,12 +295,13 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Williams' Accumulation/Distribution: a cumulative line that measures each
-   /// bar's close against the *true range* extreme — the previous close,
-   /// whenever it lies outside the current bar — rather than against the bar's
-   /// own high and low. A close above the previous one accumulates the distance
-   /// up from the true low; a close below it distributes the distance down from
-   /// the true high; an unchanged close contributes nothing. **It consumes no
+   /// Williams' Accumulation/Distribution: a cumulative line meant to expose
+   /// whether a security is quietly under accumulation (informed buying) or
+   /// distribution (informed selling) beneath the surface of price. Larry
+   /// Williams built it to catch that shift before price confirms it — traders
+   /// watch for the line to diverge from price, since a line that keeps rising
+   /// while price stalls or falls points to accumulation, and one that stalls
+   /// while price pushes to a new high points to distribution. **It consumes no
    /// volume.** Larry Williams' original multiplies each move by that bar's
    /// volume; Steven Achelis published the modification that drops the
    /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
@@ -306,8 +314,14 @@ public partial class Core
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t &gt; close_{t-1}, close_t - TRH_t if close_t &lt; close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
-   /// The first bar of the requested range has no previous close, so it contributes 0 and the line starts there — the same convention as AD, OBV, NVI and PVI. The accumulator restarts wherever the caller starts, so a different `startIdx` shifts the whole line by a constant.
+   /// For each bar t:
+   /// TRH_t = max(close_{t-1}, high_t)
+   /// TRL_t = min(close_{t-1}, low_t)
+   /// if close_t &gt; close_{t-1} then AD_t = close_t - TRL_t
+   /// if close_t &lt; close_{t-1} then AD_t = close_t - TRH_t
+   /// otherwise                     AD_t = 0
+   /// WAD_t = WAD_{t-1} + AD_t
+   /// The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
    /// </code>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

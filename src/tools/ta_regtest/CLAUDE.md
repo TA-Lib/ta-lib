@@ -358,6 +358,35 @@ The paired server-side saving is the `no_output` request flag (see the root
 CLAUDE.md): callers that only want `timing_ns` suppress the output arrays. Every
 correctness path omits it and still gets the values.
 
+### Driving a server by hand
+
+Three traps, each of which costs a debugging cycle:
+
+**Arguments are NESTED under `"params"`** — `{"method":"TA_X","params":{...}}`
+(`server_verify.c:210` and every sibling builder). The Rust server reads
+`req["params"]` and *panics* on a bounds assert if the fields are flat: it parses
+an empty input array, then `endIdx < inHigh.len()` fails. C# throws
+`IndexOutOfRangeException`. C and Java only appear to accept a flat request
+because their naive scanners find the field anywhere in the line. The external
+`ta_pandas_serve` oracle is the opposite — it reads `req.get(...)` at the top
+level only. Do not duplicate fields to satisfy both shapes; long requests
+silently truncate.
+
+**Compact separators are mandatory.** The C and tulip servers scan for the
+literal `"field":`, so Python's `json.dumps` default `": "` makes every lookup
+miss and the C server answers `{"error":"Missing method field"}`. Use
+`separators=(",",":")`.
+
+**`fuzz_hash_init()` is `1469598103934665603`, which is NOT the standard FNV-1a
+64-bit offset basis** (`0xCBF29CE484222325` = `14695981039346656037`) despite the
+comment at `fuzz_data.h:637` saying so — the repo constant is that value with its
+last digit lost. Every server and both oracles use the repo constant, so a
+from-scratch reimplementation of the standard basis produces hashes that match
+nothing. Call `fuzz_hash_init()`; never retype the number.
+
+Servers launch from `bin/`: `java -cp ta_codegen_java TaCodegenServe` and
+`dotnet ta_codegen_csharp/TaCodegenServe.dll`.
+
 ## Buffer Sizes
 
 - `JSON_BUF_SIZE` = 64KB in current code

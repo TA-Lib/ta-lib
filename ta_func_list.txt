@@ -170,7 +170,7 @@ ULTOSC              Ultimate Oscillator
 VAR                 Variance
 VWAP                Volume Weighted Average Price
 VWMA                Volume Weighted Moving Average
-WAD                 Williams' Accumulation/Distribution (no volume)
+WAD                 Williams' Accumulation/Distribution
 WCLPRICE            Weighted Close Price
 WILLR               Williams' %R
 WMA                 Weighted Moving Average

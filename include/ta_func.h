@@ -9466,7 +9466,7 @@ TA_LIB_API TA_RetCode TA_VWMA_Close( TA_VWMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_VWMA_OpenAndFill( TA_VWMA_Stream **stream, const double inReal[], const double inVolume[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
- * TA_WAD - Williams' Accumulation/Distribution (no volume)
+ * TA_WAD - Williams' Accumulation/Distribution
  * 
  * Input  = High, Low, Close
  * Output = double

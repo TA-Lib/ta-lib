@@ -56,7 +56,7 @@ static const TA_OptInputParameterInfo *TA_WAD_OptInputs[] =
 
 DEF_FUNCTION( WAD,
               TA_GroupId_MomentumIndicators,
-              "Williams' Accumulation/Distribution (no volume)",
+              "Williams' Accumulation/Distribution",
               TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
              );
 /* WAD END */
