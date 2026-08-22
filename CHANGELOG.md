@@ -9,12 +9,6 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ## [0.8.1] Not Released Yet
 ### Added
 - New Streaming API. See https://ta-lib.org/api/stream/
-- (#241) Every stream handle reports the bars it has produced a value for, as the same
-  `OutRange` the batch API returns: `TA_StreamOutRange` in C (one accessor, for a handle
-  of any function), `out_range()` in Rust, `outRange()` in Java, `OutRange` in C#. Feed a
-  stream N bars by any mixture of opener and updates and it equals what the batch call
-  over those same N bars reports — the opener sets it, each committed bar adds one, a
-  peek leaves it alone, a copy carries it.
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !
@@ -31,24 +25,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - PVO: Percentage Volume Oscillator (#119)
   - QSTICK: Qstick (#226)
   - SMI: Stochastic Momentum Index (#238)
-  - VWAP: Volume Weighted Average Price, cumulative over the requested range (#237)
+  - VWAP: Volume Weighted Average Price (#237)
   - VWMA: Volume Weighted Moving Average (#131)
   - WAD: Williams' Accumulation/Distribution (#200)
-- (#236) `TA_INSUFFICIENT_HISTORY` (17), a new `TA_RetCode`: a streaming
-  `Open`/`OpenAndFill` given fewer than `lookback + 1` bars reports it. That is the
-  library's one recoverable failure — accumulate more bars and retry — so it is worth
-  telling apart from `TA_BAD_PARAM`, which always means the call itself is wrong.
-  Appended, so no existing code's value moved. The batch tier is unaffected: a range
-  shorter than the lookback is still `TA_SUCCESS` with a zero count.
-- (#236) Java and C#: every exception the library raises now carries the
-  `TA_RetCode` it corresponds to — `TaLibFailure.retCode()` in Java,
-  `ITaLibFailure.RetCode` in C#. The exception types are unchanged (the new classes
-  subclass the ones already documented, so existing `catch` blocks keep working);
-  what is new is that a caller can tell apart the conditions one exception type
-  covers — `startIdx` from `endIdx`, an allocation failure from an internal error.
-  Java's `RetCode` enum is public for this, with `asCInt()` giving C's number. It
-  covers every indicator call, batch and streaming; the settings builder and the
-  metadata binder are not indicator calls and still raise plain types.
 - New MAType (for MA, BBANDS, STOCH etc...):
   - TA_MAType_HMA (#139)
   - TA_MAType_DISABLED — no smoothing at any period; the output is a copy of the input (#93)
@@ -68,28 +47,6 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~10%: ATR and NATR
 
 ### Changed
-- (#236) The cross-language test harness now drives each language's public API for
-  every correctness comparison, so the surface a caller actually touches — its
-  argument checks, its exception mapping, the range it reports — is compared against
-  the C reference on every case in the cross-language corpus. It was comparing an
-  internal tier before. No behaviour changed: the return code of every case is
-  identical either way, which is how the switch was verified.
-- (#236) Java and C#: the internal `RetCode`-returning tier is gone. `Core` now has
-  one entry point per indicator — the `OutRange`-returning method that throws on a
-  rejection — instead of that beside a second, near-identical method taking two
-  out-parameters. Nothing in the public API changed: the tier was package-private in
-  Java and `internal` in C#, so no caller outside the library could name it.
-- (#236) Java and C#: when one indicator is built from another (APO from MA, BBANDS
-  from MA and STDDEV, …) the inner call now goes through the same public API you
-  would call yourself. One consequence is visible: if the inner call is the one that
-  rejects, the exception names the inner function — `MA: bad parameter` from a call
-  you made to `MACDEXT`. Reaching it needs a fault the outer function does not screen
-  for first, so it is rare; the outer function's own rejections are unchanged.
-- (#236) Java: an out-of-range `startIdx`/`endIdx` is now reported ahead of a null
-  array argument, matching C's order — previously a null buffer pre-empted the index
-  complaint. And a null enum parameter (e.g. `MAType`) is rejected naming the function
-  and the parameter instead of raising a bare `NullPointerException` from inside the
-  lookback.
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
