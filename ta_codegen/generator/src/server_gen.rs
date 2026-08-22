@@ -1619,17 +1619,36 @@ fn generate_c_state_eq(
 /// no second reference handle — the range is public API in all four backends and
 /// the batch pair is already in scope — so it runs in every language server.
 fn emit_sv_range_decls(s: &mut String) {
-    s.push_str("        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;\n");
+    s.push_str("        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;\n");
     s.push_str("        int rB = 0, rN = 0;\n");
 }
+
+/// How many range-compare SITES this server emits per streamable function. Each
+/// one sets its own bit in `rangeSites`, and the driver requires every bit to
+/// have been set somewhere in the run.
+///
+/// The leg's other two floors are totals — one counts functions, the other
+/// counts legs against the function count — so a whole site class going dead in
+/// one language leaves both far above their floor and green. This is the ratchet
+/// that sees it. Corpus-wide rather than per function, because a site can
+/// legitimately not run for a given function or vector: C's anchored compare
+/// needs `lb < Sidx < svN - 1`, which a large lookback denies.
+const SV_RANGE_SITES_C: u32 = 3;
 
 /// One comparison: `handle`'s range against the `(beg, nb)` the batch reported
 /// for the same bars. `guard` is the leg's own success condition — a leg that
 /// already failed has a handle short of the bars it was supposed to consume.
-fn emit_sv_range_check(s: &mut String, indent: &str, handle: &str, guard: &str, beg: &str, nb: &str) {
+fn emit_sv_range_check(
+    s: &mut String, indent: &str, handle: &str, guard: &str, beg: &str, nb: &str, site: u32,
+) {
+    assert!(site < SV_RANGE_SITES_C, "range site {site} is outside the declared count");
     let _ = writeln!(s, "{indent}if( {guard} )");
     let _ = writeln!(s, "{indent}{{");
-    let _ = writeln!(s, "{indent}    rangeChecked = 1; rangeLegs++;");
+    let _ = writeln!(
+        s,
+        "{indent}    rangeChecked = 1; rangeLegs++; rangeSites |= {};",
+        1u32 << site
+    );
     let _ = writeln!(s, "{indent}    rB = -1; rN = -1;");
     let _ = writeln!(
         s,
@@ -1642,7 +1661,10 @@ fn emit_sv_range_check(s: &mut String, indent: &str, handle: &str, guard: &str, 
 /// regresses still fails the run.
 fn emit_sv_range_report(s: &mut String) {
     s.push_str("        if( rangeChecked && !rangeOk ) allOk = 0;\n");
-    s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"range_checked\\\":%d,\\\"range_legs\\\":%d,\\\"range_ok\\\":%d\", rangeChecked, rangeLegs, rangeOk);\n");
+    let _ = writeln!(
+        s,
+        "        pos = json_appendf(resp, resp_size, pos, \",\\\"range_checked\\\":%d,\\\"range_legs\\\":%d,\\\"range_sites\\\":%d,\\\"range_sites_n\\\":{SV_RANGE_SITES_C},\\\"range_ok\\\":%d\", rangeChecked, rangeLegs, rangeSites, rangeOk);"
+    );
 }
 
 fn emit_sv_state_decls(s: &mut String, name: &str, steq: bool) {
@@ -2014,7 +2036,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             // buffer at full history and reads only [0, nb), so a write past
             // `nb` lands in `lookback` elements of unread space.
             s.push_str(&c_canary_check(&fbuf, &out_is_int));
-            emit_sv_range_check(&mut s, "            ", "stf", "frc == TA_SUCCESS && stf", "svBeg", "svNb");
+            emit_sv_range_check(&mut s, "            ", "stf", "frc == TA_SUCCESS && stf", "svBeg", "svNb", 0);
             s.push_str(&format!("            if( stf ) TA_{name}_Close(stf);\n"));
             s.push_str("        }\n");
 
@@ -2149,7 +2171,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_state_compare(&mut s, name, steq);
         // Open(P) + (svN - P) updates: whatever P was, the handle has consumed
         // svN bars and must report exactly what batch(0, svN-1) did.
-        emit_sv_range_check(&mut s, "            ", "st", "ok && st", "svBeg", "svNb");
+        emit_sv_range_check(&mut s, "            ", "st", "ok && st", "svBeg", "svNb", 1);
         s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
         if candle {
             s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
@@ -2196,7 +2218,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             ));
             s.push_str("                    if( arc != TA_SUCCESS || !stA ) ok = 0;\n");
             emit_sv_compare(&mut s, &out_is_int, &bbuf, "                    ", "(svN - 1) - svBegS", "svN - 1", "ok &&");
-            emit_sv_range_check(&mut s, "                    ", "stA", "ok && stA", "svBegS", "svNbS");
+            emit_sv_range_check(&mut s, "                    ", "stA", "ok && stA", "svBegS", "svNbS", 2);
             s.push_str(&format!("                    if( stA ) TA_{name}_Close(stA);\n"));
             s.push_str("                    if( !ok ) allOk = 0;\n");
             s.push_str("                    (void)badBar; (void)badOut; (void)bv; (void)sv;\n");
@@ -6044,7 +6066,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // The range leg (#241): a handle's OutRange against what batch reported for
     // the same bars. Public API in every backend, so unlike the state leg this
     // one is not C-only.
-    s.push_str("    let mut range_checked = 0i32;\n    let mut range_ok = true;\n    let mut range_legs = 0i64;\n");
+    s.push_str("    let mut range_checked = 0i32;\n    let mut range_ok = true;\n    let mut range_legs = 0i64;\n    let mut range_sites = 0i32;\n");
     // Benign +/-0 cases across every cross-tier compare in this request. `mut`
     // only when an output can reach sv_xtier_ne: an all-integer function (every
     // CDL*, MIN/MAX/MINMAXINDEX, HT_TRENDMODE) compares with `!=` and only ever
@@ -6134,7 +6156,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         "        match c2.{fname}_OpenAndFill({full_ins}{opts_tail}{fargs}) {{"
     );
     s.push_str("            Err(_) => { fill_ok = false; }\n");
-    s.push_str("            Ok((_h, fr)) => {\n                range_checked = 1; range_legs += 1;\n                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }\n                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }\n                else {\n");
+    s.push_str("            Ok((_h, fr)) => {\n                range_checked = 1; range_legs += 1; range_sites |= 1;\n                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }\n                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }\n                else {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         if *is_int {
             let _ = writeln!(s, "                    for i in 0..nb {{ if f{i}[i] != b{i}[i] {{ fill_ok = false; }} }}");
@@ -6217,7 +6239,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // Only when the value leg passed: its update loop breaks on a rejected bar,
     // which leaves the handle short of the bars it was supposed to consume.
     s.push_str("                    if all_ok {\n");
-    s.push_str("                        range_checked = 1; range_legs += 1;\n");
+    s.push_str("                        range_checked = 1; range_legs += 1; range_sites |= 2;\n");
     s.push_str("                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }\n");
     s.push_str("                    }\n");
     s.push_str("                }\n            }\n        }\n");
@@ -6242,7 +6264,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("    }\n");
     // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
     // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
-    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_n\\\":2,\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
     s.push_str("}\n\n");
     s
 }
@@ -6487,7 +6509,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // The range leg (#241): a handle's outRange() against what batch reported
     // for the same bars. Public API in every backend, so unlike the state leg
     // this one is not C-only.
-    s.push_str("        int rangeChecked = 0;\n        boolean rangeOk = true;\n        long rangeLegs = 0;\n");
+    s.push_str("        int rangeChecked = 0;\n        boolean rangeOk = true;\n        long rangeLegs = 0;\n        int rangeSites = 0;\n");
     // Benign +/-0 cases across every cross-tier compare in this request. A
     // one-element array, not a static: the server answers many requests per
     // process and a static would carry one function's count into the next.
@@ -6568,7 +6590,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         "                Core.{class} _fh = c2.{base}_OpenAndFill({full_ins}{opts_tail}{fargs});"
     );
     s.push_str("                OutRange _fr = _fh.outRange();\n");
-    s.push_str("                rangeChecked = 1; rangeLegs++;\n");
+    s.push_str("                rangeChecked = 1; rangeLegs++; rangeSites |= 1;\n");
     s.push_str("                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;\n");
     s.push_str("                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;\n                else {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
@@ -6714,10 +6736,11 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // bars and must report exactly what batch(0, svN-1) did. Only when the value
     // leg passed — otherwise the handle is short of the bars it was to consume.
     s.push_str("                if (allOk) {\n");
-    s.push_str("                    rangeChecked = 1; rangeLegs++;\n");
+    s.push_str("                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;\n");
     s.push_str("                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;\n");
     s.push_str("                }\n");
     s.push_str("            }\n");
+
 
     // copy() independence leg: open at the earliest prefix, advance to mid,
     // copy, drive both to the end — both must match batch bitwise (a shallow
@@ -6813,9 +6836,42 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         s.push_str("            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }\n");
     }
 
+    // startIdx-anchored range site (#241). `_OpenInternal` is the composition
+    // seam, and its range is max(startIdx, lookback) — a DIFFERENT expression
+    // from the two sites above, resolved by a different emitter branch. It was
+    // gated in C alone, which is how a clamp landed in the three managed
+    // backends without its history re-check and shipped: nothing here executed
+    // it. Same shape as the C leg, against a reference recomputed for the
+    // anchored range under this request's own settings.
+    s.push_str("            {\n");
+    s.push_str("                int Sidx = lb + (svN - lb) / 3;\n");
+    s.push_str("                if (Sidx > lb && Sidx < svN - 1) {\n");
+    s.push_str("                    MInteger begS = new MInteger();\n");
+    s.push_str("                    MInteger nbS = new MInteger();\n");
+    s.push_str("                    RetCode rcS;\n");
+    let _ = writeln!(
+        s,
+        "                    try {{ rcS = c2.{base}_Impl(Sidx, svN - 1, {full_ins}, {opts_lead}begS, nbS{bargs}); }}\n\
+         \x20                   catch (RuntimeException _sve) {{ if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }}"
+    );
+    s.push_str("                    if (rcS == RetCode.Success && nbS.value > 0) {\n");
+    let _ = writeln!(
+        s,
+        "                        try {{\n\
+         \x20                           Core.{class} stA = c2.{base}_OpenInternal({}, Sidx{opts_tail});\n\
+         \x20                           rangeChecked = 1; rangeLegs++; rangeSites |= 4;\n\
+         \x20                           if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;\n\
+         \x20                       }} catch (IllegalArgumentException _e) {{ rangeOk = false; if (diag.isEmpty()) diag = \",\\\"anchoredOpenRejected\\\":1\"; }}",
+        pfx_ins("svN")
+    );
+    s.push_str("                    }\n");
+    s.push_str("                }\n");
+    s.push_str("            }\n");
+
     s.push_str("        }\n");
     // fill_ok folds into ok as a safety net (mirrors the C/Rust gates).
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
+
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_n\\\":3,\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
@@ -7471,7 +7527,7 @@ fn emit_csharp_sv_func(
     // The range leg (#241): a handle's OutRange against what batch reported for
     // the same bars. Public API in every backend, so unlike the state leg this
     // one is not C-only.
-    s.push_str("        int rangeChecked = 0;\n        bool rangeOk = true;\n        long rangeLegs = 0;\n");
+    s.push_str("        int rangeChecked = 0;\n        bool rangeOk = true;\n        long rangeLegs = 0;\n        int rangeSites = 0;\n");
     // RULE 7 -- the benign +/-0 accumulator is a REQUEST-SCOPED LOCAL, passed by
     // `ref`. One process answers many requests and a `static` would carry one
     // function's count into the next -- and the plan's Java<->C# `benign`
@@ -7634,7 +7690,7 @@ fn emit_csharp_sv_func(
     // `OutRange` is a PROPERTY on the C# handle (Java spells it `outRange()`),
     // returning the shipped `OutRange` with `BegIdx` / `Count`.
     s.push_str("                OutRange _fr = _fh.OutRange;\n");
-    s.push_str("                rangeChecked = 1; rangeLegs++;\n");
+    s.push_str("                rangeChecked = 1; rangeLegs++; rangeSites |= 1;\n");
     s.push_str("                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;\n");
     s.push_str("                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;\n                else {\n");
     for i in 0..n_out {
@@ -7920,10 +7976,11 @@ fn emit_csharp_sv_func(
     // bars and must report exactly what batch(0, svN-1) did. Only when the value
     // leg passed — otherwise the handle is short of the bars it was to consume.
     s.push_str("                if (allOk) {\n");
-    s.push_str("                    rangeChecked = 1; rangeLegs++;\n");
+    s.push_str("                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;\n");
     s.push_str("                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;\n");
     s.push_str("                }\n");
     s.push_str("            }\n");
+
 
     // ---- Clone() independence: open at the earliest prefix, advance to mid,
     // clone, drive both to the end. Both must match batch (cross-tier) and each
@@ -8135,6 +8192,33 @@ fn emit_csharp_sv_func(
         s.push_str("            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }\n");
     }
 
+    // startIdx-anchored range site (#241) — the C leg's twin. `_OpenInternal`'s
+    // range is max(startIdx, lookback), resolved by a different emitter branch
+    // from the two sites above, and it was gated in C alone.
+    s.push_str("            {\n");
+    s.push_str("                int Sidx = lb + (svN - lb) / 3;\n");
+    s.push_str("                if (Sidx > lb && Sidx < svN - 1) {\n");
+    s.push_str("                    int begS = 0, nbS = 0;\n");
+    s.push_str("                    RetCode rcS;\n");
+    let _ = writeln!(
+        s,
+        "                    try {{ rcS = c2.{base}_Impl(Sidx, svN - 1, {full_ins}, {opts_lead}out begS, out nbS{bargs}); }}\n\
+         \x20                   catch (Exception _sve) when (_sve is ITaLibFailure) {{ rcS = ((ITaLibFailure)_sve).RetCode; }}"
+    );
+    s.push_str("                    if (rcS == RetCode.Success && nbS > 0) {\n");
+    let _ = writeln!(
+        s,
+        "                        try {{\n\
+         \x20                           Core.{class} stA = c2.{base}_OpenInternal({}, Sidx{opts_tail});\n\
+         \x20                           rangeChecked = 1; rangeLegs++; rangeSites |= 4;\n\
+         \x20                           if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;\n\
+         \x20                       }} catch (ArgumentException) {{ rangeOk = false; if (diag.Length == 0) diag = \",\\\"anchoredOpenRejected\\\":1\"; }}",
+        pfx_ins("svN")
+    );
+    s.push_str("                    }\n");
+    s.push_str("                }\n");
+    s.push_str("            }\n");
+
     s.push_str("        }\n");
     // `fill_ok` folds into `ok` as a safety net (mirrors the C/Rust/Java gates),
     // and so does the allocation probe -- `updAlloc` is a diagnostic AND a
@@ -8145,7 +8229,8 @@ fn emit_csharp_sv_func(
     if candle {
         s.push_str("        extra += \",\\\"candleMut\\\":\" + candleMutRan + \",\\\"candleMutMoved\\\":\" + candleMutMoved + \",\\\"benignMut\\\":\" + zsignMut;\n");
     }
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign + extra + diag + \"}\";\n");
+
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_n\\\":3,\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign + extra + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }

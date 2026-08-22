@@ -358,6 +358,16 @@ typedef struct {
 static FuncStreamCounters g_streamCounters[MAX_FUNCTIONS];
 static int                g_numStreamCounters = 0;
 
+/* Bits set in `v`. Only the range-site mask uses it, and only in a message and
+ * a floor, so a loop is clearer here than a builtin that is not C89. */
+static int codegen_popcount( int v )
+{
+    int n = 0;
+    unsigned int u = (unsigned int)v;
+    while( u ) { n += (int)(u & 1u); u >>= 1; }
+    return n;
+}
+
 static void record_stream_counters( const char *funcName, int langIndex,
                                     int legs, long long benign )
 {
@@ -1753,6 +1763,8 @@ typedef struct {
     int               streamStateLegs;      /* legs that compared handle state (#240) */
     int               streamRangeFunctions; /* funcs whose handle OutRange matched batch (#241) */
     int               streamRangeLegs;      /* legs that compared the handle's OutRange (#241) */
+    int               streamRangeSites;     /* OR of the range-compare sites that fired (#241) */
+    int               streamRangeSitesN;    /* how many sites this server says it has */
     long long         streamBenign;        /* cross-tier +0.0/-0.0 pairs (#147) — never a failure */
 } ForEachFuncContext;
 
@@ -3260,6 +3272,8 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int stateOfLegs = 0;   /* value legs in the requests that reported it */
     int rangeChecked = 0;  /* set once any leg reports the OutRange compare (#241) */
     int rangeLegs = 0;     /* how many legs actually compared a handle's OutRange */
+    int rangeSites = 0;    /* OR of the range-compare sites that fired */
+    int rangeSitesN = 0;   /* how many the server says it has */
     long long benign = 0;  /* signed-zero cases this function's legs reported */
     int isUnstable;
 
@@ -3460,6 +3474,16 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             {
                 rangeChecked = 1;
                 rangeLegs += stream_flag(ctx->responseBuf, "\"range_legs\":");
+                {
+                    /* Which of THIS server's range-compare sites fired, and how
+                     * many it has. Reported by the server rather than held as a
+                     * per-language constant here, so the two cannot drift when a
+                     * language gains a site. */
+                    int m = stream_flag(ctx->responseBuf, "\"range_sites\":");
+                    int nsites = stream_flag(ctx->responseBuf, "\"range_sites_n\":");
+                    if( m > 0 ) rangeSites |= m;
+                    if( nsites > rangeSitesN ) rangeSitesN = nsites;
+                }
                 if( stream_flag(ctx->responseBuf, "\"range_ok\":") != 1 )
                 {
                     printf("STREAM RANGE MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
@@ -3523,6 +3547,8 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     if( stateChecked ) ctx->streamStateFunctions++;
     if( rangeChecked ) ctx->streamRangeFunctions++;
     ctx->streamRangeLegs += rangeLegs;
+    ctx->streamRangeSites |= rangeSites;
+    if( rangeSitesN > ctx->streamRangeSitesN ) ctx->streamRangeSitesN = rangeSitesN;
     /* Per-leg, not per-function: a function counts as covered as soon as ONE of
      * its legs compares, so without this a reference open that quietly failed
      * on 15 of 16 legs would still read as full coverage. Every leg that
@@ -4278,6 +4304,8 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamStateLegs     = 0;
             ctx.streamRangeFunctions = 0;
             ctx.streamRangeLegs     = 0;
+            ctx.streamRangeSites    = 0;
+            ctx.streamRangeSitesN   = 0;
             ctx.streamBenign        = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
             /* The benign total is printed unconditionally, zero included: the
@@ -4290,12 +4318,13 @@ static ErrorNumber test_codegen_for_language(
                    "  OpenAndFill verify: %d functions, filled array == batch(0,n-1) bitwise\n"
                    "  State-equivalence verify: %d functions, %d legs, handle after "
                    "Open(P)+updates == handle after Open(n) bitwise\n"
-                   "  OutRange verify: %d functions, %d legs, the handle's range == "
-                   "the batch range over the same bars\n",
+                   "  OutRange verify: %d functions, %d legs across %d of %d compare "
+                   "site(s), the handle's range == the batch range over the same bars\n",
                    ctx.streamFunctions, ctx.streamLegs, ctx.streamRejectArms,
                    ctx.streamSkipped, ctx.streamBenign, ctx.streamFillFunctions,
                    ctx.streamStateFunctions, ctx.streamStateLegs,
-                   ctx.streamRangeFunctions, ctx.streamRangeLegs);
+                   ctx.streamRangeFunctions, ctx.streamRangeLegs,
+                   codegen_popcount(ctx.streamRangeSites), ctx.streamRangeSitesN);
             /* Coverage ratchet: every function with a server stream must ALSO
              * verify OpenAndFill (the emit side and this verify side both gate on
              * the same has_open_and_fill, so they cannot desync silently — but if
@@ -4351,12 +4380,22 @@ static ErrorNumber test_codegen_for_language(
                        ctx.streamRangeFunctions, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
+            /* Per-SITE, not per-total. The floor above counts functions and
+             * the leg total is far above any threshold worth setting, so a whole
+             * compare site going dead — the anchored open, say, or the fill —
+             * stays green on both: the surviving sites carry the counts. Each
+             * server reports which of its own sites fired; every one has to have
+             * fired somewhere in the run. Corpus-wide rather than per function,
+             * because a site can legitimately not run for a given function or
+             * vector (C's anchored compare needs lb < Sidx < svN-1). */
             if( ctx.error == TA_TEST_PASS && ctx.streamFunctions > 0 &&
-                ctx.streamRangeLegs < ctx.streamFunctions )
+                ctx.streamRangeSitesN > 0 &&
+                ctx.streamRangeSites != (1 << ctx.streamRangeSitesN) - 1 )
             {
-                printf("STREAM RANGE VACUOUS: %d range legs over %d streaming "
-                       "functions — fewer than one each\n",
-                       ctx.streamRangeLegs, ctx.streamFunctions);
+                printf("STREAM RANGE PARTIAL: only %d of %d range compare site(s) "
+                       "ever fired (mask 0x%x) — a whole site class is dead\n",
+                       codegen_popcount(ctx.streamRangeSites), ctx.streamRangeSitesN,
+                       (unsigned)ctx.streamRangeSites);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
         }

@@ -5400,7 +5400,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AC_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -5433,7 +5433,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -5483,7 +5483,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -5507,7 +5507,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -5522,7 +5522,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5534,7 +5534,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ACCBANDS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -5573,7 +5573,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -5636,7 +5636,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -5664,7 +5664,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v2, sv_b2[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 2; bv = sv_b2[(svN - 1) - svBegS]; sv = v2; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -5679,7 +5679,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5690,7 +5690,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ACOS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -5723,7 +5723,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -5773,7 +5773,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -5797,7 +5797,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -5812,7 +5812,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5823,7 +5823,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AD_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -5856,7 +5856,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -5906,7 +5906,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -5930,7 +5930,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -5945,7 +5945,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -5956,7 +5956,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ADD_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -5989,7 +5989,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6039,7 +6039,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6063,7 +6063,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -6078,7 +6078,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6091,7 +6091,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ADOSC_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -6126,7 +6126,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6176,7 +6176,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6200,7 +6200,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -6216,7 +6216,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6228,7 +6228,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ADX_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -6263,7 +6263,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6313,7 +6313,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6337,7 +6337,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -6353,7 +6353,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6365,7 +6365,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ADXR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -6400,7 +6400,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6450,7 +6450,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6474,7 +6474,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -6490,7 +6490,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6503,7 +6503,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AO_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -6536,7 +6536,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6586,7 +6586,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6610,7 +6610,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -6625,7 +6625,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6639,7 +6639,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_APO_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -6680,7 +6680,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6730,7 +6730,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6754,7 +6754,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -6773,7 +6773,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6785,7 +6785,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AROON_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -6821,7 +6821,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6881,7 +6881,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -6907,7 +6907,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -6922,7 +6922,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -6934,7 +6934,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AROONOSC_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -6967,7 +6967,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7017,7 +7017,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7041,7 +7041,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -7056,7 +7056,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7067,7 +7067,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ASIN_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -7100,7 +7100,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7150,7 +7150,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7174,7 +7174,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -7189,7 +7189,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7200,7 +7200,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ATAN_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -7233,7 +7233,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7283,7 +7283,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7307,7 +7307,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -7322,7 +7322,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7334,7 +7334,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ATR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -7369,7 +7369,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7419,7 +7419,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7443,7 +7443,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -7459,7 +7459,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7471,7 +7471,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AVGDEV_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -7504,7 +7504,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7554,7 +7554,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7578,7 +7578,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -7593,7 +7593,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7604,7 +7604,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AVGPRICE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -7637,7 +7637,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7687,7 +7687,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7711,7 +7711,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -7726,7 +7726,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7741,7 +7741,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_BBANDS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -7788,7 +7788,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7851,7 +7851,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7879,7 +7879,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v2, sv_b2[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 2; bv = sv_b2[(svN - 1) - svBegS]; sv = v2; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -7898,7 +7898,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -7910,7 +7910,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_BETA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -7943,7 +7943,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -7993,7 +7993,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8017,7 +8017,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -8032,7 +8032,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8043,7 +8043,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_BOP_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -8076,7 +8076,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8126,7 +8126,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8150,7 +8150,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -8165,7 +8165,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8177,7 +8177,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CCI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -8210,7 +8210,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8260,7 +8260,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8284,7 +8284,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -8299,7 +8299,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8310,7 +8310,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL2CROWS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -8351,7 +8351,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8393,7 +8393,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8420,7 +8420,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -8435,7 +8435,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8446,7 +8446,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3BLACKCROWS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -8487,7 +8487,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8529,7 +8529,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8556,7 +8556,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -8571,7 +8571,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8582,7 +8582,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3INSIDE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -8623,7 +8623,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8665,7 +8665,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8692,7 +8692,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -8707,7 +8707,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8718,7 +8718,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3LINESTRIKE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -8759,7 +8759,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8801,7 +8801,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8828,7 +8828,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -8843,7 +8843,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8854,7 +8854,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3OUTSIDE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -8895,7 +8895,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8937,7 +8937,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -8964,7 +8964,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -8979,7 +8979,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -8990,7 +8990,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3STARSINSOUTH_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -9031,7 +9031,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9073,7 +9073,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9100,7 +9100,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -9115,7 +9115,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9126,7 +9126,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3WHITESOLDIERS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -9167,7 +9167,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9209,7 +9209,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9236,7 +9236,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -9251,7 +9251,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9263,7 +9263,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLABANDONEDBABY_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -9304,7 +9304,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9346,7 +9346,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9373,7 +9373,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -9388,7 +9388,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9399,7 +9399,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLADVANCEBLOCK_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -9440,7 +9440,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9482,7 +9482,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9509,7 +9509,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -9524,7 +9524,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9535,7 +9535,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLBELTHOLD_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -9576,7 +9576,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9618,7 +9618,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9645,7 +9645,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -9660,7 +9660,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9671,7 +9671,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLBREAKAWAY_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -9712,7 +9712,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9754,7 +9754,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9781,7 +9781,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -9796,7 +9796,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9807,7 +9807,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLCLOSINGMARUBOZU_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -9848,7 +9848,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9890,7 +9890,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -9917,7 +9917,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -9932,7 +9932,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -9943,7 +9943,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLCONCEALBABYSWALL_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -9984,7 +9984,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10026,7 +10026,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10053,7 +10053,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -10068,7 +10068,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10079,7 +10079,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLCOUNTERATTACK_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -10120,7 +10120,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10162,7 +10162,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10189,7 +10189,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -10204,7 +10204,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10216,7 +10216,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLDARKCLOUDCOVER_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -10257,7 +10257,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10299,7 +10299,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10326,7 +10326,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -10341,7 +10341,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10352,7 +10352,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLDOJI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -10393,7 +10393,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10435,7 +10435,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10462,7 +10462,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -10477,7 +10477,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10488,7 +10488,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLDOJISTAR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -10529,7 +10529,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10571,7 +10571,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10598,7 +10598,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -10613,7 +10613,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10624,7 +10624,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLDRAGONFLYDOJI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -10665,7 +10665,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10707,7 +10707,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10734,7 +10734,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -10749,7 +10749,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10760,7 +10760,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLENGULFING_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -10801,7 +10801,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10843,7 +10843,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10870,7 +10870,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -10885,7 +10885,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -10897,7 +10897,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLEVENINGDOJISTAR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -10938,7 +10938,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -10980,7 +10980,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11007,7 +11007,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -11022,7 +11022,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11034,7 +11034,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLEVENINGSTAR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -11075,7 +11075,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11117,7 +11117,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11144,7 +11144,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -11159,7 +11159,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11170,7 +11170,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLGAPSIDESIDEWHITE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -11211,7 +11211,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11253,7 +11253,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11280,7 +11280,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -11295,7 +11295,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11306,7 +11306,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLGRAVESTONEDOJI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -11347,7 +11347,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11389,7 +11389,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11416,7 +11416,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -11431,7 +11431,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11442,7 +11442,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHAMMER_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -11483,7 +11483,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11525,7 +11525,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11552,7 +11552,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -11567,7 +11567,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11578,7 +11578,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHANGINGMAN_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -11619,7 +11619,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11661,7 +11661,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11688,7 +11688,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -11703,7 +11703,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11714,7 +11714,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHARAMI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -11755,7 +11755,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11797,7 +11797,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11824,7 +11824,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -11839,7 +11839,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11850,7 +11850,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHARAMICROSS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -11891,7 +11891,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11933,7 +11933,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -11960,7 +11960,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -11975,7 +11975,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -11986,7 +11986,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHIGHWAVE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -12027,7 +12027,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12069,7 +12069,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12096,7 +12096,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -12111,7 +12111,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12122,7 +12122,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHIKKAKE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -12163,7 +12163,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12205,7 +12205,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12232,7 +12232,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -12247,7 +12247,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12258,7 +12258,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHIKKAKEMOD_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -12299,7 +12299,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12341,7 +12341,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12368,7 +12368,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -12383,7 +12383,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12394,7 +12394,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHOMINGPIGEON_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -12435,7 +12435,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12477,7 +12477,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12504,7 +12504,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -12519,7 +12519,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12530,7 +12530,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLIDENTICAL3CROWS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -12571,7 +12571,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12613,7 +12613,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12640,7 +12640,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -12655,7 +12655,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12666,7 +12666,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLINNECK_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -12707,7 +12707,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12749,7 +12749,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12776,7 +12776,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -12791,7 +12791,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12802,7 +12802,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLINVERTEDHAMMER_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -12843,7 +12843,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12885,7 +12885,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -12912,7 +12912,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -12927,7 +12927,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -12938,7 +12938,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLKICKING_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -12979,7 +12979,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13021,7 +13021,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13048,7 +13048,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -13063,7 +13063,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13074,7 +13074,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLKICKINGBYLENGTH_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -13115,7 +13115,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13157,7 +13157,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13184,7 +13184,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -13199,7 +13199,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13210,7 +13210,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLLADDERBOTTOM_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -13251,7 +13251,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13293,7 +13293,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13320,7 +13320,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -13335,7 +13335,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13346,7 +13346,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLLONGLEGGEDDOJI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -13387,7 +13387,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13429,7 +13429,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13456,7 +13456,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -13471,7 +13471,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13482,7 +13482,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLLONGLINE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -13523,7 +13523,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13565,7 +13565,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13592,7 +13592,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -13607,7 +13607,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13618,7 +13618,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMARUBOZU_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -13659,7 +13659,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13701,7 +13701,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13728,7 +13728,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -13743,7 +13743,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13754,7 +13754,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMATCHINGLOW_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -13795,7 +13795,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13837,7 +13837,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13864,7 +13864,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -13879,7 +13879,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -13891,7 +13891,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMATHOLD_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -13932,7 +13932,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -13974,7 +13974,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14001,7 +14001,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -14016,7 +14016,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14028,7 +14028,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMORNINGDOJISTAR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -14069,7 +14069,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14111,7 +14111,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14138,7 +14138,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -14153,7 +14153,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14165,7 +14165,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMORNINGSTAR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -14206,7 +14206,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14248,7 +14248,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14275,7 +14275,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -14290,7 +14290,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14301,7 +14301,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLONNECK_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -14342,7 +14342,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14384,7 +14384,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14411,7 +14411,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -14426,7 +14426,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14437,7 +14437,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLPIERCING_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -14478,7 +14478,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14520,7 +14520,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14547,7 +14547,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -14562,7 +14562,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14573,7 +14573,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLRICKSHAWMAN_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -14614,7 +14614,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14656,7 +14656,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14683,7 +14683,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -14698,7 +14698,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14709,7 +14709,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLRISEFALL3METHODS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -14750,7 +14750,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14792,7 +14792,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14819,7 +14819,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -14834,7 +14834,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14845,7 +14845,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSEPARATINGLINES_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -14886,7 +14886,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14928,7 +14928,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -14955,7 +14955,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -14970,7 +14970,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -14981,7 +14981,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSHOOTINGSTAR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -15022,7 +15022,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15064,7 +15064,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15091,7 +15091,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -15106,7 +15106,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15117,7 +15117,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSHORTLINE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -15158,7 +15158,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15200,7 +15200,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15227,7 +15227,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -15242,7 +15242,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15253,7 +15253,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSPINNINGTOP_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -15294,7 +15294,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15336,7 +15336,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15363,7 +15363,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -15378,7 +15378,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15389,7 +15389,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSTALLEDPATTERN_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -15430,7 +15430,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15472,7 +15472,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15499,7 +15499,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -15514,7 +15514,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15525,7 +15525,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSTICKSANDWICH_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -15566,7 +15566,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15608,7 +15608,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15635,7 +15635,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -15650,7 +15650,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15661,7 +15661,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLTAKURI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -15702,7 +15702,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15744,7 +15744,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15771,7 +15771,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -15786,7 +15786,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15797,7 +15797,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLTASUKIGAP_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -15838,7 +15838,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15880,7 +15880,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -15907,7 +15907,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -15922,7 +15922,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -15933,7 +15933,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLTHRUSTING_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -15974,7 +15974,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16016,7 +16016,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16043,7 +16043,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -16058,7 +16058,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16069,7 +16069,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLTRISTAR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -16110,7 +16110,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16152,7 +16152,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16179,7 +16179,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -16194,7 +16194,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16205,7 +16205,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLUNIQUE3RIVER_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -16246,7 +16246,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16288,7 +16288,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16315,7 +16315,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -16330,7 +16330,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16341,7 +16341,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLUPSIDEGAP2CROWS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -16382,7 +16382,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16424,7 +16424,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16451,7 +16451,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -16466,7 +16466,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16477,7 +16477,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLXSIDEGAP3METHODS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -16518,7 +16518,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16560,7 +16560,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16587,7 +16587,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -16602,7 +16602,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16613,7 +16613,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CEIL_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -16646,7 +16646,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16696,7 +16696,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16720,7 +16720,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -16735,7 +16735,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16747,7 +16747,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CMF_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -16780,7 +16780,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16830,7 +16830,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16854,7 +16854,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -16869,7 +16869,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -16881,7 +16881,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CMO_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -16916,7 +16916,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16966,7 +16966,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -16990,7 +16990,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -17006,7 +17006,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17018,7 +17018,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CMOU_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -17051,7 +17051,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17101,7 +17101,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17125,7 +17125,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -17140,7 +17140,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17152,7 +17152,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CORREL_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -17185,7 +17185,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17235,7 +17235,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17259,7 +17259,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -17274,7 +17274,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17285,7 +17285,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_COS_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -17318,7 +17318,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17368,7 +17368,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17392,7 +17392,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -17407,7 +17407,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17418,7 +17418,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_COSH_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -17451,7 +17451,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17501,7 +17501,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17525,7 +17525,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -17540,7 +17540,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17552,7 +17552,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_DEMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -17587,7 +17587,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17637,7 +17637,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17661,7 +17661,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -17677,7 +17677,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17688,7 +17688,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_DIV_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -17721,7 +17721,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17771,7 +17771,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17795,7 +17795,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -17810,7 +17810,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17822,7 +17822,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_DX_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -17857,7 +17857,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17907,7 +17907,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -17931,7 +17931,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -17947,7 +17947,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -17959,7 +17959,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_EFI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -17992,7 +17992,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18042,7 +18042,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18066,7 +18066,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -18081,7 +18081,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -18093,7 +18093,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_EMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -18128,7 +18128,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18178,7 +18178,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18202,7 +18202,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -18218,7 +18218,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -18229,7 +18229,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_EXP_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -18262,7 +18262,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18312,7 +18312,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18336,7 +18336,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -18351,7 +18351,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -18362,7 +18362,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_FLOOR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -18395,7 +18395,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18445,7 +18445,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18469,7 +18469,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -18484,7 +18484,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -18496,7 +18496,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -18529,7 +18529,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18579,7 +18579,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18603,7 +18603,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -18618,7 +18618,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -18629,7 +18629,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_DCPERIOD_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -18664,7 +18664,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18714,7 +18714,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18738,7 +18738,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -18754,7 +18754,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -18765,7 +18765,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_DCPHASE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -18800,7 +18800,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18850,7 +18850,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18874,7 +18874,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -18890,7 +18890,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -18901,7 +18901,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_PHASOR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -18939,7 +18939,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -18999,7 +18999,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19025,7 +19025,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -19041,7 +19041,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -19052,7 +19052,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_SINE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -19090,7 +19090,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19150,7 +19150,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19176,7 +19176,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -19192,7 +19192,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -19203,7 +19203,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_TRENDLINE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -19238,7 +19238,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19288,7 +19288,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19312,7 +19312,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -19328,7 +19328,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -19339,7 +19339,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_TRENDMODE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -19374,7 +19374,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19417,7 +19417,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19441,7 +19441,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -19457,7 +19457,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -19469,7 +19469,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_IMI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -19502,7 +19502,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19552,7 +19552,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19576,7 +19576,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -19591,7 +19591,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -19603,7 +19603,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_KAMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -19638,7 +19638,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19688,7 +19688,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19712,7 +19712,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -19728,7 +19728,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -19740,7 +19740,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LINEARREG_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -19773,7 +19773,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19823,7 +19823,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19847,7 +19847,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -19862,7 +19862,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -19874,7 +19874,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LINEARREG_ANGLE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -19907,7 +19907,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19957,7 +19957,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -19981,7 +19981,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -19996,7 +19996,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -20008,7 +20008,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LINEARREG_INTERCEPT_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -20041,7 +20041,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20091,7 +20091,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20115,7 +20115,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -20130,7 +20130,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -20142,7 +20142,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LINEARREG_SLOPE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -20175,7 +20175,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20225,7 +20225,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20249,7 +20249,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -20264,7 +20264,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -20275,7 +20275,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LN_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -20308,7 +20308,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20358,7 +20358,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20382,7 +20382,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -20397,7 +20397,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -20408,7 +20408,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LOG10_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -20441,7 +20441,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20491,7 +20491,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20515,7 +20515,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -20530,7 +20530,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -20543,7 +20543,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -20584,7 +20584,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20634,7 +20634,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20658,7 +20658,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -20677,7 +20677,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -20691,7 +20691,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MACD_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -20732,7 +20732,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20795,7 +20795,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20823,7 +20823,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v2, sv_b2[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 2; bv = sv_b2[(svN - 1) - svBegS]; sv = v2; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -20839,7 +20839,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -20856,7 +20856,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MACDEXT_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -20903,7 +20903,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20966,7 +20966,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -20994,7 +20994,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v2, sv_b2[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 2; bv = sv_b2[(svN - 1) - svBegS]; sv = v2; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -21013,7 +21013,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -21025,7 +21025,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MACDFIX_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -21066,7 +21066,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21129,7 +21129,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21157,7 +21157,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v2, sv_b2[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 2; bv = sv_b2[(svN - 1) - svBegS]; sv = v2; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -21173,7 +21173,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -21186,7 +21186,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MAMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -21224,7 +21224,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21284,7 +21284,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21310,7 +21310,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -21326,7 +21326,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -21337,7 +21337,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MARKETFI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -21370,7 +21370,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21420,7 +21420,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21444,7 +21444,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -21459,7 +21459,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -21474,7 +21474,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MAVP_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -21515,7 +21515,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21565,7 +21565,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21589,7 +21589,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -21608,7 +21608,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -21620,7 +21620,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MAX_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -21653,7 +21653,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21703,7 +21703,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21727,7 +21727,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -21742,7 +21742,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -21754,7 +21754,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MAXINDEX_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -21787,7 +21787,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21830,7 +21830,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21854,7 +21854,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -21869,7 +21869,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -21880,7 +21880,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MEDPRICE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -21913,7 +21913,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21963,7 +21963,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -21987,7 +21987,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -22002,7 +22002,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -22014,7 +22014,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MFI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -22047,7 +22047,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22097,7 +22097,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22121,7 +22121,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -22136,7 +22136,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -22148,7 +22148,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MIDPOINT_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -22181,7 +22181,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22231,7 +22231,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22255,7 +22255,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -22270,7 +22270,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -22282,7 +22282,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MIDPRICE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -22315,7 +22315,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22365,7 +22365,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22389,7 +22389,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -22404,7 +22404,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -22416,7 +22416,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MIN_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -22449,7 +22449,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22499,7 +22499,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22523,7 +22523,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -22538,7 +22538,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -22550,7 +22550,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MININDEX_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -22583,7 +22583,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22626,7 +22626,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22650,7 +22650,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -22665,7 +22665,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -22677,7 +22677,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MINMAX_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -22713,7 +22713,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22773,7 +22773,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22799,7 +22799,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -22814,7 +22814,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -22826,7 +22826,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MINMAXINDEX_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -22862,7 +22862,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22915,7 +22915,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -22941,7 +22941,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && v1 != sv_ib1[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 1; bv = (double)sv_ib1[(svN - 1) - svBegS]; sv = (double)v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -22956,7 +22956,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -22968,7 +22968,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MINUS_DI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -23003,7 +23003,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23053,7 +23053,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23077,7 +23077,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -23093,7 +23093,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -23105,7 +23105,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MINUS_DM_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -23140,7 +23140,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23190,7 +23190,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23214,7 +23214,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -23230,7 +23230,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -23242,7 +23242,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MOM_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -23275,7 +23275,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23325,7 +23325,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23349,7 +23349,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -23364,7 +23364,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -23375,7 +23375,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MULT_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -23408,7 +23408,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23458,7 +23458,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23482,7 +23482,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -23497,7 +23497,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -23509,7 +23509,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_NATR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -23544,7 +23544,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23594,7 +23594,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23618,7 +23618,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -23634,7 +23634,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -23645,7 +23645,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_NVI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -23678,7 +23678,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23728,7 +23728,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23752,7 +23752,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -23767,7 +23767,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -23778,7 +23778,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_OBV_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -23811,7 +23811,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23861,7 +23861,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23885,7 +23885,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -23900,7 +23900,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -23912,7 +23912,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PLUS_DI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -23947,7 +23947,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -23997,7 +23997,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24021,7 +24021,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -24037,7 +24037,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -24049,7 +24049,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PLUS_DM_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -24084,7 +24084,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24134,7 +24134,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24158,7 +24158,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -24174,7 +24174,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -24188,7 +24188,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PPO_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -24229,7 +24229,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24279,7 +24279,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24303,7 +24303,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -24322,7 +24322,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -24333,7 +24333,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PVI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -24366,7 +24366,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24416,7 +24416,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24440,7 +24440,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -24455,7 +24455,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -24469,7 +24469,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PVO_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -24510,7 +24510,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24560,7 +24560,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24584,7 +24584,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -24603,7 +24603,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -24615,7 +24615,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_QSTICK_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -24648,7 +24648,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24698,7 +24698,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24722,7 +24722,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -24737,7 +24737,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -24749,7 +24749,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ROC_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -24782,7 +24782,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24832,7 +24832,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24856,7 +24856,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -24871,7 +24871,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -24883,7 +24883,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ROCP_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -24916,7 +24916,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24966,7 +24966,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -24990,7 +24990,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -25005,7 +25005,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -25017,7 +25017,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ROCR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -25050,7 +25050,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25100,7 +25100,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25124,7 +25124,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -25139,7 +25139,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -25151,7 +25151,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ROCR100_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -25184,7 +25184,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25234,7 +25234,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25258,7 +25258,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -25273,7 +25273,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -25285,7 +25285,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_RSI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -25320,7 +25320,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25370,7 +25370,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25394,7 +25394,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -25410,7 +25410,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -25423,7 +25423,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SAR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -25456,7 +25456,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25506,7 +25506,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25530,7 +25530,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -25545,7 +25545,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -25564,7 +25564,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SAREXT_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -25597,7 +25597,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25647,7 +25647,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25671,7 +25671,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -25686,7 +25686,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -25697,7 +25697,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SIN_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -25730,7 +25730,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25780,7 +25780,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25804,7 +25804,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -25819,7 +25819,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -25830,7 +25830,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SINH_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -25863,7 +25863,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25913,7 +25913,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -25937,7 +25937,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -25952,7 +25952,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -25964,7 +25964,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -25997,7 +25997,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26047,7 +26047,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26071,7 +26071,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -26086,7 +26086,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -26101,7 +26101,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SMI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -26139,7 +26139,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26199,7 +26199,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26225,7 +26225,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -26241,7 +26241,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -26252,7 +26252,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SQRT_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -26285,7 +26285,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26335,7 +26335,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26359,7 +26359,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -26374,7 +26374,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -26387,7 +26387,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_STDDEV_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -26420,7 +26420,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26470,7 +26470,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26494,7 +26494,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -26509,7 +26509,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -26525,7 +26525,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_STOCH_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -26569,7 +26569,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26629,7 +26629,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26655,7 +26655,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -26674,7 +26674,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -26688,7 +26688,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_STOCHF_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -26732,7 +26732,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26792,7 +26792,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26818,7 +26818,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -26837,7 +26837,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -26852,7 +26852,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_STOCHRSI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -26898,7 +26898,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26958,7 +26958,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -26984,7 +26984,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -27004,7 +27004,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -27015,7 +27015,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SUB_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -27048,7 +27048,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27098,7 +27098,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27122,7 +27122,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -27137,7 +27137,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -27149,7 +27149,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SUM_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -27182,7 +27182,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27232,7 +27232,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27256,7 +27256,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -27271,7 +27271,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -27284,7 +27284,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_T3_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -27319,7 +27319,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27369,7 +27369,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27393,7 +27393,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -27409,7 +27409,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -27420,7 +27420,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TAN_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -27453,7 +27453,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27503,7 +27503,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27527,7 +27527,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -27542,7 +27542,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -27553,7 +27553,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TANH_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -27586,7 +27586,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27636,7 +27636,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27660,7 +27660,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -27675,7 +27675,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -27687,7 +27687,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TEMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -27722,7 +27722,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27772,7 +27772,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27796,7 +27796,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -27812,7 +27812,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -27823,7 +27823,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TRANGE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -27856,7 +27856,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27906,7 +27906,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -27930,7 +27930,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -27945,7 +27945,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -27957,7 +27957,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TRIMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -27990,7 +27990,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28040,7 +28040,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28064,7 +28064,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -28079,7 +28079,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -28091,7 +28091,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TRIX_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -28126,7 +28126,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28176,7 +28176,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28200,7 +28200,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -28216,7 +28216,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -28228,7 +28228,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TSF_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -28261,7 +28261,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28311,7 +28311,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28335,7 +28335,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -28350,7 +28350,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -28361,7 +28361,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TYPPRICE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -28394,7 +28394,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28444,7 +28444,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28468,7 +28468,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -28483,7 +28483,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -28497,7 +28497,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ULTOSC_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -28530,7 +28530,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28580,7 +28580,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28604,7 +28604,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -28619,7 +28619,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -28632,7 +28632,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_VAR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -28665,7 +28665,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28715,7 +28715,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28739,7 +28739,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -28754,7 +28754,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -28765,7 +28765,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_VWAP_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -28798,7 +28798,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28848,7 +28848,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28872,7 +28872,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -28887,7 +28887,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -28899,7 +28899,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_VWMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -28932,7 +28932,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -28982,7 +28982,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -29006,7 +29006,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -29021,7 +29021,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -29032,7 +29032,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_WAD_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -29065,7 +29065,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -29115,7 +29115,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -29139,7 +29139,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -29154,7 +29154,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -29165,7 +29165,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_WCLPRICE_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -29198,7 +29198,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -29248,7 +29248,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -29272,7 +29272,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -29287,7 +29287,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -29299,7 +29299,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_WILLR_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -29332,7 +29332,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -29382,7 +29382,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -29406,7 +29406,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -29421,7 +29421,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }
@@ -29433,7 +29433,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_WMA_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
@@ -29466,7 +29466,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                }
             if( frc == TA_SUCCESS && stf )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -29516,7 +29516,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
             if( ok && st )
             {
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                 rB = -1; rN = -1;
                 if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
             }
@@ -29540,7 +29540,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
                     if( ok && stA )
                     {
-                        rangeChecked = 1; rangeLegs++;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
                         rB = -1; rN = -1;
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
@@ -29555,7 +29555,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         if( stateChecked && !stateOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_ok\":%d", rangeChecked, rangeLegs, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_n\":3,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ok\":%d,\"peek_ok\":%d,\"benign\":%d}", fillChecked, fillOk, allOk, peekAll, svZsign);
         return;
     }

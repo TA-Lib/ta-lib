@@ -173155,6 +173155,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -173174,7 +173175,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AC_Stream _fh = c2.AC_OpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -173209,7 +173210,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -173239,8 +173240,25 @@ public class TaCodegenServe {
                 Core.AC_Stream sE = c2.AC_Open(fz_h, fz_l, 5, 34, 5);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.AC_Impl(Sidx, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.AC_Stream stA = c2.AC_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ACCBANDS(String json) {
@@ -173276,6 +173294,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -173299,7 +173318,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.ACCBANDS_Stream _fh = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1, f2);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -173348,7 +173367,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -173382,8 +173401,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().realMiddleBand(), sE.value().realMiddleBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().realLowerBand(), sE.value().realLowerBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ACCBANDS_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0, b1, b2); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ACCBANDS_Stream stA = c2.ACCBANDS_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ACOS(String json) {
@@ -173416,6 +173452,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -173435,7 +173472,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ACOS_Stream _fh = c2.ACOS_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -173470,7 +173507,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -173495,8 +173532,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ACOS_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ACOS_Stream stA = c2.ACOS_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_AD(String json) {
@@ -173529,6 +173583,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -173548,7 +173603,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AD_Stream _fh = c2.AD_OpenAndFill(fz_h, fz_l, fz_c, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -173583,7 +173638,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -173608,8 +173663,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.AD_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.AD_Stream stA = c2.AD_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ADD(String json) {
@@ -173642,6 +173714,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -173661,7 +173734,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ADD_Stream _fh = c2.ADD_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -173696,7 +173769,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -173721,8 +173794,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ADD_Impl(Sidx, svN - 1, fz_c, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ADD_Stream stA = c2.ADD_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ADOSC(String json) {
@@ -173757,6 +173847,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -173777,7 +173868,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ADOSC_Stream _fh = c2.ADOSC_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -173812,7 +173903,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -173842,8 +173933,25 @@ public class TaCodegenServe {
                 Core.ADOSC_Stream sE = c2.ADOSC_Open(fz_h, fz_l, fz_c, fz_v, 3, 10);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ADOSC_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ADOSC_Stream stA = c2.ADOSC_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx, optInFastPeriod, optInSlowPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ADX(String json) {
@@ -173877,6 +173985,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -173897,7 +174006,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ADX_Stream _fh = c2.ADX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -173932,7 +174041,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -173962,8 +174071,25 @@ public class TaCodegenServe {
                 Core.ADX_Stream sE = c2.ADX_Open(fz_h, fz_l, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ADX_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ADX_Stream stA = c2.ADX_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ADXR(String json) {
@@ -173997,6 +174123,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -174017,7 +174144,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ADXR_Stream _fh = c2.ADXR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -174052,7 +174179,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -174082,8 +174209,25 @@ public class TaCodegenServe {
                 Core.ADXR_Stream sE = c2.ADXR_Open(fz_h, fz_l, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ADXR_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ADXR_Stream stA = c2.ADXR_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_AO(String json) {
@@ -174118,6 +174262,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -174137,7 +174282,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AO_Stream _fh = c2.AO_OpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -174172,7 +174317,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -174202,8 +174347,25 @@ public class TaCodegenServe {
                 Core.AO_Stream sE = c2.AO_Open(fz_h, fz_l, 5, 34);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.AO_Impl(Sidx, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.AO_Stream stA = c2.AO_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInFastPeriod, optInSlowPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_APO(String json) {
@@ -174245,6 +174407,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -174268,7 +174431,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.APO_Stream _fh = c2.APO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -174303,7 +174466,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -174333,8 +174496,25 @@ public class TaCodegenServe {
                 Core.APO_Stream sE = c2.APO_Open(fz_c, 12, 26, optInMAType);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.APO_Impl(Sidx, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.APO_Stream stA = c2.APO_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastPeriod, optInSlowPeriod, optInMAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_AROON(String json) {
@@ -174369,6 +174549,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -174390,7 +174571,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.AROON_Stream _fh = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -174433,7 +174614,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -174465,8 +174646,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().aroonDown(), sE.value().aroonDown())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().aroonUp(), sE.value().aroonUp())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.AROON_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.AROON_Stream stA = c2.AROON_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_AROONOSC(String json) {
@@ -174500,6 +174698,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -174519,7 +174718,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AROONOSC_Stream _fh = c2.AROONOSC_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -174554,7 +174753,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -174584,8 +174783,25 @@ public class TaCodegenServe {
                 Core.AROONOSC_Stream sE = c2.AROONOSC_Open(fz_h, fz_l, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.AROONOSC_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.AROONOSC_Stream stA = c2.AROONOSC_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ASIN(String json) {
@@ -174618,6 +174834,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -174637,7 +174854,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ASIN_Stream _fh = c2.ASIN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -174672,7 +174889,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -174697,8 +174914,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ASIN_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ASIN_Stream stA = c2.ASIN_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ATAN(String json) {
@@ -174731,6 +174965,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -174750,7 +174985,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ATAN_Stream _fh = c2.ATAN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -174785,7 +175020,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -174810,8 +175045,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ATAN_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ATAN_Stream stA = c2.ATAN_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ATR(String json) {
@@ -174845,6 +175097,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -174865,7 +175118,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ATR_Stream _fh = c2.ATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -174900,7 +175153,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -174930,8 +175183,25 @@ public class TaCodegenServe {
                 Core.ATR_Stream sE = c2.ATR_Open(fz_h, fz_l, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ATR_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ATR_Stream stA = c2.ATR_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_AVGDEV(String json) {
@@ -174965,6 +175235,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -174984,7 +175255,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AVGDEV_Stream _fh = c2.AVGDEV_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -175019,7 +175290,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -175049,8 +175320,25 @@ public class TaCodegenServe {
                 Core.AVGDEV_Stream sE = c2.AVGDEV_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.AVGDEV_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.AVGDEV_Stream stA = c2.AVGDEV_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_AVGPRICE(String json) {
@@ -175083,6 +175371,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -175102,7 +175391,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AVGPRICE_Stream _fh = c2.AVGPRICE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -175137,7 +175426,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -175162,8 +175451,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.AVGPRICE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.AVGPRICE_Stream stA = c2.AVGPRICE_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_BBANDS(String json) {
@@ -175208,6 +175514,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -175235,7 +175542,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.BBANDS_Stream _fh = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, f2);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -175284,7 +175591,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -175318,8 +175625,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().realMiddleBand(), sE.value().realMiddleBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().realLowerBand(), sE.value().realLowerBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.BBANDS_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, begS, nbS, b0, b1, b2); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.BBANDS_Stream stA = c2.BBANDS_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_BETA(String json) {
@@ -175353,6 +175677,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -175372,7 +175697,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.BETA_Stream _fh = c2.BETA_OpenAndFill(fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -175407,7 +175732,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -175437,8 +175762,25 @@ public class TaCodegenServe {
                 Core.BETA_Stream sE = c2.BETA_Open(fz_c, fz_v, 5);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.BETA_Impl(Sidx, svN - 1, fz_c, fz_v, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.BETA_Stream stA = c2.BETA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_BOP(String json) {
@@ -175471,6 +175813,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -175490,7 +175833,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.BOP_Stream _fh = c2.BOP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -175525,7 +175868,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -175550,8 +175893,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.BOP_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.BOP_Stream stA = c2.BOP_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CCI(String json) {
@@ -175585,6 +175945,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -175604,7 +175965,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CCI_Stream _fh = c2.CCI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -175639,7 +176000,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -175669,8 +176030,25 @@ public class TaCodegenServe {
                 Core.CCI_Stream sE = c2.CCI_Open(fz_h, fz_l, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CCI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CCI_Stream stA = c2.CCI_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDL2CROWS(String json) {
@@ -175704,6 +176082,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -175726,7 +176105,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL2CROWS_Stream _fh = c2.CDL2CROWS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -175760,7 +176139,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -175785,8 +176164,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDL2CROWS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDL2CROWS_Stream stA = c2.CDL2CROWS_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDL3BLACKCROWS(String json) {
@@ -175820,6 +176216,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -175842,7 +176239,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3BLACKCROWS_Stream _fh = c2.CDL3BLACKCROWS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -175876,7 +176273,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -175901,8 +176298,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDL3BLACKCROWS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDL3BLACKCROWS_Stream stA = c2.CDL3BLACKCROWS_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDL3INSIDE(String json) {
@@ -175936,6 +176350,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -175958,7 +176373,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3INSIDE_Stream _fh = c2.CDL3INSIDE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -175992,7 +176407,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -176017,8 +176432,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDL3INSIDE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDL3INSIDE_Stream stA = c2.CDL3INSIDE_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDL3LINESTRIKE(String json) {
@@ -176052,6 +176484,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -176074,7 +176507,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3LINESTRIKE_Stream _fh = c2.CDL3LINESTRIKE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -176108,7 +176541,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -176133,8 +176566,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDL3LINESTRIKE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDL3LINESTRIKE_Stream stA = c2.CDL3LINESTRIKE_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDL3OUTSIDE(String json) {
@@ -176168,6 +176618,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -176190,7 +176641,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3OUTSIDE_Stream _fh = c2.CDL3OUTSIDE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -176224,7 +176675,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -176249,8 +176700,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDL3OUTSIDE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDL3OUTSIDE_Stream stA = c2.CDL3OUTSIDE_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDL3STARSINSOUTH(String json) {
@@ -176284,6 +176752,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -176306,7 +176775,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3STARSINSOUTH_Stream _fh = c2.CDL3STARSINSOUTH_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -176340,7 +176809,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -176365,8 +176834,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDL3STARSINSOUTH_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDL3STARSINSOUTH_Stream stA = c2.CDL3STARSINSOUTH_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDL3WHITESOLDIERS(String json) {
@@ -176400,6 +176886,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -176422,7 +176909,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3WHITESOLDIERS_Stream _fh = c2.CDL3WHITESOLDIERS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -176456,7 +176943,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -176481,8 +176968,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDL3WHITESOLDIERS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDL3WHITESOLDIERS_Stream stA = c2.CDL3WHITESOLDIERS_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLABANDONEDBABY(String json) {
@@ -176517,6 +177021,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -176539,7 +177044,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLABANDONEDBABY_Stream _fh = c2.CDLABANDONEDBABY_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -176573,7 +177078,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -176598,8 +177103,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLABANDONEDBABY_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLABANDONEDBABY_Stream stA = c2.CDLABANDONEDBABY_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInPenetration);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLADVANCEBLOCK(String json) {
@@ -176633,6 +177155,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -176655,7 +177178,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLADVANCEBLOCK_Stream _fh = c2.CDLADVANCEBLOCK_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -176689,7 +177212,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -176714,8 +177237,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLADVANCEBLOCK_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLADVANCEBLOCK_Stream stA = c2.CDLADVANCEBLOCK_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLBELTHOLD(String json) {
@@ -176749,6 +177289,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -176771,7 +177312,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLBELTHOLD_Stream _fh = c2.CDLBELTHOLD_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -176805,7 +177346,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -176830,8 +177371,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLBELTHOLD_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLBELTHOLD_Stream stA = c2.CDLBELTHOLD_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLBREAKAWAY(String json) {
@@ -176865,6 +177423,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -176887,7 +177446,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLBREAKAWAY_Stream _fh = c2.CDLBREAKAWAY_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -176921,7 +177480,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -176946,8 +177505,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLBREAKAWAY_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLBREAKAWAY_Stream stA = c2.CDLBREAKAWAY_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLCLOSINGMARUBOZU(String json) {
@@ -176981,6 +177557,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -177003,7 +177580,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLCLOSINGMARUBOZU_Stream _fh = c2.CDLCLOSINGMARUBOZU_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -177037,7 +177614,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -177062,8 +177639,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLCLOSINGMARUBOZU_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLCLOSINGMARUBOZU_Stream stA = c2.CDLCLOSINGMARUBOZU_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLCONCEALBABYSWALL(String json) {
@@ -177097,6 +177691,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -177119,7 +177714,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLCONCEALBABYSWALL_Stream _fh = c2.CDLCONCEALBABYSWALL_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -177153,7 +177748,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -177178,8 +177773,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLCONCEALBABYSWALL_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLCONCEALBABYSWALL_Stream stA = c2.CDLCONCEALBABYSWALL_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLCOUNTERATTACK(String json) {
@@ -177213,6 +177825,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -177235,7 +177848,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLCOUNTERATTACK_Stream _fh = c2.CDLCOUNTERATTACK_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -177269,7 +177882,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -177294,8 +177907,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLCOUNTERATTACK_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLCOUNTERATTACK_Stream stA = c2.CDLCOUNTERATTACK_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLDARKCLOUDCOVER(String json) {
@@ -177330,6 +177960,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -177352,7 +177983,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLDARKCLOUDCOVER_Stream _fh = c2.CDLDARKCLOUDCOVER_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -177386,7 +178017,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -177411,8 +178042,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLDARKCLOUDCOVER_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLDARKCLOUDCOVER_Stream stA = c2.CDLDARKCLOUDCOVER_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInPenetration);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLDOJI(String json) {
@@ -177446,6 +178094,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -177468,7 +178117,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLDOJI_Stream _fh = c2.CDLDOJI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -177502,7 +178151,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -177527,8 +178176,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLDOJI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLDOJI_Stream stA = c2.CDLDOJI_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLDOJISTAR(String json) {
@@ -177562,6 +178228,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -177584,7 +178251,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLDOJISTAR_Stream _fh = c2.CDLDOJISTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -177618,7 +178285,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -177643,8 +178310,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLDOJISTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLDOJISTAR_Stream stA = c2.CDLDOJISTAR_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLDRAGONFLYDOJI(String json) {
@@ -177678,6 +178362,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -177700,7 +178385,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLDRAGONFLYDOJI_Stream _fh = c2.CDLDRAGONFLYDOJI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -177734,7 +178419,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -177759,8 +178444,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLDRAGONFLYDOJI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLDRAGONFLYDOJI_Stream stA = c2.CDLDRAGONFLYDOJI_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLENGULFING(String json) {
@@ -177794,6 +178496,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -177816,7 +178519,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLENGULFING_Stream _fh = c2.CDLENGULFING_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -177850,7 +178553,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -177875,8 +178578,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLENGULFING_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLENGULFING_Stream stA = c2.CDLENGULFING_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLEVENINGDOJISTAR(String json) {
@@ -177911,6 +178631,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -177933,7 +178654,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLEVENINGDOJISTAR_Stream _fh = c2.CDLEVENINGDOJISTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -177967,7 +178688,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -177992,8 +178713,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLEVENINGDOJISTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLEVENINGDOJISTAR_Stream stA = c2.CDLEVENINGDOJISTAR_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInPenetration);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLEVENINGSTAR(String json) {
@@ -178028,6 +178766,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -178050,7 +178789,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLEVENINGSTAR_Stream _fh = c2.CDLEVENINGSTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -178084,7 +178823,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -178109,8 +178848,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLEVENINGSTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLEVENINGSTAR_Stream stA = c2.CDLEVENINGSTAR_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInPenetration);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLGAPSIDESIDEWHITE(String json) {
@@ -178144,6 +178900,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -178166,7 +178923,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLGAPSIDESIDEWHITE_Stream _fh = c2.CDLGAPSIDESIDEWHITE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -178200,7 +178957,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -178225,8 +178982,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLGAPSIDESIDEWHITE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLGAPSIDESIDEWHITE_Stream stA = c2.CDLGAPSIDESIDEWHITE_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLGRAVESTONEDOJI(String json) {
@@ -178260,6 +179034,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -178282,7 +179057,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLGRAVESTONEDOJI_Stream _fh = c2.CDLGRAVESTONEDOJI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -178316,7 +179091,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -178341,8 +179116,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLGRAVESTONEDOJI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLGRAVESTONEDOJI_Stream stA = c2.CDLGRAVESTONEDOJI_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLHAMMER(String json) {
@@ -178376,6 +179168,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -178398,7 +179191,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHAMMER_Stream _fh = c2.CDLHAMMER_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -178432,7 +179225,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -178457,8 +179250,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLHAMMER_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLHAMMER_Stream stA = c2.CDLHAMMER_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLHANGINGMAN(String json) {
@@ -178492,6 +179302,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -178514,7 +179325,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHANGINGMAN_Stream _fh = c2.CDLHANGINGMAN_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -178548,7 +179359,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -178573,8 +179384,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLHANGINGMAN_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLHANGINGMAN_Stream stA = c2.CDLHANGINGMAN_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLHARAMI(String json) {
@@ -178608,6 +179436,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -178630,7 +179459,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHARAMI_Stream _fh = c2.CDLHARAMI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -178664,7 +179493,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -178689,8 +179518,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLHARAMI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLHARAMI_Stream stA = c2.CDLHARAMI_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLHARAMICROSS(String json) {
@@ -178724,6 +179570,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -178746,7 +179593,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHARAMICROSS_Stream _fh = c2.CDLHARAMICROSS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -178780,7 +179627,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -178805,8 +179652,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLHARAMICROSS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLHARAMICROSS_Stream stA = c2.CDLHARAMICROSS_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLHIGHWAVE(String json) {
@@ -178840,6 +179704,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -178862,7 +179727,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHIGHWAVE_Stream _fh = c2.CDLHIGHWAVE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -178896,7 +179761,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -178921,8 +179786,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLHIGHWAVE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLHIGHWAVE_Stream stA = c2.CDLHIGHWAVE_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLHIKKAKE(String json) {
@@ -178956,6 +179838,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -178978,7 +179861,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHIKKAKE_Stream _fh = c2.CDLHIKKAKE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -179012,7 +179895,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -179037,8 +179920,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLHIKKAKE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLHIKKAKE_Stream stA = c2.CDLHIKKAKE_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLHIKKAKEMOD(String json) {
@@ -179072,6 +179972,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -179094,7 +179995,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHIKKAKEMOD_Stream _fh = c2.CDLHIKKAKEMOD_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -179128,7 +180029,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -179153,8 +180054,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLHIKKAKEMOD_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLHIKKAKEMOD_Stream stA = c2.CDLHIKKAKEMOD_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLHOMINGPIGEON(String json) {
@@ -179188,6 +180106,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -179210,7 +180129,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHOMINGPIGEON_Stream _fh = c2.CDLHOMINGPIGEON_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -179244,7 +180163,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -179269,8 +180188,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLHOMINGPIGEON_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLHOMINGPIGEON_Stream stA = c2.CDLHOMINGPIGEON_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLIDENTICAL3CROWS(String json) {
@@ -179304,6 +180240,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -179326,7 +180263,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLIDENTICAL3CROWS_Stream _fh = c2.CDLIDENTICAL3CROWS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -179360,7 +180297,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -179385,8 +180322,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLIDENTICAL3CROWS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLIDENTICAL3CROWS_Stream stA = c2.CDLIDENTICAL3CROWS_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLINNECK(String json) {
@@ -179420,6 +180374,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -179442,7 +180397,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLINNECK_Stream _fh = c2.CDLINNECK_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -179476,7 +180431,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -179501,8 +180456,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLINNECK_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLINNECK_Stream stA = c2.CDLINNECK_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLINVERTEDHAMMER(String json) {
@@ -179536,6 +180508,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -179558,7 +180531,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLINVERTEDHAMMER_Stream _fh = c2.CDLINVERTEDHAMMER_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -179592,7 +180565,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -179617,8 +180590,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLINVERTEDHAMMER_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLINVERTEDHAMMER_Stream stA = c2.CDLINVERTEDHAMMER_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLKICKING(String json) {
@@ -179652,6 +180642,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -179674,7 +180665,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLKICKING_Stream _fh = c2.CDLKICKING_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -179708,7 +180699,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -179733,8 +180724,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLKICKING_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLKICKING_Stream stA = c2.CDLKICKING_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLKICKINGBYLENGTH(String json) {
@@ -179768,6 +180776,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -179790,7 +180799,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLKICKINGBYLENGTH_Stream _fh = c2.CDLKICKINGBYLENGTH_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -179824,7 +180833,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -179849,8 +180858,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLKICKINGBYLENGTH_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLKICKINGBYLENGTH_Stream stA = c2.CDLKICKINGBYLENGTH_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLLADDERBOTTOM(String json) {
@@ -179884,6 +180910,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -179906,7 +180933,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLLADDERBOTTOM_Stream _fh = c2.CDLLADDERBOTTOM_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -179940,7 +180967,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -179965,8 +180992,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLLADDERBOTTOM_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLLADDERBOTTOM_Stream stA = c2.CDLLADDERBOTTOM_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLLONGLEGGEDDOJI(String json) {
@@ -180000,6 +181044,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -180022,7 +181067,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLLONGLEGGEDDOJI_Stream _fh = c2.CDLLONGLEGGEDDOJI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -180056,7 +181101,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -180081,8 +181126,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLLONGLEGGEDDOJI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLLONGLEGGEDDOJI_Stream stA = c2.CDLLONGLEGGEDDOJI_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLLONGLINE(String json) {
@@ -180116,6 +181178,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -180138,7 +181201,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLLONGLINE_Stream _fh = c2.CDLLONGLINE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -180172,7 +181235,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -180197,8 +181260,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLLONGLINE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLLONGLINE_Stream stA = c2.CDLLONGLINE_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLMARUBOZU(String json) {
@@ -180232,6 +181312,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -180254,7 +181335,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMARUBOZU_Stream _fh = c2.CDLMARUBOZU_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -180288,7 +181369,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -180313,8 +181394,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLMARUBOZU_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLMARUBOZU_Stream stA = c2.CDLMARUBOZU_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLMATCHINGLOW(String json) {
@@ -180348,6 +181446,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -180370,7 +181469,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMATCHINGLOW_Stream _fh = c2.CDLMATCHINGLOW_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -180404,7 +181503,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -180429,8 +181528,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLMATCHINGLOW_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLMATCHINGLOW_Stream stA = c2.CDLMATCHINGLOW_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLMATHOLD(String json) {
@@ -180465,6 +181581,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -180487,7 +181604,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMATHOLD_Stream _fh = c2.CDLMATHOLD_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -180521,7 +181638,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -180546,8 +181663,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLMATHOLD_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLMATHOLD_Stream stA = c2.CDLMATHOLD_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInPenetration);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLMORNINGDOJISTAR(String json) {
@@ -180582,6 +181716,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -180604,7 +181739,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMORNINGDOJISTAR_Stream _fh = c2.CDLMORNINGDOJISTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -180638,7 +181773,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -180663,8 +181798,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLMORNINGDOJISTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLMORNINGDOJISTAR_Stream stA = c2.CDLMORNINGDOJISTAR_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInPenetration);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLMORNINGSTAR(String json) {
@@ -180699,6 +181851,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -180721,7 +181874,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMORNINGSTAR_Stream _fh = c2.CDLMORNINGSTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -180755,7 +181908,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -180780,8 +181933,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLMORNINGSTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLMORNINGSTAR_Stream stA = c2.CDLMORNINGSTAR_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInPenetration);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLONNECK(String json) {
@@ -180815,6 +181985,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -180837,7 +182008,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLONNECK_Stream _fh = c2.CDLONNECK_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -180871,7 +182042,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -180896,8 +182067,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLONNECK_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLONNECK_Stream stA = c2.CDLONNECK_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLPIERCING(String json) {
@@ -180931,6 +182119,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -180953,7 +182142,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLPIERCING_Stream _fh = c2.CDLPIERCING_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -180987,7 +182176,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -181012,8 +182201,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLPIERCING_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLPIERCING_Stream stA = c2.CDLPIERCING_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLRICKSHAWMAN(String json) {
@@ -181047,6 +182253,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -181069,7 +182276,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLRICKSHAWMAN_Stream _fh = c2.CDLRICKSHAWMAN_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -181103,7 +182310,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -181128,8 +182335,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLRICKSHAWMAN_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLRICKSHAWMAN_Stream stA = c2.CDLRICKSHAWMAN_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLRISEFALL3METHODS(String json) {
@@ -181163,6 +182387,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -181185,7 +182410,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLRISEFALL3METHODS_Stream _fh = c2.CDLRISEFALL3METHODS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -181219,7 +182444,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -181244,8 +182469,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLRISEFALL3METHODS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLRISEFALL3METHODS_Stream stA = c2.CDLRISEFALL3METHODS_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLSEPARATINGLINES(String json) {
@@ -181279,6 +182521,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -181301,7 +182544,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSEPARATINGLINES_Stream _fh = c2.CDLSEPARATINGLINES_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -181335,7 +182578,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -181360,8 +182603,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLSEPARATINGLINES_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLSEPARATINGLINES_Stream stA = c2.CDLSEPARATINGLINES_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLSHOOTINGSTAR(String json) {
@@ -181395,6 +182655,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -181417,7 +182678,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSHOOTINGSTAR_Stream _fh = c2.CDLSHOOTINGSTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -181451,7 +182712,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -181476,8 +182737,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLSHOOTINGSTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLSHOOTINGSTAR_Stream stA = c2.CDLSHOOTINGSTAR_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLSHORTLINE(String json) {
@@ -181511,6 +182789,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -181533,7 +182812,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSHORTLINE_Stream _fh = c2.CDLSHORTLINE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -181567,7 +182846,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -181592,8 +182871,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLSHORTLINE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLSHORTLINE_Stream stA = c2.CDLSHORTLINE_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLSPINNINGTOP(String json) {
@@ -181627,6 +182923,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -181649,7 +182946,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSPINNINGTOP_Stream _fh = c2.CDLSPINNINGTOP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -181683,7 +182980,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -181708,8 +183005,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLSPINNINGTOP_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLSPINNINGTOP_Stream stA = c2.CDLSPINNINGTOP_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLSTALLEDPATTERN(String json) {
@@ -181743,6 +183057,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -181765,7 +183080,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSTALLEDPATTERN_Stream _fh = c2.CDLSTALLEDPATTERN_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -181799,7 +183114,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -181824,8 +183139,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLSTALLEDPATTERN_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLSTALLEDPATTERN_Stream stA = c2.CDLSTALLEDPATTERN_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLSTICKSANDWICH(String json) {
@@ -181859,6 +183191,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -181881,7 +183214,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSTICKSANDWICH_Stream _fh = c2.CDLSTICKSANDWICH_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -181915,7 +183248,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -181940,8 +183273,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLSTICKSANDWICH_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLSTICKSANDWICH_Stream stA = c2.CDLSTICKSANDWICH_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLTAKURI(String json) {
@@ -181975,6 +183325,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -181997,7 +183348,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLTAKURI_Stream _fh = c2.CDLTAKURI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -182031,7 +183382,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -182056,8 +183407,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLTAKURI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLTAKURI_Stream stA = c2.CDLTAKURI_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLTASUKIGAP(String json) {
@@ -182091,6 +183459,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -182113,7 +183482,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLTASUKIGAP_Stream _fh = c2.CDLTASUKIGAP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -182147,7 +183516,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -182172,8 +183541,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLTASUKIGAP_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLTASUKIGAP_Stream stA = c2.CDLTASUKIGAP_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLTHRUSTING(String json) {
@@ -182207,6 +183593,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -182229,7 +183616,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLTHRUSTING_Stream _fh = c2.CDLTHRUSTING_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -182263,7 +183650,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -182288,8 +183675,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLTHRUSTING_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLTHRUSTING_Stream stA = c2.CDLTHRUSTING_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLTRISTAR(String json) {
@@ -182323,6 +183727,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -182345,7 +183750,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLTRISTAR_Stream _fh = c2.CDLTRISTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -182379,7 +183784,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -182404,8 +183809,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLTRISTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLTRISTAR_Stream stA = c2.CDLTRISTAR_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLUNIQUE3RIVER(String json) {
@@ -182439,6 +183861,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -182461,7 +183884,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLUNIQUE3RIVER_Stream _fh = c2.CDLUNIQUE3RIVER_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -182495,7 +183918,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -182520,8 +183943,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLUNIQUE3RIVER_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLUNIQUE3RIVER_Stream stA = c2.CDLUNIQUE3RIVER_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLUPSIDEGAP2CROWS(String json) {
@@ -182555,6 +183995,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -182577,7 +184018,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLUPSIDEGAP2CROWS_Stream _fh = c2.CDLUPSIDEGAP2CROWS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -182611,7 +184052,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -182636,8 +184077,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLUPSIDEGAP2CROWS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLUPSIDEGAP2CROWS_Stream stA = c2.CDLUPSIDEGAP2CROWS_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CDLXSIDEGAP3METHODS(String json) {
@@ -182671,6 +184129,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = (candleLegs != 0) ? 4 : 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -182693,7 +184152,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLXSIDEGAP3METHODS_Stream _fh = c2.CDLXSIDEGAP3METHODS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -182727,7 +184186,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -182752,8 +184211,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CDLXSIDEGAP3METHODS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CDLXSIDEGAP3METHODS_Stream stA = c2.CDLXSIDEGAP3METHODS_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CEIL(String json) {
@@ -182786,6 +184262,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -182805,7 +184282,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CEIL_Stream _fh = c2.CEIL_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -182840,7 +184317,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -182865,8 +184342,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CEIL_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CEIL_Stream stA = c2.CEIL_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CMF(String json) {
@@ -182900,6 +184394,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -182919,7 +184414,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CMF_Stream _fh = c2.CMF_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -182954,7 +184449,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -182984,8 +184479,25 @@ public class TaCodegenServe {
                 Core.CMF_Stream sE = c2.CMF_Open(fz_h, fz_l, fz_c, fz_v, 20);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CMF_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CMF_Stream stA = c2.CMF_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CMO(String json) {
@@ -183019,6 +184531,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -183039,7 +184552,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CMO_Stream _fh = c2.CMO_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -183074,7 +184587,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -183104,8 +184617,25 @@ public class TaCodegenServe {
                 Core.CMO_Stream sE = c2.CMO_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CMO_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CMO_Stream stA = c2.CMO_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CMOU(String json) {
@@ -183139,6 +184669,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -183158,7 +184689,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CMOU_Stream _fh = c2.CMOU_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -183193,7 +184724,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -183223,8 +184754,25 @@ public class TaCodegenServe {
                 Core.CMOU_Stream sE = c2.CMOU_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CMOU_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CMOU_Stream stA = c2.CMOU_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_CORREL(String json) {
@@ -183258,6 +184806,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -183277,7 +184826,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CORREL_Stream _fh = c2.CORREL_OpenAndFill(fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -183312,7 +184861,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -183342,8 +184891,25 @@ public class TaCodegenServe {
                 Core.CORREL_Stream sE = c2.CORREL_Open(fz_c, fz_v, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.CORREL_Impl(Sidx, svN - 1, fz_c, fz_v, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.CORREL_Stream stA = c2.CORREL_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_COS(String json) {
@@ -183376,6 +184942,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -183395,7 +184962,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.COS_Stream _fh = c2.COS_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -183430,7 +184997,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -183455,8 +185022,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.COS_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.COS_Stream stA = c2.COS_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_COSH(String json) {
@@ -183489,6 +185073,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -183508,7 +185093,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.COSH_Stream _fh = c2.COSH_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -183543,7 +185128,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -183568,8 +185153,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.COSH_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.COSH_Stream stA = c2.COSH_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_DEMA(String json) {
@@ -183603,6 +185205,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -183623,7 +185226,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.DEMA_Stream _fh = c2.DEMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -183658,7 +185261,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -183688,8 +185291,25 @@ public class TaCodegenServe {
                 Core.DEMA_Stream sE = c2.DEMA_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.DEMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.DEMA_Stream stA = c2.DEMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_DIV(String json) {
@@ -183722,6 +185342,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -183741,7 +185362,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.DIV_Stream _fh = c2.DIV_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -183776,7 +185397,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -183801,8 +185422,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.DIV_Impl(Sidx, svN - 1, fz_c, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.DIV_Stream stA = c2.DIV_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_DX(String json) {
@@ -183836,6 +185474,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -183856,7 +185495,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.DX_Stream _fh = c2.DX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -183891,7 +185530,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -183921,8 +185560,25 @@ public class TaCodegenServe {
                 Core.DX_Stream sE = c2.DX_Open(fz_h, fz_l, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.DX_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.DX_Stream stA = c2.DX_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_EFI(String json) {
@@ -183956,6 +185612,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -183975,7 +185632,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.EFI_Stream _fh = c2.EFI_OpenAndFill(fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -184010,7 +185667,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -184040,8 +185697,25 @@ public class TaCodegenServe {
                 Core.EFI_Stream sE = c2.EFI_Open(fz_c, fz_v, 13);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.EFI_Impl(Sidx, svN - 1, fz_c, fz_v, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.EFI_Stream stA = c2.EFI_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_EMA(String json) {
@@ -184075,6 +185749,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -184095,7 +185770,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.EMA_Stream _fh = c2.EMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -184130,7 +185805,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -184160,8 +185835,25 @@ public class TaCodegenServe {
                 Core.EMA_Stream sE = c2.EMA_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.EMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.EMA_Stream stA = c2.EMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_EXP(String json) {
@@ -184194,6 +185886,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -184213,7 +185906,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.EXP_Stream _fh = c2.EXP_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -184248,7 +185941,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -184273,8 +185966,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.EXP_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.EXP_Stream stA = c2.EXP_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_FLOOR(String json) {
@@ -184307,6 +186017,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -184326,7 +186037,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.FLOOR_Stream _fh = c2.FLOOR_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -184361,7 +186072,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -184386,8 +186097,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.FLOOR_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.FLOOR_Stream stA = c2.FLOOR_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_HMA(String json) {
@@ -184421,6 +186149,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -184440,7 +186169,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.HMA_Stream _fh = c2.HMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -184475,7 +186204,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -184505,8 +186234,25 @@ public class TaCodegenServe {
                 Core.HMA_Stream sE = c2.HMA_Open(fz_c, 20);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.HMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.HMA_Stream stA = c2.HMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_HT_DCPERIOD(String json) {
@@ -184539,6 +186285,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -184559,7 +186306,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.HT_DCPERIOD_Stream _fh = c2.HT_DCPERIOD_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -184594,7 +186341,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -184619,8 +186366,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.HT_DCPERIOD_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.HT_DCPERIOD_Stream stA = c2.HT_DCPERIOD_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_HT_DCPHASE(String json) {
@@ -184653,6 +186417,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -184673,7 +186438,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.HT_DCPHASE_Stream _fh = c2.HT_DCPHASE_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -184708,7 +186473,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -184733,8 +186498,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.HT_DCPHASE_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.HT_DCPHASE_Stream stA = c2.HT_DCPHASE_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_HT_PHASOR(String json) {
@@ -184768,6 +186550,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -184790,7 +186573,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.HT_PHASOR_Stream _fh = c2.HT_PHASOR_OpenAndFill(fz_c, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -184833,7 +186616,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -184859,8 +186642,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.HT_PHASOR_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.HT_PHASOR_Stream stA = c2.HT_PHASOR_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_HT_SINE(String json) {
@@ -184894,6 +186694,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -184916,7 +186717,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.HT_SINE_Stream _fh = c2.HT_SINE_OpenAndFill(fz_c, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -184959,7 +186760,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -184985,8 +186786,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.HT_SINE_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.HT_SINE_Stream stA = c2.HT_SINE_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_HT_TRENDLINE(String json) {
@@ -185019,6 +186837,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -185039,7 +186858,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.HT_TRENDLINE_Stream _fh = c2.HT_TRENDLINE_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -185074,7 +186893,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -185099,8 +186918,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.HT_TRENDLINE_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.HT_TRENDLINE_Stream stA = c2.HT_TRENDLINE_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_HT_TRENDMODE(String json) {
@@ -185133,6 +186969,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -185153,7 +186990,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.HT_TRENDMODE_Stream _fh = c2.HT_TRENDMODE_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -185187,7 +187024,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -185212,8 +187049,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.HT_TRENDMODE_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.HT_TRENDMODE_Stream stA = c2.HT_TRENDMODE_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_IMI(String json) {
@@ -185247,6 +187101,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -185266,7 +187121,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.IMI_Stream _fh = c2.IMI_OpenAndFill(fz_o, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -185301,7 +187156,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -185331,8 +187186,25 @@ public class TaCodegenServe {
                 Core.IMI_Stream sE = c2.IMI_Open(fz_o, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.IMI_Impl(Sidx, svN - 1, fz_o, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.IMI_Stream stA = c2.IMI_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_KAMA(String json) {
@@ -185366,6 +187238,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -185386,7 +187259,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.KAMA_Stream _fh = c2.KAMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -185421,7 +187294,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -185451,8 +187324,25 @@ public class TaCodegenServe {
                 Core.KAMA_Stream sE = c2.KAMA_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.KAMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.KAMA_Stream stA = c2.KAMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_LINEARREG(String json) {
@@ -185486,6 +187376,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -185505,7 +187396,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LINEARREG_Stream _fh = c2.LINEARREG_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -185540,7 +187431,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -185570,8 +187461,25 @@ public class TaCodegenServe {
                 Core.LINEARREG_Stream sE = c2.LINEARREG_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.LINEARREG_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.LINEARREG_Stream stA = c2.LINEARREG_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_LINEARREG_ANGLE(String json) {
@@ -185605,6 +187513,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -185624,7 +187533,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LINEARREG_ANGLE_Stream _fh = c2.LINEARREG_ANGLE_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -185659,7 +187568,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -185689,8 +187598,25 @@ public class TaCodegenServe {
                 Core.LINEARREG_ANGLE_Stream sE = c2.LINEARREG_ANGLE_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.LINEARREG_ANGLE_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.LINEARREG_ANGLE_Stream stA = c2.LINEARREG_ANGLE_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_LINEARREG_INTERCEPT(String json) {
@@ -185724,6 +187650,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -185743,7 +187670,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LINEARREG_INTERCEPT_Stream _fh = c2.LINEARREG_INTERCEPT_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -185778,7 +187705,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -185808,8 +187735,25 @@ public class TaCodegenServe {
                 Core.LINEARREG_INTERCEPT_Stream sE = c2.LINEARREG_INTERCEPT_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.LINEARREG_INTERCEPT_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.LINEARREG_INTERCEPT_Stream stA = c2.LINEARREG_INTERCEPT_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_LINEARREG_SLOPE(String json) {
@@ -185843,6 +187787,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -185862,7 +187807,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LINEARREG_SLOPE_Stream _fh = c2.LINEARREG_SLOPE_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -185897,7 +187842,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -185927,8 +187872,25 @@ public class TaCodegenServe {
                 Core.LINEARREG_SLOPE_Stream sE = c2.LINEARREG_SLOPE_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.LINEARREG_SLOPE_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.LINEARREG_SLOPE_Stream stA = c2.LINEARREG_SLOPE_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_LN(String json) {
@@ -185961,6 +187923,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -185980,7 +187943,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LN_Stream _fh = c2.LN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -186015,7 +187978,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -186040,8 +188003,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.LN_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.LN_Stream stA = c2.LN_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_LOG10(String json) {
@@ -186074,6 +188054,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -186093,7 +188074,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LOG10_Stream _fh = c2.LOG10_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -186128,7 +188109,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -186153,8 +188134,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.LOG10_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.LOG10_Stream stA = c2.LOG10_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MA(String json) {
@@ -186195,6 +188193,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -186218,7 +188217,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MA_Stream _fh = c2.MA_OpenAndFill(fz_c, optInTimePeriod, optInMAType, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -186253,7 +188252,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -186283,8 +188282,25 @@ public class TaCodegenServe {
                 Core.MA_Stream sE = c2.MA_Open(fz_c, 30, optInMAType);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInMAType, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MA_Stream stA = c2.MA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInMAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MACD(String json) {
@@ -186322,6 +188338,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -186346,7 +188363,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.MACD_Stream _fh = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f2);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -186395,7 +188412,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -186429,8 +188446,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().macdSignal(), sE.value().macdSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().macdHist(), sE.value().macdHist())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MACD_Impl(Sidx, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, begS, nbS, b0, b1, b2); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MACD_Stream stA = c2.MACD_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MACDEXT(String json) {
@@ -186489,6 +188523,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -186516,7 +188551,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.MACDEXT_Stream _fh = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, f2);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -186565,7 +188600,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -186599,8 +188634,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().macdSignal(), sE.value().macdSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().macdHist(), sE.value().macdHist())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MACDEXT_Impl(Sidx, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, begS, nbS, b0, b1, b2); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MACDEXT_Stream stA = c2.MACDEXT_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MACDFIX(String json) {
@@ -186636,6 +188688,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -186660,7 +188713,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.MACDFIX_Stream _fh = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1, f2);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -186709,7 +188762,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -186743,8 +188796,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().macdSignal(), sE.value().macdSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().macdHist(), sE.value().macdHist())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MACDFIX_Impl(Sidx, svN - 1, fz_c, optInSignalPeriod, begS, nbS, b0, b1, b2); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MACDFIX_Stream stA = c2.MACDFIX_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInSignalPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MAMA(String json) {
@@ -186780,6 +188850,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -186802,7 +188873,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.MAMA_Stream _fh = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -186845,7 +188916,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -186871,8 +188942,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MAMA_Impl(Sidx, svN - 1, fz_c, optInFastLimit, optInSlowLimit, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MAMA_Stream stA = c2.MAMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastLimit, optInSlowLimit);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MARKETFI(String json) {
@@ -186905,6 +188993,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -186924,7 +189013,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MARKETFI_Stream _fh = c2.MARKETFI_OpenAndFill(fz_h, fz_l, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -186959,7 +189048,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -186984,8 +189073,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MARKETFI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MARKETFI_Stream stA = c2.MARKETFI_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MAVP(String json) {
@@ -187028,6 +189134,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -187051,7 +189158,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MAVP_Stream _fh = c2.MAVP_OpenAndFill(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -187086,7 +189193,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -187116,8 +189223,25 @@ public class TaCodegenServe {
                 Core.MAVP_Stream sE = c2.MAVP_Open(fz_c, fz_v, 2, 30, optInMAType);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MAVP_Impl(Sidx, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MAVP_Stream stA = c2.MAVP_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx, optInMinPeriod, optInMaxPeriod, optInMAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MAX(String json) {
@@ -187151,6 +189275,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -187170,7 +189295,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MAX_Stream _fh = c2.MAX_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -187205,7 +189330,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -187235,8 +189360,25 @@ public class TaCodegenServe {
                 Core.MAX_Stream sE = c2.MAX_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MAX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MAX_Stream stA = c2.MAX_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MAXINDEX(String json) {
@@ -187270,6 +189412,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -187289,7 +189432,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.MAXINDEX_Stream _fh = c2.MAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -187323,7 +189466,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -187353,8 +189496,25 @@ public class TaCodegenServe {
                 Core.MAXINDEX_Stream sE = c2.MAXINDEX_Open(fz_c, 30);
                 if (sD.value() != sE.value()) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MAXINDEX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MAXINDEX_Stream stA = c2.MAXINDEX_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MEDPRICE(String json) {
@@ -187387,6 +189547,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -187406,7 +189567,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MEDPRICE_Stream _fh = c2.MEDPRICE_OpenAndFill(fz_h, fz_l, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -187441,7 +189602,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -187466,8 +189627,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MEDPRICE_Impl(Sidx, svN - 1, fz_h, fz_l, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MEDPRICE_Stream stA = c2.MEDPRICE_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MFI(String json) {
@@ -187501,6 +189679,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -187520,7 +189699,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MFI_Stream _fh = c2.MFI_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -187555,7 +189734,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -187585,8 +189764,25 @@ public class TaCodegenServe {
                 Core.MFI_Stream sE = c2.MFI_Open(fz_h, fz_l, fz_c, fz_v, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MFI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MFI_Stream stA = c2.MFI_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MIDPOINT(String json) {
@@ -187620,6 +189816,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -187639,7 +189836,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MIDPOINT_Stream _fh = c2.MIDPOINT_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -187674,7 +189871,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -187704,8 +189901,25 @@ public class TaCodegenServe {
                 Core.MIDPOINT_Stream sE = c2.MIDPOINT_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MIDPOINT_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MIDPOINT_Stream stA = c2.MIDPOINT_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MIDPRICE(String json) {
@@ -187739,6 +189953,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -187758,7 +189973,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MIDPRICE_Stream _fh = c2.MIDPRICE_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -187793,7 +190008,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -187823,8 +190038,25 @@ public class TaCodegenServe {
                 Core.MIDPRICE_Stream sE = c2.MIDPRICE_Open(fz_h, fz_l, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MIDPRICE_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MIDPRICE_Stream stA = c2.MIDPRICE_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MIN(String json) {
@@ -187858,6 +190090,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -187877,7 +190110,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MIN_Stream _fh = c2.MIN_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -187912,7 +190145,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -187942,8 +190175,25 @@ public class TaCodegenServe {
                 Core.MIN_Stream sE = c2.MIN_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MIN_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MIN_Stream stA = c2.MIN_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MININDEX(String json) {
@@ -187977,6 +190227,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -187996,7 +190247,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (int)-987654321);
                 Core.MININDEX_Stream _fh = c2.MININDEX_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -188030,7 +190281,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -188060,8 +190311,25 @@ public class TaCodegenServe {
                 Core.MININDEX_Stream sE = c2.MININDEX_Open(fz_c, 30);
                 if (sD.value() != sE.value()) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MININDEX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MININDEX_Stream stA = c2.MININDEX_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MINMAX(String json) {
@@ -188096,6 +190364,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -188117,7 +190386,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.MINMAX_Stream _fh = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -188160,7 +190429,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -188192,8 +190461,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().min(), sE.value().min())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().max(), sE.value().max())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MINMAX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MINMAX_Stream stA = c2.MINMAX_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MINMAXINDEX(String json) {
@@ -188228,6 +190514,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -188249,7 +190536,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (int)-987654321);
                 Core.MINMAXINDEX_Stream _fh = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -188290,7 +190577,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -188322,8 +190609,25 @@ public class TaCodegenServe {
                 if (sD.value().minIdx() != sE.value().minIdx()) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (sD.value().maxIdx() != sE.value().maxIdx()) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MINMAXINDEX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MINMAXINDEX_Stream stA = c2.MINMAXINDEX_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MINUS_DI(String json) {
@@ -188357,6 +190661,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -188377,7 +190682,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MINUS_DI_Stream _fh = c2.MINUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -188412,7 +190717,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -188442,8 +190747,25 @@ public class TaCodegenServe {
                 Core.MINUS_DI_Stream sE = c2.MINUS_DI_Open(fz_h, fz_l, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MINUS_DI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MINUS_DI_Stream stA = c2.MINUS_DI_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MINUS_DM(String json) {
@@ -188477,6 +190799,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -188497,7 +190820,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MINUS_DM_Stream _fh = c2.MINUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -188532,7 +190855,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -188562,8 +190885,25 @@ public class TaCodegenServe {
                 Core.MINUS_DM_Stream sE = c2.MINUS_DM_Open(fz_h, fz_l, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MINUS_DM_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MINUS_DM_Stream stA = c2.MINUS_DM_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MOM(String json) {
@@ -188597,6 +190937,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -188616,7 +190957,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MOM_Stream _fh = c2.MOM_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -188651,7 +190992,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -188681,8 +191022,25 @@ public class TaCodegenServe {
                 Core.MOM_Stream sE = c2.MOM_Open(fz_c, 10);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MOM_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MOM_Stream stA = c2.MOM_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_MULT(String json) {
@@ -188715,6 +191073,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -188734,7 +191093,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MULT_Stream _fh = c2.MULT_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -188769,7 +191128,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -188794,8 +191153,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.MULT_Impl(Sidx, svN - 1, fz_c, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.MULT_Stream stA = c2.MULT_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_NATR(String json) {
@@ -188829,6 +191205,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -188849,7 +191226,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.NATR_Stream _fh = c2.NATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -188884,7 +191261,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -188914,8 +191291,25 @@ public class TaCodegenServe {
                 Core.NATR_Stream sE = c2.NATR_Open(fz_h, fz_l, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.NATR_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.NATR_Stream stA = c2.NATR_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_NVI(String json) {
@@ -188948,6 +191342,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -188967,7 +191362,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.NVI_Stream _fh = c2.NVI_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -189002,7 +191397,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -189027,8 +191422,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.NVI_Impl(Sidx, svN - 1, fz_c, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.NVI_Stream stA = c2.NVI_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_OBV(String json) {
@@ -189061,6 +191473,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -189080,7 +191493,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.OBV_Stream _fh = c2.OBV_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -189115,7 +191528,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -189140,8 +191553,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.OBV_Impl(Sidx, svN - 1, fz_c, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.OBV_Stream stA = c2.OBV_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_PLUS_DI(String json) {
@@ -189175,6 +191605,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -189195,7 +191626,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PLUS_DI_Stream _fh = c2.PLUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -189230,7 +191661,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -189260,8 +191691,25 @@ public class TaCodegenServe {
                 Core.PLUS_DI_Stream sE = c2.PLUS_DI_Open(fz_h, fz_l, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.PLUS_DI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.PLUS_DI_Stream stA = c2.PLUS_DI_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_PLUS_DM(String json) {
@@ -189295,6 +191743,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -189315,7 +191764,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PLUS_DM_Stream _fh = c2.PLUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -189350,7 +191799,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -189380,8 +191829,25 @@ public class TaCodegenServe {
                 Core.PLUS_DM_Stream sE = c2.PLUS_DM_Open(fz_h, fz_l, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.PLUS_DM_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.PLUS_DM_Stream stA = c2.PLUS_DM_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_PPO(String json) {
@@ -189423,6 +191889,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -189446,7 +191913,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PPO_Stream _fh = c2.PPO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -189481,7 +191948,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -189511,8 +191978,25 @@ public class TaCodegenServe {
                 Core.PPO_Stream sE = c2.PPO_Open(fz_c, 12, 26, optInMAType);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.PPO_Impl(Sidx, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.PPO_Stream stA = c2.PPO_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastPeriod, optInSlowPeriod, optInMAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_PVI(String json) {
@@ -189545,6 +192029,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -189564,7 +192049,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PVI_Stream _fh = c2.PVI_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -189599,7 +192084,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -189624,8 +192109,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.PVI_Impl(Sidx, svN - 1, fz_c, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.PVI_Stream stA = c2.PVI_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_PVO(String json) {
@@ -189667,6 +192169,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -189690,7 +192193,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PVO_Stream _fh = c2.PVO_OpenAndFill(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -189725,7 +192228,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -189755,8 +192258,25 @@ public class TaCodegenServe {
                 Core.PVO_Stream sE = c2.PVO_Open(fz_v, 12, 26, optInMAType);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.PVO_Impl(Sidx, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.PVO_Stream stA = c2.PVO_OpenInternal(java.util.Arrays.copyOf(fz_v, svN), Sidx, optInFastPeriod, optInSlowPeriod, optInMAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_QSTICK(String json) {
@@ -189790,6 +192310,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -189809,7 +192330,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.QSTICK_Stream _fh = c2.QSTICK_OpenAndFill(fz_o, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -189844,7 +192365,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -189874,8 +192395,25 @@ public class TaCodegenServe {
                 Core.QSTICK_Stream sE = c2.QSTICK_Open(fz_o, fz_c, 10);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.QSTICK_Impl(Sidx, svN - 1, fz_o, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.QSTICK_Stream stA = c2.QSTICK_OpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ROC(String json) {
@@ -189909,6 +192447,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -189928,7 +192467,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ROC_Stream _fh = c2.ROC_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -189963,7 +192502,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -189993,8 +192532,25 @@ public class TaCodegenServe {
                 Core.ROC_Stream sE = c2.ROC_Open(fz_c, 10);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ROC_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ROC_Stream stA = c2.ROC_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ROCP(String json) {
@@ -190028,6 +192584,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -190047,7 +192604,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ROCP_Stream _fh = c2.ROCP_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -190082,7 +192639,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -190112,8 +192669,25 @@ public class TaCodegenServe {
                 Core.ROCP_Stream sE = c2.ROCP_Open(fz_c, 10);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ROCP_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ROCP_Stream stA = c2.ROCP_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ROCR(String json) {
@@ -190147,6 +192721,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -190166,7 +192741,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ROCR_Stream _fh = c2.ROCR_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -190201,7 +192776,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -190231,8 +192806,25 @@ public class TaCodegenServe {
                 Core.ROCR_Stream sE = c2.ROCR_Open(fz_c, 10);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ROCR_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ROCR_Stream stA = c2.ROCR_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ROCR100(String json) {
@@ -190266,6 +192858,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -190285,7 +192878,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ROCR100_Stream _fh = c2.ROCR100_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -190320,7 +192913,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -190350,8 +192943,25 @@ public class TaCodegenServe {
                 Core.ROCR100_Stream sE = c2.ROCR100_Open(fz_c, 10);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ROCR100_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ROCR100_Stream stA = c2.ROCR100_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_RSI(String json) {
@@ -190385,6 +192995,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -190405,7 +193016,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.RSI_Stream _fh = c2.RSI_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -190440,7 +193051,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -190470,8 +193081,25 @@ public class TaCodegenServe {
                 Core.RSI_Stream sE = c2.RSI_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.RSI_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.RSI_Stream stA = c2.RSI_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_SAR(String json) {
@@ -190506,6 +193134,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -190525,7 +193154,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SAR_Stream _fh = c2.SAR_OpenAndFill(fz_h, fz_l, optInAcceleration, optInMaximum, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -190560,7 +193189,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -190585,8 +193214,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SAR_Impl(Sidx, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SAR_Stream stA = c2.SAR_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInAcceleration, optInMaximum);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_SAREXT(String json) {
@@ -190627,6 +193273,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -190646,7 +193293,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SAREXT_Stream _fh = c2.SAREXT_OpenAndFill(fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -190681,7 +193328,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -190706,8 +193353,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SAREXT_Impl(Sidx, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SAREXT_Stream stA = c2.SAREXT_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_SIN(String json) {
@@ -190740,6 +193404,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -190759,7 +193424,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SIN_Stream _fh = c2.SIN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -190794,7 +193459,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -190819,8 +193484,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SIN_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SIN_Stream stA = c2.SIN_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_SINH(String json) {
@@ -190853,6 +193535,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -190872,7 +193555,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SINH_Stream _fh = c2.SINH_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -190907,7 +193590,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -190932,8 +193615,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SINH_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SINH_Stream stA = c2.SINH_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_SMA(String json) {
@@ -190967,6 +193667,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -190986,7 +193687,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SMA_Stream _fh = c2.SMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -191021,7 +193722,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -191051,8 +193752,25 @@ public class TaCodegenServe {
                 Core.SMA_Stream sE = c2.SMA_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SMA_Stream stA = c2.SMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_SMI(String json) {
@@ -191090,6 +193808,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -191112,7 +193831,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.SMI_Stream _fh = c2.SMI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -191155,7 +193874,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -191187,8 +193906,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().smi(), sE.value().smi())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().smiSignal(), sE.value().smiSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SMI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SMI_Stream stA = c2.SMI_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_SQRT(String json) {
@@ -191221,6 +193957,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -191240,7 +193977,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SQRT_Stream _fh = c2.SQRT_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -191275,7 +194012,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -191300,8 +194037,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SQRT_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SQRT_Stream stA = c2.SQRT_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_STDDEV(String json) {
@@ -191336,6 +194090,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -191355,7 +194110,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.STDDEV_Stream _fh = c2.STDDEV_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -191390,7 +194145,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -191420,8 +194175,25 @@ public class TaCodegenServe {
                 Core.STDDEV_Stream sE = c2.STDDEV_Open(fz_c, 5, optInNbDev);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.STDDEV_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInNbDev, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.STDDEV_Stream stA = c2.STDDEV_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInNbDev);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_STOCH(String json) {
@@ -191472,6 +194244,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -191497,7 +194270,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.STOCH_Stream _fh = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -191540,7 +194313,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -191572,8 +194345,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().slowK(), sE.value().slowK())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().slowD(), sE.value().slowD())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.STOCH_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.STOCH_Stream stA = c2.STOCH_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_STOCHF(String json) {
@@ -191616,6 +194406,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -191641,7 +194432,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.STOCHF_Stream _fh = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -191684,7 +194475,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -191716,8 +194507,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().fastK(), sE.value().fastK())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().fastD(), sE.value().fastD())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.STOCHF_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.STOCHF_Stream stA = c2.STOCHF_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_STOCHRSI(String json) {
@@ -191761,6 +194569,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -191787,7 +194596,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.STOCHRSI_Stream _fh = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -191830,7 +194639,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -191862,8 +194671,25 @@ public class TaCodegenServe {
                 if (svBne(sD.value().fastK(), sE.value().fastK())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
                 if (svBne(sD.value().fastD(), sE.value().fastD())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.STOCHRSI_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.STOCHRSI_Stream stA = c2.STOCHRSI_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_SUB(String json) {
@@ -191896,6 +194722,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -191915,7 +194742,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SUB_Stream _fh = c2.SUB_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -191950,7 +194777,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -191975,8 +194802,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SUB_Impl(Sidx, svN - 1, fz_c, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SUB_Stream stA = c2.SUB_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_SUM(String json) {
@@ -192010,6 +194854,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -192029,7 +194874,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SUM_Stream _fh = c2.SUM_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -192064,7 +194909,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -192094,8 +194939,25 @@ public class TaCodegenServe {
                 Core.SUM_Stream sE = c2.SUM_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SUM_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SUM_Stream stA = c2.SUM_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_T3(String json) {
@@ -192130,6 +194992,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -192150,7 +195013,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.T3_Stream _fh = c2.T3_OpenAndFill(fz_c, optInTimePeriod, optInVFactor, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -192185,7 +195048,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -192215,8 +195078,25 @@ public class TaCodegenServe {
                 Core.T3_Stream sE = c2.T3_Open(fz_c, 5, optInVFactor);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.T3_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInVFactor, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.T3_Stream stA = c2.T3_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInVFactor);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_TAN(String json) {
@@ -192249,6 +195129,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -192268,7 +195149,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TAN_Stream _fh = c2.TAN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -192303,7 +195184,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -192328,8 +195209,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.TAN_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.TAN_Stream stA = c2.TAN_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_TANH(String json) {
@@ -192362,6 +195260,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -192381,7 +195280,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TANH_Stream _fh = c2.TANH_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -192416,7 +195315,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -192441,8 +195340,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.TANH_Impl(Sidx, svN - 1, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.TANH_Stream stA = c2.TANH_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_TEMA(String json) {
@@ -192476,6 +195392,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -192496,7 +195413,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TEMA_Stream _fh = c2.TEMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -192531,7 +195448,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -192561,8 +195478,25 @@ public class TaCodegenServe {
                 Core.TEMA_Stream sE = c2.TEMA_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.TEMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.TEMA_Stream stA = c2.TEMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_TRANGE(String json) {
@@ -192595,6 +195529,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -192614,7 +195549,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TRANGE_Stream _fh = c2.TRANGE_OpenAndFill(fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -192649,7 +195584,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -192674,8 +195609,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.TRANGE_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.TRANGE_Stream stA = c2.TRANGE_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_TRIMA(String json) {
@@ -192709,6 +195661,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -192728,7 +195681,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TRIMA_Stream _fh = c2.TRIMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -192763,7 +195716,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -192793,8 +195746,25 @@ public class TaCodegenServe {
                 Core.TRIMA_Stream sE = c2.TRIMA_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.TRIMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.TRIMA_Stream stA = c2.TRIMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_TRIX(String json) {
@@ -192828,6 +195798,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -192848,7 +195819,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TRIX_Stream _fh = c2.TRIX_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -192883,7 +195854,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -192913,8 +195884,25 @@ public class TaCodegenServe {
                 Core.TRIX_Stream sE = c2.TRIX_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.TRIX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.TRIX_Stream stA = c2.TRIX_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_TSF(String json) {
@@ -192948,6 +195936,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -192967,7 +195956,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TSF_Stream _fh = c2.TSF_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -193002,7 +195991,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -193032,8 +196021,25 @@ public class TaCodegenServe {
                 Core.TSF_Stream sE = c2.TSF_Open(fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.TSF_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.TSF_Stream stA = c2.TSF_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_TYPPRICE(String json) {
@@ -193066,6 +196072,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -193085,7 +196092,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TYPPRICE_Stream _fh = c2.TYPPRICE_OpenAndFill(fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -193120,7 +196127,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -193145,8 +196152,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.TYPPRICE_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.TYPPRICE_Stream stA = c2.TYPPRICE_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_ULTOSC(String json) {
@@ -193182,6 +196206,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -193201,7 +196226,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ULTOSC_Stream _fh = c2.ULTOSC_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -193236,7 +196261,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -193266,8 +196291,25 @@ public class TaCodegenServe {
                 Core.ULTOSC_Stream sE = c2.ULTOSC_Open(fz_h, fz_l, fz_c, 7, 14, 28);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ULTOSC_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.ULTOSC_Stream stA = c2.ULTOSC_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_VAR(String json) {
@@ -193302,6 +196344,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -193321,7 +196364,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.VAR_Stream _fh = c2.VAR_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -193356,7 +196399,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -193386,8 +196429,25 @@ public class TaCodegenServe {
                 Core.VAR_Stream sE = c2.VAR_Open(fz_c, 5, optInNbDev);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.VAR_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInNbDev, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.VAR_Stream stA = c2.VAR_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInNbDev);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_VWAP(String json) {
@@ -193420,6 +196480,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -193439,7 +196500,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.VWAP_Stream _fh = c2.VWAP_OpenAndFill(fz_h, fz_l, fz_c, fz_v, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -193474,7 +196535,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -193499,8 +196560,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.VWAP_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.VWAP_Stream stA = c2.VWAP_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_VWMA(String json) {
@@ -193534,6 +196612,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -193553,7 +196632,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.VWMA_Stream _fh = c2.VWMA_OpenAndFill(fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -193588,7 +196667,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -193618,8 +196697,25 @@ public class TaCodegenServe {
                 Core.VWMA_Stream sE = c2.VWMA_Open(fz_c, fz_v, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.VWMA_Impl(Sidx, svN - 1, fz_c, fz_v, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.VWMA_Stream stA = c2.VWMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), java.util.Arrays.copyOf(fz_v, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_WAD(String json) {
@@ -193652,6 +196748,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -193671,7 +196768,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.WAD_Stream _fh = c2.WAD_OpenAndFill(fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -193706,7 +196803,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -193731,8 +196828,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.WAD_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.WAD_Stream stA = c2.WAD_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_WCLPRICE(String json) {
@@ -193765,6 +196879,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -193784,7 +196899,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.WCLPRICE_Stream _fh = c2.WCLPRICE_OpenAndFill(fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -193819,7 +196934,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -193844,8 +196959,25 @@ public class TaCodegenServe {
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
             }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.WCLPRICE_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.WCLPRICE_Stream stA = c2.WCLPRICE_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_WILLR(String json) {
@@ -193879,6 +197011,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -193898,7 +197031,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.WILLR_Stream _fh = c2.WILLR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -193933,7 +197066,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -193963,8 +197096,25 @@ public class TaCodegenServe {
                 Core.WILLR_Stream sE = c2.WILLR_Open(fz_h, fz_l, fz_c, 14);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.WILLR_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.WILLR_Stream stA = c2.WILLR_OpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String sv_WMA(String json) {
@@ -193998,6 +197148,7 @@ public class TaCodegenServe {
         int rangeChecked = 0;
         boolean rangeOk = true;
         long rangeLegs = 0;
+        int rangeSites = 0;
         long[] zsign = { 0 };
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
@@ -194017,7 +197168,7 @@ public class TaCodegenServe {
                 java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.WMA_Stream _fh = c2.WMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
@@ -194052,7 +197203,7 @@ public class TaCodegenServe {
                     }
                 }
                 if (allOk) {
-                    rangeChecked = 1; rangeLegs++;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
                     if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
                 }
             }
@@ -194082,8 +197233,25 @@ public class TaCodegenServe {
                 Core.WMA_Stream sE = c2.WMA_Open(fz_c, 30);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.WMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.WMA_Stream stA = c2.WMA_OpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
         }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_n\":3,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
     static String handle_fuzz_in_hash(String json) {
