@@ -846,6 +846,11 @@ public partial class Core
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */

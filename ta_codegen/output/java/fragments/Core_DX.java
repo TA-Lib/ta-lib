@@ -907,6 +907,11 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /*
        * The DM1 (one period) is base on the largest part of
        * today's range that is outside of yesterdays range.

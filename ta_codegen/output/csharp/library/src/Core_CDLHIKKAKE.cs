@@ -585,6 +585,11 @@ public partial class Core
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
        * state carried without an absolute bar index.
        */

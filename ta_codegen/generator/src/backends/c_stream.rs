@@ -3933,6 +3933,41 @@ fn emit_open_validation(
     // or another output (#108/#130). `Open`'s sinks are this call's own stack
     // slots.
     o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
+    emit_anchor_guard(o);
+}
+
+/// The anchor has to land inside the history.
+///
+/// This is the batch prologue's `(endIdx < startIdx)` rejection, which the
+/// streaming prologue never had. It matters because only 137 of the 174
+/// transcribed `_OpenPass` bodies carry TA-Lib's "make sure there is still
+/// something to evaluate" preamble — a function with no lookback has nothing to
+/// clamp `startIdx` up to, so the transcription has no such check and the batch
+/// tier caught the case in its prologue instead. The remaining 37 compute
+/// `nbBar = endIdx - startIdx + 1` and then run `while( nbBar != 0 )`, so a
+/// negative count never reaches zero: the loop walks off the end of both the
+/// inputs and the output (an ASan stack-buffer-overflow inside
+/// `TA_AD_OpenPass`, and a `usize` underflow panic in Rust).
+///
+/// Emitting it here rather than per-body is what makes it total, and it cannot
+/// change any behaviour that was already defined: the preamble's clamp only
+/// ever moves `startIdx` UP, so `startIdx > endIdx` before the clamp implies it
+/// after — this fires exactly where that preamble would have, returns the same
+/// code, and writes the same out-meta. For the public entry points it is inert
+/// (they pass `startIdx = 0`, and `historyLen < 1` is already rejected above).
+///
+/// A negative `startIdx` is deliberately NOT rejected here: no caller in the
+/// tree can produce one (every call site passes a literal `0`, a pass-through
+/// of an already-validated anchor, or MAVP's `subStart`), and Rust types the
+/// parameter `usize`, so a guard for it would be unreachable in C and
+/// inexpressible in the backend it would have to match.
+fn emit_anchor_guard(o: &mut String) {
+    let _ = writeln!(o, "   if( startIdx > historyLen - 1 )");
+    let _ = writeln!(o, "   {{");
+    let _ = writeln!(o, "      *outBegIdx = 0;");
+    let _ = writeln!(o, "      *outNBElement = 0;");
+    let _ = writeln!(o, "      return TA_INSUFFICIENT_HISTORY;");
+    let _ = writeln!(o, "   }}");
 }
 
 /// `if (buf != &local_buf[0]) TA_Free(buf);` for every batch circ storage —

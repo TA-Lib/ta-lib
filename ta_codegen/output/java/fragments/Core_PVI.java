@@ -437,6 +437,11 @@
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* The index is a running cumulative value seeded at 1000, updated only on
        * bars whose volume increased versus the prior bar (Positive Volume).
        */

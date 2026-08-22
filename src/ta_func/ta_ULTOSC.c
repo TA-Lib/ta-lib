@@ -772,6 +772,12 @@ static TA_RetCode TA_ULTOSC_OpenPass( struct TA_ULTOSC_Stream **stream, const do
       optInTimePeriod3 = 28;
    else if( (int)optInTimePeriod3 < 1 || (int)optInTimePeriod3 > 100000 )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

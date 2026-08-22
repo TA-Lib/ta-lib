@@ -887,6 +887,11 @@
       } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* > 0 indicates long. == 0 indicates short */
       /* Implementation of the SAR has been a little bit open to interpretation
        * since Wilder (the original author) did not define a precise algorithm

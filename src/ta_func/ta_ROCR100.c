@@ -281,6 +281,12 @@ static TA_RetCode TA_ROCR100_OpenPass( struct TA_ROCR100_Stream **stream, const 
       optInTimePeriod = 10;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

@@ -659,6 +659,11 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
        * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
        * d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of

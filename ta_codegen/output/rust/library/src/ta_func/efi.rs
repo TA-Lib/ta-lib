@@ -464,6 +464,11 @@ impl Core {
         let historyLen: usize = inClose.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::InsufficientHistory);
+        }
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {

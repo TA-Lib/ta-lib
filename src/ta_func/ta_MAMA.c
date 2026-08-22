@@ -1174,6 +1174,12 @@ static TA_RetCode TA_MAMA_OpenPass( struct TA_MAMA_Stream **stream, const double
       optInSlowLimit = 0.05;
    else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

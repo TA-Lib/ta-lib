@@ -744,6 +744,11 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Both the per-bar money flow volume and the volume that produced it are
        * carried in the circular buffer. Keeping the volume here rather than
        * re-reading inVolume[] at the trailing index is what makes outReal safe to

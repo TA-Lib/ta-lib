@@ -636,6 +636,11 @@
       if( optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( historyLen < STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
          return RetCode.InsufficientHistory;
       }

@@ -524,6 +524,11 @@
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
       int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
       double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;

@@ -980,6 +980,12 @@ static TA_RetCode TA_SAREXT_OpenPass( struct TA_SAREXT_Stream **stream, const do
       optInAccelerationMaxShort = 0.2;
    else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

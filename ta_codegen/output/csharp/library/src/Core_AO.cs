@@ -701,6 +701,11 @@ public partial class Core
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Bill Williams' Awesome Oscillator (New Trading Dimensions, 1998): the
        * spread between a short and a long simple moving average of the median
        * price, drawn as a zero-centred histogram.

@@ -338,6 +338,12 @@ static TA_RetCode TA_APO_OpenPass( struct TA_APO_Stream **stream, const double i
       optInMAType = 1;
    else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

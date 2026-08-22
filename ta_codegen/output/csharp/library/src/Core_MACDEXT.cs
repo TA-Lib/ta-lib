@@ -915,6 +915,11 @@ public partial class Core
       } else if( (int)optInSignalMAType < MATypes.Min || (int)optInSignalMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( historyLen < MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
          return RetCode.InsufficientHistory;
       }

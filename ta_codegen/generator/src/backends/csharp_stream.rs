@@ -1700,7 +1700,20 @@ fn emit_open_prologue(
     emit_body_decls(o, func, open_body);
     emit_open_head(o, func, &model.outputs);
     emit_open_validation(o, func, OutMode::Core, enums);
+    emit_anchor_guard(o);
     emit_extras_and_candle(o, func, open_body, registry, helpers, counter, stream_fma);
+}
+
+/// The anchor has to land inside the history — see `c_stream::emit_anchor_guard`
+/// for why the transcribed bodies cannot be relied on for this (only 137 of 174
+/// carry TA-Lib's "make sure there is still something to evaluate" preamble, and
+/// the rest run `while nbBar != 0` on a count that went negative).
+fn emit_anchor_guard(o: &mut String) {
+    let _ = writeln!(o, "      if( startIdx > endIdx ) {{");
+    let _ = writeln!(o, "         outBegIdx = 0;");
+    let _ = writeln!(o, "         outNBElement = 0;");
+    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
+    let _ = writeln!(o, "      }}");
 }
 
 /// The transcribed body's VarDecls, including CIRCBUF prologs.
@@ -3687,6 +3700,7 @@ fn emit_composed_open(
     emit_body_decls(o, func, &combined);
     emit_open_head(o, func, &[]);
     emit_open_validation(o, func, OutMode::Core, enums);
+    emit_anchor_guard(o);
     // Own-lookback precheck BEFORE opening any sub: a sub's reject would carry
     // the CALLEE's message prefix ("MA open:" for a BBANDS call), breaking the
     // stable "<NAME> open:" contract. Same check the dispatch and period-bank

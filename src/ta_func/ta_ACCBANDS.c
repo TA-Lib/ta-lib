@@ -455,6 +455,12 @@ static TA_RetCode TA_ACCBANDS_OpenPass( struct TA_ACCBANDS_Stream **stream, cons
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

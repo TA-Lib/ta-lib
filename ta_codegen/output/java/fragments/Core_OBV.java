@@ -352,6 +352,11 @@
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       prevOBV = inVolume[startIdx];
       prevReal = inReal[startIdx];
       outIdx = 0;

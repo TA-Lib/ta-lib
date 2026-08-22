@@ -538,6 +538,11 @@ public partial class Core
       } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
          return RetCode.InsufficientHistory;
       }

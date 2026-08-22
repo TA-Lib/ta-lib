@@ -1000,6 +1000,11 @@
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
          return RetCode.InsufficientHistory;
       }

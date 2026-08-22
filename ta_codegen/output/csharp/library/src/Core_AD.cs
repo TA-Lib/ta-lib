@@ -474,6 +474,11 @@ public partial class Core
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Note: Results from this function might vary slightly
        *       from Metastock outputs. The reason being that
        *       Metastock use float instead of double and this

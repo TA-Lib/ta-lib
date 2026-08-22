@@ -446,6 +446,12 @@ static TA_RetCode TA_CDLMATHOLD_OpenPass( struct TA_CDLMATHOLD_Stream **stream, 
       optInPenetration = 0.5;
    else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

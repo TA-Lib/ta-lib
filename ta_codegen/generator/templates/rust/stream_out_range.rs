@@ -334,3 +334,91 @@ fn an_anchor_past_the_history_is_insufficient_history() {
         "an anchored open reports max(startIdx, lookback) and the bars after it"
     );
 }
+
+/// The `_OpenPass` prologue must reject an anchor past the history for EVERY
+/// function — not only the ones whose transcribed body happens to carry
+/// TA-Lib's "make sure there is still something to evaluate" preamble.
+///
+/// 37 of the 174 `_OpenPass` bodies do not have it, because in the batch tier
+/// that case is caught by the prologue's `endIdx < startIdx` guard, which the
+/// streaming prologue never got. Their loop is `nbBar = endIdx - startIdx + 1`
+/// followed by `while nbBar != 0`, so a negative count never reaches zero: in C
+/// it walks off both the input and the output (an ASan stack-buffer-overflow in
+/// `TA_AD_OpenPass`), and here `usize` underflows and panics.
+///
+/// The functions below are one per shape in that set, all with a lookback of 0
+/// or none at all, which is what leaves `startIdx` as the only thing bounding
+/// the loop.
+#[test]
+fn an_anchor_past_the_history_is_rejected_by_bodies_that_do_not_check_it() {
+    let core = Core::new();
+    let (high, low, close, volume, _) = series(N);
+    const H: usize = 10; // ten bars of history ...
+    const A: usize = 30; // ... anchored well past the end of it
+
+    // Loop tier, lookback 0, four inputs — the shape that overflowed in C.
+    assert!(
+        matches!(
+            core.AD_OpenInternal(&high[..H], &low[..H], &close[..H], &volume[..H], A),
+            Err(RetCode::InsufficientHistory)
+        ),
+        "AD_OpenInternal anchored past the history must reject, not run an unbounded loop"
+    );
+    // Loop tier, lookback 0, two inputs.
+    assert!(
+        matches!(
+            core.OBV_OpenInternal(&close[..H], &volume[..H], A),
+            Err(RetCode::InsufficientHistory)
+        ),
+        "OBV_OpenInternal anchored past the history must reject"
+    );
+    // Stateless map: no accumulator to be short of, so nothing but the anchor
+    // can stop it.
+    assert!(
+        matches!(
+            core.MEDPRICE_OpenInternal(&high[..H], &low[..H], A),
+            Err(RetCode::InsufficientHistory)
+        ),
+        "MEDPRICE_OpenInternal anchored past the history must reject"
+    );
+    // Composed, multi-output.
+    assert!(
+        matches!(
+            core.BBANDS_OpenInternal(&close[..H], A, 5, 2.0, 2.0, MAType::SMA),
+            Err(RetCode::InsufficientHistory)
+        ),
+        "BBANDS_OpenInternal anchored past the history must reject"
+    );
+    // Composed, single output, with a period whose lookback is below the anchor.
+    assert!(
+        matches!(
+            core.STDDEV_OpenInternal(&close[..H], A, 5, 1.0),
+            Err(RetCode::InsufficientHistory)
+        ),
+        "STDDEV_OpenInternal anchored past the history must reject"
+    );
+
+    // The boundary is exactly `startIdx == historyLen - 1`: the last bar of the
+    // history is still a legal anchor, and one past it is not. Without both
+    // halves this is a rejection sweep that an always-reject prologue passes.
+    assert!(
+        core.AD_OpenInternal(&high[..H], &low[..H], &close[..H], &volume[..H], H - 1).is_ok(),
+        "the last bar of the history is a legal anchor"
+    );
+    assert!(
+        matches!(
+            core.AD_OpenInternal(&high[..H], &low[..H], &close[..H], &volume[..H], H),
+            Err(RetCode::InsufficientHistory)
+        ),
+        "one bar past the history is not"
+    );
+    let (h, _) = core
+        .AD_OpenInternal(&high[..H], &low[..H], &close[..H], &volume[..H], H - 1)
+        .expect("a reachable anchor");
+    assert_eq!(
+        h.out_range(),
+        OutRange { beg_idx: H - 1, count: 1 },
+        "anchoring on the last bar reports exactly that one bar"
+    );
+}
+

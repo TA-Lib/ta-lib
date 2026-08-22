@@ -641,6 +641,11 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* This code is almost identical to the TA_AROON function
        * except that instead of outputing ArroonUp and AroonDown
        * individually, an oscillator is build from both.

@@ -578,6 +578,11 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
        * Regression attempts to fit a straight line between

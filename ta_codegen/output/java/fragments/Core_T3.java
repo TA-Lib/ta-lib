@@ -705,6 +705,11 @@
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( optInTimePeriod == 1 ) {
          int fillLb = T3_Lookback(optInTimePeriod, optInVFactor);
          if( startIdx > fillLb ) fillLb = startIdx;

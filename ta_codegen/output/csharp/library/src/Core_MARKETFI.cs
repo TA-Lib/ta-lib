@@ -455,6 +455,11 @@ public partial class Core
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Bill Williams' Market Facilitation Index: the price range a bar
        * travelled per unit of volume traded, i.e. how much movement the
        * market "facilitated" per tick.

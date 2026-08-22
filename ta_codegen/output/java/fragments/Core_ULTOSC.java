@@ -964,6 +964,11 @@
       } else if( optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* The two per-bar terms the three moving sums are built from. Both are a
        * pure function of the bar, so each bar is evaluated once on entry and read
        * back when it leaves each of the three windows.

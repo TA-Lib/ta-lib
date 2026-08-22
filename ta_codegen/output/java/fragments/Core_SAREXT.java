@@ -1184,6 +1184,11 @@
       } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* > 0 indicates long. == 0 indicates short */
       /* This function is the same as TA_SAR, except that the caller has
        * greater control on the SAR dynamic and initial state.

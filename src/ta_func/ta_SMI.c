@@ -880,6 +880,12 @@ static TA_RetCode TA_SMI_OpenPass( struct TA_SMI_Stream **stream, const double i
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 2 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

@@ -1247,6 +1247,11 @@ public partial class Core
       } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* > 0 indicates long. == 0 indicates short */
       /* This function is the same as TA_SAR, except that the caller has
        * greater control on the SAR dynamic and initial state.

@@ -730,6 +730,11 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Id, Type, Static Size */
       if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mflow_positive = new double[optInTimePeriod];

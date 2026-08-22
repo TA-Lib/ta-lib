@@ -811,6 +811,11 @@
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Bill Williams' Accelerator/Decelerator Oscillator (New Trading
        * Dimensions, 1998): how fast the Awesome Oscillator is itself
        * accelerating, drawn as a zero-centred histogram.

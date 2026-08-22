@@ -843,6 +843,11 @@
       if( optInSignalMAType == MAType.DEFAULT ) {
          optInSignalMAType = MAType.SMA;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( historyLen < MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
          return RetCode.InsufficientHistory;
       }

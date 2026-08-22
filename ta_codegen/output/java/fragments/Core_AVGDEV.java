@@ -421,6 +421,11 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       lookback = optInTimePeriod - 1;
       if( startIdx < lookback ) {
          startIdx = lookback;

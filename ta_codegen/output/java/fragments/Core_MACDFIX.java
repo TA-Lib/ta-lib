@@ -690,6 +690,11 @@
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       optInFastPeriod = 12;
       optInSlowPeriod = 26;
       /* MACDFIX is the fixed 26/12 MACD: the fast/slow periods and their

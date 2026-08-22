@@ -505,6 +505,11 @@ public partial class Core
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* True Range is the greatest of the following:
        *
        *  val1 = distance from today's high to today's low.

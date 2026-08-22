@@ -707,6 +707,11 @@ public partial class Core
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       int Equal_rangeType = (int)this.candleSettings[(int)CandleSettingType.Equal].rangeType;
       int Equal_avgPeriod = this.candleSettings[(int)CandleSettingType.Equal].avgPeriod;
       double Equal_factor = this.candleSettings[(int)CandleSettingType.Equal].factor;

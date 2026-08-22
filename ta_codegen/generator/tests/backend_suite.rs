@@ -10387,3 +10387,184 @@ fn test_composed_open_fuses_every_sub_call() {
          Adding a composed indicator moves this number: update it deliberately."
     );
 }
+
+/// Every transcribed `_OpenPass` rejects an anchor that lands past the history,
+/// in all four backends, and does it before any loop can run.
+///
+/// The batch prologue has always rejected `endIdx < startIdx`; the streaming
+/// prologue did not, and only 137 of the 174 transcribed bodies carry TA-Lib's
+/// own "make sure there is still something to evaluate" preamble to make up for
+/// it — a function with no lookback has nothing to clamp `startIdx` up to, so
+/// its transcription never had the check. The other 37 compute
+/// `nbBar = endIdx - startIdx + 1` and then run `while( nbBar != 0 )`: a
+/// negative count never reaches zero, and the loop walks off the end of both
+/// the inputs and the output. `TA_AD_OpenInternal` with `startIdx` 45 over 40
+/// bars was an ASan stack-buffer-overflow; the same call panicked in Rust,
+/// where the count is `usize`.
+///
+/// Two ORDER assertions, because presence alone is the weaker half of this and
+/// a guard in the wrong place is exactly the bug:
+///
+///   * after the history-emptiness check — `historyLen - 1` is evaluated by the
+///     guard itself, and in Rust `historyLen` is a `usize`;
+///   * before the first loop in the body — a guard the loop has already run
+///     past protects nothing.
+#[test]
+fn every_open_pass_rejects_an_anchor_past_the_history() {
+    /// The `{`-matched body that follows `from`.
+    fn body_after(s: &str, from: usize) -> &str {
+        let b = match s[from..].find('{') {
+            Some(i) => from + i,
+            None => return "",
+        };
+        let bytes = s.as_bytes();
+        let (mut depth, mut j) = (0usize, b);
+        while j < bytes.len() {
+            match bytes[j] {
+                b'{' => depth += 1,
+                b'}' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        return &s[b..=j];
+                    }
+                }
+                _ => {}
+            }
+            j += 1;
+        }
+        &s[b..]
+    }
+
+    /// Comments removed, line by line so every slice stays on a char boundary
+    /// (these bodies carry em dashes). Prose is not code: "Trading for a
+    /// Living" in EFI's provenance note otherwise reads as a loop.
+    fn strip_comments(s: &str) -> String {
+        let mut out = String::with_capacity(s.len());
+        let mut in_block = false;
+        for line in s.lines() {
+            let mut rest = line;
+            loop {
+                if in_block {
+                    match rest.find("*/") {
+                        Some(e) => {
+                            rest = &rest[e + 2..];
+                            in_block = false;
+                        }
+                        None => break,
+                    }
+                } else {
+                    match (rest.find("/*"), rest.find("//")) {
+                        (Some(a), Some(b)) if b < a => {
+                            out.push_str(&rest[..b]);
+                            break;
+                        }
+                        (Some(a), _) => {
+                            out.push_str(&rest[..a]);
+                            rest = &rest[a + 2..];
+                            in_block = true;
+                        }
+                        (None, Some(b)) => {
+                            out.push_str(&rest[..b]);
+                            break;
+                        }
+                        (None, None) => {
+                            out.push_str(rest);
+                            break;
+                        }
+                    }
+                }
+            }
+            out.push('\n');
+        }
+        out
+    }
+
+    /// Every `_OpenPass` DEFINITION body in `src`. `_OpenPass(` alone also
+    /// matches the two call sites every function has, and a body sliced from a
+    /// call site is whatever block happens to follow it — so the definition
+    /// keyword has to be on the same line.
+    fn open_passes<'a>(src: &'a str, def_kw: &str) -> Vec<&'a str> {
+        let mut out = Vec::new();
+        let mut at = 0;
+        while let Some(i) = src[at..].find("_OpenPass(") {
+            let abs = at + i;
+            at = abs + "_OpenPass(".len();
+            let line_start = src[..abs].rfind('\n').map_or(0, |n| n + 1);
+            if src[line_start..abs].contains(def_kw) {
+                out.push(body_after(src, abs));
+            }
+        }
+        out
+    }
+
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let enums = load_enums();
+
+    // guard text, the emptiness check it must follow, and the signature marker
+    let specs: [(&str, &str, &str); 4] = [
+        ("C", "if( startIdx > historyLen - 1 )", "if( historyLen < 1 ) return TA_BAD_PARAM;"),
+        ("Rust", "if startIdx > endIdx {", ".is_empty()"),
+        ("Java", "if( startIdx > endIdx ) {", "historyLen < 1"),
+        ("C#", "if( startIdx > endIdx ) {", "historyLen < 1"),
+    ];
+    // The definition keyword, which is what tells a definition from a call site.
+    let def_kws = ["static TA_RetCode", "pub(crate) fn", "private RetCode", "private RetCode"];
+
+    let mut checked = 0usize;
+    let mut per_backend = [0usize; 4];
+
+    for name in discover_indicators() {
+        let Some((func, _)) = try_load_indicator(&name) else { continue };
+        let sources = [
+            backends::c::generate(&func, &enums, &registry, &helpers),
+            backends::rust_lang::generate(&func, &enums, &registry, &helpers),
+            backends::java::generate(&func, &enums, &registry, &helpers),
+            backends::csharp::generate(&func, &enums, &registry, &helpers),
+        ];
+
+        for (b, src) in sources.iter().enumerate() {
+            let (lang, guard, empty_check) = specs[b];
+            for body in open_passes(src, def_kws[b]) {
+                if body.is_empty() {
+                    continue;
+                }
+                let body = &strip_comments(body);
+                let g = body.find(guard).unwrap_or_else(|| {
+                    panic!("{lang} {}_OpenPass: no anchor guard — an anchor past the history would run the body's loop with a negative count", func.name)
+                });
+                if let Some(e) = body.find(empty_check) {
+                    assert!(
+                        e < g,
+                        "{lang} {}_OpenPass: the anchor guard evaluates the history length, so it must come after the emptiness check",
+                        func.name
+                    );
+                }
+                let first_loop = ["while", "for "]
+                    .iter()
+                    .filter_map(|kw| body.find(kw))
+                    .min();
+                if let Some(l) = first_loop {
+                    assert!(
+                        g < l,
+                        "{lang} {}_OpenPass: the anchor guard sits after the first loop, which is where the unbounded walk happens",
+                        func.name
+                    );
+                }
+                per_backend[b] += 1;
+                checked += 1;
+            }
+        }
+    }
+
+    // Non-vacuity: this must actually have looked at the corpus, in every
+    // backend, not silently skip on a signature marker that stopped matching.
+    for (b, n) in per_backend.iter().enumerate() {
+        assert!(
+            *n > 150,
+            "{}: only {n} _OpenPass bodies seen — the signature marker has drifted",
+            specs[b].0
+        );
+    }
+    assert!(checked > 600, "only {checked} bodies checked across four backends");
+}

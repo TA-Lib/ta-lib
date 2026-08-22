@@ -1073,6 +1073,11 @@ public partial class Core
       } else if( (int)optInSlowD_MAType < MATypes.Min || (int)optInSlowD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( historyLen < STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) + 1 ) {
          return RetCode.InsufficientHistory;
       }

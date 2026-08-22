@@ -506,6 +506,11 @@ public partial class Core
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* The index is a running cumulative value seeded at 1000, updated only on
        * bars whose volume decreased versus the prior bar (Negative Volume).
        */

@@ -630,6 +630,11 @@
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Implementation Note:
        *     The fastEMA varaible is not neceseraly the
        *     fastest EMA.

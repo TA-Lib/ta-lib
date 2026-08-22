@@ -767,6 +767,11 @@ public partial class Core
       } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       int BodyDoji_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyDoji].rangeType;
       int BodyDoji_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyDoji].avgPeriod;
       double BodyDoji_factor = this.candleSettings[(int)CandleSettingType.BodyDoji].factor;

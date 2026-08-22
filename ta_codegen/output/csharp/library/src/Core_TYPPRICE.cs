@@ -391,6 +391,11 @@ public partial class Core
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Typical price = (High + Low + Close ) / 3 */
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {

@@ -481,6 +481,11 @@
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Williams' Accumulation/Distribution, in the form Steven Achelis
        * published (Technical Analysis from A to Z, 2nd ed., p.368) and the form
        * every modern vendor ships: each bar's close is measured against the TRUE

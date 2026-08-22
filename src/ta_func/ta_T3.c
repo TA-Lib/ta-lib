@@ -484,6 +484,12 @@ static TA_RetCode TA_T3_OpenPass( struct TA_T3_Stream **stream, const double inR
       optInVFactor = 0.7;
    else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

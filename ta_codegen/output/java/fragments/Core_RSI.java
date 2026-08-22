@@ -662,6 +662,11 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( optInTimePeriod == 1 ) {
          int fillLb = RSI_Lookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;

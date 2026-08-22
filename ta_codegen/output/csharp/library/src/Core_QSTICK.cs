@@ -545,6 +545,11 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Qstick (Chande & Kroll, The New Technical Trader, 1994): a simple moving
        * average of the candle body, close minus open. Above zero means bodies
        * were predominantly bullish over the window; the zero crossings are the

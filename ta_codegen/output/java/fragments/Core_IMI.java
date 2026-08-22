@@ -464,6 +464,11 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       outIdx = 0;
       lookback = IMI_Lookback(optInTimePeriod);
       if( startIdx < lookback ) {

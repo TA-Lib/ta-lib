@@ -692,6 +692,11 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( optInTimePeriod == 1 ) {
          int fillLb = CMO_Lookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;

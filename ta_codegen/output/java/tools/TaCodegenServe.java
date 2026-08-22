@@ -945,6 +945,11 @@ class Core {
           } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Bill Williams' Accelerator/Decelerator Oscillator (New Trading
            * Dimensions, 1998): how fast the Awesome Oscillator is itself
            * accelerating, drawn as a zero-centred histogram.
@@ -1908,6 +1913,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
            */
@@ -2440,6 +2450,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.acos(inReal[i]);
           }
@@ -2953,6 +2968,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Note: Results from this function might vary slightly
            *       from Metastock outputs. The reason being that
            *       Metastock use float instead of double and this
@@ -3399,6 +3419,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = inReal0[i] + inReal1[i];
@@ -4137,6 +4162,11 @@ class Core {
              optInSlowPeriod = 10;
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Implementation Note:
            *     The fastEMA varaible is not neceseraly the
@@ -5352,6 +5382,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /*
            * The DM1 (one period) is base on the largest part of
            * today's range that is outside of yesterdays range.
@@ -6271,6 +6306,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( historyLen < ADXR_Lookback(optInTimePeriod) + 1 ) {
              return RetCode.InsufficientHistory;
           }
@@ -7082,6 +7122,11 @@ class Core {
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Bill Williams' Awesome Oscillator (New Trading Dimensions, 1998): the
            * spread between a short and a long simple moving average of the median
            * price, drawn as a zero-centred histogram.
@@ -7856,6 +7901,11 @@ class Core {
           }
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.EMA;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           if( historyLen < APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
              return RetCode.InsufficientHistory;
@@ -8671,6 +8721,11 @@ class Core {
              optInTimePeriod = 14;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* This function is using a speed optimized algorithm
            * for the min/max logic.
@@ -9524,6 +9579,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* This code is almost identical to the TA_AROON function
            * except that instead of outputing ArroonUp and AroonDown
            * individually, an oscillator is build from both.
@@ -10059,6 +10119,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.asin(inReal[i]);
           }
@@ -10469,6 +10534,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Default return values */
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
@@ -11210,6 +11280,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Average True Range is the greatest of the following:
            *
            *  val1 = distance from today's high to today's low.
@@ -11868,6 +11943,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           lookback = optInTimePeriod - 1;
           if( startIdx < lookback ) {
              startIdx = lookback;
@@ -12346,6 +12426,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Average price = (High + Low + Open + Close) / 4 */
           outIdx = 0;
@@ -13457,6 +13542,11 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.SMA;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
              return RetCode.InsufficientHistory;
           }
@@ -14394,6 +14484,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           S_xx = 0.0;
           S_xy = 0.0;
           S_x = 0.0;
@@ -14998,6 +15093,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* BOP = (Close - Open)/(High - Low) */
           outIdx = 0;
@@ -15681,6 +15781,11 @@ class Core {
              optInTimePeriod = 14;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* This ptr will points on a circular buffer of
            * at least "optInTimePeriod" element.
@@ -16394,6 +16499,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -17161,6 +17271,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int ShadowVeryShort_rangeType = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].rangeType.ordinal();
           int ShadowVeryShort_avgPeriod = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].avgPeriod;
@@ -17969,6 +18084,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -18755,6 +18875,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
           int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
           double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
@@ -19372,6 +19497,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
@@ -20303,6 +20433,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -21405,6 +21540,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
           int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
           double BodyShort_factor = this.candleSettings[CandleSettingType.BodyShort.ordinal()].factor;
@@ -22414,6 +22554,11 @@ class Core {
              optInPenetration = 3e-1;
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -23547,6 +23692,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -24445,6 +24595,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -25193,6 +25348,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -25949,6 +26109,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -26726,6 +26891,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int ShadowVeryShort_rangeType = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].rangeType.ordinal();
           int ShadowVeryShort_avgPeriod = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].avgPeriod;
@@ -27532,6 +27702,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -28284,6 +28459,11 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -28934,6 +29114,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -29696,6 +29881,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -30470,6 +30660,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
           double BodyDoji_factor = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].factor;
@@ -31092,6 +31287,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
@@ -31951,6 +32151,11 @@ class Core {
              optInPenetration = 3e-1;
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -32849,6 +33054,11 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -33670,6 +33880,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int Equal_rangeType = this.candleSettings[CandleSettingType.Equal.ordinal()].rangeType.ordinal();
           int Equal_avgPeriod = this.candleSettings[CandleSettingType.Equal.ordinal()].avgPeriod;
           double Equal_factor = this.candleSettings[CandleSettingType.Equal.ordinal()].factor;
@@ -34454,6 +34669,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -35369,6 +35589,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
           int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
@@ -36352,6 +36577,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
           int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
           double BodyShort_factor = this.candleSettings[CandleSettingType.BodyShort.ordinal()].factor;
@@ -37232,6 +37462,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -38070,6 +38305,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
           double BodyDoji_factor = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].factor;
@@ -38852,6 +39092,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
           int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
           double BodyShort_factor = this.candleSettings[CandleSettingType.BodyShort.ordinal()].factor;
@@ -39571,6 +39816,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
            * state carried without an absolute bar index.
@@ -40400,6 +40650,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
           int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
           double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
@@ -41225,6 +41480,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -42086,6 +42346,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int Equal_rangeType = this.candleSettings[CandleSettingType.Equal.ordinal()].rangeType.ordinal();
           int Equal_avgPeriod = this.candleSettings[CandleSettingType.Equal.ordinal()].avgPeriod;
           double Equal_factor = this.candleSettings[CandleSettingType.Equal.ordinal()].factor;
@@ -42911,6 +43176,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -43763,6 +44033,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
           int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
           double BodyShort_factor = this.candleSettings[CandleSettingType.BodyShort.ordinal()].factor;
@@ -44605,6 +44880,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -45429,6 +45709,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -46191,6 +46476,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int ShadowVeryShort_rangeType = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].rangeType.ordinal();
           int ShadowVeryShort_avgPeriod = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].avgPeriod;
           double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].factor;
@@ -46945,6 +47235,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
           double BodyDoji_factor = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].factor;
@@ -47682,6 +47977,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -48432,6 +48732,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -49125,6 +49430,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int Equal_rangeType = this.candleSettings[CandleSettingType.Equal.ordinal()].rangeType.ordinal();
           int Equal_avgPeriod = this.candleSettings[CandleSettingType.Equal.ordinal()].avgPeriod;
@@ -50015,6 +50325,11 @@ class Core {
              optInPenetration = 5e-1;
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -50981,6 +51296,11 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
           double BodyDoji_factor = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].factor;
@@ -51886,6 +52206,11 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -52698,6 +53023,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -53442,6 +53772,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -54259,6 +54594,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -55178,6 +55518,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -56078,6 +56423,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -56958,6 +57308,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
           int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
           double BodyShort_factor = this.candleSettings[CandleSettingType.BodyShort.ordinal()].factor;
@@ -57748,6 +58103,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
           int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
           double BodyShort_factor = this.candleSettings[CandleSettingType.BodyShort.ordinal()].factor;
@@ -58409,6 +58769,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
           int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
@@ -59364,6 +59729,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -60172,6 +60542,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int Equal_rangeType = this.candleSettings[CandleSettingType.Equal.ordinal()].rangeType.ordinal();
           int Equal_avgPeriod = this.candleSettings[CandleSettingType.Equal.ordinal()].avgPeriod;
@@ -60985,6 +61360,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
           double BodyDoji_factor = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].factor;
@@ -61738,6 +62118,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
           int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
@@ -62522,6 +62907,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -63275,6 +63665,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
           int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -64071,6 +64466,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -64895,6 +65295,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
           int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
           double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
@@ -65545,6 +65950,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
            */
@@ -66000,6 +66410,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.ceil(inReal[i]);
@@ -66791,6 +67206,11 @@ class Core {
              optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Both the per-bar money flow volume and the volume that produced it are
            * carried in the circular buffer. Keeping the volume here rather than
@@ -67633,6 +68053,11 @@ class Core {
              optInTimePeriod = 14;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           if( optInTimePeriod == 1 ) {
              int fillLb = CMO_Lookback(optInTimePeriod);
@@ -68480,6 +68905,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
            * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
            * d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
@@ -69305,6 +69735,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Move up the start index if there is not
            * enough initial data.
            */
@@ -69809,6 +70244,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.cos(inReal[i]);
           }
@@ -70218,6 +70658,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.cosh(inReal[i]);
@@ -70881,6 +71326,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( optInTimePeriod == 1 ) {
              int fillLb = DEMA_Lookback(optInTimePeriod);
              if( startIdx > fillLb ) fillLb = startIdx;
@@ -71432,6 +71882,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = inReal0[i] / inReal1[i];
@@ -72447,6 +72902,11 @@ class Core {
              optInTimePeriod = 14;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /*
            * The DM1 (one period) is base on the largest part of
@@ -74168,6 +74628,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( optInTimePeriod == 1 ) {
              int fillLb = EMA_Lookback(optInTimePeriod);
              if( startIdx > fillLb ) fillLb = startIdx;
@@ -74651,6 +75116,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.exp(inReal[i]);
           }
@@ -75056,6 +75526,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.floor(inReal[i]);
@@ -77894,6 +78369,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           a = 0.0962;
           b = 0.5769;
           /* Variable used for the price smoother (a weighted moving average). */
@@ -79862,6 +80342,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           a = 0.0962;
           b = 0.5769;
           /* Variable used for the price smoother (a weighted moving average). */
@@ -81718,6 +82203,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           a = 0.0962;
           b = 0.5769;
@@ -83734,6 +84224,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           a = 0.0962;
           b = 0.5769;
           /* Variable used for the price smoother (a weighted moving average). */
@@ -85696,6 +86191,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           a = 0.0962;
           b = 0.5769;
@@ -87980,6 +88480,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           a = 0.0962;
           b = 0.5769;
           /* Variable used for the price smoother (a weighted moving average). */
@@ -89038,6 +89543,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           outIdx = 0;
           lookback = IMI_Lookback(optInTimePeriod);
           if( startIdx < lookback ) {
@@ -89892,6 +90402,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( optInTimePeriod == 1 ) {
              int fillLb = KAMA_Lookback(optInTimePeriod);
              if( startIdx > fillLb ) fillLb = startIdx;
@@ -90683,6 +91198,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Linear Regression is a concept also known as the
            * "least squares method" or "best fit." Linear
            * Regression attempts to fit a straight line between
@@ -91391,6 +91911,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Linear Regression is a concept also known as the
            * "least squares method" or "best fit." Linear
            * Regression attempts to fit a straight line between
@@ -92096,6 +92621,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Linear Regression is a concept also known as the
            * "least squares method" or "best fit." Linear
            * Regression attempts to fit a straight line between
@@ -92794,6 +93324,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Linear Regression is a concept also known as the
            * "least squares method" or "best fit." Linear
            * Regression attempts to fit a straight line between
@@ -93290,6 +93825,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.log(inReal[i]);
           }
@@ -93705,6 +94245,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.log10(inReal[i]);
@@ -95803,6 +96348,11 @@ class Core {
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Make sure slow is really slower than
            * the fast period! if not, swap...
            */
@@ -96917,6 +97467,11 @@ class Core {
           if( optInSignalMAType == MAType.DEFAULT ) {
              optInSignalMAType = MAType.SMA;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( historyLen < MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
              return RetCode.InsufficientHistory;
           }
@@ -97829,6 +98384,11 @@ class Core {
              optInSignalPeriod = 9;
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           optInFastPeriod = 12;
           optInSlowPeriod = 26;
@@ -99632,6 +100192,11 @@ class Core {
           } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           a = 0.0962;
           b = 0.5769;
           /* Variable used for the price smoother (a weighted moving average). */
@@ -100500,6 +101065,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Bill Williams' Market Facilitation Index: the price range a bar
            * travelled per unit of volume traded, i.e. how much movement the
@@ -102279,6 +102849,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Identify the minimum number of price bar needed
            * to identify at least one output over the specified
            * period.
@@ -102963,6 +103538,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Identify the minimum number of price bar needed
            * to identify at least one output over the specified
            * period.
@@ -103461,6 +104041,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* MEDPRICE = (High + Low ) / 2
            * This is the high and low of the same price bar.
@@ -104245,6 +104830,11 @@ class Core {
              optInTimePeriod = 14;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Id, Type, Static Size */
           if( optInTimePeriod < 1 ) return RetCode.InternalError;
@@ -105169,6 +105759,11 @@ class Core {
              optInTimePeriod = 14;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Find the highest and lowest value of a timeserie
            * over the period.
@@ -106127,6 +106722,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* MIDPRICE = (Highest High + Lowest Low)/2
            *
            * This function is equivalent to MEDPRICE when the
@@ -106943,6 +107543,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Identify the minimum number of price bar needed
            * to identify at least one output over the specified
            * period.
@@ -107624,6 +108229,11 @@ class Core {
              optInTimePeriod = 30;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Identify the minimum number of price bar needed
            * to identify at least one output over the specified
@@ -108534,6 +109144,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Identify the minimum number of price bar needed
            * to identify at least one output over the specified
            * period.
@@ -109362,6 +109977,11 @@ class Core {
              optInTimePeriod = 30;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Identify the minimum number of price bar needed
            * to identify at least one output over the specified
@@ -112573,6 +113193,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* The interpretation of the rate of change varies widely depending
            * which software and/or books you are refering to.
            *
@@ -113060,6 +113685,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           outIdx = 0;
           i = startIdx;
@@ -113882,6 +114512,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* This function is very similar as ATR, except
            * it is being normalized as follow:
            *
@@ -114598,6 +115233,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* The index is a running cumulative value seeded at 1000, updated only on
            * bars whose volume decreased versus the prior bar (Negative Volume).
            */
@@ -115094,6 +115734,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           prevOBV = inVolume[startIdx];
           prevReal = inReal[startIdx];
@@ -118366,6 +119011,11 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.EMA;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( historyLen < PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
              return RetCode.InsufficientHistory;
           }
@@ -118975,6 +119625,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* The index is a running cumulative value seeded at 1000, updated only on
            * bars whose volume increased versus the prior bar (Positive Volume).
@@ -119682,6 +120337,11 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.EMA;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( historyLen < PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
              return RetCode.InsufficientHistory;
           }
@@ -120338,6 +120998,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Qstick (Chande & Kroll, The New Technical Trader, 1994): a simple moving
            * average of the candle body, close minus open. Above zero means bodies
            * were predominantly bullish over the window; the zero crossings are the
@@ -120965,6 +121630,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* The interpretation of the rate of change varies widely depending
            * which software and/or books you are refering to.
            *
@@ -121582,6 +122252,11 @@ class Core {
              optInTimePeriod = 10;
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* The interpretation of the rate of change varies widely depending
            * which software and/or books you are refering to.
@@ -122203,6 +122878,11 @@ class Core {
              optInTimePeriod = 10;
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* The interpretation of the rate of change varies widely depending
            * which software and/or books you are refering to.
@@ -122826,6 +123506,11 @@ class Core {
              optInTimePeriod = 10;
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* The interpretation of the rate of change varies widely depending
            * which software and/or books you are refering to.
@@ -123661,6 +124346,11 @@ class Core {
              optInTimePeriod = 14;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           if( optInTimePeriod == 1 ) {
              int fillLb = RSI_Lookback(optInTimePeriod);
@@ -124807,6 +125497,11 @@ class Core {
              optInMaximum = 2e-1;
           } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* > 0 indicates long. == 0 indicates short */
           /* Implementation of the SAR has been a little bit open to interpretation
@@ -126320,6 +127015,11 @@ class Core {
           } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* > 0 indicates long. == 0 indicates short */
           /* This function is the same as TA_SAR, except that the caller has
            * greater control on the SAR dynamic and initial state.
@@ -127014,6 +127714,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.sin(inReal[i]);
           }
@@ -127421,6 +128126,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.sinh(inReal[i]);
@@ -127984,6 +128694,11 @@ class Core {
              optInTimePeriod = 30;
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
@@ -129309,6 +130024,11 @@ class Core {
           } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           lookbackTotal = SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
@@ -129979,6 +130699,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.sqrt(inReal[i]);
           }
@@ -130564,6 +131289,11 @@ class Core {
              optInNbDev = 1e0;
           } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
              return RetCode.InsufficientHistory;
@@ -131739,6 +132469,11 @@ class Core {
           }
           if( optInSlowD_MAType == MAType.DEFAULT ) {
              optInSlowD_MAType = MAType.SMA;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           if( historyLen < STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) + 1 ) {
              return RetCode.InsufficientHistory;
@@ -132996,6 +133731,11 @@ class Core {
           if( optInFastD_MAType == MAType.DEFAULT ) {
              optInFastD_MAType = MAType.SMA;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( historyLen < STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
              return RetCode.InsufficientHistory;
           }
@@ -133956,6 +134696,11 @@ class Core {
           if( optInFastD_MAType == MAType.DEFAULT ) {
              optInFastD_MAType = MAType.SMA;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( historyLen < STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
              return RetCode.InsufficientHistory;
           }
@@ -134445,6 +135190,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Default return values */
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
@@ -134984,6 +135734,11 @@ class Core {
              optInTimePeriod = 30;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
@@ -135846,6 +136601,11 @@ class Core {
           } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( optInTimePeriod == 1 ) {
              int fillLb = T3_Lookback(optInTimePeriod, optInVFactor);
              if( startIdx > fillLb ) fillLb = startIdx;
@@ -136413,6 +137173,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.tan(inReal[i]);
           }
@@ -136820,6 +137585,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
              outReal[outIdx * outStride] = Math.tanh(inReal[i]);
@@ -137528,6 +138298,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( optInTimePeriod == 1 ) {
              int fillLb = TEMA_Lookback(optInTimePeriod);
              if( startIdx > fillLb ) fillLb = startIdx;
@@ -138226,6 +139001,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* True Range is the greatest of the following:
            *
@@ -140284,6 +141064,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* TRIX = 1-day percent rate-of-change of a triple EMA. */
           /* Will change only on success. */
           outNBElement.value = 0;
@@ -141011,6 +141796,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Linear Regression is a concept also known as the
            * "least squares method" or "best fit." Linear
            * Regression attempts to fit a straight line between
@@ -141525,6 +142315,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Typical price = (High + Low + Close ) / 3 */
           outIdx = 0;
@@ -142600,6 +143395,11 @@ class Core {
           } else if( optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* The two per-bar terms the three moving sums are built from. Both are a
            * pure function of the bar, so each bar is evaluated once on entry and read
            * back when it leaves each of the three windows.
@@ -143617,6 +144417,11 @@ class Core {
           } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Identify the minimum number of price bar needed to calculate
            * at least one output.
            */
@@ -144457,6 +145262,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Volume Weighted Average Price: the average typical price paid per
            * unit of volume, accumulated from the first bar of the range.
            *
@@ -145253,6 +146063,11 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           if( optInTimePeriod == 1 ) {
              int fillLb = VWMA_Lookback(optInTimePeriod);
              if( startIdx > fillLb ) fillLb = startIdx;
@@ -145946,6 +146761,11 @@ class Core {
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Williams' Accumulation/Distribution, in the form Steven Achelis
            * published (Technical Analysis from A to Z, 2nd ed., p.368) and the form
            * every modern vendor ships: each bar's close is measured against the TRUE
@@ -146438,6 +147258,11 @@ class Core {
           }
           if( historyLen > MAX_INDEX + 1 ) {
              return RetCode.OutOfRangeEndIndex;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
           outIdx = 0;
@@ -147332,6 +148157,11 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
           /* Identify the minimum number of price bar needed
            * to identify at least one output over the specified
            * period.
@@ -148124,6 +148954,11 @@ class Core {
              optInTimePeriod = 30;
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
           }
           if( optInTimePeriod == 1 ) {
              int fillLb = WMA_Lookback(optInTimePeriod);

@@ -554,6 +554,11 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* TRIX = 1-day percent rate-of-change of a triple EMA. */
       /* Will change only on success. */
       outNBElement.value = 0;

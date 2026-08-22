@@ -1603,6 +1603,11 @@ public partial class Core
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       a = 0.0962;
       b = 0.5769;
       /* Variable used for the price smoother (a weighted moving average). */

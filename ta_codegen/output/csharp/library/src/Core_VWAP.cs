@@ -656,6 +656,11 @@ public partial class Core
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Volume Weighted Average Price: the average typical price paid per
        * unit of volume, accumulated from the first bar of the range.
        *

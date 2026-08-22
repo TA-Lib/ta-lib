@@ -478,6 +478,11 @@
       } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
       if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
          return RetCode.InsufficientHistory;
       }

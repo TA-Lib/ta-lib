@@ -767,6 +767,11 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       /* Find the highest and lowest value of a timeserie
        * over the period.
        *      MIDPOINT = (Highest Value + Lowest Value)/2

@@ -1449,6 +1449,21 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
 /// The open initialization block: `historyLen`/`endIdx`/`startIdx`, out-meta
 /// dummies, the Scalar-mode `lastValue_*` sinks, and private-extra-param
 /// locals. Shared by the transcribing tiers (loop and dual-mode).
+/// The anchor has to land inside the history — see `c_stream::emit_anchor_guard`
+/// for why the transcribed bodies cannot be relied on for this (only 137 of 174
+/// carry TA-Lib's "make sure there is still something to evaluate" preamble, and
+/// the rest run `while nbBar != 0` on a count that went negative).
+///
+/// `startIdx` is `usize` here, so only the upper half of the C guard exists —
+/// the lower half is unrepresentable rather than omitted.
+fn emit_anchor_guard(o: &mut String) {
+    let _ = writeln!(o, "        if startIdx > endIdx {{");
+    let _ = writeln!(o, "            (*outBegIdx) = 0;");
+    let _ = writeln!(o, "            (*outNBElement) = 0;");
+    let _ = writeln!(o, "            return Err(RetCode::InsufficientHistory);");
+    let _ = writeln!(o, "        }}");
+}
+
 fn emit_open_inits(
     o: &mut String,
     func: &FuncDef,
@@ -1464,6 +1479,7 @@ fn emit_open_inits(
     // startIdx is always a parameter of the core: 0 from both public entry
     // points, the caller's own when a composed function opens this as a sub.
     let _ = writeln!(o, "        let mut startIdx = startIdx;");
+    emit_anchor_guard(o);
     let _ = writeln!(o, "        let mut dummyBegIdx: usize = 0;");
     let _ = writeln!(o, "        let mut dummyNBElement: usize = 0;");
     let opt_real_params: Vec<String> = func

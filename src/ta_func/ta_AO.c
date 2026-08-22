@@ -403,6 +403,12 @@ static TA_RetCode TA_AO_OpenPass( struct TA_AO_Stream **stream, const double inH
       optInSlowPeriod = 34;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;

@@ -708,6 +708,11 @@ public partial class Core
       } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
       int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
       int BodyLong_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyLong].avgPeriod;
       double BodyLong_factor = this.candleSettings[(int)CandleSettingType.BodyLong].factor;
