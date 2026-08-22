@@ -1623,31 +1623,61 @@ fn emit_sv_range_decls(s: &mut String) {
     s.push_str("        int rB = 0, rN = 0;\n");
 }
 
-/// How many range-compare SITES this server emits per streamable function. Each
-/// one sets its own bit in `rangeSites`, and the driver requires every bit to
-/// have been set somewhere in the run.
+/// The range-compare SITES a server emits, in bit order. Each site sets its own
+/// bit in `rangeSites`; the server declares the count as `range_sites_n`; the
+/// driver ORs the mask across the run and requires every bit.
 ///
-/// The leg's other two floors are totals — one counts functions, the other
-/// counts legs against the function count — so a whole site class going dead in
-/// one language leaves both far above their floor and green. This is the ratchet
-/// that sees it. Corpus-wide rather than per function, because a site can
-/// legitimately not run for a given function or vector: C's anchored compare
-/// needs `lb < Sidx < svN - 1`, which a large lookback denies.
+/// The leg's other floor is a total — it counts functions — so a whole site
+/// class going dead in one language leaves it far above its floor and green.
+/// This is the ratchet that sees it. Corpus-wide rather than per function,
+/// because a site can legitimately not run for a given function or vector: the
+/// anchored compare needs `lb < Sidx < svN - 1`, which a large lookback denies.
+///
+/// One definition per language, and the bit and the count are read from the SAME
+/// place, because the drift that fails OPEN is a site added without bumping the
+/// count: the mask then carries a bit the ratchet never demands. `sv_range_bit`
+/// is the only way to spell a bit, and it asserts against the count.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SvRangeSite {
+    /// The `OpenAndFill` handle.
+    Fill = 0,
+    /// The `Open(P)` + updates handle.
+    Prefix = 1,
+    /// The `startIdx`-anchored `_OpenInternal` handle. Every server but Rust,
+    /// whose server is a separate crate and cannot reach a `pub(crate)` seam.
+    Anchored = 2,
+}
+
+/// The bit `site` sets, checked against the count the server will declare.
+fn sv_range_bit(site: SvRangeSite, declared: u32) -> u32 {
+    let bit = site as u32;
+    assert!(
+        bit < declared,
+        "range site {bit} is outside the {declared} this server declares — the mask \
+         would carry a bit the driver's ratchet never demands"
+    );
+    1u32 << bit
+}
+
+/// C, Java and C# reach the anchored seam; Rust cannot.
 const SV_RANGE_SITES_C: u32 = 3;
+const SV_RANGE_SITES_JAVA: u32 = 3;
+const SV_RANGE_SITES_CSHARP: u32 = 3;
+const SV_RANGE_SITES_RUST: u32 = 2;
 
 /// One comparison: `handle`'s range against the `(beg, nb)` the batch reported
 /// for the same bars. `guard` is the leg's own success condition — a leg that
 /// already failed has a handle short of the bars it was supposed to consume.
 fn emit_sv_range_check(
-    s: &mut String, indent: &str, handle: &str, guard: &str, beg: &str, nb: &str, site: u32,
+    s: &mut String, indent: &str, handle: &str, guard: &str, beg: &str, nb: &str,
+    site: SvRangeSite,
 ) {
-    assert!(site < SV_RANGE_SITES_C, "range site {site} is outside the declared count");
     let _ = writeln!(s, "{indent}if( {guard} )");
     let _ = writeln!(s, "{indent}{{");
     let _ = writeln!(
         s,
         "{indent}    rangeChecked = 1; rangeLegs++; rangeSites |= {};",
-        1u32 << site
+        sv_range_bit(site, SV_RANGE_SITES_C)
     );
     let _ = writeln!(s, "{indent}    rB = -1; rN = -1;");
     let _ = writeln!(
@@ -2036,7 +2066,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             // buffer at full history and reads only [0, nb), so a write past
             // `nb` lands in `lookback` elements of unread space.
             s.push_str(&c_canary_check(&fbuf, &out_is_int));
-            emit_sv_range_check(&mut s, "            ", "stf", "frc == TA_SUCCESS && stf", "svBeg", "svNb", 0);
+            emit_sv_range_check(&mut s, "            ", "stf", "frc == TA_SUCCESS && stf", "svBeg", "svNb", SvRangeSite::Fill);
             s.push_str(&format!("            if( stf ) TA_{name}_Close(stf);\n"));
             s.push_str("        }\n");
 
@@ -2171,7 +2201,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_state_compare(&mut s, name, steq);
         // Open(P) + (svN - P) updates: whatever P was, the handle has consumed
         // svN bars and must report exactly what batch(0, svN-1) did.
-        emit_sv_range_check(&mut s, "            ", "st", "ok && st", "svBeg", "svNb", 1);
+        emit_sv_range_check(&mut s, "            ", "st", "ok && st", "svBeg", "svNb", SvRangeSite::Prefix);
         s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
         if candle {
             s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
@@ -2218,7 +2248,8 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             ));
             s.push_str("                    if( arc != TA_SUCCESS || !stA ) ok = 0;\n");
             emit_sv_compare(&mut s, &out_is_int, &bbuf, "                    ", "(svN - 1) - svBegS", "svN - 1", "ok &&");
-            emit_sv_range_check(&mut s, "                    ", "stA", "ok && stA", "svBegS", "svNbS", 2);
+            emit_sv_range_check(&mut s, "                    ", "stA", "ok && stA", "svBegS", "svNbS", SvRangeSite::Anchored);
+
             s.push_str(&format!("                    if( stA ) TA_{name}_Close(stA);\n"));
             s.push_str("                    if( !ok ) allOk = 0;\n");
             s.push_str("                    (void)badBar; (void)badOut; (void)bv; (void)sv;\n");
@@ -6156,7 +6187,10 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         "        match c2.{fname}_OpenAndFill({full_ins}{opts_tail}{fargs}) {{"
     );
     s.push_str("            Err(_) => { fill_ok = false; }\n");
-    s.push_str("            Ok((_h, fr)) => {\n                range_checked = 1; range_legs += 1; range_sites |= 1;\n                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }\n                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }\n                else {\n");
+    let fill_bit = sv_range_bit(SvRangeSite::Fill, SV_RANGE_SITES_RUST);
+    s.push_str("            Ok((_h, fr)) => {\n                range_checked = 1; range_legs += 1; range_sites |= ");
+    s.push_str(&fill_bit.to_string());
+    s.push_str(";\n                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }\n                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }\n                else {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         if *is_int {
             let _ = writeln!(s, "                    for i in 0..nb {{ if f{i}[i] != b{i}[i] {{ fill_ok = false; }} }}");
@@ -6239,7 +6273,9 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // Only when the value leg passed: its update loop breaks on a rejected bar,
     // which leaves the handle short of the bars it was supposed to consume.
     s.push_str("                    if all_ok {\n");
-    s.push_str("                        range_checked = 1; range_legs += 1; range_sites |= 2;\n");
+    s.push_str("                        range_checked = 1; range_legs += 1; range_sites |= ");
+    s.push_str(&sv_range_bit(SvRangeSite::Prefix, SV_RANGE_SITES_RUST).to_string());
+    s.push_str(";\n");
     s.push_str("                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }\n");
     s.push_str("                    }\n");
     s.push_str("                }\n            }\n        }\n");
@@ -6264,7 +6300,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("    }\n");
     // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
     // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
-    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_n\\\":2,\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_n\\\":"); s.push_str(&SV_RANGE_SITES_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
     s.push_str("}\n\n");
     s
 }
@@ -6866,12 +6902,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     );
     s.push_str("                    }\n");
     s.push_str("                }\n");
+
     s.push_str("            }\n");
 
     s.push_str("        }\n");
     // fill_ok folds into ok as a safety net (mirrors the C/Rust gates).
 
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_n\\\":3,\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_n\\\":"); s.push_str(&SV_RANGE_SITES_JAVA.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
@@ -8217,6 +8254,7 @@ fn emit_csharp_sv_func(
     );
     s.push_str("                    }\n");
     s.push_str("                }\n");
+
     s.push_str("            }\n");
 
     s.push_str("        }\n");
@@ -8230,7 +8268,7 @@ fn emit_csharp_sv_func(
         s.push_str("        extra += \",\\\"candleMut\\\":\" + candleMutRan + \",\\\"candleMutMoved\\\":\" + candleMutMoved + \",\\\"benignMut\\\":\" + zsignMut;\n");
     }
 
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_n\\\":3,\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign + extra + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_n\\\":"); s.push_str(&SV_RANGE_SITES_CSHARP.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign + extra + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }

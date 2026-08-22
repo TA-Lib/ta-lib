@@ -377,9 +377,9 @@ cd ../bin && ./ta_regtest
 ./ta_regtest --codegen --language=c,rust --function=SMA,RSI
 ```
 
-## `stream_verify` — what each leg family can and cannot see (issue #240)
+## `stream_verify` — what each leg family can and cannot see (issues #240, #241)
 
-One request drives five families against one seeded series. They are not
+One request drives six families against one seeded series. They are not
 interchangeable, and the coverage they add is very uneven:
 
 | family | what it compares | blind to |
@@ -389,6 +389,7 @@ interchangeable, and the coverage they add is very uneven:
 | `OpenInternal` anchored leg | `OpenInternal(S)` vs `batch(S)` at the last bar | same — one more open, no update |
 | `Peek` | Peek vs the Update that immediately follows it | a defect in the step: both run it |
 | **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers (the batch transcription is one arm of the compare) |
+| **range** (#241) | the handle's `OutRange` against the batch range over the same bars, at three sites: the `OpenAndFill` handle, `Open(P)` + updates, and the anchored `OpenInternal` | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is unreachable from here (it is pinned in the generator instead) |
 
 So of the four value families, three delegate to the batch transcription and the
 fourth is same-tier: the prefix sweep's Update loop was the only thing looking at
@@ -408,6 +409,22 @@ one-bar rotation of a folded ring read:
 
 The state leg is therefore independent of firing density and of decision margin,
 which is what no amount of extra data buys.
+
+The **range** leg is the odd one out twice over. It is the only family that is
+not C-only *and* not a value comparison: it compares a number pair, so it sees
+what every value leg is structurally blind to — an output is the same whether or
+not the handle knows how many of them it has produced. And it is the first
+family with a per-SITE ratchet rather than a total: each server reports which of
+its own compare sites fired (`range_sites`) and how many it has
+(`range_sites_n`), and the driver ORs the mask across the run and demands every
+bit. A total cannot see one site of three stop — measured, dropping C's anchored
+site moved the leg count only 174 -> 145, far above any floor worth setting.
+Rust declares two sites, not three: its server is a separate crate and cannot
+reach the `pub(crate)` `_OpenInternal` seam, so it says so rather than
+pretending. The mask and the count are checked against each other on emitted
+text by `sv_range_sites_mask_matches_the_declared_count`, because a site added
+without bumping the count, or one reusing another's bit, leaves a full mask at
+run time and fails open.
 
 **Why it holds bit-for-bit.** `Update` is the transcribed batch loop body, so
 both routes execute the identical operation sequence over the identical bars,

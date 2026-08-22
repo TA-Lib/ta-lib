@@ -7139,20 +7139,15 @@ fn test_c_ma_dispatch_stream_section() {
     assert!(!c.contains("TA_MA_StepInternal"), "dispatch has no transition fn");
 
     // Open: identity path first (mirrors batch order), then the dispatch. The
-    // anchor is resolved ONCE per mode — the lookback, clamped up to `startIdx`
-    // on the two variants that carry one — and the min-history check is made
-    // against the CLAMPED anchor. Pinned as three consecutive lines because
-    // splitting them is what the bug was: the clamp landed without the
-    // re-check, and `historyLen - anchor` then went negative (and, in Rust,
-    // underflowed a usize) for an anchor the history does not reach.
-    assert!(
-        c.contains(concat!(
-            "      int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );\n",
-            "      if( startIdx > fillLb ) fillLb = startIdx;\n",
-            "      if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }\n",
-        )),
-        "identity anchor: resolve, clamp to startIdx, then re-check the history"
-    );
+    // anchor is resolved once per mode and the range is reported from it.
+    //
+    // The ORDER of the clamp and the history re-check — the property 96d1052f8
+    // is about — is pinned in open_core_suite's
+    // `dispatch_open_modes_differ_only_where_intended`, per mode, on a sliced
+    // body. It cannot be pinned here: `c` is the whole file, the three lines are
+    // emitted byte-identically by the scalar open and the anchored fill, and a
+    // `contains` over both is satisfied by whichever arm is still correct.
+    // Measured — reordering the scalar arm alone left every generator test green.
     assert!(
         c.contains(concat!(
             "      sp->outRangeBegIdx = fillLb;\n",
@@ -7627,6 +7622,136 @@ fn c_stream_every_tier_leads_with_the_range_head() {
     }
     assert!(checked >= 170, "expected the streaming corpus, saw {checked}");
     assert_eq!(tiers.len(), 5, "all five stream tiers must be covered, saw {}", tiers.len());
+}
+
+/// The clamp and its history re-check are ONE edit, in all four backends.
+///
+/// The identity arms resolve their own anchor — the lookback, moved up to
+/// `startIdx` — and then have to test the history against the CLAMPED value.
+/// Clamping and then testing the PRE-clamp anchor lets an anchor the history
+/// does not reach through, and the count published is `historyLen - anchor`:
+/// negative in C, Java and C#, a `usize` underflow in Rust. That is the defect
+/// this branch shipped and 96d1052f8 fixed.
+///
+/// Pinned in the generator rather than behaviourally, because outside Rust the
+/// guard is not reachable from the public API: the public openers pass
+/// `startIdx = 0`, where the clamp is a no-op, and the only caller that anchors
+/// is the `_OpenInternal` seam — contracted on `startIdx <= endIdx`, whose
+/// transcribed bodies index before they check. Driving it out of contract is
+/// undefined, not a rejection; measured, `TA_AD_OpenInternal(45, 40)` segfaults
+/// under ASan. Rust's case IS publicly reachable (its MAVP has no own-lookback
+/// precheck) and is covered behaviourally by
+/// `an_anchor_past_the_history_is_insufficient_history`.
+#[test]
+fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
+    let (func, enums) = load_indicator("ma");
+    let registry = make_registry();
+    let helpers =
+        HelperRegistry::from_dir(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input"));
+
+    // (backend, emitted text, clamp needle, re-check needle)
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let java = backends::java::generate(&func, &enums, &registry, &helpers);
+    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    let cases: [(&str, &str, &str, &str); 4] = [
+        ("c", &c, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
+        (
+            "rust",
+            &rust,
+            "let fillLb = if startIdx > fillLb { startIdx } else { fillLb };",
+            "if historyLen < fillLb + 1 {",
+        ),
+        ("java", &java, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
+        ("csharp", &csharp, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
+    ];
+
+    let mut checked = 0usize;
+    for (lang, src, clamp, recheck) in cases {
+        // Every clamp in the file must be followed by its re-check before the
+        // next clamp — walking them pairwise rather than taking the first of
+        // each, because the same two lines are emitted by more than one arm and
+        // a first-occurrence check is satisfied by whichever arm is still right.
+        let mut from = 0usize;
+        let mut seen = 0usize;
+        while let Some(i) = src[from..].find(clamp) {
+            let at = from + i;
+            let rest = &src[at + clamp.len()..];
+            let next_clamp = rest.find(clamp).unwrap_or(rest.len());
+            let next_recheck = rest
+                .find(recheck)
+                .unwrap_or_else(|| panic!("{lang}: a clamp at byte {at} has no re-check after it"));
+            assert!(
+                next_recheck < next_clamp,
+                "{lang}: the clamp at byte {at} is not followed by its history re-check before \
+                 the next clamp — clamping and then testing the PRE-clamp anchor is the defect"
+            );
+            seen += 1;
+            from = at + clamp.len();
+        }
+        assert!(seen >= 1, "{lang}: MA emits no startIdx clamp at all");
+        checked += 1;
+    }
+    assert_eq!(checked, 4, "all four backends must be covered");
+}
+
+/// The #241 range leg's per-site ratchet, pinned across all four servers at once.
+///
+/// The driver ORs the `range_sites` mask across the run and requires every bit
+/// below the `range_sites_n` the server declares. Two drifts fail OPEN and are
+/// what this catches:
+///
+///   * a site added without bumping the count — the mask then carries a bit the
+///     ratchet never demands, so the new site can die unnoticed;
+///   * a site that reuses an existing bit — its death is masked by the other.
+///
+/// Neither is visible at run time: both leave a full mask. So the check is on
+/// the emitted text — the set of bits a server actually ORs in must be exactly
+/// `{1, 2, .., 2^(n-1)}` for the `n` it declares. C, Java and C# reach the
+/// anchored `_OpenInternal` seam and declare 3; Rust's server is a separate
+/// crate and cannot, so it declares 2 and says so.
+#[test]
+fn sv_range_sites_mask_matches_the_declared_count() {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+    let funcs: Vec<ir::FuncDef> = discover_indicators().iter().map(|n| load_indicator(n).0).collect();
+
+    let servers = [
+        ("c", ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums), 3usize),
+        ("java", ta_codegen_lib::server_gen::generate_java_server(&funcs, &enums), 3),
+        ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 3),
+        ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 2),
+    ];
+
+    for (lang, src, want_n) in servers {
+        // What the server tells the driver about itself.
+        let decl = format!("\\\"range_sites_n\\\":{want_n}");
+        let decl_plain = format!("\"range_sites_n\":{want_n}");
+        assert!(
+            src.contains(&decl) || src.contains(&decl_plain),
+            "{lang}: server does not declare range_sites_n = {want_n}"
+        );
+
+        // What it actually ORs in. Collect every `rangeSites |= N` / `range_sites |= N`.
+        let mut bits: std::collections::BTreeSet<u32> = std::collections::BTreeSet::new();
+        for needle in ["rangeSites |= ", "range_sites |= "] {
+            let mut from = 0usize;
+            while let Some(i) = src[from..].find(needle) {
+                let at = from + i + needle.len();
+                let digits: String = src[at..].chars().take_while(char::is_ascii_digit).collect();
+                assert!(!digits.is_empty(), "{lang}: unparsable site bit at byte {at}");
+                bits.insert(digits.parse().expect("site bit is a number"));
+                from = at;
+            }
+        }
+        let want: std::collections::BTreeSet<u32> = (0..want_n as u32).map(|b| 1u32 << b).collect();
+        assert_eq!(
+            bits, want,
+            "{lang}: the site bits the server sets do not match the {want_n} sites it declares. \
+             A bit above the count is a site the ratchet never demands; a missing bit is a site \
+             whose death nothing would see."
+        );
+    }
 }
 
 /// The #240 state-equivalence leg, pinned where #229 taught us to pin: as the

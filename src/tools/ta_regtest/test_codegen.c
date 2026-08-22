@@ -4388,6 +4388,21 @@ static ErrorNumber test_codegen_for_language(
              * fired somewhere in the run. Corpus-wide rather than per function,
              * because a site can legitimately not run for a given function or
              * vector (C's anchored compare needs lb < Sidx < svN-1). */
+            /* Fails CLOSED on a server that stops declaring its site count.
+             * `range_sites_n` is the server's own claim about itself, so
+             * skipping the ratchet when it is absent would let the leg be
+             * disarmed by deleting one field — the exact shape this ratchet
+             * exists to catch. A server that answered the leg at all must say
+             * how many sites it has. */
+            if( ctx.error == TA_TEST_PASS && ctx.streamRangeFunctions > 0 &&
+                ctx.streamRangeSitesN <= 0 )
+            {
+                printf("STREAM RANGE PARTIAL: the %s server compared ranges for "
+                       "%d function(s) but never declared how many compare sites "
+                       "it has — the per-site ratchet cannot run\n",
+                       lang->name, ctx.streamRangeFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
             if( ctx.error == TA_TEST_PASS && ctx.streamFunctions > 0 &&
                 ctx.streamRangeSitesN > 0 &&
                 ctx.streamRangeSites != (1 << ctx.streamRangeSitesN) - 1 )

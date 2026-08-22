@@ -300,6 +300,33 @@ public static class StreamApiTest
                   $"Open({warm}) + updates == the batch range");
         }
 
+        // A history shorter than the bank's shared anchor is InsufficientHistory,
+        // not a handle carrying a nonsense range (#241). Honest about scope:
+        // MAVP rejects at its own-lookback precheck, which predates #241, so
+        // this passes with or without the post-clamp re-check 96d1052f8 added —
+        // measured. Outside Rust that re-check is unreachable from the public
+        // API, and the anchored _OpenInternal seam cannot be driven out of its
+        // startIdx <= endIdx contract safely. It is gated in the generator, by
+        // identity_anchor_clamps_before_it_rechecks_in_every_backend. What this
+        // asserts is the public contract around it.
+        try
+        {
+            core.MAVP_Open(closes[..10], closes[..10], 1, 30, MAType.SMA);
+            Check(false, "MAVP_Open on a history shorter than the bank's anchor must throw");
+        }
+        catch (InsufficientHistoryException)
+        {
+            Check(true, "MAVP_Open rejects an anchor past the history");
+        }
+        // The positive half, so this is not a rejection sweep.
+        {
+            int mavpLb = core.MAVP_Lookback(1, 30, MAType.SMA);
+            var px = closes[..(mavpLb + 3)];
+            Core.MAVP_Stream mv = core.MAVP_Open(px, px, 1, 30, MAType.SMA);
+            Check(mv.OutRange.BegIdx == mavpLb && mv.OutRange.Count == 3,
+                  "MAVP_Open just past its anchor reports (lookback, 3)");
+        }
+
         // A clone forks: its own updates extend only itself.
         Core.SMA_Stream a = core.SMA_Open(closes, period);
         Core.SMA_Stream b = a.Clone();

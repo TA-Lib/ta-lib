@@ -399,6 +399,40 @@ public class StreamSmokeTest {
               "a copy's own update extends only the copy");
         check(f.outRange().equals(batchRange), "the original is untouched by the copy's update");
 
+        /* A history shorter than the bank's shared anchor is InsufficientHistory,
+         * not a handle carrying a nonsense range (#241).
+         *
+         * Honest about what this does and does not gate: MAVP rejects here at
+         * its own-lookback precheck, which predates #241, so this would pass
+         * with or without the post-clamp history re-check that commit 96d1052f8
+         * added — measured, by removing that guard from the emitter. Outside
+         * Rust the re-check is not reachable from the public API at all (the
+         * public openers pass startIdx = 0, where the clamp is a no-op), and the
+         * one caller that anchors is the _OpenInternal seam, contracted on
+         * startIdx <= endIdx: its transcribed bodies index before they check, so
+         * driving it out of contract is undefined rather than a rejection —
+         * TA_AD_OpenInternal(45, 40) segfaults under ASan. The re-check is
+         * gated in the generator instead, by
+         * identity_anchor_clamps_before_it_rechecks_in_every_backend. What this
+         * asserts is the public contract around it, which is worth its own line.
+         */
+        try {
+            core.MAVP_Open(java.util.Arrays.copyOf(close, 10),
+                           java.util.Arrays.copyOf(close, 10), 1, 30, MAType.SMA);
+            check(false, "MAVP_Open on a history shorter than the bank's anchor must throw");
+        } catch (InsufficientHistoryException e) {
+            /* expected */
+        }
+        /* The positive half, so this is not a rejection sweep: one more bar than
+         * the anchor needs, and the range is the anchor and the bars after it. */
+        {
+            int mavpLb = core.MAVP_Lookback(1, 30, MAType.SMA);
+            double[] px = java.util.Arrays.copyOf(close, mavpLb + 3);
+            Core.MAVP_Stream mv = core.MAVP_Open(px, px, 1, 30, MAType.SMA);
+            check(mv.outRange().equals(new OutRange(mavpLb, 3)),
+                  "MAVP_Open just past its anchor reports (lookback, 3), got " + mv.outRange());
+        }
+
         /* Exceptions: typed insufficient history; plain IAE for bad params;
          * aliasing rejection on openAndFill; update/peek never throw. */
         try {

@@ -331,6 +331,36 @@ fn dispatch_open_modes_differ_only_where_intended() {
     );
     assert!(!fill.contains("startIdx"), "the public fill is anchored at bar 0:\n{fill}");
 
+    // ORDER, per mode. The clamp and the history re-check are one edit: clamping
+    // the anchor up to `startIdx` and then testing the history against the
+    // PRE-clamp anchor lets an anchor the history does not reach through, and the
+    // count it publishes is `historyLen - anchor` — negative in C, a `usize`
+    // underflow in Rust. That is the defect #241 shipped and 96d1052f8 fixed.
+    //
+    // Asserted per mode, on a sliced body, because the three lines are emitted
+    // BYTE-IDENTICALLY by the scalar and the anchored fill: a whole-file
+    // `contains` is satisfied by whichever arm still happens to be right, so it
+    // stays green when only one of them regresses. Measured, not assumed —
+    // reordering the scalar arm alone left all 280 generator tests passing.
+    let clamp = "if( startIdx > fillLb ) fillLb = startIdx;";
+    let recheck = "if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }";
+    for (what, body) in [("OpenInternal", &scalar), ("OpenAndFillInternal", &internal)] {
+        let c = body
+            .find(clamp)
+            .unwrap_or_else(|| panic!("{what} lost the startIdx clamp:\n{body}"));
+        let r = body
+            .find(recheck)
+            .unwrap_or_else(|| panic!("{what} lost the post-clamp history re-check:\n{body}"));
+        assert!(
+            c < r,
+            "{what} re-checks the history BEFORE clamping the anchor to startIdx, so an \
+             anchor past the history publishes a handle instead of rejecting:\n{body}"
+        );
+    }
+    // The public fill has no startIdx to clamp with, so it checks once and that
+    // is the whole of it.
+    assert!(fill.contains(recheck), "the public fill must still check the history:\n{fill}");
+
     // Each mode delegates to the callee entry point that matches it.
     assert!(
         scalar.contains("TA_SMA_OpenInternal(") && !scalar.contains("_OpenAndFill"),
