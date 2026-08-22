@@ -2,7 +2,7 @@
 
 ## Summary
 
-Williams' Accumulation/Distribution: a cumulative line built to expose the buying or selling pressure hiding underneath price action. Larry Williams designed it primarily as a divergence tool — a line that keeps climbing while price stalls suggests buyers are still in control, and one that fails to confirm a fresh price high or low warns that the move may be running out of conviction.
+Williams' Accumulation/Distribution: a cumulative line meant to expose whether a security is quietly under accumulation (informed buying) or distribution (informed selling) beneath the surface of price. Larry Williams built it to catch that shift before price confirms it — traders watch for the line to diverge from price, since a line that keeps rising while price stalls or falls points to accumulation, and one that stalls while price pushes to a new high points to distribution.
 
 **It consumes no volume.** Larry Williams' original multiplies each move by that bar's volume; Steven Achelis published the modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the industry kept Williams' name on that no-volume form. That industry-wide decision is enough for TA-Lib to ship the same form under the same name. What remains once the multiplier is dropped is a signed close-to-close move measured on the true range, so it is grouped as a momentum indicator, not a volume one.
 
