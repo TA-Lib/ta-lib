@@ -754,7 +754,7 @@ struct TA_SMI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_SMI_ReleaseInternal( struct TA_SMI_Stream *sp )
+static void TA_SMI_ReleaseImpl( struct TA_SMI_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
@@ -767,7 +767,7 @@ static void TA_SMI_ReleaseInternal( struct TA_SMI_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_SMI_StepInternal( struct TA_SMI_Stream *sp, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal )
+static void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal )
 {
    double tmp;
 
@@ -1208,22 +1208,22 @@ static TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double i
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_SMI_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_SMI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;
       sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inHigh ) { TA_SMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inHigh ) { TA_SMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inHigh ) { TA_SMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inHigh ) { TA_SMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inLow ) { TA_SMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inLow ) { TA_SMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inLow ) { TA_SMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inLow ) { TA_SMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->x_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inClose ) { TA_SMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inClose ) { TA_SMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inClose ) { TA_SMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inClose ) { TA_SMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -1288,7 +1288,7 @@ TA_LIB_API TA_RetCode TA_SMI_Update( TA_SMI_Stream *stream, double inHigh, doubl
 {
    if( !stream || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_SMI_StepInternal( stream, inHigh, inLow, inClose, outSMI, outSMISignal );
+   TA_SMI_StepImpl( stream, inHigh, inLow, inClose, outSMI, outSMISignal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -1306,13 +1306,13 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
    memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xPhys );
    scratch.x_inClose = stream->xMirror_inClose;
    memcpy( scratch.x_inClose, stream->x_inClose, sizeof(double) * (size_t)stream->xPhys );
-   TA_SMI_StepInternal( &scratch, inHigh, inLow, inClose, outSMI, outSMISignal );
+   TA_SMI_StepImpl( &scratch, inHigh, inLow, inClose, outSMI, outSMISignal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_SMI_Close( TA_SMI_Stream *stream )
 {
-   TA_SMI_ReleaseInternal( stream );
+   TA_SMI_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

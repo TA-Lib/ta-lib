@@ -563,7 +563,7 @@
       public Value update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
-         core.ACCBANDS_StreamStep(this, inHigh, inLow, inClose);
+         core.ACCBANDS_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
          return this.cachedValue;
@@ -588,7 +588,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.ACCBANDS_StreamStep(scratch, inHigh, inLow, inClose);
+         core.ACCBANDS_StepImpl(scratch, inHigh, inLow, inClose);
          return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
       }
 
@@ -609,7 +609,7 @@
          return new ACCBANDS_Stream(this);
       }
    }
-   void ACCBANDS_StreamStep( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
+   void ACCBANDS_StepImpl( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

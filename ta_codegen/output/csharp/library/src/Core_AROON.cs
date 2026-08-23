@@ -571,7 +571,7 @@ public partial class Core
       public AROON_Value Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AROON", "update", RetCode.BadParam);
-         core.AROON_StreamStep(this, inHigh, inLow);
+         core.AROON_StepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new AROON_Value(cur_outAroonDown, cur_outAroonUp);
       }
@@ -598,7 +598,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.AROON_StreamStep(scratch, inHigh, inLow);
+         core.AROON_StepImpl(scratch, inHigh, inLow);
          return new AROON_Value(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
       }
 
@@ -618,7 +618,7 @@ public partial class Core
       }
    }
 
-   internal void AROON_StreamStep( AROON_Stream sp, double inHigh, double inLow )
+   internal void AROON_StepImpl( AROON_Stream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

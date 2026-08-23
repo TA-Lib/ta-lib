@@ -717,7 +717,7 @@ struct TA_BBANDS_Stream {
 };
 
 /* Private function, not in public API. */
-static TA_RetCode TA_BBANDS_StepInternal( struct TA_BBANDS_Stream *sp, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+static TA_RetCode TA_BBANDS_StepImpl( struct TA_BBANDS_Stream *sp, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    double tempReal;
    double tempReal2;
@@ -1044,7 +1044,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal,
 
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   retCode = TA_BBANDS_StepInternal( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   retCode = TA_BBANDS_StepImpl( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
    if( retCode != TA_SUCCESS ) return retCode;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -1058,7 +1058,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Peek( const TA_BBANDS_Stream *stream, double inR
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   return TA_BBANDS_StepInternal( &scratch, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   return TA_BBANDS_StepImpl( &scratch, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
 TA_LIB_API TA_RetCode TA_BBANDS_Close( TA_BBANDS_Stream *stream )

@@ -315,7 +315,7 @@ impl IMI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn IMI_step_internal(&self, sp: &mut IMI_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
+    fn IMI_step_impl(&self, sp: &mut IMI_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
         let mut upsum: f64 = 0.0_f64;
         let mut downsum: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -527,7 +527,7 @@ impl IMI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.IMI_step_internal(&mut self.state, inOpen, inClose, &mut outReal);
+        self.core.IMI_step_impl(&mut self.state, inOpen, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

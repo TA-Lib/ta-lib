@@ -387,7 +387,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDOJI update: BadParam", RetCode.BadParam);
-         core.CDLDOJI_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -403,7 +403,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDOJI peek: BadParam", RetCode.BadParam);
          CDLDOJI_Stream scratch = new CDLDOJI_Stream(this);
-         core.CDLDOJI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLDOJI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -424,7 +424,7 @@
          return new CDLDOJI_Stream(this);
       }
    }
-   void CDLDOJI_StreamStep( CDLDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLDOJI_StepImpl( CDLDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

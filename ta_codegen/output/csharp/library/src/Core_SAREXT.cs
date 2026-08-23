@@ -1015,7 +1015,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAREXT", "update", RetCode.BadParam);
-         core.SAREXT_StreamStep(this, inHigh, inLow);
+         core.SAREXT_StepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -1036,7 +1036,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAREXT", "peek", RetCode.BadParam);
          SAREXT_Stream scratch = new SAREXT_Stream(this);
-         core.SAREXT_StreamStep(scratch, inHigh, inLow);
+         core.SAREXT_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -1056,7 +1056,7 @@ public partial class Core
       }
    }
 
-   internal void SAREXT_StreamStep( SAREXT_Stream sp, double inHigh, double inLow )
+   internal void SAREXT_StepImpl( SAREXT_Stream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;

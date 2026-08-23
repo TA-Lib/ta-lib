@@ -526,7 +526,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AO update: BadParam", RetCode.BadParam);
-         core.AO_StreamStep(this, inHigh, inLow);
+         core.AO_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -550,7 +550,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.AO_StreamStep(scratch, inHigh, inLow);
+         core.AO_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -571,7 +571,7 @@
          return new AO_Stream(this);
       }
    }
-   void AO_StreamStep( AO_Stream sp, double inHigh, double inLow )
+   void AO_StepImpl( AO_Stream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       if( sp.ringCap_trailingFastIdx == 0 ) {

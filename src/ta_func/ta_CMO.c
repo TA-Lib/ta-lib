@@ -514,7 +514,7 @@ struct TA_CMO_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CMO_StepInternal( struct TA_CMO_Stream *sp, double inReal, double *outReal )
+static void TA_CMO_StepImpl( struct TA_CMO_Stream *sp, double inReal, double *outReal )
 {
    double tempValue1;
    double tempValue2;
@@ -873,7 +873,7 @@ TA_LIB_API TA_RetCode TA_CMO_Update( TA_CMO_Stream *stream, double inReal, doubl
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_CMO_StepInternal( stream, inReal, outReal );
+   TA_CMO_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -885,7 +885,7 @@ TA_LIB_API TA_RetCode TA_CMO_Peek( const TA_CMO_Stream *stream, double inReal, d
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CMO_StepInternal( &scratch, inReal, outReal );
+   TA_CMO_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

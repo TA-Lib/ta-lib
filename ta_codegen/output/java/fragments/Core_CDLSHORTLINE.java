@@ -456,7 +456,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSHORTLINE update: BadParam", RetCode.BadParam);
-         core.CDLSHORTLINE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLSHORTLINE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -480,7 +480,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLSHORTLINE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLSHORTLINE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -501,7 +501,7 @@
          return new CDLSHORTLINE_Stream(this);
       }
    }
-   void CDLSHORTLINE_StreamStep( CDLSHORTLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLSHORTLINE_StepImpl( CDLSHORTLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;

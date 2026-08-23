@@ -761,7 +761,7 @@
       public Value update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
-         core.STOCHF_StreamStep(this, inHigh, inLow, inClose);
+         core.STOCHF_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
          return this.cachedValue;
@@ -786,7 +786,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.STOCHF_StreamStep(scratch, inHigh, inLow, inClose);
+         core.STOCHF_StepImpl(scratch, inHigh, inLow, inClose);
          return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
       }
 
@@ -807,7 +807,7 @@
          return new STOCHF_Stream(this);
       }
    }
-   void STOCHF_StreamStep( STOCHF_Stream sp, double inHigh, double inLow, double inClose )
+   void STOCHF_StepImpl( STOCHF_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;

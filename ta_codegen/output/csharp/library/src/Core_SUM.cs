@@ -416,7 +416,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SUM", "update", RetCode.BadParam);
-         core.SUM_StreamStep(this, inReal);
+         core.SUM_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -436,7 +436,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SUM", "peek", RetCode.BadParam);
          SUM_Stream scratch = new SUM_Stream(this);
-         core.SUM_StreamStep(scratch, inReal);
+         core.SUM_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -456,7 +456,7 @@ public partial class Core
       }
    }
 
-   internal void SUM_StreamStep( SUM_Stream sp, double inReal )
+   internal void SUM_StepImpl( SUM_Stream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;

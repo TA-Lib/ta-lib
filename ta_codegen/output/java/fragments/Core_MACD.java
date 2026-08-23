@@ -699,7 +699,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACD update: BadParam", RetCode.BadParam);
-         core.MACD_StreamStep(this, inReal);
+         core.MACD_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
@@ -716,7 +716,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACD peek: BadParam", RetCode.BadParam);
          MACD_Stream scratch = new MACD_Stream(this);
-         core.MACD_StreamStep(scratch, inReal);
+         core.MACD_StepImpl(scratch, inReal);
          return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
@@ -737,7 +737,7 @@
          return new MACD_Stream(this);
       }
    }
-   void MACD_StreamStep( MACD_Stream sp, double inReal )
+   void MACD_StepImpl( MACD_Stream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;

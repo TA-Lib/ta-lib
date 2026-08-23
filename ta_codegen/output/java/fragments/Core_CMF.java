@@ -581,7 +581,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("CMF update: BadParam", RetCode.BadParam);
-         core.CMF_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.CMF_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -605,7 +605,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CMF_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.CMF_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -626,7 +626,7 @@
          return new CMF_Stream(this);
       }
    }
-   void CMF_StreamStep( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void CMF_StepImpl( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
       sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];

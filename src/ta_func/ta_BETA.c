@@ -687,7 +687,7 @@ struct TA_BETA_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_BETA_ReleaseInternal( struct TA_BETA_Stream *sp )
+static void TA_BETA_ReleaseImpl( struct TA_BETA_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inReal0 ) TA_Free( sp->x_inReal0 );
@@ -698,7 +698,7 @@ static void TA_BETA_ReleaseInternal( struct TA_BETA_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_BETA_StepInternal( struct TA_BETA_Stream *sp, double inReal0, double inReal1, double *outReal )
+static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double inReal1, double *outReal )
 {
    double tmp_real;
 
@@ -1213,18 +1213,18 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
       sp->trailingIdx = trailingIdx;
       sp->i = i;
       sp->xCap = (int)(i - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_BETA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_BETA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;
       sp->x_inReal0 = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inReal0 ) { TA_BETA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inReal0 ) { TA_BETA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inReal0 = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inReal0 ) { TA_BETA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inReal0 ) { TA_BETA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->x_inReal1 = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inReal1 ) { TA_BETA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inReal1 ) { TA_BETA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inReal1 = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inReal1 ) { TA_BETA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inReal1 ) { TA_BETA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -1286,7 +1286,7 @@ TA_LIB_API TA_RetCode TA_BETA_Update( TA_BETA_Stream *stream, double inReal0, do
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
-   TA_BETA_StepInternal( stream, inReal0, inReal1, outReal );
+   TA_BETA_StepImpl( stream, inReal0, inReal1, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -1302,13 +1302,13 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
    memcpy( scratch.x_inReal0, stream->x_inReal0, sizeof(double) * (size_t)stream->xPhys );
    scratch.x_inReal1 = stream->xMirror_inReal1;
    memcpy( scratch.x_inReal1, stream->x_inReal1, sizeof(double) * (size_t)stream->xPhys );
-   TA_BETA_StepInternal( &scratch, inReal0, inReal1, outReal );
+   TA_BETA_StepImpl( &scratch, inReal0, inReal1, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_BETA_Close( TA_BETA_Stream *stream )
 {
-   TA_BETA_ReleaseInternal( stream );
+   TA_BETA_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

@@ -614,7 +614,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("MFI", "update", RetCode.BadParam);
-         core.MFI_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.MFI_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -643,7 +643,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.MFI_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.MFI_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -663,7 +663,7 @@ public partial class Core
       }
    }
 
-   internal void MFI_StreamStep( MFI_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   internal void MFI_StepImpl( MFI_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       sp.posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
       sp.negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];

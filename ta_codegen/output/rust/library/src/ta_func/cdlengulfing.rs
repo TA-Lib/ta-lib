@@ -310,7 +310,7 @@ impl CDLENGULFING_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLENGULFING_step_internal(&self, sp: &mut CDLENGULFING_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLENGULFING_step_impl(&self, sp: &mut CDLENGULFING_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) {
             // white engulfs black
             // black engulfs white
@@ -496,7 +496,7 @@ impl CDLENGULFING_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLENGULFING_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLENGULFING_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

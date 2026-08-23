@@ -302,7 +302,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("COS", "update", RetCode.BadParam);
-         core.COS_StreamStep(this, inReal);
+         core.COS_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -322,7 +322,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("COS", "peek", RetCode.BadParam);
          COS_Stream scratch = new COS_Stream(this);
-         core.COS_StreamStep(scratch, inReal);
+         core.COS_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -342,7 +342,7 @@ public partial class Core
       }
    }
 
-   internal void COS_StreamStep( COS_Stream sp, double inReal )
+   internal void COS_StepImpl( COS_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Cos(inReal);
    }

@@ -222,7 +222,7 @@ struct TA_CDLXSIDEGAP3METHODS_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDLXSIDEGAP3METHODS_StepInternal( struct TA_CDLXSIDEGAP3METHODS_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDLXSIDEGAP3METHODS_StepImpl( struct TA_CDLXSIDEGAP3METHODS_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
@@ -392,7 +392,7 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Update( TA_CDLXSIDEGAP3METHODS_Stre
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDLXSIDEGAP3METHODS_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLXSIDEGAP3METHODS_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -404,7 +404,7 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Peek( const TA_CDLXSIDEGAP3METHODS_
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CDLXSIDEGAP3METHODS_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLXSIDEGAP3METHODS_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 

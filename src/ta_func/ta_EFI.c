@@ -335,7 +335,7 @@ struct TA_EFI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_EFI_StepInternal( struct TA_EFI_Stream *sp, double inClose, double inVolume, double *outReal )
+static void TA_EFI_StepImpl( struct TA_EFI_Stream *sp, double inClose, double inVolume, double *outReal )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -644,7 +644,7 @@ TA_LIB_API TA_RetCode TA_EFI_Update( TA_EFI_Stream *stream, double inClose, doub
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   TA_EFI_StepInternal( stream, inClose, inVolume, outReal );
+   TA_EFI_StepImpl( stream, inClose, inVolume, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -656,7 +656,7 @@ TA_LIB_API TA_RetCode TA_EFI_Peek( const TA_EFI_Stream *stream, double inClose, 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_EFI_StepInternal( &scratch, inClose, inVolume, outReal );
+   TA_EFI_StepImpl( &scratch, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
 

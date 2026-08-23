@@ -249,7 +249,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TAN update: BadParam", RetCode.BadParam);
-         core.TAN_StreamStep(this, inReal);
+         core.TAN_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -265,7 +265,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TAN peek: BadParam", RetCode.BadParam);
          TAN_Stream scratch = new TAN_Stream(this);
-         core.TAN_StreamStep(scratch, inReal);
+         core.TAN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -286,7 +286,7 @@
          return new TAN_Stream(this);
       }
    }
-   void TAN_StreamStep( TAN_Stream sp, double inReal )
+   void TAN_StepImpl( TAN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.tan(inReal);
    }

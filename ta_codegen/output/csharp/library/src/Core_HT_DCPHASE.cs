@@ -1265,7 +1265,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_DCPHASE", "update", RetCode.BadParam);
-         core.HT_DCPHASE_StreamStep(this, inReal);
+         core.HT_DCPHASE_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -1291,7 +1291,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_DCPHASE_StreamStep(scratch, inReal);
+         core.HT_DCPHASE_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1311,7 +1311,7 @@ public partial class Core
       }
    }
 
-   internal void HT_DCPHASE_StreamStep( HT_DCPHASE_Stream sp, double inReal )
+   internal void HT_DCPHASE_StepImpl( HT_DCPHASE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

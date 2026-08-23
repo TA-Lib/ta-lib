@@ -304,7 +304,7 @@ impl CDL3OUTSIDE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDL3OUTSIDE_step_internal(&self, sp: &mut CDL3OUTSIDE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDL3OUTSIDE_step_impl(&self, sp: &mut CDL3OUTSIDE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose {
             // white engulfs black
             // third candle higher
@@ -488,7 +488,7 @@ impl CDL3OUTSIDE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDL3OUTSIDE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDL3OUTSIDE_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

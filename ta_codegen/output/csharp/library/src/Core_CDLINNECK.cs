@@ -539,7 +539,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLINNECK", "update", RetCode.BadParam);
-         core.CDLINNECK_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLINNECK_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -568,7 +568,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLINNECK_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLINNECK_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -588,7 +588,7 @@ public partial class Core
       }
    }
 
-   internal void CDLINNECK_StreamStep( CDLINNECK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLINNECK_StepImpl( CDLINNECK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

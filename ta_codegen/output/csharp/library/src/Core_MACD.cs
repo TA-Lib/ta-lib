@@ -747,7 +747,7 @@ public partial class Core
       public MACD_Value Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACD", "update", RetCode.BadParam);
-         core.MACD_StreamStep(this, inReal);
+         core.MACD_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new MACD_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
@@ -767,7 +767,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACD", "peek", RetCode.BadParam);
          MACD_Stream scratch = new MACD_Stream(this);
-         core.MACD_StreamStep(scratch, inReal);
+         core.MACD_StepImpl(scratch, inReal);
          return new MACD_Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
@@ -787,7 +787,7 @@ public partial class Core
       }
    }
 
-   internal void MACD_StreamStep( MACD_Stream sp, double inReal )
+   internal void MACD_StepImpl( MACD_Stream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;

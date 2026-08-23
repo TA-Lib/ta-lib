@@ -929,7 +929,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ADX", "update", RetCode.BadParam);
-         core.ADX_StreamStep(this, inHigh, inLow, inClose);
+         core.ADX_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -951,7 +951,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ADX", "peek", RetCode.BadParam);
          ADX_Stream scratch = new ADX_Stream(this);
-         core.ADX_StreamStep(scratch, inHigh, inLow, inClose);
+         core.ADX_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -971,7 +971,7 @@ public partial class Core
       }
    }
 
-   internal void ADX_StreamStep( ADX_Stream sp, double inHigh, double inLow, double inClose )
+   internal void ADX_StepImpl( ADX_Stream sp, double inHigh, double inLow, double inClose )
    {
       /* Calculate the prevMinusDM and prevPlusDM */
       sp.tempReal = inHigh;

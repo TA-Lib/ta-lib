@@ -790,7 +790,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ULTOSC update: BadParam", RetCode.BadParam);
-         core.ULTOSC_StreamStep(this, inHigh, inLow, inClose);
+         core.ULTOSC_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -814,7 +814,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.ULTOSC_StreamStep(scratch, inHigh, inLow, inClose);
+         core.ULTOSC_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -835,7 +835,7 @@
          return new ULTOSC_Stream(this);
       }
    }
-   void ULTOSC_StreamStep( ULTOSC_Stream sp, double inHigh, double inLow, double inClose )
+   void ULTOSC_StepImpl( ULTOSC_Stream sp, double inHigh, double inLow, double inClose )
    {
       double trueLow = 0.0;
       double trueRange = 0.0;

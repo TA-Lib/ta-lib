@@ -1092,7 +1092,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
-         core.HT_PHASOR_StreamStep(this, inReal);
+         core.HT_PHASOR_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
          return this.cachedValue;
@@ -1117,7 +1117,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.HT_PHASOR_StreamStep(scratch, inReal);
+         core.HT_PHASOR_StepImpl(scratch, inReal);
          return new Value(scratch.cur_outInPhase, scratch.cur_outQuadrature);
       }
 
@@ -1138,7 +1138,7 @@
          return new HT_PHASOR_Stream(this);
       }
    }
-   void HT_PHASOR_StreamStep( HT_PHASOR_Stream sp, double inReal )
+   void HT_PHASOR_StepImpl( HT_PHASOR_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

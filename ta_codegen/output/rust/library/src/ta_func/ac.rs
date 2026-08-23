@@ -507,7 +507,7 @@ impl AC_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn AC_step_internal(&self, sp: &mut AC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn AC_step_impl(&self, sp: &mut AC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut medianPrice: f64 = 0.0_f64;
         if sp.ringCap_trailingFastIdx == 0 {
             sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
@@ -882,7 +882,7 @@ impl AC_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.AC_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        self.core.AC_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

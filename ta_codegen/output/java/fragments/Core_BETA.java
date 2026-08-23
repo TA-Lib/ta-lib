@@ -833,7 +833,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("BETA update: BadParam", RetCode.BadParam);
-         core.BETA_StreamStep(this, inReal0, inReal1);
+         core.BETA_StepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -857,7 +857,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.BETA_StreamStep(scratch, inReal0, inReal1);
+         core.BETA_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -878,7 +878,7 @@
          return new BETA_Stream(this);
       }
    }
-   void BETA_StreamStep( BETA_Stream sp, double inReal0, double inReal1 )
+   void BETA_StepImpl( BETA_Stream sp, double inReal0, double inReal1 )
    {
       double tmp_real = 0.0;
       if( sp.i >= 1073741824 ) {

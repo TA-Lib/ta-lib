@@ -128,7 +128,7 @@ struct TA_COSH_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_COSH_StepInternal( struct TA_COSH_Stream *sp, double inReal, double *outReal )
+static void TA_COSH_StepImpl( struct TA_COSH_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= cosh(inReal);
@@ -226,7 +226,7 @@ TA_LIB_API TA_RetCode TA_COSH_Update( TA_COSH_Stream *stream, double inReal, dou
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_COSH_StepInternal( stream, inReal, outReal );
+   TA_COSH_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_COSH_Peek( const TA_COSH_Stream *stream, double inReal,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_COSH_StepInternal( &scratch, inReal, outReal );
+   TA_COSH_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

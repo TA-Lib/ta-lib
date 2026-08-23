@@ -653,7 +653,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("PLUS_DM", "update", RetCode.BadParam);
-         core.PLUS_DM_StreamStep(this, inHigh, inLow);
+         core.PLUS_DM_StepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -674,7 +674,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("PLUS_DM", "peek", RetCode.BadParam);
          PLUS_DM_Stream scratch = new PLUS_DM_Stream(this);
-         core.PLUS_DM_StreamStep(scratch, inHigh, inLow);
+         core.PLUS_DM_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -694,7 +694,7 @@ public partial class Core
       }
    }
 
-   internal void PLUS_DM_StreamStep( PLUS_DM_Stream sp, double inHigh, double inLow )
+   internal void PLUS_DM_StepImpl( PLUS_DM_Stream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          sp.tempReal = inHigh;

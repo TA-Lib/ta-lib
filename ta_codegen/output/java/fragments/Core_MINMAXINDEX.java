@@ -500,7 +500,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
-         core.MINMAXINDEX_StreamStep(this, inReal);
+         core.MINMAXINDEX_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
          return this.cachedValue;
@@ -517,7 +517,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
          MINMAXINDEX_Stream scratch = new MINMAXINDEX_Stream(this);
-         core.MINMAXINDEX_StreamStep(scratch, inReal);
+         core.MINMAXINDEX_StepImpl(scratch, inReal);
          return new Value(scratch.cur_outMinIdx, scratch.cur_outMaxIdx);
       }
 
@@ -538,7 +538,7 @@
          return new MINMAXINDEX_Stream(this);
       }
    }
-   void MINMAXINDEX_StreamStep( MINMAXINDEX_Stream sp, double inReal )
+   void MINMAXINDEX_StepImpl( MINMAXINDEX_Stream sp, double inReal )
    {
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;

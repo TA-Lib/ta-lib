@@ -652,7 +652,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WILLR update: BadParam", RetCode.BadParam);
-         core.WILLR_StreamStep(this, inHigh, inLow, inClose);
+         core.WILLR_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -676,7 +676,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.WILLR_StreamStep(scratch, inHigh, inLow, inClose);
+         core.WILLR_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -697,7 +697,7 @@
          return new WILLR_Stream(this);
       }
    }
-   void WILLR_StreamStep( WILLR_Stream sp, double inHigh, double inLow, double inClose )
+   void WILLR_StepImpl( WILLR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

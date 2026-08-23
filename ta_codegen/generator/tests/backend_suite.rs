@@ -7133,10 +7133,23 @@ fn test_c_ma_dispatch_stream_section() {
     let helpers = HelperRegistry::empty();
     let c = backends::c::generate(&func, &enums, &registry, &helpers);
 
-    // Handle: params + a single tagged sub pointer, no StepInternal.
+    // Handle: params + a single tagged sub pointer, no StepImpl.
     assert!(c.contains("struct TA_MA_Stream {"), "state struct");
     assert!(c.contains("void *sub;"), "tagged sub-stream pointer");
-    assert!(!c.contains("TA_MA_StepInternal"), "dispatch has no transition fn");
+    // Paired with the control below, because on its own this is an assertion
+    // about a word: rename the transition tier and the negative goes true for
+    // all 176 at once. SMA is generated here only to prove the name is still
+    // the one the emitter writes, so MA's silence means something.
+    assert!(!c.contains("TA_MA_StepImpl"), "dispatch has no transition fn");
+    {
+        let (mut sma, sma_enums) = load_indicator("sma");
+        sma.streaming = true;
+        let sma_c = backends::c::generate(&sma, &sma_enums, &registry, &helpers);
+        assert!(
+            sma_c.contains("TA_SMA_StepImpl( struct"),
+            "control: a non-dispatch tier still spells its transition fn _StepImpl"
+        );
+    }
 
     // Open: identity path first (mirrors batch order), then the dispatch. The
     // anchor is resolved once per mode and the range is reported from it.
@@ -7279,7 +7292,7 @@ fn test_dual_mode_identity_guard_is_hoisted_above_the_predicate() {
     let c = backends::c::generate(&func, &enums, &registry, &helpers);
 
     let step = c
-        .split("static void TA_HMA_StepInternal(")
+        .split("static void TA_HMA_StepImpl(")
         .nth(1)
         .and_then(|s| s.split("\n}\n").next())
         .expect("step body");
@@ -7299,7 +7312,7 @@ fn test_dual_mode_identity_guard_is_hoisted_above_the_predicate() {
 }
 
 /// Pin the generated MINUS_DM dual-mode stream section: ONE union state struct,
-/// ONE StepInternal that branches on the stored (immutable) period param — no
+/// ONE StepImpl that branches on the stored (immutable) period param — no
 /// separate mode tag — and an OpenInternal that selects the degenerate vs the
 /// Wilder arm by the same predicate. The input `.c` is untouched: both arms are
 /// transcribed verbatim, so the period<=1 raw-DM1 behavior (which ignores the
@@ -7312,8 +7325,8 @@ fn test_c_minus_dm_dual_mode_stream_section() {
     let helpers = HelperRegistry::empty();
     let c = backends::c::generate(&func, &enums, &registry, &helpers);
 
-    // Exactly one StepInternal (not one per mode), branching on the stored param.
-    assert_eq!(c.matches("TA_MINUS_DM_StepInternal( struct").count(), 1, "one StepInternal def");
+    // Exactly one StepImpl (not one per mode), branching on the stored param.
+    assert_eq!(c.matches("TA_MINUS_DM_StepImpl( struct").count(), 1, "one StepImpl def");
     assert!(
         c.contains("if( sp->optInTimePeriod <= 1 )"),
         "step selects the degenerate arm from the immutable stored param"
@@ -7371,9 +7384,9 @@ fn test_c_ht_dcperiod_parity_stream_section() {
     // (1) output-gate strip: the step writes outReal UNCONDITIONALLY (no
     // `today >= startIdx` gate survives in the per-bar transition).
     let step = stream
-        .split("TA_HT_DCPERIOD_StepInternal")
+        .split("TA_HT_DCPERIOD_StepImpl")
         .nth(1)
-        .expect("StepInternal emitted");
+        .expect("StepImpl emitted");
     let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenImpl").unwrap_or(step.len())];
     assert!(
         step_body.contains("*outReal= sp->smoothPeriod;"),
@@ -7419,9 +7432,9 @@ fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
     assert!(stream.contains("sp->streamParity = 1 - sp->streamParity;"), "parity flips each step");
 
     let step = stream
-        .split("TA_HT_PHASOR_StepInternal")
+        .split("TA_HT_PHASOR_StepImpl")
         .nth(1)
-        .expect("StepInternal emitted");
+        .expect("StepImpl emitted");
     let step_body = &step[..step.find("TA_HT_PHASOR_OpenImpl").unwrap_or(step.len())];
     // The step branches on the carried parity, and BOTH outputs are written
     // unconditionally in each arm (the nested `today >= startIdx` gate stripped).
@@ -7474,7 +7487,7 @@ fn test_c_ht_dcphase_circ_ring_fixed_coexist() {
 fn test_c_ht_sine_two_sin_outputs() {
     let s = ht_stream_section("ht_sine");
     assert!(s.contains("double *cb_smoothPrice;"), "shares DCPHASE's circbuf");
-    let step = s.split("TA_HT_SINE_StepInternal").nth(1).unwrap();
+    let step = s.split("TA_HT_SINE_StepImpl").nth(1).unwrap();
     let step = &step[..step.find("TA_HT_SINE_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("*outSine="), "outSine written unconditionally");
     assert!(step.contains("*outLeadSine="), "outLeadSine written unconditionally");
@@ -7507,7 +7520,7 @@ fn test_c_folded_window_read_is_cursor_relative_and_de_moduloed() {
         !s.contains("win_totIdx_"),
         "the rescan window keeps no buffer (#229)"
     );
-    let step = s.split("TA_CDL3BLACKCROWS_StepInternal").nth(1).unwrap();
+    let step = s.split("TA_CDL3BLACKCROWS_StepImpl").nth(1).unwrap();
     let step = &step[..step.find("TA_CDL3BLACKCROWS_OpenImpl").unwrap_or(step.len())];
     let ring = "ring_ShadowVeryShortTrailingIdx_derived";
     let pos = "sp->ringPos_ShadowVeryShortTrailingIdx";
@@ -7622,6 +7635,83 @@ fn c_stream_every_tier_leads_with_the_range_head() {
     }
     assert!(checked >= 170, "expected the streaming corpus, saw {checked}");
     assert_eq!(tiers.len(), 5, "all five stream tiers must be covered, saw {}", tiers.len());
+}
+
+/// The per-bar transition tier is spelled `_StepImpl` in all four backends
+/// (#250) — `_Impl` for the numerics, leaving `_Internal` to mean a variant of
+/// an entry point. It was three different words before: `_StepInternal` in C,
+/// `_step_internal` in Rust, `_StreamStep` in Java and C#.
+///
+/// A name pin rather than a behavioural one, because a name is all this is: the
+/// tier is private in every backend, so no runtime gate can see the spelling —
+/// measured, renaming the C# emitter's method left the whole generator suite
+/// green, and only the C# compiler would have objected.
+///
+/// Both directions per backend, and on every call site the backend has, so a
+/// half-applied rename (a definition the callers no longer name, or a Peek left
+/// on the old word) fails rather than passing on the half that moved. Rust has
+/// one call site where the others have two: its `peek` clones the handle and
+/// runs `update` on the copy, so the transition is named once.
+#[test]
+fn the_transition_tier_is_step_impl_in_every_backend() {
+    // SMA's own `stream` flag, not one forced on here: a test that sets the flag
+    // itself still renders a stream section after the flag is dropped from the
+    // YAML, and would keep asserting names on output nothing ships.
+    let (func, enums) = load_indicator("sma");
+    assert!(func.streaming, "sma must carry the `stream` flag");
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let java = backends::java::generate(&func, &enums, &registry, &helpers);
+    let csharp = backends::csharp::generate(&func, &enums, &registry, &helpers);
+
+    // (backend, source, definition, call sites, the retired word)
+    let cases: [(&str, &str, &str, &[&str], &str); 4] = [
+        (
+            "c",
+            &c,
+            "static void TA_SMA_StepImpl( struct TA_SMA_Stream *sp,",
+            &["TA_SMA_StepImpl( stream,", "TA_SMA_StepImpl( &scratch,"],
+            "StepInternal",
+        ),
+        (
+            "rust",
+            &rust,
+            "fn SMA_step_impl(&self, sp: &mut SMA_StreamState,",
+            &["self.core.SMA_step_impl(&mut self.state,"],
+            "step_internal",
+        ),
+        (
+            "java",
+            &java,
+            "void SMA_StepImpl( SMA_Stream sp,",
+            &["core.SMA_StepImpl(this,", "core.SMA_StepImpl(scratch,"],
+            "StreamStep",
+        ),
+        (
+            "csharp",
+            &csharp,
+            "internal void SMA_StepImpl( SMA_Stream sp,",
+            &["core.SMA_StepImpl(this,", "core.SMA_StepImpl(scratch,"],
+            "StreamStep",
+        ),
+    ];
+
+    for (lang, src, def, calls, retired) in cases {
+        assert_eq!(
+            src.matches(def).count(),
+            1,
+            "{lang}: exactly one transition definition named `{def}`"
+        );
+        for call in calls {
+            assert!(src.contains(call), "{lang}: a call site must name `{call}`");
+        }
+        // Paired with the positives above: this is the word the rename retired,
+        // so it discriminates only while the positives hold.
+        assert!(!src.contains(retired), "{lang}: `{retired}` is the retired spelling");
+    }
 }
 
 /// The clamp and its history re-check are ONE edit, in all four backends.
@@ -7850,7 +7940,7 @@ fn test_c_ht_trendline_raw_price_window() {
     let s = ht_stream_section("ht_trendline");
     assert!(s.contains("double *win_i_inReal;"), "rescan window over raw inReal");
     assert!(!s.contains("cb_smoothPrice"), "no smoothPrice circbuf (removed, issue #88)");
-    let step = s.split("TA_HT_TRENDLINE_StepInternal").nth(1).unwrap();
+    let step = s.split("TA_HT_TRENDLINE_StepImpl").nth(1).unwrap();
     let step = &step[..step.find("TA_HT_TRENDLINE_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i >= sp->winCap_i) ?"), "de-modulo window read of bar today-i");
     assert!(step.contains("if( sp->i < sp->DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
@@ -7865,7 +7955,7 @@ fn test_c_ht_trendmode_full_union() {
     assert!(s.contains("double *ring_trailingWMAIdx_inReal;"), "WMA ring");
     assert!(s.contains("double *cb_smoothPrice;"), "smoothPrice circbuf");
     assert!(s.contains("double *win_j_inReal;"), "raw-price rescan window (counter j)");
-    let step = s.split("TA_HT_TRENDMODE_StepInternal").nth(1).unwrap();
+    let step = s.split("TA_HT_TRENDMODE_StepImpl").nth(1).unwrap();
     let step = &step[..step.find("TA_HT_TRENDMODE_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("*outInteger="), "integer trend-mode output, unconditional");
     assert!(step.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf DC-phase read");
@@ -7882,7 +7972,7 @@ fn test_c_mama_two_outputs_and_params() {
     let s = ht_stream_section("mama");
     assert!(s.contains("double optInFastLimit;") && s.contains("double optInSlowLimit;"), "real params carried in the handle");
     assert!(s.contains("double mama;") && s.contains("double fama;"), "coupled mama/fama carried");
-    let step = s.split("TA_MAMA_StepInternal").nth(1).unwrap();
+    let step = s.split("TA_MAMA_StepImpl").nth(1).unwrap();
     let step = &step[..step.find("TA_MAMA_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
     // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
@@ -7943,8 +8033,8 @@ fn test_c_mavp_period_bank() {
 
 /// Pin the generated TRIMA dual-mode (if/else) stream section: the odd/even arms
 /// are genuinely different but share identical rings, so the handle carries ONE
-/// ring set + one StepInternal branching on the stored parity; the ring buffers are
-/// freed by ReleaseInternal and mirrored in Peek.
+/// ring set + one StepImpl branching on the stored parity; the ring buffers are
+/// freed by ReleaseImpl and mirrored in Peek.
 #[test]
 fn test_c_trima_dual_mode_rings_stream_section() {
     let (mut func, enums) = load_indicator("trima");
@@ -7959,20 +8049,20 @@ fn test_c_trima_dual_mode_rings_stream_section() {
         "shared middleIdx/trailingIdx rings (one set, both arms)"
     );
     assert!(c.contains("double numerator;"), "shared triangular-sum accumulator");
-    assert_eq!(c.matches("TA_TRIMA_StepInternal( struct").count(), 1, "one StepInternal");
+    assert_eq!(c.matches("TA_TRIMA_StepImpl( struct").count(), 1, "one StepImpl");
     assert!(
         c.contains("if( sp->optInTimePeriod % 2 == 1 )"),
         "step branches on the stored parity"
     );
-    assert!(c.contains("TA_TRIMA_ReleaseInternal"), "ReleaseInternal frees the rings");
+    assert!(c.contains("TA_TRIMA_ReleaseImpl"), "ReleaseImpl frees the rings");
     assert!(c.contains("ringMirror_middleIdx_inReal"), "Peek ring mirror");
 }
 
-/// The body of `TA_<NAME>_StepInternal`, brace-balanced. Ring slots are also
+/// The body of `TA_<NAME>_StepImpl`, brace-balanced. Ring slots are also
 /// written during Open, so the per-bar stores have to be counted here alone.
-fn step_internal_body(c: &str) -> String {
-    let i = c.find("_StepInternal( struct").expect("a StepInternal definition");
-    let j = c[i..].find('{').expect("StepInternal has a body") + i;
+fn step_impl_body(c: &str) -> String {
+    let i = c.find("_StepImpl( struct").expect("a StepImpl definition");
+    let j = c[i..].find('{').expect("StepImpl has a body") + i;
     let bytes = c.as_bytes();
     let (mut depth, mut k) = (0usize, j);
     loop {
@@ -8031,14 +8121,14 @@ fn test_c_back_offset_ring_writes_the_current_bar_once() {
     // same formula. Nothing between there and the end of the step moves
     // `ringPos`, so repeating that store before the advance is a dead store.
     //
-    // `test_c_no_step_internal_stores_a_ring_slot_twice` sweeps the same
+    // `test_c_no_step_impl_stores_a_ring_slot_twice` sweeps the same
     // invariant over the whole streaming corpus; this one keeps a named witness
     // for the offset-ring layout, which is the shape that made the dead store
     // possible in the first place.
     let (mut func, enums) = load_indicator("cdlonneck");
     func.streaming = true;
     let c = backends::c::generate(&func, &enums, &make_registry(), &HelperRegistry::empty());
-    let step = step_internal_body(&c);
+    let step = step_impl_body(&c);
 
     // The ring is found by its POSITION variable, not by a hardcoded name. The
     // first version of this test spelled out `ring_EqualTrailingIdx_inOpen` and
@@ -8067,7 +8157,7 @@ fn test_c_back_offset_ring_writes_the_current_bar_once() {
 }
 
 #[test]
-fn test_c_no_step_internal_stores_a_ring_slot_twice() {
+fn test_c_no_step_impl_stores_a_ring_slot_twice() {
     // Corpus sweep for the same invariant: one write per ring slot per block.
     let registry = make_registry();
     let helpers =
@@ -8080,10 +8170,10 @@ fn test_c_no_step_internal_stores_a_ring_slot_twice() {
             continue;
         }
         let c = backends::c::generate(&func, &enums, &registry, &helpers);
-        if !c.contains("_StepInternal( struct") {
+        if !c.contains("_StepImpl( struct") {
             continue;
         }
-        let stores = ring_slot_stores(&step_internal_body(&c));
+        let stores = ring_slot_stores(&step_impl_body(&c));
         let mut seen = std::collections::BTreeSet::new();
         for (block, s) in &stores {
             assert!(
@@ -8102,7 +8192,7 @@ fn test_c_no_step_internal_stores_a_ring_slot_twice() {
 }
 
 /// Pin the generated MIDPRICE stream section: batch runs the block scan and the
-/// stream runs `midprice_ALT1`'s T4 extrema automaton — one StepInternal, no
+/// stream runs `midprice_ALT1`'s T4 extrema automaton — one StepImpl, no
 /// mode branch, and no trace of the block scan inside the Open.
 ///
 /// Every check here asserts on a string the generator DOES produce, in both
@@ -8122,7 +8212,7 @@ fn test_c_midprice_stream_uses_the_declared_alternate() {
         c.contains("double *x_inHigh;") && c.contains("double *x_inLow;"),
         "T4 extrema rings for high/low"
     );
-    assert_eq!(c.matches("TA_MIDPRICE_StepInternal( struct").count(), 1, "one StepInternal");
+    assert_eq!(c.matches("TA_MIDPRICE_StepImpl( struct").count(), 1, "one StepImpl");
     assert!(
         c.contains("*outReal= (sp->highest + sp->lowest) / 2.0;"),
         "midprice combine in the extrema step"
@@ -8217,7 +8307,7 @@ fn test_c_stoch_composed_stream_section() {
     // Peek sets the flag on the scratch copy; Close closes subs then frees.
     assert!(stream.contains("scratch.peekMode = 1;"));
     assert!(stream.contains("TA_MA_Close( stream->sub0 );"));
-    assert!(stream.contains("TA_STOCH_ReleaseInternal( stream );"));
+    assert!(stream.contains("TA_STOCH_ReleaseImpl( stream );"));
 }
 
 /// Pin the ADXR composed Open's allocation-failure cleanup. The intermediate
@@ -8282,7 +8372,7 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
         let open_at = c
             .find(&format!("TA_RetCode TA_{upper}_Open"))
             .unwrap_or_else(|| panic!("{upper} composed Open"));
-        // One `the merged open numerics` transcribes the region for both entry points, so every
+        // One `_OpenImpl` transcribes the region for both entry points, so every
         // buffer is checked exactly once — never twice. (Before the Open family
         // was merged this read 2, one per transcription; the invariant being
         // pinned is unchanged: the source's own check must not be emitted
@@ -8293,7 +8383,7 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
             assert_eq!(
                 n, 1,
                 "{upper}: `{buf}` must be null-checked exactly once in the composed \
-                 the merged open numerics, found {n} — the source's own check is being emitted \
+                 `_OpenImpl`, found {n} — the source's own check is being emitted \
                  alongside the injected one again"
             );
         }

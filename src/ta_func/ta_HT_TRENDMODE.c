@@ -1144,7 +1144,7 @@ struct TA_HT_TRENDMODE_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_HT_TRENDMODE_ReleaseInternal( struct TA_HT_TRENDMODE_Stream *sp )
+static void TA_HT_TRENDMODE_ReleaseImpl( struct TA_HT_TRENDMODE_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingWMAIdx_inReal ) TA_Free( sp->ring_trailingWMAIdx_inReal );
@@ -1157,7 +1157,7 @@ static void TA_HT_TRENDMODE_ReleaseInternal( struct TA_HT_TRENDMODE_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_HT_TRENDMODE_StepInternal( struct TA_HT_TRENDMODE_Stream *sp, double inReal, int *outInteger )
+static void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_Stream *sp, double inReal, int *outInteger )
 {
    double adjustedPrevPeriod;
    double todayValue;
@@ -2049,29 +2049,29 @@ static TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TRENDMODE_Stream **stre
       sp->maxIdx_smoothPrice = maxIdx_smoothPrice;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingWMAIdx_inReal, inReal + (historyLen - sp->ringCap_trailingWMAIdx), sizeof(double) * (size_t)sp->ringCap_trailingWMAIdx );
       }
       sp->ringPos_trailingWMAIdx = 0;
       sp->winCap_j = (int)(50);
-      if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->win_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
-      if( !sp->win_j_inReal ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_j_inReal ) { TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
-      if( !sp->winMirror_j_inReal ) { TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_j_inReal ) { TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_j_inReal, inReal + (historyLen - sp->winCap_j), sizeof(double) * (size_t)sp->winCap_j );
       sp->winPos_j = 0;
       sp->cbSize_smoothPrice = maxIdx_smoothPrice + 1;
-      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->cb_smoothPrice = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_smoothPrice = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( !sp->cbMirror_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cbMirror_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_smoothPrice, smoothPrice, sizeof(double) * (size_t)sp->cbSize_smoothPrice );
       if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); 
       sp->outRangeBegIdx = *outBegIdx;
@@ -2128,7 +2128,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Update( TA_HT_TRENDMODE_Stream *stream, do
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_HT_TRENDMODE_StepInternal( stream, inReal, outInteger );
+   TA_HT_TRENDMODE_StepImpl( stream, inReal, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -2146,13 +2146,13 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Peek( const TA_HT_TRENDMODE_Stream *stream
    memcpy( scratch.win_j_inReal, stream->win_j_inReal, sizeof(double) * (size_t)stream->winCap_j );
    scratch.cb_smoothPrice = stream->cbMirror_smoothPrice;
    memcpy( scratch.cb_smoothPrice, stream->cb_smoothPrice, sizeof(double) * (size_t)stream->cbSize_smoothPrice );
-   TA_HT_TRENDMODE_StepInternal( &scratch, inReal, outInteger );
+   TA_HT_TRENDMODE_StepImpl( &scratch, inReal, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Close( TA_HT_TRENDMODE_Stream *stream )
 {
-   TA_HT_TRENDMODE_ReleaseInternal( stream );
+   TA_HT_TRENDMODE_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

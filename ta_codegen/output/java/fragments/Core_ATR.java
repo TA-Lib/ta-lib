@@ -539,7 +539,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ATR update: BadParam", RetCode.BadParam);
-         core.ATR_StreamStep(this, inHigh, inLow, inClose);
+         core.ATR_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -555,7 +555,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ATR peek: BadParam", RetCode.BadParam);
          ATR_Stream scratch = new ATR_Stream(this);
-         core.ATR_StreamStep(scratch, inHigh, inLow, inClose);
+         core.ATR_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -576,7 +576,7 @@
          return new ATR_Stream(this);
       }
    }
-   void ATR_StreamStep( ATR_Stream sp, double inHigh, double inLow, double inClose )
+   void ATR_StepImpl( ATR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double greatest = 0.0;

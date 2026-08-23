@@ -459,7 +459,7 @@ public partial class Core
       public int Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAXINDEX", "update", RetCode.BadParam);
-         core.MAXINDEX_StreamStep(this, inReal);
+         core.MAXINDEX_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -479,7 +479,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAXINDEX", "peek", RetCode.BadParam);
          MAXINDEX_Stream scratch = new MAXINDEX_Stream(this);
-         core.MAXINDEX_StreamStep(scratch, inReal);
+         core.MAXINDEX_StepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -499,7 +499,7 @@ public partial class Core
       }
    }
 
-   internal void MAXINDEX_StreamStep( MAXINDEX_Stream sp, double inReal )
+   internal void MAXINDEX_StepImpl( MAXINDEX_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

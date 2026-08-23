@@ -245,7 +245,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SINH update: BadParam", RetCode.BadParam);
-         core.SINH_StreamStep(this, inReal);
+         core.SINH_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -261,7 +261,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SINH peek: BadParam", RetCode.BadParam);
          SINH_Stream scratch = new SINH_Stream(this);
-         core.SINH_StreamStep(scratch, inReal);
+         core.SINH_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -282,7 +282,7 @@
          return new SINH_Stream(this);
       }
    }
-   void SINH_StreamStep( SINH_Stream sp, double inReal )
+   void SINH_StepImpl( SINH_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.sinh(inReal);
    }

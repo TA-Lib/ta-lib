@@ -703,7 +703,7 @@ impl SMI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SMI_step_internal(&self, sp: &mut SMI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSMI: &mut f64, outSMISignal: &mut f64) {
+    fn SMI_step_impl(&self, sp: &mut SMI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSMI: &mut f64, outSMISignal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
@@ -1218,7 +1218,7 @@ impl SMI_Stream {
         }
         let mut outSMI: f64 = 0.0_f64;
         let mut outSMISignal: f64 = 0.0_f64;
-        self.core.SMI_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outSMI, &mut outSMISignal);
+        self.core.SMI_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSMI, &mut outSMISignal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

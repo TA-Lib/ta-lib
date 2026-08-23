@@ -483,7 +483,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG", "update", RetCode.BadParam);
-         core.LINEARREG_StreamStep(this, inReal);
+         core.LINEARREG_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -503,7 +503,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG", "peek", RetCode.BadParam);
          LINEARREG_Stream scratch = new LINEARREG_Stream(this);
-         core.LINEARREG_StreamStep(scratch, inReal);
+         core.LINEARREG_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -523,7 +523,7 @@ public partial class Core
       }
    }
 
-   internal void LINEARREG_StreamStep( LINEARREG_Stream sp, double inReal )
+   internal void LINEARREG_StepImpl( LINEARREG_Stream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;

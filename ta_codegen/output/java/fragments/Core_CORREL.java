@@ -719,7 +719,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("CORREL update: BadParam", RetCode.BadParam);
-         core.CORREL_StreamStep(this, inReal0, inReal1);
+         core.CORREL_StepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -743,7 +743,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CORREL_StreamStep(scratch, inReal0, inReal1);
+         core.CORREL_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -764,7 +764,7 @@
          return new CORREL_Stream(this);
       }
    }
-   void CORREL_StreamStep( CORREL_Stream sp, double inReal0, double inReal1 )
+   void CORREL_StepImpl( CORREL_Stream sp, double inReal0, double inReal1 )
    {
       double x = 0.0;
       if( sp.today >= 1073741824 ) {

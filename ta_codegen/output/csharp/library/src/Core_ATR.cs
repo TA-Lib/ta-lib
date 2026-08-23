@@ -595,7 +595,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ATR", "update", RetCode.BadParam);
-         core.ATR_StreamStep(this, inHigh, inLow, inClose);
+         core.ATR_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -617,7 +617,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ATR", "peek", RetCode.BadParam);
          ATR_Stream scratch = new ATR_Stream(this);
-         core.ATR_StreamStep(scratch, inHigh, inLow, inClose);
+         core.ATR_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -637,7 +637,7 @@ public partial class Core
       }
    }
 
-   internal void ATR_StreamStep( ATR_Stream sp, double inHigh, double inLow, double inClose )
+   internal void ATR_StepImpl( ATR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double greatest = 0.0;

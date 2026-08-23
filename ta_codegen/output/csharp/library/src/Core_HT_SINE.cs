@@ -1306,7 +1306,7 @@ public partial class Core
       public HT_SINE_Value Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_SINE", "update", RetCode.BadParam);
-         core.HT_SINE_StreamStep(this, inReal);
+         core.HT_SINE_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new HT_SINE_Value(cur_outSine, cur_outLeadSine);
       }
@@ -1332,7 +1332,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_SINE_StreamStep(scratch, inReal);
+         core.HT_SINE_StepImpl(scratch, inReal);
          return new HT_SINE_Value(scratch.cur_outSine, scratch.cur_outLeadSine);
       }
 
@@ -1352,7 +1352,7 @@ public partial class Core
       }
    }
 
-   internal void HT_SINE_StreamStep( HT_SINE_Stream sp, double inReal )
+   internal void HT_SINE_StepImpl( HT_SINE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

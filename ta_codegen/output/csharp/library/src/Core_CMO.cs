@@ -594,7 +594,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CMO", "update", RetCode.BadParam);
-         core.CMO_StreamStep(this, inReal);
+         core.CMO_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -614,7 +614,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CMO", "peek", RetCode.BadParam);
          CMO_Stream scratch = new CMO_Stream(this);
-         core.CMO_StreamStep(scratch, inReal);
+         core.CMO_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -634,7 +634,7 @@ public partial class Core
       }
    }
 
-   internal void CMO_StreamStep( CMO_Stream sp, double inReal )
+   internal void CMO_StepImpl( CMO_Stream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;

@@ -523,7 +523,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3LINESTRIKE", "update", RetCode.BadParam);
-         core.CDL3LINESTRIKE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDL3LINESTRIKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -552,7 +552,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDL3LINESTRIKE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDL3LINESTRIKE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -572,7 +572,7 @@ public partial class Core
       }
    }
 
-   internal void CDL3LINESTRIKE_StreamStep( CDL3LINESTRIKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDL3LINESTRIKE_StepImpl( CDL3LINESTRIKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;

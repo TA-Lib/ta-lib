@@ -545,7 +545,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLGAPSIDESIDEWHITE", "update", RetCode.BadParam);
-         core.CDLGAPSIDESIDEWHITE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLGAPSIDESIDEWHITE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -574,7 +574,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLGAPSIDESIDEWHITE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLGAPSIDESIDEWHITE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -594,7 +594,7 @@ public partial class Core
       }
    }
 
-   internal void CDLGAPSIDESIDEWHITE_StreamStep( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLGAPSIDESIDEWHITE_StepImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;

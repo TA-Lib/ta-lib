@@ -430,7 +430,7 @@ impl EFI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn EFI_step_internal(&self, sp: &mut EFI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn EFI_step_impl(&self, sp: &mut EFI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             let mut force: f64 = 0.0_f64;
             force = (inClose - sp.prevClose) * inVolume;
@@ -745,7 +745,7 @@ impl EFI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.EFI_step_internal(&mut self.state, inClose, inVolume, &mut outReal);
+        self.core.EFI_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

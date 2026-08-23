@@ -1462,7 +1462,7 @@ public partial class Core
       public int Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_TRENDMODE", "update", RetCode.BadParam);
-         core.HT_TRENDMODE_StreamStep(this, inReal);
+         core.HT_TRENDMODE_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -1488,7 +1488,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_TRENDMODE_StreamStep(scratch, inReal);
+         core.HT_TRENDMODE_StepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -1508,7 +1508,7 @@ public partial class Core
       }
    }
 
-   internal void HT_TRENDMODE_StreamStep( HT_TRENDMODE_Stream sp, double inReal )
+   internal void HT_TRENDMODE_StepImpl( HT_TRENDMODE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

@@ -510,7 +510,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLSHORTLINE", "update", RetCode.BadParam);
-         core.CDLSHORTLINE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLSHORTLINE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -539,7 +539,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLSHORTLINE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLSHORTLINE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -559,7 +559,7 @@ public partial class Core
       }
    }
 
-   internal void CDLSHORTLINE_StreamStep( CDLSHORTLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLSHORTLINE_StepImpl( CDLSHORTLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;

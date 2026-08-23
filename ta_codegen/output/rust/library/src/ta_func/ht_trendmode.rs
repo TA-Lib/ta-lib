@@ -905,7 +905,7 @@ impl HT_TRENDMODE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HT_TRENDMODE_step_internal(&self, sp: &mut HT_TRENDMODE_StreamState, inReal: f64, outInteger: &mut i32) {
+    fn HT_TRENDMODE_step_impl(&self, sp: &mut HT_TRENDMODE_StreamState, inReal: f64, outInteger: &mut i32) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -1848,7 +1848,7 @@ impl HT_TRENDMODE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.HT_TRENDMODE_step_internal(&mut self.state, inReal, &mut outInteger);
+        self.core.HT_TRENDMODE_step_impl(&mut self.state, inReal, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

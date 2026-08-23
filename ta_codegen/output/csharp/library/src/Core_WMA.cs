@@ -515,7 +515,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("WMA", "update", RetCode.BadParam);
-         core.WMA_StreamStep(this, inReal);
+         core.WMA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -535,7 +535,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("WMA", "peek", RetCode.BadParam);
          WMA_Stream scratch = new WMA_Stream(this);
-         core.WMA_StreamStep(scratch, inReal);
+         core.WMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -555,7 +555,7 @@ public partial class Core
       }
    }
 
-   internal void WMA_StreamStep( WMA_Stream sp, double inReal )
+   internal void WMA_StepImpl( WMA_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.optInTimePeriod == 1 ) {

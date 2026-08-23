@@ -466,7 +466,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3BLACKCROWS update: BadParam", RetCode.BadParam);
-         core.CDL3BLACKCROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDL3BLACKCROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -490,7 +490,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CDL3BLACKCROWS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDL3BLACKCROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -511,7 +511,7 @@
          return new CDL3BLACKCROWS_Stream(this);
       }
    }
-   void CDL3BLACKCROWS_StreamStep( CDL3BLACKCROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDL3BLACKCROWS_StepImpl( CDL3BLACKCROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;

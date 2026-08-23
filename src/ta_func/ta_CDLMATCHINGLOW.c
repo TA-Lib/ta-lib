@@ -255,7 +255,7 @@ struct TA_CDLMATCHINGLOW_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDLMATCHINGLOW_ReleaseInternal( struct TA_CDLMATCHINGLOW_Stream *sp )
+static void TA_CDLMATCHINGLOW_ReleaseImpl( struct TA_CDLMATCHINGLOW_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_EqualTrailingIdx_derived ) TA_Free( sp->ring_EqualTrailingIdx_derived );
@@ -264,7 +264,7 @@ static void TA_CDLMATCHINGLOW_ReleaseInternal( struct TA_CDLMATCHINGLOW_Stream *
 }
 
 /* Private function, not in public API. */
-static void TA_CDLMATCHINGLOW_StepInternal( struct TA_CDLMATCHINGLOW_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDLMATCHINGLOW_StepImpl( struct TA_CDLMATCHINGLOW_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* first black */
@@ -390,12 +390,12 @@ static TA_RetCode TA_CDLMATCHINGLOW_OpenImpl( struct TA_CDLMATCHINGLOW_Stream **
       sp->EqualPeriodTotal = EqualPeriodTotal;
       sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
       sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
-      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLMATCHINGLOW_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLMATCHINGLOW_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
         sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLMATCHINGLOW_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLMATCHINGLOW_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_EqualTrailingIdx_derived ) { TA_CDLMATCHINGLOW_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_EqualTrailingIdx_derived ) { TA_CDLMATCHINGLOW_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_EqualTrailingIdx_derived[fillJ % sp->ringCap_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -460,7 +460,7 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Update( TA_CDLMATCHINGLOW_Stream *stream
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDLMATCHINGLOW_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLMATCHINGLOW_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -474,13 +474,13 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Peek( const TA_CDLMATCHINGLOW_Stream *st
    scratch = *stream;
    scratch.ring_EqualTrailingIdx_derived = stream->ringMirror_EqualTrailingIdx_derived;
    memcpy( scratch.ring_EqualTrailingIdx_derived, stream->ring_EqualTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_EqualTrailingIdx > 0 ? stream->ringCap_EqualTrailingIdx : 1) );
-   TA_CDLMATCHINGLOW_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLMATCHINGLOW_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Close( TA_CDLMATCHINGLOW_Stream *stream )
 {
-   TA_CDLMATCHINGLOW_ReleaseInternal( stream );
+   TA_CDLMATCHINGLOW_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

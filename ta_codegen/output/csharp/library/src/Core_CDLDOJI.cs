@@ -441,7 +441,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLDOJI", "update", RetCode.BadParam);
-         core.CDLDOJI_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -464,7 +464,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLDOJI", "peek", RetCode.BadParam);
          CDLDOJI_Stream scratch = new CDLDOJI_Stream(this);
-         core.CDLDOJI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLDOJI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -484,7 +484,7 @@ public partial class Core
       }
    }
 
-   internal void CDLDOJI_StreamStep( CDLDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLDOJI_StepImpl( CDLDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

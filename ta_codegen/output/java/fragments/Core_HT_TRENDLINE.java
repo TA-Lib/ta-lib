@@ -1152,7 +1152,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_TRENDLINE update: BadParam", RetCode.BadParam);
-         core.HT_TRENDLINE_StreamStep(this, inReal);
+         core.HT_TRENDLINE_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -1176,7 +1176,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.HT_TRENDLINE_StreamStep(scratch, inReal);
+         core.HT_TRENDLINE_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1197,7 +1197,7 @@
          return new HT_TRENDLINE_Stream(this);
       }
    }
-   void HT_TRENDLINE_StreamStep( HT_TRENDLINE_Stream sp, double inReal )
+   void HT_TRENDLINE_StepImpl( HT_TRENDLINE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

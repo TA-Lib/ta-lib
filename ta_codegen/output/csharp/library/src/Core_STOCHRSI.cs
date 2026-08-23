@@ -589,7 +589,7 @@ public partial class Core
       public STOCHRSI_Value Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STOCHRSI", "update", RetCode.BadParam);
-         core.STOCHRSI_StreamStep(this, inReal);
+         core.STOCHRSI_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new STOCHRSI_Value(cur_outFastK, cur_outFastD);
       }
@@ -615,7 +615,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.STOCHRSI_StreamStep(scratch, inReal);
+         core.STOCHRSI_StepImpl(scratch, inReal);
          return new STOCHRSI_Value(scratch.cur_outFastK, scratch.cur_outFastD);
       }
 
@@ -635,7 +635,7 @@ public partial class Core
       }
    }
 
-   internal void STOCHRSI_StreamStep( STOCHRSI_Stream sp, double inReal )
+   internal void STOCHRSI_StepImpl( STOCHRSI_Stream sp, double inReal )
    {
       double cur_tempRSIBuffer = 0.0;
       double cur_outFastK = 0.0;

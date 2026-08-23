@@ -326,7 +326,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MEDPRICE", "update", RetCode.BadParam);
-         core.MEDPRICE_StreamStep(this, inHigh, inLow);
+         core.MEDPRICE_StepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -347,7 +347,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MEDPRICE", "peek", RetCode.BadParam);
          MEDPRICE_Stream scratch = new MEDPRICE_Stream(this);
-         core.MEDPRICE_StreamStep(scratch, inHigh, inLow);
+         core.MEDPRICE_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -367,7 +367,7 @@ public partial class Core
       }
    }
 
-   internal void MEDPRICE_StreamStep( MEDPRICE_Stream sp, double inHigh, double inLow )
+   internal void MEDPRICE_StepImpl( MEDPRICE_Stream sp, double inHigh, double inLow )
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }

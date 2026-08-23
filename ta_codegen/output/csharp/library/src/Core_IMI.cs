@@ -429,7 +429,7 @@ public partial class Core
       public double Update( double inOpen, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("IMI", "update", RetCode.BadParam);
-         core.IMI_StreamStep(this, inOpen, inClose);
+         core.IMI_StepImpl(this, inOpen, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -456,7 +456,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.IMI_StreamStep(scratch, inOpen, inClose);
+         core.IMI_StepImpl(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
 
@@ -476,7 +476,7 @@ public partial class Core
       }
    }
 
-   internal void IMI_StreamStep( IMI_Stream sp, double inOpen, double inClose )
+   internal void IMI_StepImpl( IMI_Stream sp, double inOpen, double inClose )
    {
       double upsum = 0.0;
       double downsum = 0.0;

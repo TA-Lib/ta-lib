@@ -263,7 +263,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("DIV update: BadParam", RetCode.BadParam);
-         core.DIV_StreamStep(this, inReal0, inReal1);
+         core.DIV_StepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -279,7 +279,7 @@
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("DIV peek: BadParam", RetCode.BadParam);
          DIV_Stream scratch = new DIV_Stream(this);
-         core.DIV_StreamStep(scratch, inReal0, inReal1);
+         core.DIV_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -300,7 +300,7 @@
          return new DIV_Stream(this);
       }
    }
-   void DIV_StreamStep( DIV_Stream sp, double inReal0, double inReal1 )
+   void DIV_StepImpl( DIV_Stream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 / inReal1;
    }

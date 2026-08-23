@@ -412,7 +412,7 @@ impl ACCBANDS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ACCBANDS_step_internal(&self, sp: &mut ACCBANDS_StreamState, inHigh: f64, inLow: f64, inClose: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) {
+    fn ACCBANDS_step_impl(&self, sp: &mut ACCBANDS_StreamState, inHigh: f64, inLow: f64, inClose: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inHigh[0] = inHigh;
@@ -725,7 +725,7 @@ impl ACCBANDS_Stream {
         let mut outRealUpperBand: f64 = 0.0_f64;
         let mut outRealMiddleBand: f64 = 0.0_f64;
         let mut outRealLowerBand: f64 = 0.0_f64;
-        self.core.ACCBANDS_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+        self.core.ACCBANDS_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

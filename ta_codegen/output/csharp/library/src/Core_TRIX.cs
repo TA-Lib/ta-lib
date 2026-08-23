@@ -527,7 +527,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TRIX", "update", RetCode.BadParam);
-         core.TRIX_StreamStep(this, inReal);
+         core.TRIX_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -547,7 +547,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TRIX", "peek", RetCode.BadParam);
          TRIX_Stream scratch = new TRIX_Stream(this);
-         core.TRIX_StreamStep(scratch, inReal);
+         core.TRIX_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -567,7 +567,7 @@ public partial class Core
       }
    }
 
-   internal void TRIX_StreamStep( TRIX_Stream sp, double inReal )
+   internal void TRIX_StepImpl( TRIX_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       tempReal = sp.prevEMA3;

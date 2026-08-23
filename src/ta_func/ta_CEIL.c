@@ -128,7 +128,7 @@ struct TA_CEIL_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CEIL_StepInternal( struct TA_CEIL_Stream *sp, double inReal, double *outReal )
+static void TA_CEIL_StepImpl( struct TA_CEIL_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= ceil(inReal);
@@ -226,7 +226,7 @@ TA_LIB_API TA_RetCode TA_CEIL_Update( TA_CEIL_Stream *stream, double inReal, dou
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_CEIL_StepInternal( stream, inReal, outReal );
+   TA_CEIL_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_CEIL_Peek( const TA_CEIL_Stream *stream, double inReal,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CEIL_StepInternal( &scratch, inReal, outReal );
+   TA_CEIL_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

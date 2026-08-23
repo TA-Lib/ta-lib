@@ -580,7 +580,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHAMMER update: BadParam", RetCode.BadParam);
-         core.CDLHAMMER_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLHAMMER_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -604,7 +604,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLHAMMER_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLHAMMER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -625,7 +625,7 @@
          return new CDLHAMMER_Stream(this);
       }
    }
-   void CDLHAMMER_StreamStep( CDLHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLHAMMER_StepImpl( CDLHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;

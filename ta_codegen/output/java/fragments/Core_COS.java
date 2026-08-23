@@ -249,7 +249,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COS update: BadParam", RetCode.BadParam);
-         core.COS_StreamStep(this, inReal);
+         core.COS_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -265,7 +265,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COS peek: BadParam", RetCode.BadParam);
          COS_Stream scratch = new COS_Stream(this);
-         core.COS_StreamStep(scratch, inReal);
+         core.COS_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -286,7 +286,7 @@
          return new COS_Stream(this);
       }
    }
-   void COS_StreamStep( COS_Stream sp, double inReal )
+   void COS_StepImpl( COS_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.cos(inReal);
    }

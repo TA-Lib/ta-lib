@@ -272,7 +272,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TYPPRICE update: BadParam", RetCode.BadParam);
-         core.TYPPRICE_StreamStep(this, inHigh, inLow, inClose);
+         core.TYPPRICE_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -288,7 +288,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
          TYPPRICE_Stream scratch = new TYPPRICE_Stream(this);
-         core.TYPPRICE_StreamStep(scratch, inHigh, inLow, inClose);
+         core.TYPPRICE_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -309,7 +309,7 @@
          return new TYPPRICE_Stream(this);
       }
    }
-   void TYPPRICE_StreamStep( TYPPRICE_Stream sp, double inHigh, double inLow, double inClose )
+   void TYPPRICE_StepImpl( TYPPRICE_Stream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }

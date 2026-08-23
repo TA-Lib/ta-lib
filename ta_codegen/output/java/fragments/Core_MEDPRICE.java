@@ -271,7 +271,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MEDPRICE update: BadParam", RetCode.BadParam);
-         core.MEDPRICE_StreamStep(this, inHigh, inLow);
+         core.MEDPRICE_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -287,7 +287,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
          MEDPRICE_Stream scratch = new MEDPRICE_Stream(this);
-         core.MEDPRICE_StreamStep(scratch, inHigh, inLow);
+         core.MEDPRICE_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -308,7 +308,7 @@
          return new MEDPRICE_Stream(this);
       }
    }
-   void MEDPRICE_StreamStep( MEDPRICE_Stream sp, double inHigh, double inLow )
+   void MEDPRICE_StepImpl( MEDPRICE_Stream sp, double inHigh, double inLow )
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }

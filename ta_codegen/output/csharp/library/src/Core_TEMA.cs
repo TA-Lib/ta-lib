@@ -577,7 +577,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TEMA", "update", RetCode.BadParam);
-         core.TEMA_StreamStep(this, inReal);
+         core.TEMA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -597,7 +597,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TEMA", "peek", RetCode.BadParam);
          TEMA_Stream scratch = new TEMA_Stream(this);
-         core.TEMA_StreamStep(scratch, inReal);
+         core.TEMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -617,7 +617,7 @@ public partial class Core
       }
    }
 
-   internal void TEMA_StreamStep( TEMA_Stream sp, double inReal )
+   internal void TEMA_StepImpl( TEMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

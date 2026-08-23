@@ -247,7 +247,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COSH update: BadParam", RetCode.BadParam);
-         core.COSH_StreamStep(this, inReal);
+         core.COSH_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -263,7 +263,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COSH peek: BadParam", RetCode.BadParam);
          COSH_Stream scratch = new COSH_Stream(this);
-         core.COSH_StreamStep(scratch, inReal);
+         core.COSH_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -284,7 +284,7 @@
          return new COSH_Stream(this);
       }
    }
-   void COSH_StreamStep( COSH_Stream sp, double inReal )
+   void COSH_StepImpl( COSH_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.cosh(inReal);
    }

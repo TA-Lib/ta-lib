@@ -473,7 +473,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMATCHINGLOW", "update", RetCode.BadParam);
-         core.CDLMATCHINGLOW_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLMATCHINGLOW_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -496,7 +496,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMATCHINGLOW", "peek", RetCode.BadParam);
          CDLMATCHINGLOW_Stream scratch = new CDLMATCHINGLOW_Stream(this);
-         core.CDLMATCHINGLOW_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLMATCHINGLOW_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -516,7 +516,7 @@ public partial class Core
       }
    }
 
-   internal void CDLMATCHINGLOW_StreamStep( CDLMATCHINGLOW_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLMATCHINGLOW_StepImpl( CDLMATCHINGLOW_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;

@@ -255,7 +255,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LN update: BadParam", RetCode.BadParam);
-         core.LN_StreamStep(this, inReal);
+         core.LN_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -271,7 +271,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LN peek: BadParam", RetCode.BadParam);
          LN_Stream scratch = new LN_Stream(this);
-         core.LN_StreamStep(scratch, inReal);
+         core.LN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -292,7 +292,7 @@
          return new LN_Stream(this);
       }
    }
-   void LN_StreamStep( LN_Stream sp, double inReal )
+   void LN_StepImpl( LN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.log(inReal);
    }

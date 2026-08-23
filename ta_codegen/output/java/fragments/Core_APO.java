@@ -461,7 +461,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("APO update: BadParam", RetCode.BadParam);
-         core.APO_StreamStep(this, inReal);
+         core.APO_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -485,7 +485,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.APO_StreamStep(scratch, inReal);
+         core.APO_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -506,7 +506,7 @@
          return new APO_Stream(this);
       }
    }
-   void APO_StreamStep( APO_Stream sp, double inReal )
+   void APO_StepImpl( APO_Stream sp, double inReal )
    {
       double cur_tempBuffer = 0.0;
       double cur_outReal = 0.0;

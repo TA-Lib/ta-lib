@@ -350,7 +350,7 @@
       public double update( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("NVI update: BadParam", RetCode.BadParam);
-         core.NVI_StreamStep(this, inClose, inVolume);
+         core.NVI_StepImpl(this, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -366,7 +366,7 @@
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("NVI peek: BadParam", RetCode.BadParam);
          NVI_Stream scratch = new NVI_Stream(this);
-         core.NVI_StreamStep(scratch, inClose, inVolume);
+         core.NVI_StepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -387,7 +387,7 @@
          return new NVI_Stream(this);
       }
    }
-   void NVI_StreamStep( NVI_Stream sp, double inClose, double inVolume )
+   void NVI_StepImpl( NVI_Stream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;

@@ -289,7 +289,7 @@ struct TA_EMA_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_EMA_StepInternal( struct TA_EMA_Stream *sp, double inReal, double *outReal )
+static void TA_EMA_StepImpl( struct TA_EMA_Stream *sp, double inReal, double *outReal )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -496,7 +496,7 @@ TA_LIB_API TA_RetCode TA_EMA_Update( TA_EMA_Stream *stream, double inReal, doubl
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_EMA_StepInternal( stream, inReal, outReal );
+   TA_EMA_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -508,7 +508,7 @@ TA_LIB_API TA_RetCode TA_EMA_Peek( const TA_EMA_Stream *stream, double inReal, d
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_EMA_StepInternal( &scratch, inReal, outReal );
+   TA_EMA_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

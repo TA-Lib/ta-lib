@@ -470,7 +470,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("PPO update: BadParam", RetCode.BadParam);
-         core.PPO_StreamStep(this, inReal);
+         core.PPO_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -494,7 +494,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.PPO_StreamStep(scratch, inReal);
+         core.PPO_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -515,7 +515,7 @@
          return new PPO_Stream(this);
       }
    }
-   void PPO_StreamStep( PPO_Stream sp, double inReal )
+   void PPO_StepImpl( PPO_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;

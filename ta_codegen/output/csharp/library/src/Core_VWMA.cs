@@ -534,7 +534,7 @@ public partial class Core
       public double Update( double inReal, double inVolume )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWMA", "update", RetCode.BadParam);
-         core.VWMA_StreamStep(this, inReal, inVolume);
+         core.VWMA_StepImpl(this, inReal, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -561,7 +561,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.VWMA_StreamStep(scratch, inReal, inVolume);
+         core.VWMA_StepImpl(scratch, inReal, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -581,7 +581,7 @@ public partial class Core
       }
    }
 
-   internal void VWMA_StreamStep( VWMA_Stream sp, double inReal, double inVolume )
+   internal void VWMA_StepImpl( VWMA_Stream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       if( sp.optInTimePeriod == 1 ) {

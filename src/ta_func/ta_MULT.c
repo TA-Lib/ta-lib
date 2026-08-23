@@ -142,7 +142,7 @@ struct TA_MULT_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_MULT_StepInternal( struct TA_MULT_Stream *sp, double inReal0, double inReal1, double *outReal )
+static void TA_MULT_StepImpl( struct TA_MULT_Stream *sp, double inReal0, double inReal1, double *outReal )
 {
    (void)sp;
    *outReal= inReal0 * inReal1;
@@ -244,7 +244,7 @@ TA_LIB_API TA_RetCode TA_MULT_Update( TA_MULT_Stream *stream, double inReal0, do
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
-   TA_MULT_StepInternal( stream, inReal0, inReal1, outReal );
+   TA_MULT_StepImpl( stream, inReal0, inReal1, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -256,7 +256,7 @@ TA_LIB_API TA_RetCode TA_MULT_Peek( const TA_MULT_Stream *stream, double inReal0
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MULT_StepInternal( &scratch, inReal0, inReal1, outReal );
+   TA_MULT_StepImpl( &scratch, inReal0, inReal1, outReal );
    return TA_SUCCESS;
 }
 

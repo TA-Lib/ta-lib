@@ -305,7 +305,7 @@ impl NVI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn NVI_step_internal(&self, sp: &mut NVI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn NVI_step_impl(&self, sp: &mut NVI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
         tempClose = inClose;
@@ -500,7 +500,7 @@ impl NVI_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.NVI_step_internal(&mut self.state, inClose, inVolume, &mut outReal);
+        self.core.NVI_step_impl(&mut self.state, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

@@ -474,7 +474,7 @@ impl MINUS_DM_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MINUS_DM_step_internal(&self, sp: &mut MINUS_DM_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn MINUS_DM_step_impl(&self, sp: &mut MINUS_DM_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         if sp.optInTimePeriod <= 1 {
             sp.tempReal = inHigh;
             sp.diffP = sp.tempReal - sp.prevHigh;
@@ -927,7 +927,7 @@ impl MINUS_DM_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MINUS_DM_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        self.core.MINUS_DM_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

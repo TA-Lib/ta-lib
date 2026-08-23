@@ -280,7 +280,7 @@ struct TA_APO_Stream {
 };
 
 /* Private function, not in public API. */
-static TA_RetCode TA_APO_StepInternal( struct TA_APO_Stream *sp, double inReal, double *outReal )
+static TA_RetCode TA_APO_StepImpl( struct TA_APO_Stream *sp, double inReal, double *outReal )
 {
    double cur_tempBuffer = 0.0;
    double cur_outReal = 0.0;
@@ -524,7 +524,7 @@ TA_LIB_API TA_RetCode TA_APO_Update( TA_APO_Stream *stream, double inReal, doubl
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   retCode = TA_APO_StepInternal( stream, inReal, outReal );
+   retCode = TA_APO_StepImpl( stream, inReal, outReal );
    if( retCode != TA_SUCCESS ) return retCode;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -538,7 +538,7 @@ TA_LIB_API TA_RetCode TA_APO_Peek( const TA_APO_Stream *stream, double inReal, d
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   return TA_APO_StepInternal( &scratch, inReal, outReal );
+   return TA_APO_StepImpl( &scratch, inReal, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_APO_Close( TA_APO_Stream *stream )

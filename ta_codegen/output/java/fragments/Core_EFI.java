@@ -491,7 +491,7 @@
       public double update( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("EFI update: BadParam", RetCode.BadParam);
-         core.EFI_StreamStep(this, inClose, inVolume);
+         core.EFI_StepImpl(this, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -507,7 +507,7 @@
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("EFI peek: BadParam", RetCode.BadParam);
          EFI_Stream scratch = new EFI_Stream(this);
-         core.EFI_StreamStep(scratch, inClose, inVolume);
+         core.EFI_StepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -528,7 +528,7 @@
          return new EFI_Stream(this);
       }
    }
-   void EFI_StreamStep( EFI_Stream sp, double inClose, double inVolume )
+   void EFI_StepImpl( EFI_Stream sp, double inClose, double inVolume )
    {
       if( sp.optInTimePeriod == 1 ) {
          double force = 0.0;

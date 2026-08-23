@@ -439,7 +439,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTRISTAR update: BadParam", RetCode.BadParam);
-         core.CDLTRISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLTRISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -455,7 +455,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTRISTAR peek: BadParam", RetCode.BadParam);
          CDLTRISTAR_Stream scratch = new CDLTRISTAR_Stream(this);
-         core.CDLTRISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLTRISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -476,7 +476,7 @@
          return new CDLTRISTAR_Stream(this);
       }
    }
-   void CDLTRISTAR_StreamStep( CDLTRISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLTRISTAR_StepImpl( CDLTRISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

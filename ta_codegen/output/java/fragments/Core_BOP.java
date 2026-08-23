@@ -285,7 +285,7 @@
       public double update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("BOP update: BadParam", RetCode.BadParam);
-         core.BOP_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.BOP_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -301,7 +301,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("BOP peek: BadParam", RetCode.BadParam);
          BOP_Stream scratch = new BOP_Stream(this);
-         core.BOP_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.BOP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -322,7 +322,7 @@
          return new BOP_Stream(this);
       }
    }
-   void BOP_StreamStep( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void BOP_StepImpl( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       tempReal = inHigh - inLow;

@@ -321,7 +321,7 @@ impl ROC_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ROC_step_internal(&self, sp: &mut ROC_StreamState, inReal: f64, outReal: &mut f64) {
+    fn ROC_step_impl(&self, sp: &mut ROC_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
@@ -529,7 +529,7 @@ impl ROC_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.ROC_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.ROC_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

@@ -491,7 +491,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CMOU update: BadParam", RetCode.BadParam);
-         core.CMOU_StreamStep(this, inReal);
+         core.CMOU_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -507,7 +507,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CMOU peek: BadParam", RetCode.BadParam);
          CMOU_Stream scratch = new CMOU_Stream(this);
-         core.CMOU_StreamStep(scratch, inReal);
+         core.CMOU_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -528,7 +528,7 @@
          return new CMOU_Stream(this);
       }
    }
-   void CMOU_StreamStep( CMOU_Stream sp, double inReal )
+   void CMOU_StepImpl( CMOU_Stream sp, double inReal )
    {
       double diff = 0.0;
       double tempReal = 0.0;

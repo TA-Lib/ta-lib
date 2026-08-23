@@ -424,7 +424,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ROCP", "update", RetCode.BadParam);
-         core.ROCP_StreamStep(this, inReal);
+         core.ROCP_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -444,7 +444,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ROCP", "peek", RetCode.BadParam);
          ROCP_Stream scratch = new ROCP_Stream(this);
-         core.ROCP_StreamStep(scratch, inReal);
+         core.ROCP_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -464,7 +464,7 @@ public partial class Core
       }
    }
 
-   internal void ROCP_StreamStep( ROCP_Stream sp, double inReal )
+   internal void ROCP_StepImpl( ROCP_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

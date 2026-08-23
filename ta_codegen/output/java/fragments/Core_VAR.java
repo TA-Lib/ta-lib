@@ -561,7 +561,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("VAR update: BadParam", RetCode.BadParam);
-         core.VAR_StreamStep(this, inReal);
+         core.VAR_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -577,7 +577,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("VAR peek: BadParam", RetCode.BadParam);
          VAR_Stream scratch = new VAR_Stream(this);
-         core.VAR_StreamStep(scratch, inReal);
+         core.VAR_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -598,7 +598,7 @@
          return new VAR_Stream(this);
       }
    }
-   void VAR_StreamStep( VAR_Stream sp, double inReal )
+   void VAR_StepImpl( VAR_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.i >= 1073741824 ) {

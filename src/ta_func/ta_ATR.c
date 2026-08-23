@@ -404,7 +404,7 @@ struct TA_ATR_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_ATR_StepInternal( struct TA_ATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+static void TA_ATR_StepImpl( struct TA_ATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double val2;
    double greatest;
@@ -681,7 +681,7 @@ TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, doubl
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_ATR_StepInternal( stream, inHigh, inLow, inClose, outReal );
+   TA_ATR_StepImpl( stream, inHigh, inLow, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -693,7 +693,7 @@ TA_LIB_API TA_RetCode TA_ATR_Peek( const TA_ATR_Stream *stream, double inHigh, d
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ATR_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
+   TA_ATR_StepImpl( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 

@@ -479,7 +479,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIX update: BadParam", RetCode.BadParam);
-         core.TRIX_StreamStep(this, inReal);
+         core.TRIX_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -495,7 +495,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
          TRIX_Stream scratch = new TRIX_Stream(this);
-         core.TRIX_StreamStep(scratch, inReal);
+         core.TRIX_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -516,7 +516,7 @@
          return new TRIX_Stream(this);
       }
    }
-   void TRIX_StreamStep( TRIX_Stream sp, double inReal )
+   void TRIX_StepImpl( TRIX_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       tempReal = sp.prevEMA3;

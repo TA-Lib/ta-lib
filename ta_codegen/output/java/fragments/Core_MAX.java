@@ -508,7 +508,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAX update: BadParam", RetCode.BadParam);
-         core.MAX_StreamStep(this, inReal);
+         core.MAX_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -524,7 +524,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAX peek: BadParam", RetCode.BadParam);
          MAX_Stream scratch = new MAX_Stream(this);
-         core.MAX_StreamStep(scratch, inReal);
+         core.MAX_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -545,7 +545,7 @@
          return new MAX_Stream(this);
       }
    }
-   void MAX_StreamStep( MAX_Stream sp, double inReal )
+   void MAX_StepImpl( MAX_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

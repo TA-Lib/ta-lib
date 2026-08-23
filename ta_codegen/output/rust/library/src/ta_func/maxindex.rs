@@ -327,7 +327,7 @@ impl MAXINDEX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAXINDEX_step_internal(&self, sp: &mut MAXINDEX_StreamState, inReal: f64, outInteger: &mut i32) {
+    fn MAXINDEX_step_impl(&self, sp: &mut MAXINDEX_StreamState, inReal: f64, outInteger: &mut i32) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
@@ -555,7 +555,7 @@ impl MAXINDEX_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.MAXINDEX_step_internal(&mut self.state, inReal, &mut outInteger);
+        self.core.MAXINDEX_step_impl(&mut self.state, inReal, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

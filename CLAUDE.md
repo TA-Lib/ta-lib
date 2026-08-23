@@ -74,6 +74,13 @@ and `Body` reads as markup. `Pass` was chosen (`408f7c23d`) for being
 descriptive where `_Impl` is relational — a real preference, retired because one
 word per concept beats it once the collision that forced it is gone.
 
+The step and release tiers were three more words for it — `_StepInternal` (C),
+`_step_internal` (Rust), `_StreamStep` (Java/C#) — and none of them was a variant
+of anything: no backend has a `<N>_Step` entry point. They are `<N>_StepImpl` in
+all four now, plus C-only `TA_<N>_ReleaseImpl` (Rust has `Drop`, the managed
+backends have GC). The tier is private everywhere, so no runtime gate can see the
+spelling — `the_transition_tier_is_step_impl_in_every_backend` is what pins it.
+
 **The `_Open*` family is five methods, symmetric, two hops deep:**
 
 ```

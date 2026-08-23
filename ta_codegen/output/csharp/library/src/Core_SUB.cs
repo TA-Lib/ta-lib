@@ -312,7 +312,7 @@ public partial class Core
       public double Update( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("SUB", "update", RetCode.BadParam);
-         core.SUB_StreamStep(this, inReal0, inReal1);
+         core.SUB_StepImpl(this, inReal0, inReal1);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -333,7 +333,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("SUB", "peek", RetCode.BadParam);
          SUB_Stream scratch = new SUB_Stream(this);
-         core.SUB_StreamStep(scratch, inReal0, inReal1);
+         core.SUB_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -353,7 +353,7 @@ public partial class Core
       }
    }
 
-   internal void SUB_StreamStep( SUB_Stream sp, double inReal0, double inReal1 )
+   internal void SUB_StepImpl( SUB_Stream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 - inReal1;
    }

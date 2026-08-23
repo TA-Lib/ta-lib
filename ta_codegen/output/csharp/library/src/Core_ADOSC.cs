@@ -602,7 +602,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("ADOSC", "update", RetCode.BadParam);
-         core.ADOSC_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.ADOSC_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -625,7 +625,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("ADOSC", "peek", RetCode.BadParam);
          ADOSC_Stream scratch = new ADOSC_Stream(this);
-         core.ADOSC_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.ADOSC_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -645,7 +645,7 @@ public partial class Core
       }
    }
 
-   internal void ADOSC_StreamStep( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   internal void ADOSC_StepImpl( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;

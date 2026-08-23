@@ -128,7 +128,7 @@ struct TA_SQRT_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_SQRT_StepInternal( struct TA_SQRT_Stream *sp, double inReal, double *outReal )
+static void TA_SQRT_StepImpl( struct TA_SQRT_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= sqrt(inReal);
@@ -226,7 +226,7 @@ TA_LIB_API TA_RetCode TA_SQRT_Update( TA_SQRT_Stream *stream, double inReal, dou
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_SQRT_StepInternal( stream, inReal, outReal );
+   TA_SQRT_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_SQRT_Peek( const TA_SQRT_Stream *stream, double inReal,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_SQRT_StepInternal( &scratch, inReal, outReal );
+   TA_SQRT_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

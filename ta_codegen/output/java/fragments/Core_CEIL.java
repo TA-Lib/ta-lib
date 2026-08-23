@@ -245,7 +245,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CEIL update: BadParam", RetCode.BadParam);
-         core.CEIL_StreamStep(this, inReal);
+         core.CEIL_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -261,7 +261,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CEIL peek: BadParam", RetCode.BadParam);
          CEIL_Stream scratch = new CEIL_Stream(this);
-         core.CEIL_StreamStep(scratch, inReal);
+         core.CEIL_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -282,7 +282,7 @@
          return new CEIL_Stream(this);
       }
    }
-   void CEIL_StreamStep( CEIL_Stream sp, double inReal )
+   void CEIL_StepImpl( CEIL_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.ceil(inReal);
    }

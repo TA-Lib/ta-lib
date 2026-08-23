@@ -391,7 +391,7 @@ struct TA_VAR_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_VAR_ReleaseInternal( struct TA_VAR_Stream *sp )
+static void TA_VAR_ReleaseImpl( struct TA_VAR_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inReal ) TA_Free( sp->x_inReal );
@@ -400,7 +400,7 @@ static void TA_VAR_ReleaseInternal( struct TA_VAR_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_VAR_StepInternal( struct TA_VAR_Stream *sp, double inReal, double *outReal )
+static void TA_VAR_StepImpl( struct TA_VAR_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
 
@@ -684,14 +684,14 @@ static TA_RetCode TA_VAR_OpenImpl( struct TA_VAR_Stream **stream, const double i
       sp->barsSinceReseed = barsSinceReseed;
       sp->i = i;
       sp->xCap = (int)(i - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_VAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_VAR_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;
       sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inReal ) { TA_VAR_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inReal ) { TA_VAR_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -752,7 +752,7 @@ TA_LIB_API TA_RetCode TA_VAR_Update( TA_VAR_Stream *stream, double inReal, doubl
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_VAR_StepInternal( stream, inReal, outReal );
+   TA_VAR_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -766,13 +766,13 @@ TA_LIB_API TA_RetCode TA_VAR_Peek( const TA_VAR_Stream *stream, double inReal, d
    scratch = *stream;
    scratch.x_inReal = stream->xMirror_inReal;
    memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xPhys );
-   TA_VAR_StepInternal( &scratch, inReal, outReal );
+   TA_VAR_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_VAR_Close( TA_VAR_Stream *stream )
 {
-   TA_VAR_ReleaseInternal( stream );
+   TA_VAR_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

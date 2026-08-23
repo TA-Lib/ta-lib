@@ -671,7 +671,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MIDPRICE", "update", RetCode.BadParam);
-         core.MIDPRICE_StreamStep(this, inHigh, inLow);
+         core.MIDPRICE_StepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -698,7 +698,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.MIDPRICE_StreamStep(scratch, inHigh, inLow);
+         core.MIDPRICE_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -718,7 +718,7 @@ public partial class Core
       }
    }
 
-   internal void MIDPRICE_StreamStep( MIDPRICE_Stream sp, double inHigh, double inLow )
+   internal void MIDPRICE_StepImpl( MIDPRICE_Stream sp, double inHigh, double inLow )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;

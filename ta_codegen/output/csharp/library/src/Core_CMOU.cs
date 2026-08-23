@@ -548,7 +548,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CMOU", "update", RetCode.BadParam);
-         core.CMOU_StreamStep(this, inReal);
+         core.CMOU_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -568,7 +568,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CMOU", "peek", RetCode.BadParam);
          CMOU_Stream scratch = new CMOU_Stream(this);
-         core.CMOU_StreamStep(scratch, inReal);
+         core.CMOU_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -588,7 +588,7 @@ public partial class Core
       }
    }
 
-   internal void CMOU_StreamStep( CMOU_Stream sp, double inReal )
+   internal void CMOU_StepImpl( CMOU_Stream sp, double inReal )
    {
       double diff = 0.0;
       double tempReal = 0.0;

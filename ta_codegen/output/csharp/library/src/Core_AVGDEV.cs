@@ -402,7 +402,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("AVGDEV", "update", RetCode.BadParam);
-         core.AVGDEV_StreamStep(this, inReal);
+         core.AVGDEV_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -422,7 +422,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("AVGDEV", "peek", RetCode.BadParam);
          AVGDEV_Stream scratch = new AVGDEV_Stream(this);
-         core.AVGDEV_StreamStep(scratch, inReal);
+         core.AVGDEV_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -442,7 +442,7 @@ public partial class Core
       }
    }
 
-   internal void AVGDEV_StreamStep( AVGDEV_Stream sp, double inReal )
+   internal void AVGDEV_StepImpl( AVGDEV_Stream sp, double inReal )
    {
       double todaySum = 0.0;
       double todayDev = 0.0;

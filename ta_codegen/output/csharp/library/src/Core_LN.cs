@@ -308,7 +308,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LN", "update", RetCode.BadParam);
-         core.LN_StreamStep(this, inReal);
+         core.LN_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -328,7 +328,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LN", "peek", RetCode.BadParam);
          LN_Stream scratch = new LN_Stream(this);
-         core.LN_StreamStep(scratch, inReal);
+         core.LN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -348,7 +348,7 @@ public partial class Core
       }
    }
 
-   internal void LN_StreamStep( LN_Stream sp, double inReal )
+   internal void LN_StepImpl( LN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Log(inReal);
    }

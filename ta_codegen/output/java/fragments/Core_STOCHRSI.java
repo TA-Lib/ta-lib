@@ -539,7 +539,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
-         core.STOCHRSI_StreamStep(this, inReal);
+         core.STOCHRSI_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
          return this.cachedValue;
@@ -564,7 +564,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.STOCHRSI_StreamStep(scratch, inReal);
+         core.STOCHRSI_StepImpl(scratch, inReal);
          return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
       }
 
@@ -585,7 +585,7 @@
          return new STOCHRSI_Stream(this);
       }
    }
-   void STOCHRSI_StreamStep( STOCHRSI_Stream sp, double inReal )
+   void STOCHRSI_StepImpl( STOCHRSI_Stream sp, double inReal )
    {
       double cur_tempRSIBuffer = 0.0;
       double cur_outFastK = 0.0;

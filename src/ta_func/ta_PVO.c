@@ -289,7 +289,7 @@ struct TA_PVO_Stream {
 };
 
 /* Private function, not in public API. */
-static TA_RetCode TA_PVO_StepInternal( struct TA_PVO_Stream *sp, double inVolume, double *outReal )
+static TA_RetCode TA_PVO_StepImpl( struct TA_PVO_Stream *sp, double inVolume, double *outReal )
 {
    double tempReal;
    double cur_tempBuffer = 0.0;
@@ -549,7 +549,7 @@ TA_LIB_API TA_RetCode TA_PVO_Update( TA_PVO_Stream *stream, double inVolume, dou
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   retCode = TA_PVO_StepInternal( stream, inVolume, outReal );
+   retCode = TA_PVO_StepImpl( stream, inVolume, outReal );
    if( retCode != TA_SUCCESS ) return retCode;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -563,7 +563,7 @@ TA_LIB_API TA_RetCode TA_PVO_Peek( const TA_PVO_Stream *stream, double inVolume,
    if( !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   return TA_PVO_StepInternal( &scratch, inVolume, outReal );
+   return TA_PVO_StepImpl( &scratch, inVolume, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_PVO_Close( TA_PVO_Stream *stream )

@@ -380,7 +380,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("MARKETFI", "update", RetCode.BadParam);
-         core.MARKETFI_StreamStep(this, inHigh, inLow, inVolume);
+         core.MARKETFI_StepImpl(this, inHigh, inLow, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -402,7 +402,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("MARKETFI", "peek", RetCode.BadParam);
          MARKETFI_Stream scratch = new MARKETFI_Stream(this);
-         core.MARKETFI_StreamStep(scratch, inHigh, inLow, inVolume);
+         core.MARKETFI_StepImpl(scratch, inHigh, inLow, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -422,7 +422,7 @@ public partial class Core
       }
    }
 
-   internal void MARKETFI_StreamStep( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
+   internal void MARKETFI_StepImpl( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
    {
       /* A zero-volume bar would divide by zero. Neither reference guards
        * it -- they emit +/-Inf, or NaN when the range is zero too -- but

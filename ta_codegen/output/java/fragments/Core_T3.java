@@ -617,7 +617,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("T3 update: BadParam", RetCode.BadParam);
-         core.T3_StreamStep(this, inReal);
+         core.T3_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -633,7 +633,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
          T3_Stream scratch = new T3_Stream(this);
-         core.T3_StreamStep(scratch, inReal);
+         core.T3_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -654,7 +654,7 @@
          return new T3_Stream(this);
       }
    }
-   void T3_StreamStep( T3_Stream sp, double inReal )
+   void T3_StepImpl( T3_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

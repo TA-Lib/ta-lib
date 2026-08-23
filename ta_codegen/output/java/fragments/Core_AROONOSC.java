@@ -507,7 +507,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROONOSC update: BadParam", RetCode.BadParam);
-         core.AROONOSC_StreamStep(this, inHigh, inLow);
+         core.AROONOSC_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -531,7 +531,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.AROONOSC_StreamStep(scratch, inHigh, inLow);
+         core.AROONOSC_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -552,7 +552,7 @@
          return new AROONOSC_Stream(this);
       }
    }
-   void AROONOSC_StreamStep( AROONOSC_Stream sp, double inHigh, double inLow )
+   void AROONOSC_StepImpl( AROONOSC_Stream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

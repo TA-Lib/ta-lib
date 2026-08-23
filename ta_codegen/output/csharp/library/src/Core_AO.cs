@@ -578,7 +578,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AO", "update", RetCode.BadParam);
-         core.AO_StreamStep(this, inHigh, inLow);
+         core.AO_StepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -605,7 +605,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.AO_StreamStep(scratch, inHigh, inLow);
+         core.AO_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -625,7 +625,7 @@ public partial class Core
       }
    }
 
-   internal void AO_StreamStep( AO_Stream sp, double inHigh, double inLow )
+   internal void AO_StepImpl( AO_Stream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       if( sp.ringCap_trailingFastIdx == 0 ) {

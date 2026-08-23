@@ -302,7 +302,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("COSH", "update", RetCode.BadParam);
-         core.COSH_StreamStep(this, inReal);
+         core.COSH_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -322,7 +322,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("COSH", "peek", RetCode.BadParam);
          COSH_Stream scratch = new COSH_Stream(this);
-         core.COSH_StreamStep(scratch, inReal);
+         core.COSH_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -342,7 +342,7 @@ public partial class Core
       }
    }
 
-   internal void COSH_StreamStep( COSH_Stream sp, double inReal )
+   internal void COSH_StepImpl( COSH_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Cosh(inReal);
    }

@@ -466,7 +466,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("WMA update: BadParam", RetCode.BadParam);
-         core.WMA_StreamStep(this, inReal);
+         core.WMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -482,7 +482,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("WMA peek: BadParam", RetCode.BadParam);
          WMA_Stream scratch = new WMA_Stream(this);
-         core.WMA_StreamStep(scratch, inReal);
+         core.WMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -503,7 +503,7 @@
          return new WMA_Stream(this);
       }
    }
-   void WMA_StreamStep( WMA_Stream sp, double inReal )
+   void WMA_StepImpl( WMA_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.optInTimePeriod == 1 ) {

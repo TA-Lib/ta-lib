@@ -1207,7 +1207,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_TRENDLINE", "update", RetCode.BadParam);
-         core.HT_TRENDLINE_StreamStep(this, inReal);
+         core.HT_TRENDLINE_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -1233,7 +1233,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_TRENDLINE_StreamStep(scratch, inReal);
+         core.HT_TRENDLINE_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1253,7 +1253,7 @@ public partial class Core
       }
    }
 
-   internal void HT_TRENDLINE_StreamStep( HT_TRENDLINE_Stream sp, double inReal )
+   internal void HT_TRENDLINE_StepImpl( HT_TRENDLINE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

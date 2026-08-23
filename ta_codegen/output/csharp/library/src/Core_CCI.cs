@@ -528,7 +528,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CCI", "update", RetCode.BadParam);
-         core.CCI_StreamStep(this, inHigh, inLow, inClose);
+         core.CCI_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -550,7 +550,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CCI", "peek", RetCode.BadParam);
          CCI_Stream scratch = new CCI_Stream(this);
-         core.CCI_StreamStep(scratch, inHigh, inLow, inClose);
+         core.CCI_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -570,7 +570,7 @@ public partial class Core
       }
    }
 
-   internal void CCI_StreamStep( CCI_Stream sp, double inHigh, double inLow, double inClose )
+   internal void CCI_StepImpl( CCI_Stream sp, double inHigh, double inLow, double inClose )
    {
       double lastValue = 0.0;
       lastValue = (inHigh + inLow + inClose) / 3;

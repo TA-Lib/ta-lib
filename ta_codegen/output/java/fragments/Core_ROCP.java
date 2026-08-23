@@ -371,7 +371,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROCP update: BadParam", RetCode.BadParam);
-         core.ROCP_StreamStep(this, inReal);
+         core.ROCP_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -387,7 +387,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROCP peek: BadParam", RetCode.BadParam);
          ROCP_Stream scratch = new ROCP_Stream(this);
-         core.ROCP_StreamStep(scratch, inReal);
+         core.ROCP_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -408,7 +408,7 @@
          return new ROCP_Stream(this);
       }
    }
-   void ROCP_StreamStep( ROCP_Stream sp, double inReal )
+   void ROCP_StepImpl( ROCP_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

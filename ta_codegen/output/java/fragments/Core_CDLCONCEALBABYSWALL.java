@@ -468,7 +468,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLCONCEALBABYSWALL update: BadParam", RetCode.BadParam);
-         core.CDLCONCEALBABYSWALL_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLCONCEALBABYSWALL_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -492,7 +492,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLCONCEALBABYSWALL_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLCONCEALBABYSWALL_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -513,7 +513,7 @@
          return new CDLCONCEALBABYSWALL_Stream(this);
       }
    }
-   void CDLCONCEALBABYSWALL_StreamStep( CDLCONCEALBABYSWALL_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLCONCEALBABYSWALL_StepImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;

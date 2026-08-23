@@ -371,7 +371,7 @@ impl PPO_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn PPO_step_internal(&self, sp: &mut PPO_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn PPO_step_impl(&self, sp: &mut PPO_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
@@ -605,7 +605,7 @@ impl PPO_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.PPO_step_internal(&mut self.state, inReal, &mut outReal)?;
+        self.core.PPO_step_impl(&mut self.state, inReal, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

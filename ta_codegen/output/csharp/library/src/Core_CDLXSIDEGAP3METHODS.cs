@@ -410,7 +410,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "update", RetCode.BadParam);
-         core.CDLXSIDEGAP3METHODS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLXSIDEGAP3METHODS_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -433,7 +433,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "peek", RetCode.BadParam);
          CDLXSIDEGAP3METHODS_Stream scratch = new CDLXSIDEGAP3METHODS_Stream(this);
-         core.CDLXSIDEGAP3METHODS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLXSIDEGAP3METHODS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -453,7 +453,7 @@ public partial class Core
       }
    }
 
-   internal void CDLXSIDEGAP3METHODS_StreamStep( CDLXSIDEGAP3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLXSIDEGAP3METHODS_StepImpl( CDLXSIDEGAP3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */

@@ -774,7 +774,7 @@ public partial class Core
       public double Update( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("CORREL", "update", RetCode.BadParam);
-         core.CORREL_StreamStep(this, inReal0, inReal1);
+         core.CORREL_StepImpl(this, inReal0, inReal1);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -801,7 +801,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CORREL_StreamStep(scratch, inReal0, inReal1);
+         core.CORREL_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -821,7 +821,7 @@ public partial class Core
       }
    }
 
-   internal void CORREL_StreamStep( CORREL_Stream sp, double inReal0, double inReal1 )
+   internal void CORREL_StepImpl( CORREL_Stream sp, double inReal0, double inReal1 )
    {
       double x = 0.0;
       if( sp.today >= 1073741824 ) {

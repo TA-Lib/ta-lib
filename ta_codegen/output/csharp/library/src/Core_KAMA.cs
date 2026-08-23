@@ -647,7 +647,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("KAMA", "update", RetCode.BadParam);
-         core.KAMA_StreamStep(this, inReal);
+         core.KAMA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -667,7 +667,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("KAMA", "peek", RetCode.BadParam);
          KAMA_Stream scratch = new KAMA_Stream(this);
-         core.KAMA_StreamStep(scratch, inReal);
+         core.KAMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -687,7 +687,7 @@ public partial class Core
       }
    }
 
-   internal void KAMA_StreamStep( KAMA_Stream sp, double inReal )
+   internal void KAMA_StepImpl( KAMA_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

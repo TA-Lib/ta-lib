@@ -128,7 +128,7 @@ struct TA_LN_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_LN_StepInternal( struct TA_LN_Stream *sp, double inReal, double *outReal )
+static void TA_LN_StepImpl( struct TA_LN_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= log(inReal);
@@ -226,7 +226,7 @@ TA_LIB_API TA_RetCode TA_LN_Update( TA_LN_Stream *stream, double inReal, double 
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_LN_StepInternal( stream, inReal, outReal );
+   TA_LN_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_LN_Peek( const TA_LN_Stream *stream, double inReal, dou
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_LN_StepInternal( &scratch, inReal, outReal );
+   TA_LN_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

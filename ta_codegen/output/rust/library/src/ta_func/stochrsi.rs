@@ -398,7 +398,7 @@ impl STOCHRSI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCHRSI_step_internal(&self, sp: &mut STOCHRSI_StreamState, inReal: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
+    fn STOCHRSI_step_impl(&self, sp: &mut STOCHRSI_StreamState, inReal: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
         let mut cur_tempRSIBuffer: f64 = 0.0_f64;
         let mut cur_outFastK: f64 = 0.0_f64;
         let mut cur_outFastD: f64 = 0.0_f64;
@@ -650,7 +650,7 @@ impl STOCHRSI_Stream {
         }
         let mut outFastK: f64 = 0.0_f64;
         let mut outFastD: f64 = 0.0_f64;
-        self.core.STOCHRSI_step_internal(&mut self.state, inReal, &mut outFastK, &mut outFastD)?;
+        self.core.STOCHRSI_step_impl(&mut self.state, inReal, &mut outFastK, &mut outFastD)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

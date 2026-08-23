@@ -476,7 +476,7 @@ impl MIDPRICE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MIDPRICE_step_internal(&self, sp: &mut MIDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn MIDPRICE_step_impl(&self, sp: &mut MIDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut tmpLow: f64 = 0.0_f64;
         let mut tmpHigh: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
@@ -779,7 +779,7 @@ impl MIDPRICE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MIDPRICE_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        self.core.MIDPRICE_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

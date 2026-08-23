@@ -1151,7 +1151,7 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     let _ = writeln!(o, "      public {vt} Update( {sig_bars} )");
     let _ = writeln!(o, "      {{");
     o.push_str(&finite_bar_check(func, "         ", "update"));
-    let _ = writeln!(o, "         core.{base}_StreamStep(this, {fwd_bars});");
+    let _ = writeln!(o, "         core.{base}_StepImpl(this, {fwd_bars});");
     // After the step and after the finite-bar reject, so a rejected bar leaves
     // the range where it was. `Peek` runs the same step on a scratch copy and so
     // never reaches this. Saturating: nothing bounds how many bars a live stream
@@ -1215,7 +1215,7 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     } else {
         let _ = writeln!(o, "         {class} scratch = new {class}(this);");
     }
-    let _ = writeln!(o, "         core.{base}_StreamStep(scratch, {fwd_bars});");
+    let _ = writeln!(o, "         core.{base}_StepImpl(scratch, {fwd_bars});");
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, "scratch"));
     let _ = writeln!(o, "      }}");
 
@@ -1247,7 +1247,7 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
 }
 
 // ---------------------------------------------------------------------------
-// StreamStep
+// StepImpl
 // ---------------------------------------------------------------------------
 
 /// Build the render context for stream-owned code (step bodies, captures).
@@ -1271,7 +1271,7 @@ fn stream_ctx<'a>(
     }
 }
 
-/// `internal void <base>_StreamStep( <Class> sp, double bar... )` — the one
+/// `internal void <base>_StepImpl( <Class> sp, double bar... )` — the one
 /// per-bar transition; `Update` runs it on live state, `Peek` on a copy.
 ///
 /// It stays a method on `Core` rather than on the handle because transcribed
@@ -1302,7 +1302,7 @@ fn emit_step_sig(o: &mut String, func: &FuncDef) {
     let base = base_name(func);
     let class = stream_class_name(func);
     let (sig_bars, _) = bar_params(func);
-    let _ = writeln!(o, "\n   internal void {base}_StreamStep( {class} sp, {sig_bars} )");
+    let _ = writeln!(o, "\n   internal void {base}_StepImpl( {class} sp, {sig_bars} )");
     let _ = writeln!(o, "   {{");
 }
 
@@ -3490,7 +3490,7 @@ fn transform_map_step(
     rewritten.iter().flat_map(drop_forc_shells).collect()
 }
 
-/// The composed `StreamStep`: producer transition (writing `cur_<series>`), then
+/// The composed `StepImpl`: producer transition (writing `cur_<series>`), then
 /// the batch-tail pipeline through the owned sub handles, combine maps per bar,
 /// lag-ring pushes, and the `sp.cur_*` output stores. No peek flag: peek is the
 /// universal deep-copy of the whole tree.

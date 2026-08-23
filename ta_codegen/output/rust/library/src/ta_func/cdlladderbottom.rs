@@ -409,7 +409,7 @@ impl CDLLADDERBOTTOM_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLLADDERBOTTOM_step_internal(&self, sp: &mut CDLLADDERBOTTOM_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLLADDERBOTTOM_step_impl(&self, sp: &mut CDLLADDERBOTTOM_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
@@ -749,7 +749,7 @@ impl CDLLADDERBOTTOM_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLLADDERBOTTOM_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLLADDERBOTTOM_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

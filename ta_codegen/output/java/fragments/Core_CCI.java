@@ -474,7 +474,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CCI update: BadParam", RetCode.BadParam);
-         core.CCI_StreamStep(this, inHigh, inLow, inClose);
+         core.CCI_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -490,7 +490,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CCI peek: BadParam", RetCode.BadParam);
          CCI_Stream scratch = new CCI_Stream(this);
-         core.CCI_StreamStep(scratch, inHigh, inLow, inClose);
+         core.CCI_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -511,7 +511,7 @@
          return new CCI_Stream(this);
       }
    }
-   void CCI_StreamStep( CCI_Stream sp, double inHigh, double inLow, double inClose )
+   void CCI_StepImpl( CCI_Stream sp, double inHigh, double inLow, double inClose )
    {
       double lastValue = 0.0;
       lastValue = (inHigh + inLow + inClose) / 3;

@@ -283,7 +283,7 @@ impl WCLPRICE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn WCLPRICE_step_internal(&self, sp: &mut WCLPRICE_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn WCLPRICE_step_impl(&self, sp: &mut WCLPRICE_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         (*outReal) = ((inClose as f64).mul_add(2.0, inHigh + inLow)) / 4.0;
     }
 
@@ -413,7 +413,7 @@ impl WCLPRICE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.WCLPRICE_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.WCLPRICE_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

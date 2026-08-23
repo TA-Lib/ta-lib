@@ -293,7 +293,7 @@ struct TA_CDLCONCEALBABYSWALL_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDLCONCEALBABYSWALL_ReleaseInternal( struct TA_CDLCONCEALBABYSWALL_Stream *sp )
+static void TA_CDLCONCEALBABYSWALL_ReleaseImpl( struct TA_CDLCONCEALBABYSWALL_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_ShadowVeryShortTrailingIdx_derived ) TA_Free( sp->ring_ShadowVeryShortTrailingIdx_derived );
@@ -302,7 +302,7 @@ static void TA_CDLCONCEALBABYSWALL_ReleaseInternal( struct TA_CDLCONCEALBABYSWAL
 }
 
 /* Private function, not in public API. */
-static void TA_CDLCONCEALBABYSWALL_StepInternal( struct TA_CDLCONCEALBABYSWALL_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDLCONCEALBABYSWALL_StepImpl( struct TA_CDLCONCEALBABYSWALL_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
@@ -470,12 +470,12 @@ static TA_RetCode TA_CDLCONCEALBABYSWALL_OpenImpl( struct TA_CDLCONCEALBABYSWALL
       sp->totIdx = totIdx;
       sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
       sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 4;
-      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLCONCEALBABYSWALL_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLCONCEALBABYSWALL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLCONCEALBABYSWALL_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLCONCEALBABYSWALL_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_derived ) { TA_CDLCONCEALBABYSWALL_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_derived ) { TA_CDLCONCEALBABYSWALL_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_ShadowVeryShortTrailingIdx_derived[fillJ % sp->ringCap_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -548,7 +548,7 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Update( TA_CDLCONCEALBABYSWALL_Stre
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDLCONCEALBABYSWALL_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLCONCEALBABYSWALL_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -562,13 +562,13 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Peek( const TA_CDLCONCEALBABYSWALL_
    scratch = *stream;
    scratch.ring_ShadowVeryShortTrailingIdx_derived = stream->ringMirror_ShadowVeryShortTrailingIdx_derived;
    memcpy( scratch.ring_ShadowVeryShortTrailingIdx_derived, stream->ring_ShadowVeryShortTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_ShadowVeryShortTrailingIdx > 0 ? stream->ringCap_ShadowVeryShortTrailingIdx : 1) );
-   TA_CDLCONCEALBABYSWALL_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLCONCEALBABYSWALL_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Close( TA_CDLCONCEALBABYSWALL_Stream *stream )
 {
-   TA_CDLCONCEALBABYSWALL_ReleaseInternal( stream );
+   TA_CDLCONCEALBABYSWALL_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

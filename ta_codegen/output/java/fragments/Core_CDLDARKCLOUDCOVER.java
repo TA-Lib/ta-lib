@@ -446,7 +446,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDARKCLOUDCOVER update: BadParam", RetCode.BadParam);
-         core.CDLDARKCLOUDCOVER_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLDARKCLOUDCOVER_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -462,7 +462,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDARKCLOUDCOVER peek: BadParam", RetCode.BadParam);
          CDLDARKCLOUDCOVER_Stream scratch = new CDLDARKCLOUDCOVER_Stream(this);
-         core.CDLDARKCLOUDCOVER_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLDARKCLOUDCOVER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -483,7 +483,7 @@
          return new CDLDARKCLOUDCOVER_Stream(this);
       }
    }
-   void CDLDARKCLOUDCOVER_StreamStep( CDLDARKCLOUDCOVER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLDARKCLOUDCOVER_StepImpl( CDLDARKCLOUDCOVER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

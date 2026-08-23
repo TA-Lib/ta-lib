@@ -488,7 +488,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLTASUKIGAP", "update", RetCode.BadParam);
-         core.CDLTASUKIGAP_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLTASUKIGAP_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -511,7 +511,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLTASUKIGAP", "peek", RetCode.BadParam);
          CDLTASUKIGAP_Stream scratch = new CDLTASUKIGAP_Stream(this);
-         core.CDLTASUKIGAP_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLTASUKIGAP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -531,7 +531,7 @@ public partial class Core
       }
    }
 
-   internal void CDLTASUKIGAP_StreamStep( CDLTASUKIGAP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLTASUKIGAP_StepImpl( CDLTASUKIGAP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;

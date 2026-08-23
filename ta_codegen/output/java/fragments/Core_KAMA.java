@@ -593,7 +593,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("KAMA update: BadParam", RetCode.BadParam);
-         core.KAMA_StreamStep(this, inReal);
+         core.KAMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -609,7 +609,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("KAMA peek: BadParam", RetCode.BadParam);
          KAMA_Stream scratch = new KAMA_Stream(this);
-         core.KAMA_StreamStep(scratch, inReal);
+         core.KAMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -630,7 +630,7 @@
          return new KAMA_Stream(this);
       }
    }
-   void KAMA_StreamStep( KAMA_Stream sp, double inReal )
+   void KAMA_StepImpl( KAMA_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

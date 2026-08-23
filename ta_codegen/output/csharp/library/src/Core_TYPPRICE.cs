@@ -330,7 +330,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("TYPPRICE", "update", RetCode.BadParam);
-         core.TYPPRICE_StreamStep(this, inHigh, inLow, inClose);
+         core.TYPPRICE_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -352,7 +352,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("TYPPRICE", "peek", RetCode.BadParam);
          TYPPRICE_Stream scratch = new TYPPRICE_Stream(this);
-         core.TYPPRICE_StreamStep(scratch, inHigh, inLow, inClose);
+         core.TYPPRICE_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -372,7 +372,7 @@ public partial class Core
       }
    }
 
-   internal void TYPPRICE_StreamStep( TYPPRICE_Stream sp, double inHigh, double inLow, double inClose )
+   internal void TYPPRICE_StepImpl( TYPPRICE_Stream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }

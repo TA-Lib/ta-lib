@@ -286,7 +286,7 @@ struct TA_CDLGRAVESTONEDOJI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDLGRAVESTONEDOJI_ReleaseInternal( struct TA_CDLGRAVESTONEDOJI_Stream *sp )
+static void TA_CDLGRAVESTONEDOJI_ReleaseImpl( struct TA_CDLGRAVESTONEDOJI_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_BodyDojiTrailingIdx_derived ) TA_Free( sp->ring_BodyDojiTrailingIdx_derived );
@@ -297,7 +297,7 @@ static void TA_CDLGRAVESTONEDOJI_ReleaseInternal( struct TA_CDLGRAVESTONEDOJI_St
 }
 
 /* Private function, not in public API. */
-static void TA_CDLGRAVESTONEDOJI_StepInternal( struct TA_CDLGRAVESTONEDOJI_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDLGRAVESTONEDOJI_StepImpl( struct TA_CDLGRAVESTONEDOJI_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( sp->ringCap_BodyDojiTrailingIdx == 0 )
    {
@@ -443,12 +443,12 @@ static TA_RetCode TA_CDLGRAVESTONEDOJI_OpenImpl( struct TA_CDLGRAVESTONEDOJI_Str
       sp->BodyDojiPeriodTotal = BodyDojiPeriodTotal;
       sp->ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
       sp->ringCap_BodyDojiTrailingIdx = (int)(i - BodyDojiTrailingIdx);
-      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLGRAVESTONEDOJI_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyDojiTrailingIdx < 0 || sp->ringCap_BodyDojiTrailingIdx > historyLen ) { TA_CDLGRAVESTONEDOJI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
         sp->ring_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyDojiTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyDojiTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyDojiTrailingIdx_derived[fillJ - (historyLen - sp->ringCap_BodyDojiTrailingIdx)] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -456,12 +456,12 @@ static TA_RetCode TA_CDLGRAVESTONEDOJI_OpenImpl( struct TA_CDLGRAVESTONEDOJI_Str
       }
       sp->ringPos_BodyDojiTrailingIdx = 0;
       sp->ringCap_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
-      if( sp->ringCap_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLGRAVESTONEDOJI_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLGRAVESTONEDOJI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_ShadowVeryShortTrailingIdx_derived[fillJ - (historyLen - sp->ringCap_ShadowVeryShortTrailingIdx)] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -522,7 +522,7 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Update( TA_CDLGRAVESTONEDOJI_Stream *
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDLGRAVESTONEDOJI_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLGRAVESTONEDOJI_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -538,13 +538,13 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Peek( const TA_CDLGRAVESTONEDOJI_Stre
    memcpy( scratch.ring_BodyDojiTrailingIdx_derived, stream->ring_BodyDojiTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_BodyDojiTrailingIdx > 0 ? stream->ringCap_BodyDojiTrailingIdx : 1) );
    scratch.ring_ShadowVeryShortTrailingIdx_derived = stream->ringMirror_ShadowVeryShortTrailingIdx_derived;
    memcpy( scratch.ring_ShadowVeryShortTrailingIdx_derived, stream->ring_ShadowVeryShortTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_ShadowVeryShortTrailingIdx > 0 ? stream->ringCap_ShadowVeryShortTrailingIdx : 1) );
-   TA_CDLGRAVESTONEDOJI_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLGRAVESTONEDOJI_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Close( TA_CDLGRAVESTONEDOJI_Stream *stream )
 {
-   TA_CDLGRAVESTONEDOJI_ReleaseInternal( stream );
+   TA_CDLGRAVESTONEDOJI_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

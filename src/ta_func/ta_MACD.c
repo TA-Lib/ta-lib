@@ -550,7 +550,7 @@ struct TA_MACD_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_MACD_StepInternal( struct TA_MACD_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
+static void TA_MACD_StepImpl( struct TA_MACD_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    double macdValue;
    double tempReal;
@@ -886,7 +886,7 @@ TA_LIB_API TA_RetCode TA_MACD_Update( TA_MACD_Stream *stream, double inReal, dou
 {
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_MACD_StepInternal( stream, inReal, outMACD, outMACDSignal, outMACDHist );
+   TA_MACD_StepImpl( stream, inReal, outMACD, outMACDSignal, outMACDHist );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -898,7 +898,7 @@ TA_LIB_API TA_RetCode TA_MACD_Peek( const TA_MACD_Stream *stream, double inReal,
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MACD_StepInternal( &scratch, inReal, outMACD, outMACDSignal, outMACDHist );
+   TA_MACD_StepImpl( &scratch, inReal, outMACD, outMACDSignal, outMACDHist );
    return TA_SUCCESS;
 }
 

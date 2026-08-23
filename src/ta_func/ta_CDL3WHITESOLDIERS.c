@@ -427,7 +427,7 @@ struct TA_CDL3WHITESOLDIERS_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDL3WHITESOLDIERS_ReleaseInternal( struct TA_CDL3WHITESOLDIERS_Stream *sp )
+static void TA_CDL3WHITESOLDIERS_ReleaseImpl( struct TA_CDL3WHITESOLDIERS_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_BodyShortTrailingIdx_derived ) TA_Free( sp->ring_BodyShortTrailingIdx_derived );
@@ -442,7 +442,7 @@ static void TA_CDL3WHITESOLDIERS_ReleaseInternal( struct TA_CDL3WHITESOLDIERS_St
 }
 
 /* Private function, not in public API. */
-static void TA_CDL3WHITESOLDIERS_StepInternal( struct TA_CDL3WHITESOLDIERS_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDL3WHITESOLDIERS_StepImpl( struct TA_CDL3WHITESOLDIERS_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( sp->ringCap_BodyShortTrailingIdx == 0 )
    {
@@ -690,12 +690,12 @@ static TA_RetCode TA_CDL3WHITESOLDIERS_OpenImpl( struct TA_CDL3WHITESOLDIERS_Str
       sp->BodyShortPeriodTotal = BodyShortPeriodTotal;
       sp->totIdx = totIdx;
       sp->ringCap_BodyShortTrailingIdx = (int)(i - BodyShortTrailingIdx);
-      if( sp->ringCap_BodyShortTrailingIdx < 0 || sp->ringCap_BodyShortTrailingIdx > historyLen ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_BodyShortTrailingIdx < 0 || sp->ringCap_BodyShortTrailingIdx > historyLen ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
         sp->ring_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyShortTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyShortTrailingIdx_derived[fillJ - (historyLen - sp->ringCap_BodyShortTrailingIdx)] = TA_STREAM_CANDLERANGE(BodyShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -704,12 +704,12 @@ static TA_RetCode TA_CDL3WHITESOLDIERS_OpenImpl( struct TA_CDL3WHITESOLDIERS_Str
       sp->ringPos_BodyShortTrailingIdx = 0;
       sp->ringLag_FarTrailingIdx = (int)(i - FarTrailingIdx);
       sp->ringCap_FarTrailingIdx = sp->ringLag_FarTrailingIdx + 3;
-      if( sp->ringLag_FarTrailingIdx < 0 || sp->ringCap_FarTrailingIdx > historyLen ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_FarTrailingIdx < 0 || sp->ringCap_FarTrailingIdx > historyLen ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_FarTrailingIdx > 0 ? sp->ringCap_FarTrailingIdx : 1);
         sp->ring_FarTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_FarTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_FarTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_FarTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_FarTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_FarTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_FarTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_FarTrailingIdx_derived[fillJ % sp->ringCap_FarTrailingIdx] = TA_STREAM_CANDLERANGE(Far,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -718,12 +718,12 @@ static TA_RetCode TA_CDL3WHITESOLDIERS_OpenImpl( struct TA_CDL3WHITESOLDIERS_Str
       sp->ringPos_FarTrailingIdx = historyLen % sp->ringCap_FarTrailingIdx;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
       sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
-      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_NearTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -732,12 +732,12 @@ static TA_RetCode TA_CDL3WHITESOLDIERS_OpenImpl( struct TA_CDL3WHITESOLDIERS_Str
       sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
       sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
       sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 3;
-      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_ShadowVeryShortTrailingIdx_derived[fillJ % sp->ringCap_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -806,7 +806,7 @@ TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Update( TA_CDL3WHITESOLDIERS_Stream *
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDL3WHITESOLDIERS_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDL3WHITESOLDIERS_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -826,13 +826,13 @@ TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Peek( const TA_CDL3WHITESOLDIERS_Stre
    memcpy( scratch.ring_NearTrailingIdx_derived, stream->ring_NearTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_NearTrailingIdx > 0 ? stream->ringCap_NearTrailingIdx : 1) );
    scratch.ring_ShadowVeryShortTrailingIdx_derived = stream->ringMirror_ShadowVeryShortTrailingIdx_derived;
    memcpy( scratch.ring_ShadowVeryShortTrailingIdx_derived, stream->ring_ShadowVeryShortTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_ShadowVeryShortTrailingIdx > 0 ? stream->ringCap_ShadowVeryShortTrailingIdx : 1) );
-   TA_CDL3WHITESOLDIERS_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDL3WHITESOLDIERS_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Close( TA_CDL3WHITESOLDIERS_Stream *stream )
 {
-   TA_CDL3WHITESOLDIERS_ReleaseInternal( stream );
+   TA_CDL3WHITESOLDIERS_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

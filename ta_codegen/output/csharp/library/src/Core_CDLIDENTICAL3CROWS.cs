@@ -584,7 +584,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLIDENTICAL3CROWS", "update", RetCode.BadParam);
-         core.CDLIDENTICAL3CROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLIDENTICAL3CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -613,7 +613,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLIDENTICAL3CROWS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLIDENTICAL3CROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -633,7 +633,7 @@ public partial class Core
       }
    }
 
-   internal void CDLIDENTICAL3CROWS_StreamStep( CDLIDENTICAL3CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLIDENTICAL3CROWS_StepImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;

@@ -482,7 +482,7 @@
       public double update( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWMA update: BadParam", RetCode.BadParam);
-         core.VWMA_StreamStep(this, inReal, inVolume);
+         core.VWMA_StepImpl(this, inReal, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -506,7 +506,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.VWMA_StreamStep(scratch, inReal, inVolume);
+         core.VWMA_StepImpl(scratch, inReal, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -527,7 +527,7 @@
          return new VWMA_Stream(this);
       }
    }
-   void VWMA_StreamStep( VWMA_Stream sp, double inReal, double inVolume )
+   void VWMA_StepImpl( VWMA_Stream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       if( sp.optInTimePeriod == 1 ) {

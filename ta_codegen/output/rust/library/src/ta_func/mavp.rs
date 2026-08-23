@@ -584,7 +584,7 @@ impl MAVP_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAVP_step_internal(&self, sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn MAVP_step_impl(&self, sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut cp: i32 = inPeriods as i32;
         if cp < sp.optInMinPeriod {
             cp = sp.optInMinPeriod;
@@ -790,7 +790,7 @@ impl MAVP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MAVP_step_internal(&mut self.state, inReal, inPeriods, &mut outReal)?;
+        self.core.MAVP_step_impl(&mut self.state, inReal, inPeriods, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

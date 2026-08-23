@@ -629,7 +629,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMORNINGDOJISTAR", "update", RetCode.BadParam);
-         core.CDLMORNINGDOJISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLMORNINGDOJISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -658,7 +658,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLMORNINGDOJISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLMORNINGDOJISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -678,7 +678,7 @@ public partial class Core
       }
    }
 
-   internal void CDLMORNINGDOJISTAR_StreamStep( CDLMORNINGDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLMORNINGDOJISTAR_StepImpl( CDLMORNINGDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

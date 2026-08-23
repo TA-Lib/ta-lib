@@ -667,7 +667,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("T3", "update", RetCode.BadParam);
-         core.T3_StreamStep(this, inReal);
+         core.T3_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -687,7 +687,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("T3", "peek", RetCode.BadParam);
          T3_Stream scratch = new T3_Stream(this);
-         core.T3_StreamStep(scratch, inReal);
+         core.T3_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -707,7 +707,7 @@ public partial class Core
       }
    }
 
-   internal void T3_StreamStep( T3_Stream sp, double inReal )
+   internal void T3_StepImpl( T3_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

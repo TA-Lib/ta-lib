@@ -304,7 +304,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CEIL", "update", RetCode.BadParam);
-         core.CEIL_StreamStep(this, inReal);
+         core.CEIL_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -324,7 +324,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CEIL", "peek", RetCode.BadParam);
          CEIL_Stream scratch = new CEIL_Stream(this);
-         core.CEIL_StreamStep(scratch, inReal);
+         core.CEIL_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -344,7 +344,7 @@ public partial class Core
       }
    }
 
-   internal void CEIL_StreamStep( CEIL_Stream sp, double inReal )
+   internal void CEIL_StepImpl( CEIL_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Ceiling(inReal);
    }

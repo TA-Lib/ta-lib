@@ -846,7 +846,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ULTOSC", "update", RetCode.BadParam);
-         core.ULTOSC_StreamStep(this, inHigh, inLow, inClose);
+         core.ULTOSC_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -874,7 +874,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.ULTOSC_StreamStep(scratch, inHigh, inLow, inClose);
+         core.ULTOSC_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -894,7 +894,7 @@ public partial class Core
       }
    }
 
-   internal void ULTOSC_StreamStep( ULTOSC_Stream sp, double inHigh, double inLow, double inClose )
+   internal void ULTOSC_StepImpl( ULTOSC_Stream sp, double inHigh, double inLow, double inClose )
    {
       double trueLow = 0.0;
       double trueRange = 0.0;

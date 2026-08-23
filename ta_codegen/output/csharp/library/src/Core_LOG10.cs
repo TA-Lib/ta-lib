@@ -309,7 +309,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LOG10", "update", RetCode.BadParam);
-         core.LOG10_StreamStep(this, inReal);
+         core.LOG10_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -329,7 +329,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LOG10", "peek", RetCode.BadParam);
          LOG10_Stream scratch = new LOG10_Stream(this);
-         core.LOG10_StreamStep(scratch, inReal);
+         core.LOG10_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -349,7 +349,7 @@ public partial class Core
       }
    }
 
-   internal void LOG10_StreamStep( LOG10_Stream sp, double inReal )
+   internal void LOG10_StepImpl( LOG10_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Log10(inReal);
    }

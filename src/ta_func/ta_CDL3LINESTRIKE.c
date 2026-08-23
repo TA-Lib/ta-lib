@@ -284,7 +284,7 @@ struct TA_CDL3LINESTRIKE_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDL3LINESTRIKE_ReleaseInternal( struct TA_CDL3LINESTRIKE_Stream *sp )
+static void TA_CDL3LINESTRIKE_ReleaseImpl( struct TA_CDL3LINESTRIKE_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_NearTrailingIdx_derived ) TA_Free( sp->ring_NearTrailingIdx_derived );
@@ -293,7 +293,7 @@ static void TA_CDL3LINESTRIKE_ReleaseInternal( struct TA_CDL3LINESTRIKE_Stream *
 }
 
 /* Private function, not in public API. */
-static void TA_CDL3LINESTRIKE_StepInternal( struct TA_CDL3LINESTRIKE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDL3LINESTRIKE_StepImpl( struct TA_CDL3LINESTRIKE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_NearTrailingIdx_derived[sp->ringPos_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) == ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) && /* three with same color */
@@ -449,12 +449,12 @@ static TA_RetCode TA_CDL3LINESTRIKE_OpenImpl( struct TA_CDL3LINESTRIKE_Stream **
       sp->totIdx = totIdx;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
       sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
-      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_derived ) { TA_CDL3LINESTRIKE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_NearTrailingIdx_derived ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -527,7 +527,7 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Update( TA_CDL3LINESTRIKE_Stream *stream
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDL3LINESTRIKE_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDL3LINESTRIKE_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -541,13 +541,13 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Peek( const TA_CDL3LINESTRIKE_Stream *st
    scratch = *stream;
    scratch.ring_NearTrailingIdx_derived = stream->ringMirror_NearTrailingIdx_derived;
    memcpy( scratch.ring_NearTrailingIdx_derived, stream->ring_NearTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_NearTrailingIdx > 0 ? stream->ringCap_NearTrailingIdx : 1) );
-   TA_CDL3LINESTRIKE_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDL3LINESTRIKE_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Close( TA_CDL3LINESTRIKE_Stream *stream )
 {
-   TA_CDL3LINESTRIKE_ReleaseInternal( stream );
+   TA_CDL3LINESTRIKE_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

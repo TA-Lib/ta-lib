@@ -563,7 +563,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AROONOSC", "update", RetCode.BadParam);
-         core.AROONOSC_StreamStep(this, inHigh, inLow);
+         core.AROONOSC_StepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -590,7 +590,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.AROONOSC_StreamStep(scratch, inHigh, inLow);
+         core.AROONOSC_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -610,7 +610,7 @@ public partial class Core
       }
    }
 
-   internal void AROONOSC_StreamStep( AROONOSC_Stream sp, double inHigh, double inLow )
+   internal void AROONOSC_StepImpl( AROONOSC_Stream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

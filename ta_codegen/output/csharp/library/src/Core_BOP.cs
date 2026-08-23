@@ -351,7 +351,7 @@ public partial class Core
       public double Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("BOP", "update", RetCode.BadParam);
-         core.BOP_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.BOP_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -374,7 +374,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("BOP", "peek", RetCode.BadParam);
          BOP_Stream scratch = new BOP_Stream(this);
-         core.BOP_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.BOP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -394,7 +394,7 @@ public partial class Core
       }
    }
 
-   internal void BOP_StreamStep( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void BOP_StepImpl( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       tempReal = inHigh - inLow;

@@ -485,7 +485,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG_SLOPE", "update", RetCode.BadParam);
-         core.LINEARREG_SLOPE_StreamStep(this, inReal);
+         core.LINEARREG_SLOPE_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -505,7 +505,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG_SLOPE", "peek", RetCode.BadParam);
          LINEARREG_SLOPE_Stream scratch = new LINEARREG_SLOPE_Stream(this);
-         core.LINEARREG_SLOPE_StreamStep(scratch, inReal);
+         core.LINEARREG_SLOPE_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -525,7 +525,7 @@ public partial class Core
       }
    }
 
-   internal void LINEARREG_SLOPE_StreamStep( LINEARREG_SLOPE_Stream sp, double inReal )
+   internal void LINEARREG_SLOPE_StepImpl( LINEARREG_SLOPE_Stream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;

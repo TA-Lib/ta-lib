@@ -288,7 +288,7 @@
       public double update( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("OBV update: BadParam", RetCode.BadParam);
-         core.OBV_StreamStep(this, inReal, inVolume);
+         core.OBV_StepImpl(this, inReal, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -304,7 +304,7 @@
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("OBV peek: BadParam", RetCode.BadParam);
          OBV_Stream scratch = new OBV_Stream(this);
-         core.OBV_StreamStep(scratch, inReal, inVolume);
+         core.OBV_StepImpl(scratch, inReal, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -325,7 +325,7 @@
          return new OBV_Stream(this);
       }
    }
-   void OBV_StreamStep( OBV_Stream sp, double inReal, double inVolume )
+   void OBV_StepImpl( OBV_Stream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       tempReal = inReal;

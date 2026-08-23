@@ -308,7 +308,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ACOS", "update", RetCode.BadParam);
-         core.ACOS_StreamStep(this, inReal);
+         core.ACOS_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -328,7 +328,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ACOS", "peek", RetCode.BadParam);
          ACOS_Stream scratch = new ACOS_Stream(this);
-         core.ACOS_StreamStep(scratch, inReal);
+         core.ACOS_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -348,7 +348,7 @@ public partial class Core
       }
    }
 
-   internal void ACOS_StreamStep( ACOS_Stream sp, double inReal )
+   internal void ACOS_StepImpl( ACOS_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Acos(inReal);
    }

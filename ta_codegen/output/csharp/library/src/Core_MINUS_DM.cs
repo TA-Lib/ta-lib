@@ -654,7 +654,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MINUS_DM", "update", RetCode.BadParam);
-         core.MINUS_DM_StreamStep(this, inHigh, inLow);
+         core.MINUS_DM_StepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -675,7 +675,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MINUS_DM", "peek", RetCode.BadParam);
          MINUS_DM_Stream scratch = new MINUS_DM_Stream(this);
-         core.MINUS_DM_StreamStep(scratch, inHigh, inLow);
+         core.MINUS_DM_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -695,7 +695,7 @@ public partial class Core
       }
    }
 
-   internal void MINUS_DM_StreamStep( MINUS_DM_Stream sp, double inHigh, double inLow )
+   internal void MINUS_DM_StepImpl( MINUS_DM_Stream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          sp.tempReal = inHigh;

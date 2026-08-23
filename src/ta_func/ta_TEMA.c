@@ -438,7 +438,7 @@ struct TA_TEMA_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_TEMA_StepInternal( struct TA_TEMA_Stream *sp, double inReal, double *outReal )
+static void TA_TEMA_StepImpl( struct TA_TEMA_Stream *sp, double inReal, double *outReal )
 {
    if( sp->optInTimePeriod == 1 )
    {
@@ -747,7 +747,7 @@ TA_LIB_API TA_RetCode TA_TEMA_Update( TA_TEMA_Stream *stream, double inReal, dou
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_TEMA_StepInternal( stream, inReal, outReal );
+   TA_TEMA_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -759,7 +759,7 @@ TA_LIB_API TA_RetCode TA_TEMA_Peek( const TA_TEMA_Stream *stream, double inReal,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_TEMA_StepInternal( &scratch, inReal, outReal );
+   TA_TEMA_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

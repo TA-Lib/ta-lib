@@ -241,7 +241,7 @@ impl ADD_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ADD_step_internal(&self, sp: &mut ADD_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn ADD_step_impl(&self, sp: &mut ADD_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         (*outReal) = inReal0 + inReal1;
     }
 
@@ -372,7 +372,7 @@ impl ADD_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.ADD_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        self.core.ADD_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

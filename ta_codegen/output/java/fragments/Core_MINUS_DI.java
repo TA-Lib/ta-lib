@@ -808,7 +808,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
-         core.MINUS_DI_StreamStep(this, inHigh, inLow, inClose);
+         core.MINUS_DI_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -824,7 +824,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
          MINUS_DI_Stream scratch = new MINUS_DI_Stream(this);
-         core.MINUS_DI_StreamStep(scratch, inHigh, inLow, inClose);
+         core.MINUS_DI_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -845,7 +845,7 @@
          return new MINUS_DI_Stream(this);
       }
    }
-   void MINUS_DI_StreamStep( MINUS_DI_Stream sp, double inHigh, double inLow, double inClose )
+   void MINUS_DI_StepImpl( MINUS_DI_Stream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
          sp.tempReal = inHigh;

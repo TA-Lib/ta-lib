@@ -146,7 +146,7 @@ struct TA_MEDPRICE_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_MEDPRICE_StepInternal( struct TA_MEDPRICE_Stream *sp, double inHigh, double inLow, double *outReal )
+static void TA_MEDPRICE_StepImpl( struct TA_MEDPRICE_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    (void)sp;
    *outReal= (inHigh + inLow) / 2.0;
@@ -251,7 +251,7 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Update( TA_MEDPRICE_Stream *stream, double inH
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
-   TA_MEDPRICE_StepInternal( stream, inHigh, inLow, outReal );
+   TA_MEDPRICE_StepImpl( stream, inHigh, inLow, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -263,7 +263,7 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Peek( const TA_MEDPRICE_Stream *stream, double
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MEDPRICE_StepInternal( &scratch, inHigh, inLow, outReal );
+   TA_MEDPRICE_StepImpl( &scratch, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 

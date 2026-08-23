@@ -572,7 +572,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("RSI update: BadParam", RetCode.BadParam);
-         core.RSI_StreamStep(this, inReal);
+         core.RSI_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -588,7 +588,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("RSI peek: BadParam", RetCode.BadParam);
          RSI_Stream scratch = new RSI_Stream(this);
-         core.RSI_StreamStep(scratch, inReal);
+         core.RSI_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -609,7 +609,7 @@
          return new RSI_Stream(this);
       }
    }
-   void RSI_StreamStep( RSI_Stream sp, double inReal )
+   void RSI_StepImpl( RSI_Stream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;

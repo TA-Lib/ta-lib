@@ -1094,7 +1094,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_DCPERIOD", "update", RetCode.BadParam);
-         core.HT_DCPERIOD_StreamStep(this, inReal);
+         core.HT_DCPERIOD_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -1120,7 +1120,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_DCPERIOD_StreamStep(scratch, inReal);
+         core.HT_DCPERIOD_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1140,7 +1140,7 @@ public partial class Core
       }
    }
 
-   internal void HT_DCPERIOD_StreamStep( HT_DCPERIOD_Stream sp, double inReal )
+   internal void HT_DCPERIOD_StepImpl( HT_DCPERIOD_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

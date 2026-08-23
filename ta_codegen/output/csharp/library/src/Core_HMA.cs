@@ -824,7 +824,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HMA", "update", RetCode.BadParam);
-         core.HMA_StreamStep(this, inReal);
+         core.HMA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -850,7 +850,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.HMA_StreamStep(scratch, inReal);
+         core.HMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -870,7 +870,7 @@ public partial class Core
       }
    }
 
-   internal void HMA_StreamStep( HMA_Stream sp, double inReal )
+   internal void HMA_StepImpl( HMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

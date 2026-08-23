@@ -487,7 +487,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLPIERCING", "update", RetCode.BadParam);
-         core.CDLPIERCING_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLPIERCING_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -516,7 +516,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLPIERCING_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLPIERCING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -536,7 +536,7 @@ public partial class Core
       }
    }
 
-   internal void CDLPIERCING_StreamStep( CDLPIERCING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLPIERCING_StepImpl( CDLPIERCING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

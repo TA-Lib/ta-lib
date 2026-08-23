@@ -352,7 +352,7 @@ public partial class Core
       public double Update( double inReal, double inVolume )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("OBV", "update", RetCode.BadParam);
-         core.OBV_StreamStep(this, inReal, inVolume);
+         core.OBV_StepImpl(this, inReal, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -373,7 +373,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("OBV", "peek", RetCode.BadParam);
          OBV_Stream scratch = new OBV_Stream(this);
-         core.OBV_StreamStep(scratch, inReal, inVolume);
+         core.OBV_StepImpl(scratch, inReal, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -393,7 +393,7 @@ public partial class Core
       }
    }
 
-   internal void OBV_StreamStep( OBV_Stream sp, double inReal, double inVolume )
+   internal void OBV_StepImpl( OBV_Stream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       tempReal = inReal;

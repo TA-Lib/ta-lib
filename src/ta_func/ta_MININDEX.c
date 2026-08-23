@@ -258,7 +258,7 @@ struct TA_MININDEX_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_MININDEX_ReleaseInternal( struct TA_MININDEX_Stream *sp )
+static void TA_MININDEX_ReleaseImpl( struct TA_MININDEX_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inReal ) TA_Free( sp->x_inReal );
@@ -267,7 +267,7 @@ static void TA_MININDEX_ReleaseInternal( struct TA_MININDEX_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_MININDEX_StepInternal( struct TA_MININDEX_Stream *sp, double inReal, int *outInteger )
+static void TA_MININDEX_StepImpl( struct TA_MININDEX_Stream *sp, double inReal, int *outInteger )
 {
    double tmp;
 
@@ -415,14 +415,14 @@ static TA_RetCode TA_MININDEX_OpenImpl( struct TA_MININDEX_Stream **stream, cons
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MININDEX_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MININDEX_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;
       sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inReal ) { TA_MININDEX_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inReal ) { TA_MININDEX_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inReal ) { TA_MININDEX_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inReal ) { TA_MININDEX_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -483,7 +483,7 @@ TA_LIB_API TA_RetCode TA_MININDEX_Update( TA_MININDEX_Stream *stream, double inR
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_MININDEX_StepInternal( stream, inReal, outInteger );
+   TA_MININDEX_StepImpl( stream, inReal, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -497,13 +497,13 @@ TA_LIB_API TA_RetCode TA_MININDEX_Peek( const TA_MININDEX_Stream *stream, double
    scratch = *stream;
    scratch.x_inReal = stream->xMirror_inReal;
    memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xPhys );
-   TA_MININDEX_StepInternal( &scratch, inReal, outInteger );
+   TA_MININDEX_StepImpl( &scratch, inReal, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_MININDEX_Close( TA_MININDEX_Stream *stream )
 {
-   TA_MININDEX_ReleaseInternal( stream );
+   TA_MININDEX_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

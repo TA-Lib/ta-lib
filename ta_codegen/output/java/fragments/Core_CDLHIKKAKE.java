@@ -439,7 +439,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKE update: BadParam", RetCode.BadParam);
-         core.CDLHIKKAKE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLHIKKAKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -455,7 +455,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
          CDLHIKKAKE_Stream scratch = new CDLHIKKAKE_Stream(this);
-         core.CDLHIKKAKE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLHIKKAKE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -476,7 +476,7 @@
          return new CDLHIKKAKE_Stream(this);
       }
    }
-   void CDLHIKKAKE_StreamStep( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLHIKKAKE_StepImpl( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( sp.lag1_inHigh < sp.lag2_inHigh &&
           sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */

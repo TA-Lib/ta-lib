@@ -330,7 +330,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WCLPRICE", "update", RetCode.BadParam);
-         core.WCLPRICE_StreamStep(this, inHigh, inLow, inClose);
+         core.WCLPRICE_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -352,7 +352,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WCLPRICE", "peek", RetCode.BadParam);
          WCLPRICE_Stream scratch = new WCLPRICE_Stream(this);
-         core.WCLPRICE_StreamStep(scratch, inHigh, inLow, inClose);
+         core.WCLPRICE_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -372,7 +372,7 @@ public partial class Core
       }
    }
 
-   internal void WCLPRICE_StreamStep( WCLPRICE_Stream sp, double inHigh, double inLow, double inClose )
+   internal void WCLPRICE_StepImpl( WCLPRICE_Stream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (Math.FusedMultiplyAdd(inClose, 2.0, inHigh + inLow)) / 4.0;
    }

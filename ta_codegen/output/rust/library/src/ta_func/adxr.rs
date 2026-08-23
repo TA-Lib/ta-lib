@@ -342,7 +342,7 @@ impl ADXR_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ADXR_step_internal(&self, sp: &mut ADXR_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn ADXR_step_impl(&self, sp: &mut ADXR_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut cur_adx: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
 
@@ -553,7 +553,7 @@ impl ADXR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.ADXR_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal)?;
+        self.core.ADXR_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

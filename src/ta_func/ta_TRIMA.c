@@ -529,7 +529,7 @@ struct TA_TRIMA_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_TRIMA_ReleaseInternal( struct TA_TRIMA_Stream *sp )
+static void TA_TRIMA_ReleaseImpl( struct TA_TRIMA_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_middleIdx_inReal ) TA_Free( sp->ring_middleIdx_inReal );
@@ -540,7 +540,7 @@ static void TA_TRIMA_ReleaseInternal( struct TA_TRIMA_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_TRIMA_StepInternal( struct TA_TRIMA_Stream *sp, double inReal, double *outReal )
+static void TA_TRIMA_StepImpl( struct TA_TRIMA_Stream *sp, double inReal, double *outReal )
 {
    if( sp->optInTimePeriod % 2 == 1 )
    {
@@ -866,22 +866,22 @@ static TA_RetCode TA_TRIMA_OpenImpl( struct TA_TRIMA_Stream **stream, const doub
       sp->factor = factor;
       sp->tempReal = tempReal;
       sp->ringCap_middleIdx = (int)(todayIdx - middleIdx);
-      if( sp->ringCap_middleIdx < 0 || sp->ringCap_middleIdx > historyLen ) { TA_TRIMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_middleIdx < 0 || sp->ringCap_middleIdx > historyLen ) { TA_TRIMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_middleIdx > 0 ? sp->ringCap_middleIdx : 1);
         sp->ring_middleIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_middleIdx_inReal ) { TA_TRIMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_middleIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_middleIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_middleIdx_inReal ) { TA_TRIMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_middleIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_middleIdx_inReal, inReal + (historyLen - sp->ringCap_middleIdx), sizeof(double) * (size_t)sp->ringCap_middleIdx );
       }
       sp->ringPos_middleIdx = 0;
       sp->ringCap_trailingIdx = (int)(todayIdx - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_TRIMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_TRIMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_TRIMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_TRIMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -1087,22 +1087,22 @@ static TA_RetCode TA_TRIMA_OpenImpl( struct TA_TRIMA_Stream **stream, const doub
       sp->factor = factor;
       sp->tempReal = tempReal;
       sp->ringCap_middleIdx = (int)(todayIdx - middleIdx);
-      if( sp->ringCap_middleIdx < 0 || sp->ringCap_middleIdx > historyLen ) { TA_TRIMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_middleIdx < 0 || sp->ringCap_middleIdx > historyLen ) { TA_TRIMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_middleIdx > 0 ? sp->ringCap_middleIdx : 1);
         sp->ring_middleIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_middleIdx_inReal ) { TA_TRIMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_middleIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_middleIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_middleIdx_inReal ) { TA_TRIMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_middleIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_middleIdx_inReal, inReal + (historyLen - sp->ringCap_middleIdx), sizeof(double) * (size_t)sp->ringCap_middleIdx );
       }
       sp->ringPos_middleIdx = 0;
       sp->ringCap_trailingIdx = (int)(todayIdx - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_TRIMA_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_TRIMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_TRIMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_TRIMA_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_TRIMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -1163,7 +1163,7 @@ TA_LIB_API TA_RetCode TA_TRIMA_Update( TA_TRIMA_Stream *stream, double inReal, d
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_TRIMA_StepInternal( stream, inReal, outReal );
+   TA_TRIMA_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -1179,13 +1179,13 @@ TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inRea
    memcpy( scratch.ring_middleIdx_inReal, stream->ring_middleIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_middleIdx > 0 ? stream->ringCap_middleIdx : 1) );
    scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
    memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_TRIMA_StepInternal( &scratch, inReal, outReal );
+   TA_TRIMA_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_TRIMA_Close( TA_TRIMA_Stream *stream )
 {
-   TA_TRIMA_ReleaseInternal( stream );
+   TA_TRIMA_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

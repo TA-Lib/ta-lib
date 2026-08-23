@@ -245,7 +245,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("FLOOR update: BadParam", RetCode.BadParam);
-         core.FLOOR_StreamStep(this, inReal);
+         core.FLOOR_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -261,7 +261,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
          FLOOR_Stream scratch = new FLOOR_Stream(this);
-         core.FLOOR_StreamStep(scratch, inReal);
+         core.FLOOR_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -282,7 +282,7 @@
          return new FLOOR_Stream(this);
       }
    }
-   void FLOOR_StreamStep( FLOOR_Stream sp, double inReal )
+   void FLOOR_StepImpl( FLOOR_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.floor(inReal);
    }

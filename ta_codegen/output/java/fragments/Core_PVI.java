@@ -350,7 +350,7 @@
       public double update( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("PVI update: BadParam", RetCode.BadParam);
-         core.PVI_StreamStep(this, inClose, inVolume);
+         core.PVI_StepImpl(this, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -366,7 +366,7 @@
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("PVI peek: BadParam", RetCode.BadParam);
          PVI_Stream scratch = new PVI_Stream(this);
-         core.PVI_StreamStep(scratch, inClose, inVolume);
+         core.PVI_StepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -387,7 +387,7 @@
          return new PVI_Stream(this);
       }
    }
-   void PVI_StreamStep( PVI_Stream sp, double inClose, double inVolume )
+   void PVI_StepImpl( PVI_Stream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;

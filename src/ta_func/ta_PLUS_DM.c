@@ -468,7 +468,7 @@ struct TA_PLUS_DM_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_PLUS_DM_StepInternal( struct TA_PLUS_DM_Stream *sp, double inHigh, double inLow, double *outReal )
+static void TA_PLUS_DM_StepImpl( struct TA_PLUS_DM_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    if( sp->optInTimePeriod <= 1 )
    {
@@ -934,7 +934,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Update( TA_PLUS_DM_Stream *stream, double inHig
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
-   TA_PLUS_DM_StepInternal( stream, inHigh, inLow, outReal );
+   TA_PLUS_DM_StepImpl( stream, inHigh, inLow, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -946,7 +946,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_PLUS_DM_StepInternal( &scratch, inHigh, inLow, outReal );
+   TA_PLUS_DM_StepImpl( &scratch, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
 

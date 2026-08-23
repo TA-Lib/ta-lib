@@ -493,7 +493,7 @@ impl MACDFIX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MACDFIX_step_internal(&self, sp: &mut MACDFIX_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
+    fn MACDFIX_step_impl(&self, sp: &mut MACDFIX_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
         let mut macdValue: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inReal;
@@ -812,7 +812,7 @@ impl MACDFIX_Stream {
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
-        self.core.MACDFIX_step_internal(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
+        self.core.MACDFIX_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

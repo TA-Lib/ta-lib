@@ -443,7 +443,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLLADDERBOTTOM update: BadParam", RetCode.BadParam);
-         core.CDLLADDERBOTTOM_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLLADDERBOTTOM_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -459,7 +459,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLLADDERBOTTOM peek: BadParam", RetCode.BadParam);
          CDLLADDERBOTTOM_Stream scratch = new CDLLADDERBOTTOM_Stream(this);
-         core.CDLLADDERBOTTOM_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLLADDERBOTTOM_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -480,7 +480,7 @@
          return new CDLLADDERBOTTOM_Stream(this);
       }
    }
-   void CDLLADDERBOTTOM_StreamStep( CDLLADDERBOTTOM_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLLADDERBOTTOM_StepImpl( CDLLADDERBOTTOM_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;

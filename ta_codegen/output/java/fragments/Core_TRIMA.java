@@ -690,7 +690,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIMA update: BadParam", RetCode.BadParam);
-         core.TRIMA_StreamStep(this, inReal);
+         core.TRIMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -714,7 +714,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.TRIMA_StreamStep(scratch, inReal);
+         core.TRIMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -735,7 +735,7 @@
          return new TRIMA_Stream(this);
       }
    }
-   void TRIMA_StreamStep( TRIMA_Stream sp, double inReal )
+   void TRIMA_StepImpl( TRIMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod % 2 == 1 ) {
          if( sp.ringCap_middleIdx == 0 ) {

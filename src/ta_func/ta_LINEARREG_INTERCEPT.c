@@ -280,7 +280,7 @@ struct TA_LINEARREG_INTERCEPT_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_LINEARREG_INTERCEPT_ReleaseInternal( struct TA_LINEARREG_INTERCEPT_Stream *sp )
+static void TA_LINEARREG_INTERCEPT_ReleaseImpl( struct TA_LINEARREG_INTERCEPT_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_inReal ) TA_Free( sp->ring_trailingIdx_inReal );
@@ -289,7 +289,7 @@ static void TA_LINEARREG_INTERCEPT_ReleaseInternal( struct TA_LINEARREG_INTERCEP
 }
 
 /* Private function, not in public API. */
-static void TA_LINEARREG_INTERCEPT_StepInternal( struct TA_LINEARREG_INTERCEPT_Stream *sp, double inReal, double *outReal )
+static void TA_LINEARREG_INTERCEPT_StepImpl( struct TA_LINEARREG_INTERCEPT_Stream *sp, double inReal, double *outReal )
 {
    double m;
 
@@ -437,12 +437,12 @@ static TA_RetCode TA_LINEARREG_INTERCEPT_OpenImpl( struct TA_LINEARREG_INTERCEPT
       sp->Divisor = Divisor;
       sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_LINEARREG_INTERCEPT_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_LINEARREG_INTERCEPT_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_LINEARREG_INTERCEPT_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_inReal ) { TA_LINEARREG_INTERCEPT_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_LINEARREG_INTERCEPT_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_inReal ) { TA_LINEARREG_INTERCEPT_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -500,7 +500,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Update( TA_LINEARREG_INTERCEPT_Stre
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_LINEARREG_INTERCEPT_StepInternal( stream, inReal, outReal );
+   TA_LINEARREG_INTERCEPT_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -514,13 +514,13 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Peek( const TA_LINEARREG_INTERCEPT_
    scratch = *stream;
    scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
    memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_LINEARREG_INTERCEPT_StepInternal( &scratch, inReal, outReal );
+   TA_LINEARREG_INTERCEPT_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Close( TA_LINEARREG_INTERCEPT_Stream *stream )
 {
-   TA_LINEARREG_INTERCEPT_ReleaseInternal( stream );
+   TA_LINEARREG_INTERCEPT_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

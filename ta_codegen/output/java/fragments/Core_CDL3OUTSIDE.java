@@ -349,7 +349,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3OUTSIDE update: BadParam", RetCode.BadParam);
-         core.CDL3OUTSIDE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDL3OUTSIDE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -365,7 +365,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
          CDL3OUTSIDE_Stream scratch = new CDL3OUTSIDE_Stream(this);
-         core.CDL3OUTSIDE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDL3OUTSIDE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -386,7 +386,7 @@
          return new CDL3OUTSIDE_Stream(this);
       }
    }
-   void CDL3OUTSIDE_StreamStep( CDL3OUTSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDL3OUTSIDE_StepImpl( CDL3OUTSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose ) {
          /* white engulfs black */

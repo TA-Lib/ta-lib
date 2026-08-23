@@ -472,7 +472,7 @@ impl CMO_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CMO_step_internal(&self, sp: &mut CMO_StreamState, inReal: f64, outReal: &mut f64) {
+    fn CMO_step_impl(&self, sp: &mut CMO_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
@@ -819,7 +819,7 @@ impl CMO_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.CMO_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.CMO_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

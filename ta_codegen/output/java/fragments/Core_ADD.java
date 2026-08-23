@@ -255,7 +255,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("ADD update: BadParam", RetCode.BadParam);
-         core.ADD_StreamStep(this, inReal0, inReal1);
+         core.ADD_StepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -271,7 +271,7 @@
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("ADD peek: BadParam", RetCode.BadParam);
          ADD_Stream scratch = new ADD_Stream(this);
-         core.ADD_StreamStep(scratch, inReal0, inReal1);
+         core.ADD_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -292,7 +292,7 @@
          return new ADD_Stream(this);
       }
    }
-   void ADD_StreamStep( ADD_Stream sp, double inReal0, double inReal1 )
+   void ADD_StepImpl( ADD_Stream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 + inReal1;
    }

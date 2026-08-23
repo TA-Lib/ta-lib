@@ -651,7 +651,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MIDPOINT", "update", RetCode.BadParam);
-         core.MIDPOINT_StreamStep(this, inReal);
+         core.MIDPOINT_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -671,7 +671,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MIDPOINT", "peek", RetCode.BadParam);
          MIDPOINT_Stream scratch = new MIDPOINT_Stream(this);
-         core.MIDPOINT_StreamStep(scratch, inReal);
+         core.MIDPOINT_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -691,7 +691,7 @@ public partial class Core
       }
    }
 
-   internal void MIDPOINT_StreamStep( MIDPOINT_Stream sp, double inReal )
+   internal void MIDPOINT_StepImpl( MIDPOINT_Stream sp, double inReal )
    {
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;

@@ -544,7 +544,7 @@ impl STOCHF_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCHF_step_internal(&self, sp: &mut STOCHF_StreamState, inHigh: f64, inLow: f64, inClose: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
+    fn STOCHF_step_impl(&self, sp: &mut STOCHF_StreamState, inHigh: f64, inLow: f64, inClose: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
         let mut tmp: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outFastD: f64 = 0.0_f64;
@@ -1002,7 +1002,7 @@ impl STOCHF_Stream {
         }
         let mut outFastK: f64 = 0.0_f64;
         let mut outFastD: f64 = 0.0_f64;
-        self.core.STOCHF_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outFastK, &mut outFastD)?;
+        self.core.STOCHF_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outFastK, &mut outFastD)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

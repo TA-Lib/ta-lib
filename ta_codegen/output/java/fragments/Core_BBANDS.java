@@ -892,7 +892,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
-         core.BBANDS_StreamStep(this, inReal);
+         core.BBANDS_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
          return this.cachedValue;
@@ -917,7 +917,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.BBANDS_StreamStep(scratch, inReal);
+         core.BBANDS_StepImpl(scratch, inReal);
          return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
       }
 
@@ -938,7 +938,7 @@
          return new BBANDS_Stream(this);
       }
    }
-   void BBANDS_StreamStep( BBANDS_Stream sp, double inReal )
+   void BBANDS_StepImpl( BBANDS_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

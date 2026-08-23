@@ -1292,7 +1292,7 @@ public partial class Core
       public MAMA_Value Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAMA", "update", RetCode.BadParam);
-         core.MAMA_StreamStep(this, inReal);
+         core.MAMA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new MAMA_Value(cur_outMAMA, cur_outFAMA);
       }
@@ -1318,7 +1318,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.MAMA_StreamStep(scratch, inReal);
+         core.MAMA_StepImpl(scratch, inReal);
          return new MAMA_Value(scratch.cur_outMAMA, scratch.cur_outFAMA);
       }
 
@@ -1338,7 +1338,7 @@ public partial class Core
       }
    }
 
-   internal void MAMA_StreamStep( MAMA_Stream sp, double inReal )
+   internal void MAMA_StepImpl( MAMA_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

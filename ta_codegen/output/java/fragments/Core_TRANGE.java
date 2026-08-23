@@ -360,7 +360,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
-         core.TRANGE_StreamStep(this, inHigh, inLow, inClose);
+         core.TRANGE_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -376,7 +376,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
          TRANGE_Stream scratch = new TRANGE_Stream(this);
-         core.TRANGE_StreamStep(scratch, inHigh, inLow, inClose);
+         core.TRANGE_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -397,7 +397,7 @@
          return new TRANGE_Stream(this);
       }
    }
-   void TRANGE_StreamStep( TRANGE_Stream sp, double inHigh, double inLow, double inClose )
+   void TRANGE_StepImpl( TRANGE_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double greatest = 0.0;

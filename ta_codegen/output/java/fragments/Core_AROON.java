@@ -521,7 +521,7 @@
       public Value update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROON update: BadParam", RetCode.BadParam);
-         core.AROON_StreamStep(this, inHigh, inLow);
+         core.AROON_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
          return this.cachedValue;
@@ -546,7 +546,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.AROON_StreamStep(scratch, inHigh, inLow);
+         core.AROON_StepImpl(scratch, inHigh, inLow);
          return new Value(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
       }
 
@@ -567,7 +567,7 @@
          return new AROON_Stream(this);
       }
    }
-   void AROON_StreamStep( AROON_Stream sp, double inHigh, double inLow )
+   void AROON_StepImpl( AROON_Stream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

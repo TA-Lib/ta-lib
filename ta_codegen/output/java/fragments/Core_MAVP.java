@@ -790,7 +790,7 @@
       public double update( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
             throw new TaLibArgumentException("MAVP update: BadParam", RetCode.BadParam);
-         core.MAVP_StreamStep(this, inReal, inPeriods);
+         core.MAVP_StepImpl(this, inReal, inPeriods);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -814,7 +814,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.MAVP_StreamStep(scratch, inReal, inPeriods);
+         core.MAVP_StepImpl(scratch, inReal, inPeriods);
          return scratch.cur_outReal;
       }
 
@@ -835,7 +835,7 @@
          return new MAVP_Stream(this);
       }
    }
-   void MAVP_StreamStep( MAVP_Stream sp, double inReal, double inPeriods )
+   void MAVP_StepImpl( MAVP_Stream sp, double inReal, double inPeriods )
    {
       int cp = (int)inPeriods;
       if( cp < sp.optInMinPeriod ) {

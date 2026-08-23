@@ -527,7 +527,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("PPO", "update", RetCode.BadParam);
-         core.PPO_StreamStep(this, inReal);
+         core.PPO_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -553,7 +553,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.PPO_StreamStep(scratch, inReal);
+         core.PPO_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -573,7 +573,7 @@ public partial class Core
       }
    }
 
-   internal void PPO_StreamStep( PPO_Stream sp, double inReal )
+   internal void PPO_StepImpl( PPO_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;

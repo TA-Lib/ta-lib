@@ -601,7 +601,7 @@ struct TA_STOCH_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_STOCH_ReleaseInternal( struct TA_STOCH_Stream *sp )
+static void TA_STOCH_ReleaseImpl( struct TA_STOCH_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
@@ -614,7 +614,7 @@ static void TA_STOCH_ReleaseInternal( struct TA_STOCH_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_STOCH_StepInternal( struct TA_STOCH_Stream *sp, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD )
+static TA_RetCode TA_STOCH_StepImpl( struct TA_STOCH_Stream *sp, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD )
 {
    double tmp;
    double cur_tempBuffer = 0.0;
@@ -1056,22 +1056,22 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;
       sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->x_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -1146,7 +1146,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Update( TA_STOCH_Stream *stream, double inHigh, d
 
    if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   retCode = TA_STOCH_StepInternal( stream, inHigh, inLow, inClose, outSlowK, outSlowD );
+   retCode = TA_STOCH_StepImpl( stream, inHigh, inLow, inClose, outSlowK, outSlowD );
    if( retCode != TA_SUCCESS ) return retCode;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -1166,7 +1166,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
    scratch.x_inClose = stream->xMirror_inClose;
    memcpy( scratch.x_inClose, stream->x_inClose, sizeof(double) * (size_t)stream->xPhys );
    scratch.peekMode = 1;
-   return TA_STOCH_StepInternal( &scratch, inHigh, inLow, inClose, outSlowK, outSlowD );
+   return TA_STOCH_StepImpl( &scratch, inHigh, inLow, inClose, outSlowK, outSlowD );
 }
 
 TA_LIB_API TA_RetCode TA_STOCH_Close( TA_STOCH_Stream *stream )
@@ -1174,7 +1174,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Close( TA_STOCH_Stream *stream )
    if( !stream ) return TA_SUCCESS;
    TA_MA_Close( stream->sub0 );
    TA_MA_Close( stream->sub1 );
-   TA_STOCH_ReleaseInternal( stream );
+   TA_STOCH_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

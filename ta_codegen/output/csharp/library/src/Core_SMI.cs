@@ -1028,7 +1028,7 @@ public partial class Core
       public SMI_Value Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("SMI", "update", RetCode.BadParam);
-         core.SMI_StreamStep(this, inHigh, inLow, inClose);
+         core.SMI_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new SMI_Value(cur_outSMI, cur_outSMISignal);
       }
@@ -1056,7 +1056,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.SMI_StreamStep(scratch, inHigh, inLow, inClose);
+         core.SMI_StepImpl(scratch, inHigh, inLow, inClose);
          return new SMI_Value(scratch.cur_outSMI, scratch.cur_outSMISignal);
       }
 
@@ -1076,7 +1076,7 @@ public partial class Core
       }
    }
 
-   internal void SMI_StreamStep( SMI_Stream sp, double inHigh, double inLow, double inClose )
+   internal void SMI_StepImpl( SMI_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

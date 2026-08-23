@@ -401,7 +401,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3OUTSIDE", "update", RetCode.BadParam);
-         core.CDL3OUTSIDE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDL3OUTSIDE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -424,7 +424,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3OUTSIDE", "peek", RetCode.BadParam);
          CDL3OUTSIDE_Stream scratch = new CDL3OUTSIDE_Stream(this);
-         core.CDL3OUTSIDE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDL3OUTSIDE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -444,7 +444,7 @@ public partial class Core
       }
    }
 
-   internal void CDL3OUTSIDE_StreamStep( CDL3OUTSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDL3OUTSIDE_StepImpl( CDL3OUTSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose ) {
          /* white engulfs black */

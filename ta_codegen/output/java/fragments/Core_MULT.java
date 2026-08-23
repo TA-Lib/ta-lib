@@ -263,7 +263,7 @@
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("MULT update: BadParam", RetCode.BadParam);
-         core.MULT_StreamStep(this, inReal0, inReal1);
+         core.MULT_StepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -279,7 +279,7 @@
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("MULT peek: BadParam", RetCode.BadParam);
          MULT_Stream scratch = new MULT_Stream(this);
-         core.MULT_StreamStep(scratch, inReal0, inReal1);
+         core.MULT_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -300,7 +300,7 @@
          return new MULT_Stream(this);
       }
    }
-   void MULT_StreamStep( MULT_Stream sp, double inReal0, double inReal1 )
+   void MULT_StepImpl( MULT_Stream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 * inReal1;
    }

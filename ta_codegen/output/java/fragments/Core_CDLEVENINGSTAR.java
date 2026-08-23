@@ -531,7 +531,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLEVENINGSTAR update: BadParam", RetCode.BadParam);
-         core.CDLEVENINGSTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLEVENINGSTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -555,7 +555,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLEVENINGSTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLEVENINGSTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -576,7 +576,7 @@
          return new CDLEVENINGSTAR_Stream(this);
       }
    }
-   void CDLEVENINGSTAR_StreamStep( CDLEVENINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLEVENINGSTAR_StepImpl( CDLEVENINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

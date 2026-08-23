@@ -811,7 +811,7 @@ public partial class Core
       public STOCHF_Value Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("STOCHF", "update", RetCode.BadParam);
-         core.STOCHF_StreamStep(this, inHigh, inLow, inClose);
+         core.STOCHF_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new STOCHF_Value(cur_outFastK, cur_outFastD);
       }
@@ -839,7 +839,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.STOCHF_StreamStep(scratch, inHigh, inLow, inClose);
+         core.STOCHF_StepImpl(scratch, inHigh, inLow, inClose);
          return new STOCHF_Value(scratch.cur_outFastK, scratch.cur_outFastD);
       }
 
@@ -859,7 +859,7 @@ public partial class Core
       }
    }
 
-   internal void STOCHF_StreamStep( STOCHF_Stream sp, double inHigh, double inLow, double inClose )
+   internal void STOCHF_StepImpl( STOCHF_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;

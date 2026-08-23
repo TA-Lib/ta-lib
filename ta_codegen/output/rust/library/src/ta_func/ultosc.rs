@@ -567,7 +567,7 @@ impl ULTOSC_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ULTOSC_step_internal(&self, sp: &mut ULTOSC_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn ULTOSC_step_impl(&self, sp: &mut ULTOSC_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut trueLow: f64 = 0.0_f64;
         let mut trueRange: f64 = 0.0_f64;
         let mut closeMinusTrueLow: f64 = 0.0_f64;
@@ -1006,7 +1006,7 @@ impl ULTOSC_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.ULTOSC_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.ULTOSC_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

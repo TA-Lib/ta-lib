@@ -282,7 +282,7 @@
       public double update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
-         core.AVGPRICE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.AVGPRICE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -298,7 +298,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
          AVGPRICE_Stream scratch = new AVGPRICE_Stream(this);
-         core.AVGPRICE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.AVGPRICE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -319,7 +319,7 @@
          return new AVGPRICE_Stream(this);
       }
    }
-   void AVGPRICE_StreamStep( AVGPRICE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void AVGPRICE_StepImpl( AVGPRICE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
    }

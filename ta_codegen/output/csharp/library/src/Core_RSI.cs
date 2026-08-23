@@ -628,7 +628,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("RSI", "update", RetCode.BadParam);
-         core.RSI_StreamStep(this, inReal);
+         core.RSI_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -648,7 +648,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("RSI", "peek", RetCode.BadParam);
          RSI_Stream scratch = new RSI_Stream(this);
-         core.RSI_StreamStep(scratch, inReal);
+         core.RSI_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -668,7 +668,7 @@ public partial class Core
       }
    }
 
-   internal void RSI_StreamStep( RSI_Stream sp, double inReal )
+   internal void RSI_StepImpl( RSI_Stream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;

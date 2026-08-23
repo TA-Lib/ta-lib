@@ -315,7 +315,7 @@ struct TA_STOCHRSI_Stream {
 };
 
 /* Private function, not in public API. */
-static TA_RetCode TA_STOCHRSI_StepInternal( struct TA_STOCHRSI_Stream *sp, double inReal, double *outFastK, double *outFastD )
+static TA_RetCode TA_STOCHRSI_StepImpl( struct TA_STOCHRSI_Stream *sp, double inReal, double *outFastK, double *outFastD )
 {
    double cur_tempRSIBuffer = 0.0;
    double cur_outFastK = 0.0;
@@ -580,7 +580,7 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inR
 
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   retCode = TA_STOCHRSI_StepInternal( stream, inReal, outFastK, outFastD );
+   retCode = TA_STOCHRSI_StepImpl( stream, inReal, outFastK, outFastD );
    if( retCode != TA_SUCCESS ) return retCode;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -594,7 +594,7 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Peek( const TA_STOCHRSI_Stream *stream, double
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   return TA_STOCHRSI_StepInternal( &scratch, inReal, outFastK, outFastD );
+   return TA_STOCHRSI_StepImpl( &scratch, inReal, outFastK, outFastD );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHRSI_Close( TA_STOCHRSI_Stream *stream )

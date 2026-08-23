@@ -435,7 +435,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_INTERCEPT update: BadParam", RetCode.BadParam);
-         core.LINEARREG_INTERCEPT_StreamStep(this, inReal);
+         core.LINEARREG_INTERCEPT_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -451,7 +451,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_INTERCEPT peek: BadParam", RetCode.BadParam);
          LINEARREG_INTERCEPT_Stream scratch = new LINEARREG_INTERCEPT_Stream(this);
-         core.LINEARREG_INTERCEPT_StreamStep(scratch, inReal);
+         core.LINEARREG_INTERCEPT_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -472,7 +472,7 @@
          return new LINEARREG_INTERCEPT_Stream(this);
       }
    }
-   void LINEARREG_INTERCEPT_StreamStep( LINEARREG_INTERCEPT_Stream sp, double inReal )
+   void LINEARREG_INTERCEPT_StepImpl( LINEARREG_INTERCEPT_Stream sp, double inReal )
    {
       double m = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

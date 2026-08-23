@@ -505,7 +505,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MIN update: BadParam", RetCode.BadParam);
-         core.MIN_StreamStep(this, inReal);
+         core.MIN_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -521,7 +521,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MIN peek: BadParam", RetCode.BadParam);
          MIN_Stream scratch = new MIN_Stream(this);
-         core.MIN_StreamStep(scratch, inReal);
+         core.MIN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -542,7 +542,7 @@
          return new MIN_Stream(this);
       }
    }
-   void MIN_StreamStep( MIN_Stream sp, double inReal )
+   void MIN_StepImpl( MIN_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

@@ -81,7 +81,7 @@ fn test_rust_sma_ring_stream_section() {
     assert!(!s.contains("peekMode"), "no peekMode in the Rust tier");
     assert!(!s.contains("unsafe"), "stream sections are safe Rust");
     // Step: ring read-old-then-push order, `(*outReal)` write.
-    assert!(s.contains("fn SMA_step_internal(&self, sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64)"));
+    assert!(s.contains("fn SMA_step_impl(&self, sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64)"));
     assert!(s.contains("(*outReal) = sp.tempReal / (sp.optInTimePeriod as f64);"));
     assert!(s.contains("sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;"));
     // Open family: internal seam + thin wrapper + fill in batch param order.
@@ -210,7 +210,7 @@ fn test_rust_ht_dcperiod_parity_stream_section() {
     assert!(s.contains("sp.streamParity"));
     // The gate strip + parity carry leave no cursor/startIdx leak in the step.
     let step = s
-        .split("fn HT_DCPERIOD_step_internal")
+        .split("fn HT_DCPERIOD_step_impl")
         .nth(1)
         .and_then(|t| t.split("/// The single whole-history transcription").next())
         .expect("step body");

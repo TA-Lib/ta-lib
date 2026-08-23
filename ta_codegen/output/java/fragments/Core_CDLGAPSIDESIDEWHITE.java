@@ -489,7 +489,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE update: BadParam", RetCode.BadParam);
-         core.CDLGAPSIDESIDEWHITE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLGAPSIDESIDEWHITE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -513,7 +513,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLGAPSIDESIDEWHITE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLGAPSIDESIDEWHITE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -534,7 +534,7 @@
          return new CDLGAPSIDESIDEWHITE_Stream(this);
       }
    }
-   void CDLGAPSIDESIDEWHITE_StreamStep( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLGAPSIDESIDEWHITE_StepImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;

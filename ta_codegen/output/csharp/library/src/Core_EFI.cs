@@ -541,7 +541,7 @@ public partial class Core
       public double Update( double inClose, double inVolume )
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("EFI", "update", RetCode.BadParam);
-         core.EFI_StreamStep(this, inClose, inVolume);
+         core.EFI_StepImpl(this, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -562,7 +562,7 @@ public partial class Core
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("EFI", "peek", RetCode.BadParam);
          EFI_Stream scratch = new EFI_Stream(this);
-         core.EFI_StreamStep(scratch, inClose, inVolume);
+         core.EFI_StepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -582,7 +582,7 @@ public partial class Core
       }
    }
 
-   internal void EFI_StreamStep( EFI_Stream sp, double inClose, double inVolume )
+   internal void EFI_StepImpl( EFI_Stream sp, double inClose, double inVolume )
    {
       if( sp.optInTimePeriod == 1 ) {
          double force = 0.0;

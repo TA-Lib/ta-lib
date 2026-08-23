@@ -509,7 +509,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLBREAKAWAY", "update", RetCode.BadParam);
-         core.CDLBREAKAWAY_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLBREAKAWAY_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -532,7 +532,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLBREAKAWAY", "peek", RetCode.BadParam);
          CDLBREAKAWAY_Stream scratch = new CDLBREAKAWAY_Stream(this);
-         core.CDLBREAKAWAY_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLBREAKAWAY_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -552,7 +552,7 @@ public partial class Core
       }
    }
 
-   internal void CDLBREAKAWAY_StreamStep( CDLBREAKAWAY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLBREAKAWAY_StepImpl( CDLBREAKAWAY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

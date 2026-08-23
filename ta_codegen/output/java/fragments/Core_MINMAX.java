@@ -632,7 +632,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAX update: BadParam", RetCode.BadParam);
-         core.MINMAX_StreamStep(this, inReal);
+         core.MINMAX_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
          return this.cachedValue;
@@ -649,7 +649,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAX peek: BadParam", RetCode.BadParam);
          MINMAX_Stream scratch = new MINMAX_Stream(this);
-         core.MINMAX_StreamStep(scratch, inReal);
+         core.MINMAX_StepImpl(scratch, inReal);
          return new Value(scratch.cur_outMin, scratch.cur_outMax);
       }
 
@@ -670,7 +670,7 @@
          return new MINMAX_Stream(this);
       }
    }
-   void MINMAX_StreamStep( MINMAX_Stream sp, double inReal )
+   void MINMAX_StepImpl( MINMAX_Stream sp, double inReal )
    {
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;

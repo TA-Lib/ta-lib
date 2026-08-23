@@ -372,7 +372,7 @@
       public double update( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("IMI update: BadParam", RetCode.BadParam);
-         core.IMI_StreamStep(this, inOpen, inClose);
+         core.IMI_StepImpl(this, inOpen, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -396,7 +396,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.IMI_StreamStep(scratch, inOpen, inClose);
+         core.IMI_StepImpl(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
 
@@ -417,7 +417,7 @@
          return new IMI_Stream(this);
       }
    }
-   void IMI_StreamStep( IMI_Stream sp, double inOpen, double inClose )
+   void IMI_StepImpl( IMI_Stream sp, double inOpen, double inClose )
    {
       double upsum = 0.0;
       double downsum = 0.0;

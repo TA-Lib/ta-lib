@@ -490,7 +490,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG_ANGLE", "update", RetCode.BadParam);
-         core.LINEARREG_ANGLE_StreamStep(this, inReal);
+         core.LINEARREG_ANGLE_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -510,7 +510,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG_ANGLE", "peek", RetCode.BadParam);
          LINEARREG_ANGLE_Stream scratch = new LINEARREG_ANGLE_Stream(this);
-         core.LINEARREG_ANGLE_StreamStep(scratch, inReal);
+         core.LINEARREG_ANGLE_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -530,7 +530,7 @@ public partial class Core
       }
    }
 
-   internal void LINEARREG_ANGLE_StreamStep( LINEARREG_ANGLE_Stream sp, double inReal )
+   internal void LINEARREG_ANGLE_StepImpl( LINEARREG_ANGLE_Stream sp, double inReal )
    {
       double m = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

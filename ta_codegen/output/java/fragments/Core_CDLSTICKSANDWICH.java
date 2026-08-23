@@ -426,7 +426,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSTICKSANDWICH update: BadParam", RetCode.BadParam);
-         core.CDLSTICKSANDWICH_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLSTICKSANDWICH_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -442,7 +442,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
          CDLSTICKSANDWICH_Stream scratch = new CDLSTICKSANDWICH_Stream(this);
-         core.CDLSTICKSANDWICH_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLSTICKSANDWICH_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -463,7 +463,7 @@
          return new CDLSTICKSANDWICH_Stream(this);
       }
    }
-   void CDLSTICKSANDWICH_StreamStep( CDLSTICKSANDWICH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLSTICKSANDWICH_StepImpl( CDLSTICKSANDWICH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;

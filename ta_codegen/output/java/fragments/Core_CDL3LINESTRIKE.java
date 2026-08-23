@@ -467,7 +467,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3LINESTRIKE update: BadParam", RetCode.BadParam);
-         core.CDL3LINESTRIKE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDL3LINESTRIKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -491,7 +491,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CDL3LINESTRIKE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDL3LINESTRIKE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -512,7 +512,7 @@
          return new CDL3LINESTRIKE_Stream(this);
       }
    }
-   void CDL3LINESTRIKE_StreamStep( CDL3LINESTRIKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDL3LINESTRIKE_StepImpl( CDL3LINESTRIKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;

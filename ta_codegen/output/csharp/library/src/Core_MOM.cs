@@ -413,7 +413,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MOM", "update", RetCode.BadParam);
-         core.MOM_StreamStep(this, inReal);
+         core.MOM_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -433,7 +433,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MOM", "peek", RetCode.BadParam);
          MOM_Stream scratch = new MOM_Stream(this);
-         core.MOM_StreamStep(scratch, inReal);
+         core.MOM_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -453,7 +453,7 @@ public partial class Core
       }
    }
 
-   internal void MOM_StreamStep( MOM_Stream sp, double inReal )
+   internal void MOM_StepImpl( MOM_Stream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;

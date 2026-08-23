@@ -520,7 +520,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3BLACKCROWS", "update", RetCode.BadParam);
-         core.CDL3BLACKCROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDL3BLACKCROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -549,7 +549,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDL3BLACKCROWS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDL3BLACKCROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -569,7 +569,7 @@ public partial class Core
       }
    }
 
-   internal void CDL3BLACKCROWS_StreamStep( CDL3BLACKCROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDL3BLACKCROWS_StepImpl( CDL3BLACKCROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;

@@ -408,7 +408,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ADXR update: BadParam", RetCode.BadParam);
-         core.ADXR_StreamStep(this, inHigh, inLow, inClose);
+         core.ADXR_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -424,7 +424,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ADXR peek: BadParam", RetCode.BadParam);
          ADXR_Stream scratch = new ADXR_Stream(this);
-         core.ADXR_StreamStep(scratch, inHigh, inLow, inClose);
+         core.ADXR_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -445,7 +445,7 @@
          return new ADXR_Stream(this);
       }
    }
-   void ADXR_StreamStep( ADXR_Stream sp, double inHigh, double inLow, double inClose )
+   void ADXR_StepImpl( ADXR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double cur_adx = 0.0;
       double cur_outReal = 0.0;

@@ -448,7 +448,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STDDEV", "update", RetCode.BadParam);
-         core.STDDEV_StreamStep(this, inReal);
+         core.STDDEV_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -468,7 +468,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STDDEV", "peek", RetCode.BadParam);
          STDDEV_Stream scratch = new STDDEV_Stream(this);
-         core.STDDEV_StreamStep(scratch, inReal);
+         core.STDDEV_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -488,7 +488,7 @@ public partial class Core
       }
    }
 
-   internal void STDDEV_StreamStep( STDDEV_Stream sp, double inReal )
+   internal void STDDEV_StepImpl( STDDEV_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       double cur_outReal = 0.0;

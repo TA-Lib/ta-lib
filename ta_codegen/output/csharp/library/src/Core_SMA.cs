@@ -431,7 +431,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SMA", "update", RetCode.BadParam);
-         core.SMA_StreamStep(this, inReal);
+         core.SMA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -451,7 +451,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SMA", "peek", RetCode.BadParam);
          SMA_Stream scratch = new SMA_Stream(this);
-         core.SMA_StreamStep(scratch, inReal);
+         core.SMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -471,7 +471,7 @@ public partial class Core
       }
    }
 
-   internal void SMA_StreamStep( SMA_Stream sp, double inReal )
+   internal void SMA_StepImpl( SMA_Stream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;

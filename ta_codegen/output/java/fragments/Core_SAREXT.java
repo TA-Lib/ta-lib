@@ -959,7 +959,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
-         core.SAREXT_StreamStep(this, inHigh, inLow);
+         core.SAREXT_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -975,7 +975,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
          SAREXT_Stream scratch = new SAREXT_Stream(this);
-         core.SAREXT_StreamStep(scratch, inHigh, inLow);
+         core.SAREXT_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -996,7 +996,7 @@
          return new SAREXT_Stream(this);
       }
    }
-   void SAREXT_StreamStep( SAREXT_Stream sp, double inHigh, double inLow )
+   void SAREXT_StepImpl( SAREXT_Stream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;

@@ -273,7 +273,7 @@ struct TA_CDLLADDERBOTTOM_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDLLADDERBOTTOM_ReleaseInternal( struct TA_CDLLADDERBOTTOM_Stream *sp )
+static void TA_CDLLADDERBOTTOM_ReleaseImpl( struct TA_CDLLADDERBOTTOM_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_ShadowVeryShortTrailingIdx_derived ) TA_Free( sp->ring_ShadowVeryShortTrailingIdx_derived );
@@ -282,7 +282,7 @@ static void TA_CDLLADDERBOTTOM_ReleaseInternal( struct TA_CDLLADDERBOTTOM_Stream
 }
 
 /* Private function, not in public API. */
-static void TA_CDLLADDERBOTTOM_StepInternal( struct TA_CDLLADDERBOTTOM_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDLLADDERBOTTOM_StepImpl( struct TA_CDLLADDERBOTTOM_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
@@ -433,12 +433,12 @@ static TA_RetCode TA_CDLLADDERBOTTOM_OpenImpl( struct TA_CDLLADDERBOTTOM_Stream 
       sp->ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
       sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
       sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 2;
-      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLLADDERBOTTOM_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLLADDERBOTTOM_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLLADDERBOTTOM_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLLADDERBOTTOM_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_derived ) { TA_CDLLADDERBOTTOM_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_ShadowVeryShortTrailingIdx_derived ) { TA_CDLLADDERBOTTOM_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_ShadowVeryShortTrailingIdx_derived[fillJ % sp->ringCap_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -509,7 +509,7 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Update( TA_CDLLADDERBOTTOM_Stream *stre
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDLLADDERBOTTOM_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLLADDERBOTTOM_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -523,13 +523,13 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Peek( const TA_CDLLADDERBOTTOM_Stream *
    scratch = *stream;
    scratch.ring_ShadowVeryShortTrailingIdx_derived = stream->ringMirror_ShadowVeryShortTrailingIdx_derived;
    memcpy( scratch.ring_ShadowVeryShortTrailingIdx_derived, stream->ring_ShadowVeryShortTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_ShadowVeryShortTrailingIdx > 0 ? stream->ringCap_ShadowVeryShortTrailingIdx : 1) );
-   TA_CDLLADDERBOTTOM_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLLADDERBOTTOM_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Close( TA_CDLLADDERBOTTOM_Stream *stream )
 {
-   TA_CDLLADDERBOTTOM_ReleaseInternal( stream );
+   TA_CDLLADDERBOTTOM_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

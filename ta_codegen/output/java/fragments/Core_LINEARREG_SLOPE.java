@@ -431,7 +431,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_SLOPE update: BadParam", RetCode.BadParam);
-         core.LINEARREG_SLOPE_StreamStep(this, inReal);
+         core.LINEARREG_SLOPE_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -447,7 +447,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_SLOPE peek: BadParam", RetCode.BadParam);
          LINEARREG_SLOPE_Stream scratch = new LINEARREG_SLOPE_Stream(this);
-         core.LINEARREG_SLOPE_StreamStep(scratch, inReal);
+         core.LINEARREG_SLOPE_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -468,7 +468,7 @@
          return new LINEARREG_SLOPE_Stream(this);
       }
    }
-   void LINEARREG_SLOPE_StreamStep( LINEARREG_SLOPE_Stream sp, double inReal )
+   void LINEARREG_SLOPE_StepImpl( LINEARREG_SLOPE_Stream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;

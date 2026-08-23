@@ -606,7 +606,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("NATR update: BadParam", RetCode.BadParam);
-         core.NATR_StreamStep(this, inHigh, inLow, inClose);
+         core.NATR_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -622,7 +622,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("NATR peek: BadParam", RetCode.BadParam);
          NATR_Stream scratch = new NATR_Stream(this);
-         core.NATR_StreamStep(scratch, inHigh, inLow, inClose);
+         core.NATR_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -643,7 +643,7 @@
          return new NATR_Stream(this);
       }
    }
-   void NATR_StreamStep( NATR_Stream sp, double inHigh, double inLow, double inClose )
+   void NATR_StepImpl( NATR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double greatest = 0.0;

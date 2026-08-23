@@ -526,7 +526,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TEMA update: BadParam", RetCode.BadParam);
-         core.TEMA_StreamStep(this, inReal);
+         core.TEMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -542,7 +542,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
          TEMA_Stream scratch = new TEMA_Stream(this);
-         core.TEMA_StreamStep(scratch, inReal);
+         core.TEMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -563,7 +563,7 @@
          return new TEMA_Stream(this);
       }
    }
-   void TEMA_StreamStep( TEMA_Stream sp, double inReal )
+   void TEMA_StepImpl( TEMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

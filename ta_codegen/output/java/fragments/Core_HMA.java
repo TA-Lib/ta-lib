@@ -773,7 +773,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HMA update: BadParam", RetCode.BadParam);
-         core.HMA_StreamStep(this, inReal);
+         core.HMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -797,7 +797,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.HMA_StreamStep(scratch, inReal);
+         core.HMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -818,7 +818,7 @@
          return new HMA_Stream(this);
       }
    }
-   void HMA_StreamStep( HMA_Stream sp, double inReal )
+   void HMA_StepImpl( HMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

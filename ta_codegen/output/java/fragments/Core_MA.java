@@ -657,7 +657,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MA update: BadParam", RetCode.BadParam);
-         core.MA_StreamStep(this, inReal);
+         core.MA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -681,7 +681,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.MA_StreamStep(scratch, inReal);
+         core.MA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -702,7 +702,7 @@
          return new MA_Stream(this);
       }
    }
-   void MA_StreamStep( MA_Stream sp, double inReal )
+   void MA_StepImpl( MA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
          sp.cur_outReal = inReal;

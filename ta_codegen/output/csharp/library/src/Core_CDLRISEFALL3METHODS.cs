@@ -610,7 +610,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLRISEFALL3METHODS", "update", RetCode.BadParam);
-         core.CDLRISEFALL3METHODS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLRISEFALL3METHODS_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -639,7 +639,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLRISEFALL3METHODS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLRISEFALL3METHODS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -659,7 +659,7 @@ public partial class Core
       }
    }
 
-   internal void CDLRISEFALL3METHODS_StreamStep( CDLRISEFALL3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLRISEFALL3METHODS_StepImpl( CDLRISEFALL3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

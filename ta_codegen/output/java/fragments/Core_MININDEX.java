@@ -408,7 +408,7 @@
       public int update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MININDEX update: BadParam", RetCode.BadParam);
-         core.MININDEX_StreamStep(this, inReal);
+         core.MININDEX_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -424,7 +424,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MININDEX peek: BadParam", RetCode.BadParam);
          MININDEX_Stream scratch = new MININDEX_Stream(this);
-         core.MININDEX_StreamStep(scratch, inReal);
+         core.MININDEX_StepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -445,7 +445,7 @@
          return new MININDEX_Stream(this);
       }
    }
-   void MININDEX_StreamStep( MININDEX_Stream sp, double inReal )
+   void MININDEX_StepImpl( MININDEX_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

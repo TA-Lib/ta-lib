@@ -437,7 +437,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TSF update: BadParam", RetCode.BadParam);
-         core.TSF_StreamStep(this, inReal);
+         core.TSF_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -453,7 +453,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TSF peek: BadParam", RetCode.BadParam);
          TSF_Stream scratch = new TSF_Stream(this);
-         core.TSF_StreamStep(scratch, inReal);
+         core.TSF_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -474,7 +474,7 @@
          return new TSF_Stream(this);
       }
    }
-   void TSF_StreamStep( TSF_Stream sp, double inReal )
+   void TSF_StepImpl( TSF_Stream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;

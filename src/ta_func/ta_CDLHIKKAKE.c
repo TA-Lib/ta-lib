@@ -308,7 +308,7 @@ struct TA_CDLHIKKAKE_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDLHIKKAKE_StepInternal( struct TA_CDLHIKKAKE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDLHIKKAKE_StepImpl( struct TA_CDLHIKKAKE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( sp->lag1_inHigh < sp->lag2_inHigh &&
        sp->lag1_inLow > sp->lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
@@ -527,7 +527,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Update( TA_CDLHIKKAKE_Stream *stream, double
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDLHIKKAKE_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLHIKKAKE_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -539,7 +539,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Peek( const TA_CDLHIKKAKE_Stream *stream, do
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CDLHIKKAKE_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLHIKKAKE_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 

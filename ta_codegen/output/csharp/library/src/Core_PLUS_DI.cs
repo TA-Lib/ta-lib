@@ -867,7 +867,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("PLUS_DI", "update", RetCode.BadParam);
-         core.PLUS_DI_StreamStep(this, inHigh, inLow, inClose);
+         core.PLUS_DI_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -889,7 +889,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("PLUS_DI", "peek", RetCode.BadParam);
          PLUS_DI_Stream scratch = new PLUS_DI_Stream(this);
-         core.PLUS_DI_StreamStep(scratch, inHigh, inLow, inClose);
+         core.PLUS_DI_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -909,7 +909,7 @@ public partial class Core
       }
    }
 
-   internal void PLUS_DI_StreamStep( PLUS_DI_Stream sp, double inHigh, double inLow, double inClose )
+   internal void PLUS_DI_StepImpl( PLUS_DI_Stream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
          sp.tempReal = inHigh;

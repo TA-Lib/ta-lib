@@ -302,7 +302,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SIN", "update", RetCode.BadParam);
-         core.SIN_StreamStep(this, inReal);
+         core.SIN_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -322,7 +322,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SIN", "peek", RetCode.BadParam);
          SIN_Stream scratch = new SIN_Stream(this);
-         core.SIN_StreamStep(scratch, inReal);
+         core.SIN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -342,7 +342,7 @@ public partial class Core
       }
    }
 
-   internal void SIN_StreamStep( SIN_Stream sp, double inReal )
+   internal void SIN_StepImpl( SIN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Sin(inReal);
    }

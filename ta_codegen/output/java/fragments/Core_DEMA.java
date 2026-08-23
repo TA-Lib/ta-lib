@@ -483,7 +483,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("DEMA update: BadParam", RetCode.BadParam);
-         core.DEMA_StreamStep(this, inReal);
+         core.DEMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -499,7 +499,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
          DEMA_Stream scratch = new DEMA_Stream(this);
-         core.DEMA_StreamStep(scratch, inReal);
+         core.DEMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -520,7 +520,7 @@
          return new DEMA_Stream(this);
       }
    }
-   void DEMA_StreamStep( DEMA_Stream sp, double inReal )
+   void DEMA_StepImpl( DEMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

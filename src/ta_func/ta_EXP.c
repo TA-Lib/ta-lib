@@ -128,7 +128,7 @@ struct TA_EXP_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_EXP_StepInternal( struct TA_EXP_Stream *sp, double inReal, double *outReal )
+static void TA_EXP_StepImpl( struct TA_EXP_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= exp(inReal);
@@ -226,7 +226,7 @@ TA_LIB_API TA_RetCode TA_EXP_Update( TA_EXP_Stream *stream, double inReal, doubl
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_EXP_StepInternal( stream, inReal, outReal );
+   TA_EXP_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_EXP_Peek( const TA_EXP_Stream *stream, double inReal, d
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_EXP_StepInternal( &scratch, inReal, outReal );
+   TA_EXP_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

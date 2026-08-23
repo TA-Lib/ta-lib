@@ -534,7 +534,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("DEMA", "update", RetCode.BadParam);
-         core.DEMA_StreamStep(this, inReal);
+         core.DEMA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -554,7 +554,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("DEMA", "peek", RetCode.BadParam);
          DEMA_Stream scratch = new DEMA_Stream(this);
-         core.DEMA_StreamStep(scratch, inReal);
+         core.DEMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -574,7 +574,7 @@ public partial class Core
       }
    }
 
-   internal void DEMA_StreamStep( DEMA_Stream sp, double inReal )
+   internal void DEMA_StepImpl( DEMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

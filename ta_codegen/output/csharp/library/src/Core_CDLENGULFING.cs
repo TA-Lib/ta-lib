@@ -409,7 +409,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLENGULFING", "update", RetCode.BadParam);
-         core.CDLENGULFING_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLENGULFING_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -432,7 +432,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLENGULFING", "peek", RetCode.BadParam);
          CDLENGULFING_Stream scratch = new CDLENGULFING_Stream(this);
-         core.CDLENGULFING_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLENGULFING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -452,7 +452,7 @@ public partial class Core
       }
    }
 
-   internal void CDLENGULFING_StreamStep( CDLENGULFING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLENGULFING_StepImpl( CDLENGULFING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) ) {
          /* white engulfs black */

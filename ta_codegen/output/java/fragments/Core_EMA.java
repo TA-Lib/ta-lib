@@ -423,7 +423,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EMA update: BadParam", RetCode.BadParam);
-         core.EMA_StreamStep(this, inReal);
+         core.EMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -439,7 +439,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EMA peek: BadParam", RetCode.BadParam);
          EMA_Stream scratch = new EMA_Stream(this);
-         core.EMA_StreamStep(scratch, inReal);
+         core.EMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -460,7 +460,7 @@
          return new EMA_Stream(this);
       }
    }
-   void EMA_StreamStep( EMA_Stream sp, double inReal )
+   void EMA_StepImpl( EMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

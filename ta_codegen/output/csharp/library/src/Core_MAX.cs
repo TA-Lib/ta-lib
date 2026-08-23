@@ -563,7 +563,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAX", "update", RetCode.BadParam);
-         core.MAX_StreamStep(this, inReal);
+         core.MAX_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -583,7 +583,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAX", "peek", RetCode.BadParam);
          MAX_Stream scratch = new MAX_Stream(this);
-         core.MAX_StreamStep(scratch, inReal);
+         core.MAX_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -603,7 +603,7 @@ public partial class Core
       }
    }
 
-   internal void MAX_StreamStep( MAX_Stream sp, double inReal )
+   internal void MAX_StepImpl( MAX_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

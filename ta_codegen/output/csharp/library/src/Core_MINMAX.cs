@@ -681,7 +681,7 @@ public partial class Core
       public MINMAX_Value Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MINMAX", "update", RetCode.BadParam);
-         core.MINMAX_StreamStep(this, inReal);
+         core.MINMAX_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new MINMAX_Value(cur_outMin, cur_outMax);
       }
@@ -701,7 +701,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MINMAX", "peek", RetCode.BadParam);
          MINMAX_Stream scratch = new MINMAX_Stream(this);
-         core.MINMAX_StreamStep(scratch, inReal);
+         core.MINMAX_StepImpl(scratch, inReal);
          return new MINMAX_Value(scratch.cur_outMin, scratch.cur_outMax);
       }
 
@@ -721,7 +721,7 @@ public partial class Core
       }
    }
 
-   internal void MINMAX_StreamStep( MINMAX_Stream sp, double inReal )
+   internal void MINMAX_StepImpl( MINMAX_Stream sp, double inReal )
    {
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;

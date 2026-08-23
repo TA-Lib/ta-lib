@@ -489,7 +489,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG_INTERCEPT", "update", RetCode.BadParam);
-         core.LINEARREG_INTERCEPT_StreamStep(this, inReal);
+         core.LINEARREG_INTERCEPT_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -509,7 +509,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LINEARREG_INTERCEPT", "peek", RetCode.BadParam);
          LINEARREG_INTERCEPT_Stream scratch = new LINEARREG_INTERCEPT_Stream(this);
-         core.LINEARREG_INTERCEPT_StreamStep(scratch, inReal);
+         core.LINEARREG_INTERCEPT_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -529,7 +529,7 @@ public partial class Core
       }
    }
 
-   internal void LINEARREG_INTERCEPT_StreamStep( LINEARREG_INTERCEPT_Stream sp, double inReal )
+   internal void LINEARREG_INTERCEPT_StepImpl( LINEARREG_INTERCEPT_Stream sp, double inReal )
    {
       double m = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

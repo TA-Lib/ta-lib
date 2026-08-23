@@ -509,7 +509,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLRICKSHAWMAN update: BadParam", RetCode.BadParam);
-         core.CDLRICKSHAWMAN_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLRICKSHAWMAN_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -533,7 +533,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLRICKSHAWMAN_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLRICKSHAWMAN_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -554,7 +554,7 @@
          return new CDLRICKSHAWMAN_Stream(this);
       }
    }
-   void CDLRICKSHAWMAN_StreamStep( CDLRICKSHAWMAN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLRICKSHAWMAN_StepImpl( CDLRICKSHAWMAN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

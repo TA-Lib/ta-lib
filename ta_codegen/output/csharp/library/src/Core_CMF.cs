@@ -635,7 +635,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("CMF", "update", RetCode.BadParam);
-         core.CMF_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.CMF_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -664,7 +664,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CMF_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.CMF_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -684,7 +684,7 @@ public partial class Core
       }
    }
 
-   internal void CMF_StreamStep( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   internal void CMF_StepImpl( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
       sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];

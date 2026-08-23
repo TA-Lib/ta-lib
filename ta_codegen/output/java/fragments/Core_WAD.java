@@ -408,7 +408,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WAD update: BadParam", RetCode.BadParam);
-         core.WAD_StreamStep(this, inHigh, inLow, inClose);
+         core.WAD_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -424,7 +424,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WAD peek: BadParam", RetCode.BadParam);
          WAD_Stream scratch = new WAD_Stream(this);
-         core.WAD_StreamStep(scratch, inHigh, inLow, inClose);
+         core.WAD_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -445,7 +445,7 @@
          return new WAD_Stream(this);
       }
    }
-   void WAD_StreamStep( WAD_Stream sp, double inHigh, double inLow, double inClose )
+   void WAD_StepImpl( WAD_Stream sp, double inHigh, double inLow, double inClose )
    {
       double close = 0.0;
       close = inClose;

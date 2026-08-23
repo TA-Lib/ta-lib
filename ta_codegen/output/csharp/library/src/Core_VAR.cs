@@ -618,7 +618,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("VAR", "update", RetCode.BadParam);
-         core.VAR_StreamStep(this, inReal);
+         core.VAR_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -638,7 +638,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("VAR", "peek", RetCode.BadParam);
          VAR_Stream scratch = new VAR_Stream(this);
-         core.VAR_StreamStep(scratch, inReal);
+         core.VAR_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -658,7 +658,7 @@ public partial class Core
       }
    }
 
-   internal void VAR_StreamStep( VAR_Stream sp, double inReal )
+   internal void VAR_StepImpl( VAR_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.i >= 1073741824 ) {

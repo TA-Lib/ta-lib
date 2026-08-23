@@ -382,7 +382,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SMA update: BadParam", RetCode.BadParam);
-         core.SMA_StreamStep(this, inReal);
+         core.SMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -398,7 +398,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SMA peek: BadParam", RetCode.BadParam);
          SMA_Stream scratch = new SMA_Stream(this);
-         core.SMA_StreamStep(scratch, inReal);
+         core.SMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -419,7 +419,7 @@
          return new SMA_Stream(this);
       }
    }
-   void SMA_StreamStep( SMA_Stream sp, double inReal )
+   void SMA_StepImpl( SMA_Stream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;

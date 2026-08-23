@@ -302,7 +302,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("EXP", "update", RetCode.BadParam);
-         core.EXP_StreamStep(this, inReal);
+         core.EXP_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -322,7 +322,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("EXP", "peek", RetCode.BadParam);
          EXP_Stream scratch = new EXP_Stream(this);
-         core.EXP_StreamStep(scratch, inReal);
+         core.EXP_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -342,7 +342,7 @@ public partial class Core
       }
    }
 
-   internal void EXP_StreamStep( EXP_Stream sp, double inReal )
+   internal void EXP_StepImpl( EXP_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Exp(inReal);
    }

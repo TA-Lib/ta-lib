@@ -341,7 +341,7 @@ public partial class Core
       public double Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("AVGPRICE", "update", RetCode.BadParam);
-         core.AVGPRICE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.AVGPRICE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -364,7 +364,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("AVGPRICE", "peek", RetCode.BadParam);
          AVGPRICE_Stream scratch = new AVGPRICE_Stream(this);
-         core.AVGPRICE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.AVGPRICE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -384,7 +384,7 @@ public partial class Core
       }
    }
 
-   internal void AVGPRICE_StreamStep( AVGPRICE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void AVGPRICE_StepImpl( AVGPRICE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
    }

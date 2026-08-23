@@ -530,7 +530,7 @@ struct TA_RSI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_RSI_StepInternal( struct TA_RSI_Stream *sp, double inReal, double *outReal )
+static void TA_RSI_StepImpl( struct TA_RSI_Stream *sp, double inReal, double *outReal )
 {
    double tempValue1;
    double tempValue2;
@@ -898,7 +898,7 @@ TA_LIB_API TA_RetCode TA_RSI_Update( TA_RSI_Stream *stream, double inReal, doubl
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_RSI_StepInternal( stream, inReal, outReal );
+   TA_RSI_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -910,7 +910,7 @@ TA_LIB_API TA_RetCode TA_RSI_Peek( const TA_RSI_Stream *stream, double inReal, d
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_RSI_StepInternal( &scratch, inReal, outReal );
+   TA_RSI_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

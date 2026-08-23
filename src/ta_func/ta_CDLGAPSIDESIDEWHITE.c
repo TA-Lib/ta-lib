@@ -304,7 +304,7 @@ struct TA_CDLGAPSIDESIDEWHITE_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( struct TA_CDLGAPSIDESIDEWHITE_Stream *sp )
+static void TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( struct TA_CDLGAPSIDESIDEWHITE_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_EqualTrailingIdx_derived ) TA_Free( sp->ring_EqualTrailingIdx_derived );
@@ -315,7 +315,7 @@ static void TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( struct TA_CDLGAPSIDESIDEWHIT
 }
 
 /* Private function, not in public API. */
-static void TA_CDLGAPSIDESIDEWHITE_StepInternal( struct TA_CDLGAPSIDESIDEWHITE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDLGAPSIDESIDEWHITE_StepImpl( struct TA_CDLGAPSIDESIDEWHITE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
    sp->ring_NearTrailingIdx_derived[sp->ringPos_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
@@ -475,12 +475,12 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenImpl( struct TA_CDLGAPSIDESIDEWHITE
       sp->EqualPeriodTotal = EqualPeriodTotal;
       sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
       sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
-      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
         sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_EqualTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_EqualTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_EqualTrailingIdx_derived[fillJ % sp->ringCap_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -489,12 +489,12 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenImpl( struct TA_CDLGAPSIDESIDEWHITE
       sp->ringPos_EqualTrailingIdx = historyLen % sp->ringCap_EqualTrailingIdx;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
       sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 2;
-      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_NearTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -561,7 +561,7 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Update( TA_CDLGAPSIDESIDEWHITE_Stre
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDLGAPSIDESIDEWHITE_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLGAPSIDESIDEWHITE_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -577,13 +577,13 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Peek( const TA_CDLGAPSIDESIDEWHITE_
    memcpy( scratch.ring_EqualTrailingIdx_derived, stream->ring_EqualTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_EqualTrailingIdx > 0 ? stream->ringCap_EqualTrailingIdx : 1) );
    scratch.ring_NearTrailingIdx_derived = stream->ringMirror_NearTrailingIdx_derived;
    memcpy( scratch.ring_NearTrailingIdx_derived, stream->ring_NearTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_NearTrailingIdx > 0 ? stream->ringCap_NearTrailingIdx : 1) );
-   TA_CDLGAPSIDESIDEWHITE_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLGAPSIDESIDEWHITE_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Close( TA_CDLGAPSIDESIDEWHITE_Stream *stream )
 {
-   TA_CDLGAPSIDESIDEWHITE_ReleaseInternal( stream );
+   TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

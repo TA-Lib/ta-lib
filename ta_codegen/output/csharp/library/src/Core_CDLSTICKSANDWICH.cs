@@ -480,7 +480,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLSTICKSANDWICH", "update", RetCode.BadParam);
-         core.CDLSTICKSANDWICH_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLSTICKSANDWICH_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -503,7 +503,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLSTICKSANDWICH", "peek", RetCode.BadParam);
          CDLSTICKSANDWICH_Stream scratch = new CDLSTICKSANDWICH_Stream(this);
-         core.CDLSTICKSANDWICH_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLSTICKSANDWICH_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -523,7 +523,7 @@ public partial class Core
       }
    }
 
-   internal void CDLSTICKSANDWICH_StreamStep( CDLSTICKSANDWICH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLSTICKSANDWICH_StepImpl( CDLSTICKSANDWICH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;

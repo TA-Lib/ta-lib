@@ -346,7 +346,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
-         core.AVGDEV_StreamStep(this, inReal);
+         core.AVGDEV_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -362,7 +362,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
          AVGDEV_Stream scratch = new AVGDEV_Stream(this);
-         core.AVGDEV_StreamStep(scratch, inReal);
+         core.AVGDEV_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -383,7 +383,7 @@
          return new AVGDEV_Stream(this);
       }
    }
-   void AVGDEV_StreamStep( AVGDEV_Stream sp, double inReal )
+   void AVGDEV_StepImpl( AVGDEV_Stream sp, double inReal )
    {
       double todaySum = 0.0;
       double todayDev = 0.0;

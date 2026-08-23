@@ -702,7 +702,7 @@ impl HT_PHASOR_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HT_PHASOR_step_internal(&self, sp: &mut HT_PHASOR_StreamState, inReal: f64, outInPhase: &mut f64, outQuadrature: &mut f64) {
+    fn HT_PHASOR_step_impl(&self, sp: &mut HT_PHASOR_StreamState, inReal: f64, outInPhase: &mut f64, outQuadrature: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -1350,7 +1350,7 @@ impl HT_PHASOR_Stream {
         }
         let mut outInPhase: f64 = 0.0_f64;
         let mut outQuadrature: f64 = 0.0_f64;
-        self.core.HT_PHASOR_step_internal(&mut self.state, inReal, &mut outInPhase, &mut outQuadrature);
+        self.core.HT_PHASOR_step_impl(&mut self.state, inReal, &mut outInPhase, &mut outQuadrature);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

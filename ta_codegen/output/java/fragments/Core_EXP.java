@@ -245,7 +245,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EXP update: BadParam", RetCode.BadParam);
-         core.EXP_StreamStep(this, inReal);
+         core.EXP_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -261,7 +261,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EXP peek: BadParam", RetCode.BadParam);
          EXP_Stream scratch = new EXP_Stream(this);
-         core.EXP_StreamStep(scratch, inReal);
+         core.EXP_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -282,7 +282,7 @@
          return new EXP_Stream(this);
       }
    }
-   void EXP_StreamStep( EXP_Stream sp, double inReal )
+   void EXP_StepImpl( EXP_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.exp(inReal);
    }

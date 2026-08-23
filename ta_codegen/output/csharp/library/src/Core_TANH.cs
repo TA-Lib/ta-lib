@@ -302,7 +302,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TANH", "update", RetCode.BadParam);
-         core.TANH_StreamStep(this, inReal);
+         core.TANH_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -322,7 +322,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TANH", "peek", RetCode.BadParam);
          TANH_Stream scratch = new TANH_Stream(this);
-         core.TANH_StreamStep(scratch, inReal);
+         core.TANH_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -342,7 +342,7 @@ public partial class Core
       }
    }
 
-   internal void TANH_StreamStep( TANH_Stream sp, double inReal )
+   internal void TANH_StepImpl( TANH_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Tanh(inReal);
    }

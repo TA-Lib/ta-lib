@@ -415,7 +415,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMATCHINGLOW update: BadParam", RetCode.BadParam);
-         core.CDLMATCHINGLOW_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLMATCHINGLOW_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -431,7 +431,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMATCHINGLOW peek: BadParam", RetCode.BadParam);
          CDLMATCHINGLOW_Stream scratch = new CDLMATCHINGLOW_Stream(this);
-         core.CDLMATCHINGLOW_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLMATCHINGLOW_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -452,7 +452,7 @@
          return new CDLMATCHINGLOW_Stream(this);
       }
    }
-   void CDLMATCHINGLOW_StreamStep( CDLMATCHINGLOW_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLMATCHINGLOW_StepImpl( CDLMATCHINGLOW_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;

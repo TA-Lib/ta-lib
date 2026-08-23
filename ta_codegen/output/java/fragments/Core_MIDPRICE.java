@@ -615,7 +615,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MIDPRICE update: BadParam", RetCode.BadParam);
-         core.MIDPRICE_StreamStep(this, inHigh, inLow);
+         core.MIDPRICE_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -639,7 +639,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.MIDPRICE_StreamStep(scratch, inHigh, inLow);
+         core.MIDPRICE_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -660,7 +660,7 @@
          return new MIDPRICE_Stream(this);
       }
    }
-   void MIDPRICE_StreamStep( MIDPRICE_Stream sp, double inHigh, double inLow )
+   void MIDPRICE_StepImpl( MIDPRICE_Stream sp, double inHigh, double inLow )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;

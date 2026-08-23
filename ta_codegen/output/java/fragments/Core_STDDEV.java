@@ -394,7 +394,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
-         core.STDDEV_StreamStep(this, inReal);
+         core.STDDEV_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -410,7 +410,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
          STDDEV_Stream scratch = new STDDEV_Stream(this);
-         core.STDDEV_StreamStep(scratch, inReal);
+         core.STDDEV_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -431,7 +431,7 @@
          return new STDDEV_Stream(this);
       }
    }
-   void STDDEV_StreamStep( STDDEV_Stream sp, double inReal )
+   void STDDEV_StepImpl( STDDEV_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       double cur_outReal = 0.0;

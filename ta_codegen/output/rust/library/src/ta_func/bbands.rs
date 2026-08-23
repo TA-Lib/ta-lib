@@ -648,7 +648,7 @@ impl BBANDS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BBANDS_step_internal(&self, sp: &mut BBANDS_StreamState, inReal: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) -> Result<(), RetCode> {
+    fn BBANDS_step_impl(&self, sp: &mut BBANDS_StreamState, inReal: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut cur_tempBuffer1: f64 = 0.0_f64;
@@ -955,7 +955,7 @@ impl BBANDS_Stream {
         let mut outRealUpperBand: f64 = 0.0_f64;
         let mut outRealMiddleBand: f64 = 0.0_f64;
         let mut outRealLowerBand: f64 = 0.0_f64;
-        self.core.BBANDS_step_internal(&mut self.state, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)?;
+        self.core.BBANDS_step_impl(&mut self.state, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

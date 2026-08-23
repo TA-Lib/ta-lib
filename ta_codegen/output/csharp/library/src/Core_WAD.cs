@@ -461,7 +461,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WAD", "update", RetCode.BadParam);
-         core.WAD_StreamStep(this, inHigh, inLow, inClose);
+         core.WAD_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -483,7 +483,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WAD", "peek", RetCode.BadParam);
          WAD_Stream scratch = new WAD_Stream(this);
-         core.WAD_StreamStep(scratch, inHigh, inLow, inClose);
+         core.WAD_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -503,7 +503,7 @@ public partial class Core
       }
    }
 
-   internal void WAD_StreamStep( WAD_Stream sp, double inHigh, double inLow, double inClose )
+   internal void WAD_StepImpl( WAD_Stream sp, double inHigh, double inLow, double inClose )
    {
       double close = 0.0;
       close = inClose;

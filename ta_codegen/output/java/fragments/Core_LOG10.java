@@ -253,7 +253,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
-         core.LOG10_StreamStep(this, inReal);
+         core.LOG10_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -269,7 +269,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
          LOG10_Stream scratch = new LOG10_Stream(this);
-         core.LOG10_StreamStep(scratch, inReal);
+         core.LOG10_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -290,7 +290,7 @@
          return new LOG10_Stream(this);
       }
    }
-   void LOG10_StreamStep( LOG10_Stream sp, double inReal )
+   void LOG10_StepImpl( LOG10_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.log10(inReal);
    }

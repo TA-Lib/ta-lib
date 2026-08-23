@@ -1412,7 +1412,7 @@
       public int update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
-         core.HT_TRENDMODE_StreamStep(this, inReal);
+         core.HT_TRENDMODE_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -1436,7 +1436,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.HT_TRENDMODE_StreamStep(scratch, inReal);
+         core.HT_TRENDMODE_StepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -1457,7 +1457,7 @@
          return new HT_TRENDMODE_Stream(this);
       }
    }
-   void HT_TRENDMODE_StreamStep( HT_TRENDMODE_Stream sp, double inReal )
+   void HT_TRENDMODE_StepImpl( HT_TRENDMODE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

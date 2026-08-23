@@ -490,7 +490,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TSF", "update", RetCode.BadParam);
-         core.TSF_StreamStep(this, inReal);
+         core.TSF_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -510,7 +510,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TSF", "peek", RetCode.BadParam);
          TSF_Stream scratch = new TSF_Stream(this);
-         core.TSF_StreamStep(scratch, inReal);
+         core.TSF_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -530,7 +530,7 @@ public partial class Core
       }
    }
 
-   internal void TSF_StreamStep( TSF_Stream sp, double inReal )
+   internal void TSF_StepImpl( TSF_Stream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;

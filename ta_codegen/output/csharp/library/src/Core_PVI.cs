@@ -412,7 +412,7 @@ public partial class Core
       public double Update( double inClose, double inVolume )
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("PVI", "update", RetCode.BadParam);
-         core.PVI_StreamStep(this, inClose, inVolume);
+         core.PVI_StepImpl(this, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -433,7 +433,7 @@ public partial class Core
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("PVI", "peek", RetCode.BadParam);
          PVI_Stream scratch = new PVI_Stream(this);
-         core.PVI_StreamStep(scratch, inClose, inVolume);
+         core.PVI_StepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -453,7 +453,7 @@ public partial class Core
       }
    }
 
-   internal void PVI_StreamStep( PVI_Stream sp, double inClose, double inVolume )
+   internal void PVI_StepImpl( PVI_Stream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;

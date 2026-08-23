@@ -348,7 +348,7 @@ struct TA_CCI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CCI_ReleaseInternal( struct TA_CCI_Stream *sp )
+static void TA_CCI_ReleaseImpl( struct TA_CCI_Stream *sp )
 {
    if( !sp ) return;
    if( sp->cb_circBuffer ) TA_Free( sp->cb_circBuffer );
@@ -357,7 +357,7 @@ static void TA_CCI_ReleaseInternal( struct TA_CCI_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_CCI_StepInternal( struct TA_CCI_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+static void TA_CCI_StepImpl( struct TA_CCI_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double lastValue;
 
@@ -545,11 +545,11 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
       sp->circBuffer_Idx = circBuffer_Idx;
       sp->maxIdx_circBuffer = maxIdx_circBuffer;
       sp->cbSize_circBuffer = maxIdx_circBuffer + 1;
-      if( sp->cbSize_circBuffer < 1 || sp->cbSize_circBuffer > historyLen + 1 ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->cbSize_circBuffer < 1 || sp->cbSize_circBuffer > historyLen + 1 ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->cb_circBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_circBuffer );
-      if( !sp->cb_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->cbMirror_circBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_circBuffer );
-      if( !sp->cbMirror_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cbMirror_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_circBuffer, circBuffer, sizeof(double) * (size_t)sp->cbSize_circBuffer );
       if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); 
       sp->outRangeBegIdx = *outBegIdx;
@@ -606,7 +606,7 @@ TA_LIB_API TA_RetCode TA_CCI_Update( TA_CCI_Stream *stream, double inHigh, doubl
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CCI_StepInternal( stream, inHigh, inLow, inClose, outReal );
+   TA_CCI_StepImpl( stream, inHigh, inLow, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -620,13 +620,13 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    scratch = *stream;
    scratch.cb_circBuffer = stream->cbMirror_circBuffer;
    memcpy( scratch.cb_circBuffer, stream->cb_circBuffer, sizeof(double) * (size_t)stream->cbSize_circBuffer );
-   TA_CCI_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
+   TA_CCI_StepImpl( &scratch, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CCI_Close( TA_CCI_Stream *stream )
 {
-   TA_CCI_ReleaseInternal( stream );
+   TA_CCI_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

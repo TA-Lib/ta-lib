@@ -710,7 +710,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WILLR", "update", RetCode.BadParam);
-         core.WILLR_StreamStep(this, inHigh, inLow, inClose);
+         core.WILLR_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -738,7 +738,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.WILLR_StreamStep(scratch, inHigh, inLow, inClose);
+         core.WILLR_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -758,7 +758,7 @@ public partial class Core
       }
    }
 
-   internal void WILLR_StreamStep( WILLR_Stream sp, double inHigh, double inLow, double inClose )
+   internal void WILLR_StepImpl( WILLR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

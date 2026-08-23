@@ -522,7 +522,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLCONCEALBABYSWALL", "update", RetCode.BadParam);
-         core.CDLCONCEALBABYSWALL_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLCONCEALBABYSWALL_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -551,7 +551,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.CDLCONCEALBABYSWALL_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLCONCEALBABYSWALL_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -571,7 +571,7 @@ public partial class Core
       }
    }
 
-   internal void CDLCONCEALBABYSWALL_StreamStep( CDLCONCEALBABYSWALL_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLCONCEALBABYSWALL_StepImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;

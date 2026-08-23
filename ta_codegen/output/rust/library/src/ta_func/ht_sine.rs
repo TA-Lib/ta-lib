@@ -802,7 +802,7 @@ impl HT_SINE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HT_SINE_step_internal(&self, sp: &mut HT_SINE_StreamState, inReal: f64, outSine: &mut f64, outLeadSine: &mut f64) {
+    fn HT_SINE_step_impl(&self, sp: &mut HT_SINE_StreamState, inReal: f64, outSine: &mut f64, outLeadSine: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -1595,7 +1595,7 @@ impl HT_SINE_Stream {
         }
         let mut outSine: f64 = 0.0_f64;
         let mut outLeadSine: f64 = 0.0_f64;
-        self.core.HT_SINE_step_internal(&mut self.state, inReal, &mut outSine, &mut outLeadSine);
+        self.core.HT_SINE_step_impl(&mut self.state, inReal, &mut outSine, &mut outLeadSine);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

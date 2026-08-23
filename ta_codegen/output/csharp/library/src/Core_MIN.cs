@@ -560,7 +560,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MIN", "update", RetCode.BadParam);
-         core.MIN_StreamStep(this, inReal);
+         core.MIN_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -580,7 +580,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MIN", "peek", RetCode.BadParam);
          MIN_Stream scratch = new MIN_Stream(this);
-         core.MIN_StreamStep(scratch, inReal);
+         core.MIN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -600,7 +600,7 @@ public partial class Core
       }
    }
 
-   internal void MIN_StreamStep( MIN_Stream sp, double inReal )
+   internal void MIN_StepImpl( MIN_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

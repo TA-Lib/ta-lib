@@ -248,7 +248,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ATAN update: BadParam", RetCode.BadParam);
-         core.ATAN_StreamStep(this, inReal);
+         core.ATAN_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -264,7 +264,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
          ATAN_Stream scratch = new ATAN_Stream(this);
-         core.ATAN_StreamStep(scratch, inReal);
+         core.ATAN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -285,7 +285,7 @@
          return new ATAN_Stream(this);
       }
    }
-   void ATAN_StreamStep( ATAN_Stream sp, double inReal )
+   void ATAN_StepImpl( ATAN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.atan(inReal);
    }

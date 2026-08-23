@@ -293,7 +293,7 @@ impl AD_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn AD_step_internal(&self, sp: &mut AD_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn AD_step_impl(&self, sp: &mut AD_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut high: f64 = 0.0_f64;
         let mut low: f64 = 0.0_f64;
         let mut close: f64 = 0.0_f64;
@@ -468,7 +468,7 @@ impl AD_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.AD_step_internal(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        self.core.AD_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

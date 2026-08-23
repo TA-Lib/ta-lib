@@ -468,7 +468,7 @@
       public double update( double inVolume ) {
          if( !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("PVO update: BadParam", RetCode.BadParam);
-         core.PVO_StreamStep(this, inVolume);
+         core.PVO_StepImpl(this, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -492,7 +492,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.PVO_StreamStep(scratch, inVolume);
+         core.PVO_StepImpl(scratch, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -513,7 +513,7 @@
          return new PVO_Stream(this);
       }
    }
-   void PVO_StreamStep( PVO_Stream sp, double inVolume )
+   void PVO_StepImpl( PVO_Stream sp, double inVolume )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;

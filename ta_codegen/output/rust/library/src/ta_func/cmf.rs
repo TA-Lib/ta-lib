@@ -461,7 +461,7 @@ impl CMF_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CMF_step_internal(&self, sp: &mut CMF_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn CMF_step_impl(&self, sp: &mut CMF_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
         sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
         sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
         sp.high = inHigh;
@@ -744,7 +744,7 @@ impl CMF_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.CMF_step_internal(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        self.core.CMF_step_impl(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

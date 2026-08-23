@@ -559,7 +559,7 @@ impl HMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HMA_step_internal(&self, sp: &mut HMA_StreamState, inReal: f64, outReal: &mut f64) {
+    fn HMA_step_impl(&self, sp: &mut HMA_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
@@ -1172,7 +1172,7 @@ impl HMA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.HMA_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.HMA_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

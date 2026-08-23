@@ -205,7 +205,7 @@ struct TA_NVI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_NVI_StepInternal( struct TA_NVI_Stream *sp, double inClose, double inVolume, double *outReal )
+static void TA_NVI_StepImpl( struct TA_NVI_Stream *sp, double inClose, double inVolume, double *outReal )
 {
    double tempClose;
    double tempVolume;
@@ -378,7 +378,7 @@ TA_LIB_API TA_RetCode TA_NVI_Update( TA_NVI_Stream *stream, double inClose, doub
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   TA_NVI_StepInternal( stream, inClose, inVolume, outReal );
+   TA_NVI_StepImpl( stream, inClose, inVolume, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -390,7 +390,7 @@ TA_LIB_API TA_RetCode TA_NVI_Peek( const TA_NVI_Stream *stream, double inClose, 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_NVI_StepInternal( &scratch, inClose, inVolume, outReal );
+   TA_NVI_StepImpl( &scratch, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
 

@@ -371,7 +371,7 @@ impl PVO_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn PVO_step_internal(&self, sp: &mut PVO_StreamState, inVolume: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn PVO_step_impl(&self, sp: &mut PVO_StreamState, inVolume: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
@@ -607,7 +607,7 @@ impl PVO_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.PVO_step_internal(&mut self.state, inVolume, &mut outReal)?;
+        self.core.PVO_step_impl(&mut self.state, inVolume, &mut outReal)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

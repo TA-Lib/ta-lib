@@ -410,7 +410,7 @@
       public double update( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("QSTICK update: BadParam", RetCode.BadParam);
-         core.QSTICK_StreamStep(this, inOpen, inClose);
+         core.QSTICK_StepImpl(this, inOpen, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -426,7 +426,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
          QSTICK_Stream scratch = new QSTICK_Stream(this);
-         core.QSTICK_StreamStep(scratch, inOpen, inClose);
+         core.QSTICK_StepImpl(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
 
@@ -447,7 +447,7 @@
          return new QSTICK_Stream(this);
       }
    }
-   void QSTICK_StreamStep( QSTICK_Stream sp, double inOpen, double inClose )
+   void QSTICK_StepImpl( QSTICK_Stream sp, double inOpen, double inClose )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_derived[0] = (double)(inClose - inOpen);

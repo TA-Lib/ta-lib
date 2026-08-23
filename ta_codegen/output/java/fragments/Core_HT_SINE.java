@@ -1256,7 +1256,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
-         core.HT_SINE_StreamStep(this, inReal);
+         core.HT_SINE_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
          return this.cachedValue;
@@ -1281,7 +1281,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.HT_SINE_StreamStep(scratch, inReal);
+         core.HT_SINE_StepImpl(scratch, inReal);
          return new Value(scratch.cur_outSine, scratch.cur_outLeadSine);
       }
 
@@ -1302,7 +1302,7 @@
          return new HT_SINE_Stream(this);
       }
    }
-   void HT_SINE_StreamStep( HT_SINE_Stream sp, double inReal )
+   void HT_SINE_StepImpl( HT_SINE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

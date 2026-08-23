@@ -556,7 +556,7 @@ impl SAR_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SAR_step_internal(&self, sp: &mut SAR_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn SAR_step_impl(&self, sp: &mut SAR_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut prevHigh: f64 = 0.0_f64;
         let mut prevLow: f64 = 0.0_f64;
         prevLow = sp.newLow;
@@ -1016,7 +1016,7 @@ impl SAR_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.SAR_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        self.core.SAR_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

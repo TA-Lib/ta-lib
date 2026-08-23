@@ -355,7 +355,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLENGULFING update: BadParam", RetCode.BadParam);
-         core.CDLENGULFING_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLENGULFING_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -371,7 +371,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
          CDLENGULFING_Stream scratch = new CDLENGULFING_Stream(this);
-         core.CDLENGULFING_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLENGULFING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -392,7 +392,7 @@
          return new CDLENGULFING_Stream(this);
       }
    }
-   void CDLENGULFING_StreamStep( CDLENGULFING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLENGULFING_StepImpl( CDLENGULFING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) ) {
          /* white engulfs black */

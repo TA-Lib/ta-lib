@@ -465,7 +465,7 @@ public partial class Core
       public double Update( double inOpen, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("QSTICK", "update", RetCode.BadParam);
-         core.QSTICK_StreamStep(this, inOpen, inClose);
+         core.QSTICK_StepImpl(this, inOpen, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -486,7 +486,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("QSTICK", "peek", RetCode.BadParam);
          QSTICK_Stream scratch = new QSTICK_Stream(this);
-         core.QSTICK_StreamStep(scratch, inOpen, inClose);
+         core.QSTICK_StepImpl(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
 
@@ -506,7 +506,7 @@ public partial class Core
       }
    }
 
-   internal void QSTICK_StreamStep( QSTICK_Stream sp, double inOpen, double inClose )
+   internal void QSTICK_StepImpl( QSTICK_Stream sp, double inOpen, double inClose )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_derived[0] = (double)(inClose - inOpen);

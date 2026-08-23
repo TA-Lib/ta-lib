@@ -495,7 +495,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLHIKKAKE", "update", RetCode.BadParam);
-         core.CDLHIKKAKE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLHIKKAKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -518,7 +518,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLHIKKAKE", "peek", RetCode.BadParam);
          CDLHIKKAKE_Stream scratch = new CDLHIKKAKE_Stream(this);
-         core.CDLHIKKAKE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLHIKKAKE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -538,7 +538,7 @@ public partial class Core
       }
    }
 
-   internal void CDLHIKKAKE_StreamStep( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLHIKKAKE_StepImpl( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( sp.lag1_inHigh < sp.lag2_inHigh &&
           sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */

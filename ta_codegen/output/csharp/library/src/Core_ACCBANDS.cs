@@ -618,7 +618,7 @@ public partial class Core
       public ACCBANDS_Value Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ACCBANDS", "update", RetCode.BadParam);
-         core.ACCBANDS_StreamStep(this, inHigh, inLow, inClose);
+         core.ACCBANDS_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new ACCBANDS_Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
@@ -646,7 +646,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.ACCBANDS_StreamStep(scratch, inHigh, inLow, inClose);
+         core.ACCBANDS_StepImpl(scratch, inHigh, inLow, inClose);
          return new ACCBANDS_Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
       }
 
@@ -666,7 +666,7 @@ public partial class Core
       }
    }
 
-   internal void ACCBANDS_StreamStep( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
+   internal void ACCBANDS_StepImpl( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

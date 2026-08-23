@@ -447,7 +447,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWAP update: BadParam", RetCode.BadParam);
-         core.VWAP_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.VWAP_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -463,7 +463,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWAP peek: BadParam", RetCode.BadParam);
          VWAP_Stream scratch = new VWAP_Stream(this);
-         core.VWAP_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.VWAP_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -484,7 +484,7 @@
          return new VWAP_Stream(this);
       }
    }
-   void VWAP_StreamStep( VWAP_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void VWAP_StepImpl( VWAP_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double typPrice = 0.0;
       double volume = 0.0;

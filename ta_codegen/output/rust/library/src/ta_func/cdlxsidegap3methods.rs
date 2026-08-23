@@ -314,7 +314,7 @@ impl CDLXSIDEGAP3METHODS_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLXSIDEGAP3METHODS_step_internal(&self, sp: &mut CDLXSIDEGAP3METHODS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLXSIDEGAP3METHODS_step_impl(&self, sp: &mut CDLXSIDEGAP3METHODS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) && // 3rd opposite color
            inOpen < (sp.lag1_inClose).max(sp.lag1_inOpen) &&  // 3rd opens within 2nd rb
@@ -509,7 +509,7 @@ impl CDLXSIDEGAP3METHODS_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLXSIDEGAP3METHODS_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLXSIDEGAP3METHODS_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

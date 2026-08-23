@@ -758,7 +758,7 @@ impl HT_TRENDLINE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn HT_TRENDLINE_step_internal(&self, sp: &mut HT_TRENDLINE_StreamState, inReal: f64, outReal: &mut f64) {
+    fn HT_TRENDLINE_step_impl(&self, sp: &mut HT_TRENDLINE_StreamState, inReal: f64, outReal: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -1494,7 +1494,7 @@ impl HT_TRENDLINE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.HT_TRENDLINE_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.HT_TRENDLINE_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

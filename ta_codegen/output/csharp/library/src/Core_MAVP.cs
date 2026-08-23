@@ -844,7 +844,7 @@ public partial class Core
       public double Update( double inReal, double inPeriods )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inPeriods) ) throw Core.StreamFailure("MAVP", "update", RetCode.BadParam);
-         core.MAVP_StreamStep(this, inReal, inPeriods);
+         core.MAVP_StepImpl(this, inReal, inPeriods);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -871,7 +871,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.MAVP_StreamStep(scratch, inReal, inPeriods);
+         core.MAVP_StepImpl(scratch, inReal, inPeriods);
          return scratch.cur_outReal;
       }
 
@@ -891,7 +891,7 @@ public partial class Core
       }
    }
 
-   internal void MAVP_StreamStep( MAVP_Stream sp, double inReal, double inPeriods )
+   internal void MAVP_StepImpl( MAVP_Stream sp, double inReal, double inPeriods )
    {
       int cp = (int)inPeriods;
       if( cp < sp.optInMinPeriod ) {

@@ -525,7 +525,7 @@ public partial class Core
       public double Update( double inVolume )
       {
          if( !double.IsFinite(inVolume) ) throw Core.StreamFailure("PVO", "update", RetCode.BadParam);
-         core.PVO_StreamStep(this, inVolume);
+         core.PVO_StepImpl(this, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -551,7 +551,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.PVO_StreamStep(scratch, inVolume);
+         core.PVO_StepImpl(scratch, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -571,7 +571,7 @@ public partial class Core
       }
    }
 
-   internal void PVO_StreamStep( PVO_Stream sp, double inVolume )
+   internal void PVO_StepImpl( PVO_Stream sp, double inVolume )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;

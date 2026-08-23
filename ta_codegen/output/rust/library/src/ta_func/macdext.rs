@@ -509,7 +509,7 @@ impl MACDEXT_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MACDEXT_step_internal(&self, sp: &mut MACDEXT_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) -> Result<(), RetCode> {
+    fn MACDEXT_step_impl(&self, sp: &mut MACDEXT_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) -> Result<(), RetCode> {
         let mut cur_slowMABuffer: f64 = 0.0_f64;
         let mut cur_fastMABuffer: f64 = 0.0_f64;
         let mut cur_outMACDSignal: f64 = 0.0_f64;
@@ -841,7 +841,7 @@ impl MACDEXT_Stream {
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
-        self.core.MACDEXT_step_internal(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)?;
+        self.core.MACDEXT_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

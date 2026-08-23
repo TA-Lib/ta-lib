@@ -390,7 +390,7 @@ impl CDLMATCHINGLOW_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLMATCHINGLOW_step_internal(&self, sp: &mut CDLMATCHINGLOW_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLMATCHINGLOW_step_impl(&self, sp: &mut CDLMATCHINGLOW_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
         #[allow(non_snake_case)]
@@ -699,7 +699,7 @@ impl CDLMATCHINGLOW_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLMATCHINGLOW_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLMATCHINGLOW_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

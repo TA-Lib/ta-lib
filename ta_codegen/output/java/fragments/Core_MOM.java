@@ -360,7 +360,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MOM update: BadParam", RetCode.BadParam);
-         core.MOM_StreamStep(this, inReal);
+         core.MOM_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -376,7 +376,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MOM peek: BadParam", RetCode.BadParam);
          MOM_Stream scratch = new MOM_Stream(this);
-         core.MOM_StreamStep(scratch, inReal);
+         core.MOM_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -397,7 +397,7 @@
          return new MOM_Stream(this);
       }
    }
-   void MOM_StreamStep( MOM_Stream sp, double inReal )
+   void MOM_StepImpl( MOM_Stream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;

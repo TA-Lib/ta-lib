@@ -382,7 +382,7 @@ impl AROON_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn AROON_step_internal(&self, sp: &mut AROON_StreamState, inHigh: f64, inLow: f64, outAroonDown: &mut f64, outAroonUp: &mut f64) {
+    fn AROON_step_impl(&self, sp: &mut AROON_StreamState, inHigh: f64, inLow: f64, outAroonDown: &mut f64, outAroonUp: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
@@ -682,7 +682,7 @@ impl AROON_Stream {
         }
         let mut outAroonDown: f64 = 0.0_f64;
         let mut outAroonUp: f64 = 0.0_f64;
-        self.core.AROON_step_internal(&mut self.state, inHigh, inLow, &mut outAroonDown, &mut outAroonUp);
+        self.core.AROON_step_impl(&mut self.state, inHigh, inLow, &mut outAroonDown, &mut outAroonUp);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

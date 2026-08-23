@@ -795,7 +795,7 @@ public partial class Core
       public MACDEXT_Value Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDEXT", "update", RetCode.BadParam);
-         core.MACDEXT_StreamStep(this, inReal);
+         core.MACDEXT_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new MACDEXT_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
@@ -821,7 +821,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.MACDEXT_StreamStep(scratch, inReal);
+         core.MACDEXT_StepImpl(scratch, inReal);
          return new MACDEXT_Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
@@ -841,7 +841,7 @@ public partial class Core
       }
    }
 
-   internal void MACDEXT_StreamStep( MACDEXT_Stream sp, double inReal )
+   internal void MACDEXT_StepImpl( MACDEXT_Stream sp, double inReal )
    {
       double cur_slowMABuffer = 0.0;
       double cur_fastMABuffer = 0.0;

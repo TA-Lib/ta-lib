@@ -255,7 +255,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ACOS update: BadParam", RetCode.BadParam);
-         core.ACOS_StreamStep(this, inReal);
+         core.ACOS_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -271,7 +271,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ACOS peek: BadParam", RetCode.BadParam);
          ACOS_Stream scratch = new ACOS_Stream(this);
-         core.ACOS_StreamStep(scratch, inReal);
+         core.ACOS_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -292,7 +292,7 @@
          return new ACOS_Stream(this);
       }
    }
-   void ACOS_StreamStep( ACOS_Stream sp, double inReal )
+   void ACOS_StepImpl( ACOS_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.acos(inReal);
    }

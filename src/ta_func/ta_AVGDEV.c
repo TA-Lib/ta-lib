@@ -207,7 +207,7 @@ struct TA_AVGDEV_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_AVGDEV_ReleaseInternal( struct TA_AVGDEV_Stream *sp )
+static void TA_AVGDEV_ReleaseImpl( struct TA_AVGDEV_Stream *sp )
 {
    if( !sp ) return;
    if( sp->win_i_inReal ) TA_Free( sp->win_i_inReal );
@@ -216,7 +216,7 @@ static void TA_AVGDEV_ReleaseInternal( struct TA_AVGDEV_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_AVGDEV_StepInternal( struct TA_AVGDEV_Stream *sp, double inReal, double *outReal )
+static void TA_AVGDEV_StepImpl( struct TA_AVGDEV_Stream *sp, double inReal, double *outReal )
 {
    double todaySum;
    double todayDev;
@@ -316,11 +316,11 @@ static TA_RetCode TA_AVGDEV_OpenImpl( struct TA_AVGDEV_Stream **stream, const do
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->winCap_i = (int)(optInTimePeriod);
-      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_AVGDEV_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->win_i_inReal ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_i_inReal ) { TA_AVGDEV_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->winMirror_i_inReal ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_i_inReal ) { TA_AVGDEV_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inReal, inReal + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
       sp->winPos_i = 0;
       sp->outRangeBegIdx = *outBegIdx;
@@ -377,7 +377,7 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Update( TA_AVGDEV_Stream *stream, double inReal,
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_AVGDEV_StepInternal( stream, inReal, outReal );
+   TA_AVGDEV_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -391,13 +391,13 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Peek( const TA_AVGDEV_Stream *stream, double inR
    scratch = *stream;
    scratch.win_i_inReal = stream->winMirror_i_inReal;
    memcpy( scratch.win_i_inReal, stream->win_i_inReal, sizeof(double) * (size_t)stream->winCap_i );
-   TA_AVGDEV_StepInternal( &scratch, inReal, outReal );
+   TA_AVGDEV_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_AVGDEV_Close( TA_AVGDEV_Stream *stream )
 {
-   TA_AVGDEV_ReleaseInternal( stream );
+   TA_AVGDEV_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

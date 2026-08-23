@@ -984,7 +984,7 @@
       public Value update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
-         core.SMI_StreamStep(this, inHigh, inLow, inClose);
+         core.SMI_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
          return this.cachedValue;
@@ -1009,7 +1009,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.SMI_StreamStep(scratch, inHigh, inLow, inClose);
+         core.SMI_StepImpl(scratch, inHigh, inLow, inClose);
          return new Value(scratch.cur_outSMI, scratch.cur_outSMISignal);
       }
 
@@ -1030,7 +1030,7 @@
          return new SMI_Stream(this);
       }
    }
-   void SMI_StreamStep( SMI_Stream sp, double inHigh, double inLow, double inClose )
+   void SMI_StepImpl( SMI_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

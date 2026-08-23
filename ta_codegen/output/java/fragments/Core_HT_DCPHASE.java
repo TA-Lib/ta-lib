@@ -1216,7 +1216,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_DCPHASE update: BadParam", RetCode.BadParam);
-         core.HT_DCPHASE_StreamStep(this, inReal);
+         core.HT_DCPHASE_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -1240,7 +1240,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.HT_DCPHASE_StreamStep(scratch, inReal);
+         core.HT_DCPHASE_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1261,7 +1261,7 @@
          return new HT_DCPHASE_Stream(this);
       }
    }
-   void HT_DCPHASE_StreamStep( HT_DCPHASE_Stream sp, double inReal )
+   void HT_DCPHASE_StepImpl( HT_DCPHASE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

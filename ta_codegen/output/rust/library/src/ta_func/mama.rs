@@ -813,7 +813,7 @@ impl MAMA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAMA_step_internal(&self, sp: &mut MAMA_StreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
+    fn MAMA_step_impl(&self, sp: &mut MAMA_StreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -1542,7 +1542,7 @@ impl MAMA_Stream {
         }
         let mut outMAMA: f64 = 0.0_f64;
         let mut outFAMA: f64 = 0.0_f64;
-        self.core.MAMA_step_internal(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
+        self.core.MAMA_step_impl(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

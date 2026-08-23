@@ -661,7 +661,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("NATR", "update", RetCode.BadParam);
-         core.NATR_StreamStep(this, inHigh, inLow, inClose);
+         core.NATR_StepImpl(this, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -683,7 +683,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("NATR", "peek", RetCode.BadParam);
          NATR_Stream scratch = new NATR_Stream(this);
-         core.NATR_StreamStep(scratch, inHigh, inLow, inClose);
+         core.NATR_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -703,7 +703,7 @@ public partial class Core
       }
    }
 
-   internal void NATR_StreamStep( NATR_Stream sp, double inHigh, double inLow, double inClose )
+   internal void NATR_StepImpl( NATR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double greatest = 0.0;

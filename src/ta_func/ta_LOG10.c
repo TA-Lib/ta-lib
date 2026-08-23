@@ -128,7 +128,7 @@ struct TA_LOG10_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_LOG10_StepInternal( struct TA_LOG10_Stream *sp, double inReal, double *outReal )
+static void TA_LOG10_StepImpl( struct TA_LOG10_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= log10(inReal);
@@ -226,7 +226,7 @@ TA_LIB_API TA_RetCode TA_LOG10_Update( TA_LOG10_Stream *stream, double inReal, d
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_LOG10_StepInternal( stream, inReal, outReal );
+   TA_LOG10_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_LOG10_Peek( const TA_LOG10_Stream *stream, double inRea
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_LOG10_StepInternal( &scratch, inReal, outReal );
+   TA_LOG10_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

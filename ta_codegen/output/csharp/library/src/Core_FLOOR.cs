@@ -305,7 +305,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("FLOOR", "update", RetCode.BadParam);
-         core.FLOOR_StreamStep(this, inReal);
+         core.FLOOR_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -325,7 +325,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("FLOOR", "peek", RetCode.BadParam);
          FLOOR_Stream scratch = new FLOOR_Stream(this);
-         core.FLOOR_StreamStep(scratch, inReal);
+         core.FLOOR_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -345,7 +345,7 @@ public partial class Core
       }
    }
 
-   internal void FLOOR_StreamStep( FLOOR_Stream sp, double inReal )
+   internal void FLOOR_StepImpl( FLOOR_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Floor(inReal);
    }

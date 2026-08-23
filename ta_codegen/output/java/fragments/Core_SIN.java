@@ -247,7 +247,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SIN update: BadParam", RetCode.BadParam);
-         core.SIN_StreamStep(this, inReal);
+         core.SIN_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -263,7 +263,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SIN peek: BadParam", RetCode.BadParam);
          SIN_Stream scratch = new SIN_Stream(this);
-         core.SIN_StreamStep(scratch, inReal);
+         core.SIN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -284,7 +284,7 @@
          return new SIN_Stream(this);
       }
    }
-   void SIN_StreamStep( SIN_Stream sp, double inReal )
+   void SIN_StepImpl( SIN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.sin(inReal);
    }

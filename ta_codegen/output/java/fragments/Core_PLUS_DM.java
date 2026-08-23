@@ -601,7 +601,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("PLUS_DM update: BadParam", RetCode.BadParam);
-         core.PLUS_DM_StreamStep(this, inHigh, inLow);
+         core.PLUS_DM_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -617,7 +617,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("PLUS_DM peek: BadParam", RetCode.BadParam);
          PLUS_DM_Stream scratch = new PLUS_DM_Stream(this);
-         core.PLUS_DM_StreamStep(scratch, inHigh, inLow);
+         core.PLUS_DM_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -638,7 +638,7 @@
          return new PLUS_DM_Stream(this);
       }
    }
-   void PLUS_DM_StreamStep( PLUS_DM_Stream sp, double inHigh, double inLow )
+   void PLUS_DM_StepImpl( PLUS_DM_Stream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          sp.tempReal = inHigh;

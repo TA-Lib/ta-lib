@@ -303,7 +303,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ATAN", "update", RetCode.BadParam);
-         core.ATAN_StreamStep(this, inReal);
+         core.ATAN_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -323,7 +323,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ATAN", "peek", RetCode.BadParam);
          ATAN_Stream scratch = new ATAN_Stream(this);
-         core.ATAN_StreamStep(scratch, inReal);
+         core.ATAN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -343,7 +343,7 @@ public partial class Core
       }
    }
 
-   internal void ATAN_StreamStep( ATAN_Stream sp, double inReal )
+   internal void ATAN_StepImpl( ATAN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Atan(inReal);
    }

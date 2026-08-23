@@ -358,7 +358,7 @@ impl LINEARREG_SLOPE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn LINEARREG_SLOPE_step_internal(&self, sp: &mut LINEARREG_SLOPE_StreamState, inReal: f64, outReal: &mut f64) {
+    fn LINEARREG_SLOPE_step_impl(&self, sp: &mut LINEARREG_SLOPE_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
@@ -585,7 +585,7 @@ impl LINEARREG_SLOPE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.LINEARREG_SLOPE_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.LINEARREG_SLOPE_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

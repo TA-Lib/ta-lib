@@ -534,7 +534,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKEMOD update: BadParam", RetCode.BadParam);
-         core.CDLHIKKAKEMOD_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLHIKKAKEMOD_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -550,7 +550,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKEMOD peek: BadParam", RetCode.BadParam);
          CDLHIKKAKEMOD_Stream scratch = new CDLHIKKAKEMOD_Stream(this);
-         core.CDLHIKKAKEMOD_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLHIKKAKEMOD_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -571,7 +571,7 @@
          return new CDLHIKKAKEMOD_Stream(this);
       }
    }
-   void CDLHIKKAKEMOD_StreamStep( CDLHIKKAKEMOD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLHIKKAKEMOD_StepImpl( CDLHIKKAKEMOD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;

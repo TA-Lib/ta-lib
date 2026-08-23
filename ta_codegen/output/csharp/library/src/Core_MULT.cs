@@ -319,7 +319,7 @@ public partial class Core
       public double Update( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("MULT", "update", RetCode.BadParam);
-         core.MULT_StreamStep(this, inReal0, inReal1);
+         core.MULT_StepImpl(this, inReal0, inReal1);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -340,7 +340,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("MULT", "peek", RetCode.BadParam);
          MULT_Stream scratch = new MULT_Stream(this);
-         core.MULT_StreamStep(scratch, inReal0, inReal1);
+         core.MULT_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -360,7 +360,7 @@ public partial class Core
       }
    }
 
-   internal void MULT_StreamStep( MULT_Stream sp, double inReal0, double inReal1 )
+   internal void MULT_StepImpl( MULT_Stream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 * inReal1;
    }

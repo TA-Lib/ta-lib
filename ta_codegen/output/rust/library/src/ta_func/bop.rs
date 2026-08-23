@@ -259,7 +259,7 @@ impl BOP_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BOP_step_internal(&self, sp: &mut BOP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn BOP_step_impl(&self, sp: &mut BOP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inHigh - inLow;
         if (tempReal) < 1e-14 {
@@ -404,7 +404,7 @@ impl BOP_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.BOP_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
+        self.core.BOP_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

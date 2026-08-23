@@ -462,7 +462,7 @@
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIGHWAVE update: BadParam", RetCode.BadParam);
-         core.CDLHIGHWAVE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLHIGHWAVE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
       }
@@ -486,7 +486,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.CDLHIGHWAVE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLHIGHWAVE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -507,7 +507,7 @@
          return new CDLHIGHWAVE_Stream(this);
       }
    }
-   void CDLHIGHWAVE_StreamStep( CDLHIGHWAVE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLHIGHWAVE_StepImpl( CDLHIGHWAVE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;

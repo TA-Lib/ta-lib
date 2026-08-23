@@ -699,7 +699,7 @@
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAR update: BadParam", RetCode.BadParam);
-         core.SAR_StreamStep(this, inHigh, inLow);
+         core.SAR_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -715,7 +715,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAR peek: BadParam", RetCode.BadParam);
          SAR_Stream scratch = new SAR_Stream(this);
-         core.SAR_StreamStep(scratch, inHigh, inLow);
+         core.SAR_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -736,7 +736,7 @@
          return new SAR_Stream(this);
       }
    }
-   void SAR_StreamStep( SAR_Stream sp, double inHigh, double inLow )
+   void SAR_StepImpl( SAR_Stream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;

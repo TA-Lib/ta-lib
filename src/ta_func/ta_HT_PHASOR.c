@@ -813,7 +813,7 @@ struct TA_HT_PHASOR_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_HT_PHASOR_ReleaseInternal( struct TA_HT_PHASOR_Stream *sp )
+static void TA_HT_PHASOR_ReleaseImpl( struct TA_HT_PHASOR_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingWMAIdx_inReal ) TA_Free( sp->ring_trailingWMAIdx_inReal );
@@ -822,7 +822,7 @@ static void TA_HT_PHASOR_ReleaseInternal( struct TA_HT_PHASOR_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_HT_PHASOR_StepInternal( struct TA_HT_PHASOR_Stream *sp, double inReal, double *outInPhase, double *outQuadrature )
+static void TA_HT_PHASOR_StepImpl( struct TA_HT_PHASOR_Stream *sp, double inReal, double *outInPhase, double *outQuadrature )
 {
    double adjustedPrevPeriod;
    double todayValue;
@@ -1406,12 +1406,12 @@ static TA_RetCode TA_HT_PHASOR_OpenImpl( struct TA_HT_PHASOR_Stream **stream, co
       sp->rad2Deg = rad2Deg;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_PHASOR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_PHASOR_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_PHASOR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_PHASOR_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_PHASOR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_PHASOR_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingWMAIdx_inReal, inReal + (historyLen - sp->ringCap_trailingWMAIdx), sizeof(double) * (size_t)sp->ringCap_trailingWMAIdx );
       }
       sp->ringPos_trailingWMAIdx = 0;
@@ -1471,7 +1471,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Update( TA_HT_PHASOR_Stream *stream, double i
 {
    if( !stream || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_HT_PHASOR_StepInternal( stream, inReal, outInPhase, outQuadrature );
+   TA_HT_PHASOR_StepImpl( stream, inReal, outInPhase, outQuadrature );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -1485,13 +1485,13 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Peek( const TA_HT_PHASOR_Stream *stream, doub
    scratch = *stream;
    scratch.ring_trailingWMAIdx_inReal = stream->ringMirror_trailingWMAIdx_inReal;
    memcpy( scratch.ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingWMAIdx > 0 ? stream->ringCap_trailingWMAIdx : 1) );
-   TA_HT_PHASOR_StepInternal( &scratch, inReal, outInPhase, outQuadrature );
+   TA_HT_PHASOR_StepImpl( &scratch, inReal, outInPhase, outQuadrature );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Close( TA_HT_PHASOR_Stream *stream )
 {
-   TA_HT_PHASOR_ReleaseInternal( stream );
+   TA_HT_PHASOR_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

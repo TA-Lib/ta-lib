@@ -4,7 +4,7 @@
 //! `/**** Streaming API *****/` section to the generated per-function Rust
 //! file: an opaque `#[derive(Clone)]` handle (`<NAME>_Stream { core, state }`),
 //! a private state struct mirroring the C stream struct field-for-field, a
-//! `<NAME>_step_internal` transition method on `Core` (so batch rendering
+//! `<NAME>_step_impl` transition method on `Core` (so batch rendering
 //! conventions — `self.candle_settings`, `self.compatibility`, lookback calls —
 //! work verbatim), a `pub(crate) <NAME>_OpenInternal(.., startIdx, ..)`
 //! composition seam, the public `<NAME>_Open` / `<NAME>_OpenAndFill`
@@ -879,7 +879,7 @@ fn emit_state_restore(
 }
 
 // ---------------------------------------------------------------------------
-// StepInternal
+// StepImpl
 // ---------------------------------------------------------------------------
 
 /// Step context: the open-body typing plus every state name aliased under its
@@ -989,7 +989,7 @@ fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
 }
 
 
-/// `fn <NAME>_step_internal(&self, sp: &mut State, <bars>, <&mut outs>)`.
+/// `fn <NAME>_step_impl(&self, sp: &mut State, <bars>, <&mut outs>)`.
 #[allow(clippy::too_many_arguments)]
 fn emit_step(
     o: &mut String,
@@ -1027,7 +1027,7 @@ fn emit_step_sig(o: &mut String, func: &FuncDef, fallible: bool) {
     let ret = if fallible { " -> Result<(), RetCode>" } else { "" };
     let _ = writeln!(
         o,
-        "    fn {sn}_step_internal(&self, sp: &mut {state}{params}){ret} {{"
+        "    fn {sn}_step_impl(&self, sp: &mut {state}{params}){ret} {{"
     );
 }
 
@@ -2227,7 +2227,7 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     o.push_str(&out_decls);
     let _ = writeln!(
         o,
-        "        self.core.{sn}_step_internal(&mut self.state, {fwd_bars}{out_refs}){step_try};"
+        "        self.core.{sn}_step_impl(&mut self.state, {fwd_bars}{out_refs}){step_try};"
     );
     // After the step, so a rejected bar (non-finite here, or a sub-stream's
     // reject through `?`) leaves the range exactly where it was. `peek` runs the
@@ -3427,7 +3427,7 @@ fn composed_step_ctx(
     ctx
 }
 
-/// The composed StepInternal: producer transition (writing `cur_<series>`),
+/// The composed StepImpl: producer transition (writing `cur_<series>`),
 /// then the batch-tail pipeline through the owned sub handles, combine maps
 /// per bar, lag-ring pushes, and the output writes. No peek flag: peek is the
 /// universal clone-of-the-whole-tree.

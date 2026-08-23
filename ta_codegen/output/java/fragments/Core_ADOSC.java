@@ -541,7 +541,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("ADOSC update: BadParam", RetCode.BadParam);
-         core.ADOSC_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.ADOSC_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -557,7 +557,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("ADOSC peek: BadParam", RetCode.BadParam);
          ADOSC_Stream scratch = new ADOSC_Stream(this);
-         core.ADOSC_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.ADOSC_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -578,7 +578,7 @@
          return new ADOSC_Stream(this);
       }
    }
-   void ADOSC_StreamStep( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void ADOSC_StepImpl( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;

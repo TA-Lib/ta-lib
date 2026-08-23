@@ -317,7 +317,7 @@ public partial class Core
       public double Update( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("DIV", "update", RetCode.BadParam);
-         core.DIV_StreamStep(this, inReal0, inReal1);
+         core.DIV_StepImpl(this, inReal0, inReal1);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -338,7 +338,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("DIV", "peek", RetCode.BadParam);
          DIV_Stream scratch = new DIV_Stream(this);
-         core.DIV_StreamStep(scratch, inReal0, inReal1);
+         core.DIV_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -358,7 +358,7 @@ public partial class Core
       }
    }
 
-   internal void DIV_StreamStep( DIV_Stream sp, double inReal0, double inReal1 )
+   internal void DIV_StepImpl( DIV_Stream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 / inReal1;
    }

@@ -245,7 +245,7 @@ impl MEDPRICE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MEDPRICE_step_internal(&self, sp: &mut MEDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn MEDPRICE_step_impl(&self, sp: &mut MEDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         (*outReal) = (inHigh + inLow) / 2.0;
     }
 
@@ -376,7 +376,7 @@ impl MEDPRICE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MEDPRICE_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        self.core.MEDPRICE_step_impl(&mut self.state, inHigh, inLow, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

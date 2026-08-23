@@ -335,7 +335,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("AD update: BadParam", RetCode.BadParam);
-         core.AD_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.AD_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -351,7 +351,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("AD peek: BadParam", RetCode.BadParam);
          AD_Stream scratch = new AD_Stream(this);
-         core.AD_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.AD_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -372,7 +372,7 @@
          return new AD_Stream(this);
       }
    }
-   void AD_StreamStep( AD_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void AD_StepImpl( AD_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;

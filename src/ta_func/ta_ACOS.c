@@ -128,7 +128,7 @@ struct TA_ACOS_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_ACOS_StepInternal( struct TA_ACOS_Stream *sp, double inReal, double *outReal )
+static void TA_ACOS_StepImpl( struct TA_ACOS_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= acos(inReal);
@@ -226,7 +226,7 @@ TA_LIB_API TA_RetCode TA_ACOS_Update( TA_ACOS_Stream *stream, double inReal, dou
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_ACOS_StepInternal( stream, inReal, outReal );
+   TA_ACOS_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_ACOS_Peek( const TA_ACOS_Stream *stream, double inReal,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ACOS_StepInternal( &scratch, inReal, outReal );
+   TA_ACOS_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

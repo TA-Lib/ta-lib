@@ -253,7 +253,7 @@ struct TA_QSTICK_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_QSTICK_ReleaseInternal( struct TA_QSTICK_Stream *sp )
+static void TA_QSTICK_ReleaseImpl( struct TA_QSTICK_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_derived ) TA_Free( sp->ring_trailingIdx_derived );
@@ -262,7 +262,7 @@ static void TA_QSTICK_ReleaseInternal( struct TA_QSTICK_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_QSTICK_StepInternal( struct TA_QSTICK_Stream *sp, double inOpen, double inClose, double *outReal )
+static void TA_QSTICK_StepImpl( struct TA_QSTICK_Stream *sp, double inOpen, double inClose, double *outReal )
 {
    if( sp->ringCap_trailingIdx == 0 )
    {
@@ -391,12 +391,12 @@ static TA_RetCode TA_QSTICK_OpenImpl( struct TA_QSTICK_Stream **stream, const do
       sp->periodTotal = periodTotal;
       sp->tempReal = tempReal;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_QSTICK_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_QSTICK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_derived ) { TA_QSTICK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingIdx_derived ) { TA_QSTICK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_derived ) { TA_QSTICK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingIdx_derived ) { TA_QSTICK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx_derived[fillJ - (historyLen - sp->ringCap_trailingIdx)] = (double)(inClose[fillJ] - inOpen[fillJ]);
@@ -457,7 +457,7 @@ TA_LIB_API TA_RetCode TA_QSTICK_Update( TA_QSTICK_Stream *stream, double inOpen,
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_QSTICK_StepInternal( stream, inOpen, inClose, outReal );
+   TA_QSTICK_StepImpl( stream, inOpen, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -471,13 +471,13 @@ TA_LIB_API TA_RetCode TA_QSTICK_Peek( const TA_QSTICK_Stream *stream, double inO
    scratch = *stream;
    scratch.ring_trailingIdx_derived = stream->ringMirror_trailingIdx_derived;
    memcpy( scratch.ring_trailingIdx_derived, stream->ring_trailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_QSTICK_StepInternal( &scratch, inOpen, inClose, outReal );
+   TA_QSTICK_StepImpl( &scratch, inOpen, inClose, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_QSTICK_Close( TA_QSTICK_Stream *stream )
 {
-   TA_QSTICK_ReleaseInternal( stream );
+   TA_QSTICK_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

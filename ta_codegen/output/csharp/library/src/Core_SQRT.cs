@@ -308,7 +308,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SQRT", "update", RetCode.BadParam);
-         core.SQRT_StreamStep(this, inReal);
+         core.SQRT_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -328,7 +328,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SQRT", "peek", RetCode.BadParam);
          SQRT_Stream scratch = new SQRT_Stream(this);
-         core.SQRT_StreamStep(scratch, inReal);
+         core.SQRT_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -348,7 +348,7 @@ public partial class Core
       }
    }
 
-   internal void SQRT_StreamStep( SQRT_Stream sp, double inReal )
+   internal void SQRT_StepImpl( SQRT_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Sqrt(inReal);
    }

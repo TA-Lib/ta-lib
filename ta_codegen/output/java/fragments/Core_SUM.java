@@ -357,7 +357,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SUM update: BadParam", RetCode.BadParam);
-         core.SUM_StreamStep(this, inReal);
+         core.SUM_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -373,7 +373,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SUM peek: BadParam", RetCode.BadParam);
          SUM_Stream scratch = new SUM_Stream(this);
-         core.SUM_StreamStep(scratch, inReal);
+         core.SUM_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -394,7 +394,7 @@
          return new SUM_Stream(this);
       }
    }
-   void SUM_StreamStep( SUM_Stream sp, double inReal )
+   void SUM_StepImpl( SUM_Stream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;

@@ -429,7 +429,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG update: BadParam", RetCode.BadParam);
-         core.LINEARREG_StreamStep(this, inReal);
+         core.LINEARREG_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -445,7 +445,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG peek: BadParam", RetCode.BadParam);
          LINEARREG_Stream scratch = new LINEARREG_Stream(this);
-         core.LINEARREG_StreamStep(scratch, inReal);
+         core.LINEARREG_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -466,7 +466,7 @@
          return new LINEARREG_Stream(this);
       }
    }
-   void LINEARREG_StreamStep( LINEARREG_Stream sp, double inReal )
+   void LINEARREG_StepImpl( LINEARREG_Stream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;

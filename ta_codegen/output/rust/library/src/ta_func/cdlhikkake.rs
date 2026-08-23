@@ -361,7 +361,7 @@ impl CDLHIKKAKE_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn CDLHIKKAKE_step_internal(&self, sp: &mut CDLHIKKAKE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLHIKKAKE_step_impl(&self, sp: &mut CDLHIKKAKE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if sp.lag1_inHigh < sp.lag2_inHigh &&
            sp.lag1_inLow > sp.lag2_inLow &&   // 1st + 2nd: lower high and higher low
            (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
@@ -602,7 +602,7 @@ impl CDLHIKKAKE_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outInteger: i32 = 0_i32;
-        self.core.CDLHIKKAKE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLHIKKAKE_step_impl(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

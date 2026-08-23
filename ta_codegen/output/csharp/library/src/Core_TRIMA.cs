@@ -744,7 +744,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TRIMA", "update", RetCode.BadParam);
-         core.TRIMA_StreamStep(this, inReal);
+         core.TRIMA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -770,7 +770,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.TRIMA_StreamStep(scratch, inReal);
+         core.TRIMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -790,7 +790,7 @@ public partial class Core
       }
    }
 
-   internal void TRIMA_StreamStep( TRIMA_Stream sp, double inReal )
+   internal void TRIMA_StepImpl( TRIMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod % 2 == 1 ) {
          if( sp.ringCap_middleIdx == 0 ) {

@@ -237,7 +237,7 @@ impl SIN_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn SIN_step_internal(&self, sp: &mut SIN_StreamState, inReal: f64, outReal: &mut f64) {
+    fn SIN_step_impl(&self, sp: &mut SIN_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).sin();
     }
 
@@ -365,7 +365,7 @@ impl SIN_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.SIN_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.SIN_step_impl(&mut self.state, inReal, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

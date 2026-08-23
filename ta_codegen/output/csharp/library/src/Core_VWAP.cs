@@ -501,7 +501,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWAP", "update", RetCode.BadParam);
-         core.VWAP_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.VWAP_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -524,7 +524,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWAP", "peek", RetCode.BadParam);
          VWAP_Stream scratch = new VWAP_Stream(this);
-         core.VWAP_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.VWAP_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -544,7 +544,7 @@ public partial class Core
       }
    }
 
-   internal void VWAP_StreamStep( VWAP_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   internal void VWAP_StepImpl( VWAP_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double typPrice = 0.0;
       double volume = 0.0;

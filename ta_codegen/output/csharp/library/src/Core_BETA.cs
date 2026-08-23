@@ -884,7 +884,7 @@ public partial class Core
       public double Update( double inReal0, double inReal1 )
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("BETA", "update", RetCode.BadParam);
-         core.BETA_StreamStep(this, inReal0, inReal1);
+         core.BETA_StepImpl(this, inReal0, inReal1);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -911,7 +911,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.BETA_StreamStep(scratch, inReal0, inReal1);
+         core.BETA_StepImpl(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -931,7 +931,7 @@ public partial class Core
       }
    }
 
-   internal void BETA_StreamStep( BETA_Stream sp, double inReal0, double inReal1 )
+   internal void BETA_StepImpl( BETA_Stream sp, double inReal0, double inReal1 )
    {
       double tmp_real = 0.0;
       if( sp.i >= 1073741824 ) {

@@ -491,7 +491,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLTRISTAR", "update", RetCode.BadParam);
-         core.CDLTRISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLTRISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -514,7 +514,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLTRISTAR", "peek", RetCode.BadParam);
          CDLTRISTAR_Stream scratch = new CDLTRISTAR_Stream(this);
-         core.CDLTRISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLTRISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -534,7 +534,7 @@ public partial class Core
       }
    }
 
-   internal void CDLTRISTAR_StreamStep( CDLTRISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLTRISTAR_StepImpl( CDLTRISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

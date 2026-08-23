@@ -249,7 +249,7 @@ struct TA_STDDEV_Stream {
 };
 
 /* Private function, not in public API. */
-static TA_RetCode TA_STDDEV_StepInternal( struct TA_STDDEV_Stream *sp, double inReal, double *outReal )
+static TA_RetCode TA_STDDEV_StepImpl( struct TA_STDDEV_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
    double cur_outReal = 0.0;
@@ -473,7 +473,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   retCode = TA_STDDEV_StepInternal( stream, inReal, outReal );
+   retCode = TA_STDDEV_StepImpl( stream, inReal, outReal );
    if( retCode != TA_SUCCESS ) return retCode;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -487,7 +487,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_Peek( const TA_STDDEV_Stream *stream, double inR
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   return TA_STDDEV_StepInternal( &scratch, inReal, outReal );
+   return TA_STDDEV_StepImpl( &scratch, inReal, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_STDDEV_Close( TA_STDDEV_Stream *stream )

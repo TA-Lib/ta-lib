@@ -933,7 +933,7 @@ public partial class Core
       public BBANDS_Value Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("BBANDS", "update", RetCode.BadParam);
-         core.BBANDS_StreamStep(this, inReal);
+         core.BBANDS_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new BBANDS_Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
@@ -959,7 +959,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.BBANDS_StreamStep(scratch, inReal);
+         core.BBANDS_StepImpl(scratch, inReal);
          return new BBANDS_Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
       }
 
@@ -979,7 +979,7 @@ public partial class Core
       }
    }
 
-   internal void BBANDS_StreamStep( BBANDS_Stream sp, double inReal )
+   internal void BBANDS_StepImpl( BBANDS_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

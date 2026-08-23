@@ -591,7 +591,7 @@ impl BETA_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn BETA_step_internal(&self, sp: &mut BETA_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn BETA_step_impl(&self, sp: &mut BETA_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         let mut tmp_real: f64 = 0.0_f64;
         if sp.i >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
@@ -1181,7 +1181,7 @@ impl BETA_Stream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        self.core.BETA_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        self.core.BETA_step_impl(&mut self.state, inReal0, inReal1, &mut outReal);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

@@ -308,7 +308,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ASIN", "update", RetCode.BadParam);
-         core.ASIN_StreamStep(this, inReal);
+         core.ASIN_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -328,7 +328,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ASIN", "peek", RetCode.BadParam);
          ASIN_Stream scratch = new ASIN_Stream(this);
-         core.ASIN_StreamStep(scratch, inReal);
+         core.ASIN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -348,7 +348,7 @@ public partial class Core
       }
    }
 
-   internal void ASIN_StreamStep( ASIN_Stream sp, double inReal )
+   internal void ASIN_StepImpl( ASIN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Asin(inReal);
    }

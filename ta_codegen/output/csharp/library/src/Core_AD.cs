@@ -395,7 +395,7 @@ public partial class Core
       public double Update( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("AD", "update", RetCode.BadParam);
-         core.AD_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.AD_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -418,7 +418,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("AD", "peek", RetCode.BadParam);
          AD_Stream scratch = new AD_Stream(this);
-         core.AD_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.AD_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -438,7 +438,7 @@ public partial class Core
       }
    }
 
-   internal void AD_StreamStep( AD_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   internal void AD_StepImpl( AD_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;

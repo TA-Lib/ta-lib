@@ -788,7 +788,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("DX update: BadParam", RetCode.BadParam);
-         core.DX_StreamStep(this, inHigh, inLow, inClose);
+         core.DX_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -804,7 +804,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("DX peek: BadParam", RetCode.BadParam);
          DX_Stream scratch = new DX_Stream(this);
-         core.DX_StreamStep(scratch, inHigh, inLow, inClose);
+         core.DX_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -825,7 +825,7 @@
          return new DX_Stream(this);
       }
    }
-   void DX_StreamStep( DX_Stream sp, double inHigh, double inLow, double inClose )
+   void DX_StepImpl( DX_Stream sp, double inHigh, double inLow, double inClose )
    {
       /* Calculate the prevMinusDM and prevPlusDM */
       sp.tempReal = inHigh;

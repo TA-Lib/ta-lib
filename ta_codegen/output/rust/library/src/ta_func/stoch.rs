@@ -593,7 +593,7 @@ impl STOCH_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCH_step_internal(&self, sp: &mut STOCH_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) -> Result<(), RetCode> {
+    fn STOCH_step_impl(&self, sp: &mut STOCH_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) -> Result<(), RetCode> {
         let mut tmp: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outSlowD: f64 = 0.0_f64;
@@ -1073,7 +1073,7 @@ impl STOCH_Stream {
         }
         let mut outSlowK: f64 = 0.0_f64;
         let mut outSlowD: f64 = 0.0_f64;
-        self.core.STOCH_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD)?;
+        self.core.STOCH_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD)?;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

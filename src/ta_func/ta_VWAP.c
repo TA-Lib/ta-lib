@@ -284,7 +284,7 @@ struct TA_VWAP_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_VWAP_StepInternal( struct TA_VWAP_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
+static void TA_VWAP_StepImpl( struct TA_VWAP_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    double typPrice;
    double volume;
@@ -582,7 +582,7 @@ TA_LIB_API TA_RetCode TA_VWAP_Update( TA_VWAP_Stream *stream, double inHigh, dou
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   TA_VWAP_StepInternal( stream, inHigh, inLow, inClose, inVolume, outReal );
+   TA_VWAP_StepImpl( stream, inHigh, inLow, inClose, inVolume, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -594,7 +594,7 @@ TA_LIB_API TA_RetCode TA_VWAP_Peek( const TA_VWAP_Stream *stream, double inHigh,
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_VWAP_StepInternal( &scratch, inHigh, inLow, inClose, inVolume, outReal );
+   TA_VWAP_StepImpl( &scratch, inHigh, inLow, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
 

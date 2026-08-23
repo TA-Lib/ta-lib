@@ -797,7 +797,7 @@ struct TA_HT_DCPERIOD_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_HT_DCPERIOD_ReleaseInternal( struct TA_HT_DCPERIOD_Stream *sp )
+static void TA_HT_DCPERIOD_ReleaseImpl( struct TA_HT_DCPERIOD_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingWMAIdx_inReal ) TA_Free( sp->ring_trailingWMAIdx_inReal );
@@ -806,7 +806,7 @@ static void TA_HT_DCPERIOD_ReleaseInternal( struct TA_HT_DCPERIOD_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_HT_DCPERIOD_StepInternal( struct TA_HT_DCPERIOD_Stream *sp, double inReal, double *outReal )
+static void TA_HT_DCPERIOD_StepImpl( struct TA_HT_DCPERIOD_Stream *sp, double inReal, double *outReal )
 {
    double adjustedPrevPeriod;
    double todayValue;
@@ -1385,12 +1385,12 @@ static TA_RetCode TA_HT_DCPERIOD_OpenImpl( struct TA_HT_DCPERIOD_Stream **stream
       sp->smoothPeriod = smoothPeriod;
       sp->streamParity = historyLen % 2;
       sp->ringCap_trailingWMAIdx = (int)(today - trailingWMAIdx);
-      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_DCPERIOD_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringCap_trailingWMAIdx < 0 || sp->ringCap_trailingWMAIdx > historyLen ) { TA_HT_DCPERIOD_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
         sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingWMAIdx_inReal, inReal + (historyLen - sp->ringCap_trailingWMAIdx), sizeof(double) * (size_t)sp->ringCap_trailingWMAIdx );
       }
       sp->ringPos_trailingWMAIdx = 0;
@@ -1448,7 +1448,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Update( TA_HT_DCPERIOD_Stream *stream, doub
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_HT_DCPERIOD_StepInternal( stream, inReal, outReal );
+   TA_HT_DCPERIOD_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -1462,13 +1462,13 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
    scratch = *stream;
    scratch.ring_trailingWMAIdx_inReal = stream->ringMirror_trailingWMAIdx_inReal;
    memcpy( scratch.ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingWMAIdx > 0 ? stream->ringCap_trailingWMAIdx : 1) );
-   TA_HT_DCPERIOD_StepInternal( &scratch, inReal, outReal );
+   TA_HT_DCPERIOD_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Close( TA_HT_DCPERIOD_Stream *stream )
 {
-   TA_HT_DCPERIOD_ReleaseInternal( stream );
+   TA_HT_DCPERIOD_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

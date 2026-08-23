@@ -247,7 +247,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SQRT update: BadParam", RetCode.BadParam);
-         core.SQRT_StreamStep(this, inReal);
+         core.SQRT_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -263,7 +263,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
          SQRT_Stream scratch = new SQRT_Stream(this);
-         core.SQRT_StreamStep(scratch, inReal);
+         core.SQRT_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -284,7 +284,7 @@
          return new SQRT_Stream(this);
       }
    }
-   void SQRT_StreamStep( SQRT_Stream sp, double inReal )
+   void SQRT_StepImpl( SQRT_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.sqrt(inReal);
    }

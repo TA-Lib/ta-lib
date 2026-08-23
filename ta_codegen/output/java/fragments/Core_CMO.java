@@ -536,7 +536,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CMO update: BadParam", RetCode.BadParam);
-         core.CMO_StreamStep(this, inReal);
+         core.CMO_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -552,7 +552,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CMO peek: BadParam", RetCode.BadParam);
          CMO_Stream scratch = new CMO_Stream(this);
-         core.CMO_StreamStep(scratch, inReal);
+         core.CMO_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -573,7 +573,7 @@
          return new CMO_Stream(this);
       }
    }
-   void CMO_StreamStep( CMO_Stream sp, double inReal )
+   void CMO_StepImpl( CMO_Stream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;

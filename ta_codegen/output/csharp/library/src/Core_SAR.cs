@@ -752,7 +752,7 @@ public partial class Core
       public double Update( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAR", "update", RetCode.BadParam);
-         core.SAR_StreamStep(this, inHigh, inLow);
+         core.SAR_StepImpl(this, inHigh, inLow);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -773,7 +773,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAR", "peek", RetCode.BadParam);
          SAR_Stream scratch = new SAR_Stream(this);
-         core.SAR_StreamStep(scratch, inHigh, inLow);
+         core.SAR_StepImpl(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -793,7 +793,7 @@ public partial class Core
       }
    }
 
-   internal void SAR_StreamStep( SAR_Stream sp, double inHigh, double inLow )
+   internal void SAR_StepImpl( SAR_Stream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;

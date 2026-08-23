@@ -1140,7 +1140,7 @@ public partial class Core
       public HT_PHASOR_Value Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_PHASOR", "update", RetCode.BadParam);
-         core.HT_PHASOR_StreamStep(this, inReal);
+         core.HT_PHASOR_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new HT_PHASOR_Value(cur_outInPhase, cur_outQuadrature);
       }
@@ -1166,7 +1166,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.HT_PHASOR_StreamStep(scratch, inReal);
+         core.HT_PHASOR_StepImpl(scratch, inReal);
          return new HT_PHASOR_Value(scratch.cur_outInPhase, scratch.cur_outQuadrature);
       }
 
@@ -1186,7 +1186,7 @@ public partial class Core
       }
    }
 
-   internal void HT_PHASOR_StreamStep( HT_PHASOR_Stream sp, double inReal )
+   internal void HT_PHASOR_StepImpl( HT_PHASOR_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

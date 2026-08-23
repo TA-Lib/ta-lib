@@ -652,7 +652,7 @@ public partial class Core
       public MACDFIX_Value Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDFIX", "update", RetCode.BadParam);
-         core.MACDFIX_StreamStep(this, inReal);
+         core.MACDFIX_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return new MACDFIX_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
@@ -672,7 +672,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDFIX", "peek", RetCode.BadParam);
          MACDFIX_Stream scratch = new MACDFIX_Stream(this);
-         core.MACDFIX_StreamStep(scratch, inReal);
+         core.MACDFIX_StepImpl(scratch, inReal);
          return new MACDFIX_Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
@@ -692,7 +692,7 @@ public partial class Core
       }
    }
 
-   internal void MACDFIX_StreamStep( MACDFIX_Stream sp, double inReal )
+   internal void MACDFIX_StepImpl( MACDFIX_Stream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;

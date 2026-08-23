@@ -468,7 +468,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("EMA", "update", RetCode.BadParam);
-         core.EMA_StreamStep(this, inReal);
+         core.EMA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -488,7 +488,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("EMA", "peek", RetCode.BadParam);
          EMA_Stream scratch = new EMA_Stream(this);
-         core.EMA_StreamStep(scratch, inReal);
+         core.EMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -508,7 +508,7 @@ public partial class Core
       }
    }
 
-   internal void EMA_StreamStep( EMA_Stream sp, double inReal )
+   internal void EMA_StepImpl( EMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

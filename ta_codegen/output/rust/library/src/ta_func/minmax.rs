@@ -469,7 +469,7 @@ impl MINMAX_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MINMAX_step_internal(&self, sp: &mut MINMAX_StreamState, inReal: f64, outMin: &mut f64, outMax: &mut f64) {
+    fn MINMAX_step_impl(&self, sp: &mut MINMAX_StreamState, inReal: f64, outMin: &mut f64, outMax: &mut f64) {
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
@@ -764,7 +764,7 @@ impl MINMAX_Stream {
         }
         let mut outMin: f64 = 0.0_f64;
         let mut outMax: f64 = 0.0_f64;
-        self.core.MINMAX_step_internal(&mut self.state, inReal, &mut outMin, &mut outMax);
+        self.core.MINMAX_step_impl(&mut self.state, inReal, &mut outMin, &mut outMax);
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }

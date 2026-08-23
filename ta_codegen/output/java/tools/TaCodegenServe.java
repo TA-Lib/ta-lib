@@ -807,7 +807,7 @@ class Core {
           public double update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("AC update: BadParam", RetCode.BadParam);
-             core.AC_StreamStep(this, inHigh, inLow);
+             core.AC_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -831,7 +831,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.AC_StreamStep(scratch, inHigh, inLow);
+             core.AC_StepImpl(scratch, inHigh, inLow);
              return scratch.cur_outReal;
           }
 
@@ -852,7 +852,7 @@ class Core {
              return new AC_Stream(this);
           }
        }
-       void AC_StreamStep( AC_Stream sp, double inHigh, double inLow )
+       void AC_StepImpl( AC_Stream sp, double inHigh, double inLow )
        {
           double medianPrice = 0.0;
           if( sp.ringCap_trailingFastIdx == 0 ) {
@@ -1767,7 +1767,7 @@ class Core {
           public Value update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
-             core.ACCBANDS_StreamStep(this, inHigh, inLow, inClose);
+             core.ACCBANDS_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
              return this.cachedValue;
@@ -1792,7 +1792,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.ACCBANDS_StreamStep(scratch, inHigh, inLow, inClose);
+             core.ACCBANDS_StepImpl(scratch, inHigh, inLow, inClose);
              return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
           }
 
@@ -1813,7 +1813,7 @@ class Core {
              return new ACCBANDS_Stream(this);
           }
        }
-       void ACCBANDS_StreamStep( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
+       void ACCBANDS_StepImpl( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
        {
           double tempReal = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
@@ -2341,7 +2341,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ACOS update: BadParam", RetCode.BadParam);
-             core.ACOS_StreamStep(this, inReal);
+             core.ACOS_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -2357,7 +2357,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ACOS peek: BadParam", RetCode.BadParam);
              ACOS_Stream scratch = new ACOS_Stream(this);
-             core.ACOS_StreamStep(scratch, inReal);
+             core.ACOS_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -2378,7 +2378,7 @@ class Core {
              return new ACOS_Stream(this);
           }
        }
-       void ACOS_StreamStep( ACOS_Stream sp, double inReal )
+       void ACOS_StepImpl( ACOS_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.acos(inReal);
        }
@@ -2816,7 +2816,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("AD update: BadParam", RetCode.BadParam);
-             core.AD_StreamStep(this, inHigh, inLow, inClose, inVolume);
+             core.AD_StepImpl(this, inHigh, inLow, inClose, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -2832,7 +2832,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("AD peek: BadParam", RetCode.BadParam);
              AD_Stream scratch = new AD_Stream(this);
-             core.AD_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+             core.AD_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -2853,7 +2853,7 @@ class Core {
              return new AD_Stream(this);
           }
        }
-       void AD_StreamStep( AD_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+       void AD_StepImpl( AD_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
        {
           double high = 0.0;
           double low = 0.0;
@@ -3257,7 +3257,7 @@ class Core {
           public double update( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("ADD update: BadParam", RetCode.BadParam);
-             core.ADD_StreamStep(this, inReal0, inReal1);
+             core.ADD_StepImpl(this, inReal0, inReal1);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -3273,7 +3273,7 @@ class Core {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("ADD peek: BadParam", RetCode.BadParam);
              ADD_Stream scratch = new ADD_Stream(this);
-             core.ADD_StreamStep(scratch, inReal0, inReal1);
+             core.ADD_StepImpl(scratch, inReal0, inReal1);
              return scratch.cur_outReal;
           }
 
@@ -3294,7 +3294,7 @@ class Core {
              return new ADD_Stream(this);
           }
        }
-       void ADD_StreamStep( ADD_Stream sp, double inReal0, double inReal1 )
+       void ADD_StepImpl( ADD_Stream sp, double inReal0, double inReal1 )
        {
           sp.cur_outReal = inReal0 + inReal1;
        }
@@ -3938,7 +3938,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("ADOSC update: BadParam", RetCode.BadParam);
-             core.ADOSC_StreamStep(this, inHigh, inLow, inClose, inVolume);
+             core.ADOSC_StepImpl(this, inHigh, inLow, inClose, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -3954,7 +3954,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("ADOSC peek: BadParam", RetCode.BadParam);
              ADOSC_Stream scratch = new ADOSC_Stream(this);
-             core.ADOSC_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+             core.ADOSC_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -3975,7 +3975,7 @@ class Core {
              return new ADOSC_Stream(this);
           }
        }
-       void ADOSC_StreamStep( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+       void ADOSC_StepImpl( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
        {
           double high = 0.0;
           double low = 0.0;
@@ -5101,7 +5101,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ADX update: BadParam", RetCode.BadParam);
-             core.ADX_StreamStep(this, inHigh, inLow, inClose);
+             core.ADX_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -5117,7 +5117,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ADX peek: BadParam", RetCode.BadParam);
              ADX_Stream scratch = new ADX_Stream(this);
-             core.ADX_StreamStep(scratch, inHigh, inLow, inClose);
+             core.ADX_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -5138,7 +5138,7 @@ class Core {
              return new ADX_Stream(this);
           }
        }
-       void ADX_StreamStep( ADX_Stream sp, double inHigh, double inLow, double inClose )
+       void ADX_StepImpl( ADX_Stream sp, double inHigh, double inLow, double inClose )
        {
           /* Calculate the prevMinusDM and prevPlusDM */
           sp.tempReal = inHigh;
@@ -6049,7 +6049,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ADXR update: BadParam", RetCode.BadParam);
-             core.ADXR_StreamStep(this, inHigh, inLow, inClose);
+             core.ADXR_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -6065,7 +6065,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ADXR peek: BadParam", RetCode.BadParam);
              ADXR_Stream scratch = new ADXR_Stream(this);
-             core.ADXR_StreamStep(scratch, inHigh, inLow, inClose);
+             core.ADXR_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -6086,7 +6086,7 @@ class Core {
              return new ADXR_Stream(this);
           }
        }
-       void ADXR_StreamStep( ADXR_Stream sp, double inHigh, double inLow, double inClose )
+       void ADXR_StepImpl( ADXR_Stream sp, double inHigh, double inLow, double inClose )
        {
           double cur_adx = 0.0;
           double cur_outReal = 0.0;
@@ -6790,7 +6790,7 @@ class Core {
           public double update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("AO update: BadParam", RetCode.BadParam);
-             core.AO_StreamStep(this, inHigh, inLow);
+             core.AO_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -6814,7 +6814,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.AO_StreamStep(scratch, inHigh, inLow);
+             core.AO_StepImpl(scratch, inHigh, inLow);
              return scratch.cur_outReal;
           }
 
@@ -6835,7 +6835,7 @@ class Core {
              return new AO_Stream(this);
           }
        }
-       void AO_StreamStep( AO_Stream sp, double inHigh, double inLow )
+       void AO_StepImpl( AO_Stream sp, double inHigh, double inLow )
        {
           double medianPrice = 0.0;
           if( sp.ringCap_trailingFastIdx == 0 ) {
@@ -7568,7 +7568,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("APO update: BadParam", RetCode.BadParam);
-             core.APO_StreamStep(this, inReal);
+             core.APO_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -7592,7 +7592,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.APO_StreamStep(scratch, inReal);
+             core.APO_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -7613,7 +7613,7 @@ class Core {
              return new APO_Stream(this);
           }
        }
-       void APO_StreamStep( APO_Stream sp, double inReal )
+       void APO_StepImpl( APO_Stream sp, double inReal )
        {
           double cur_tempBuffer = 0.0;
           double cur_outReal = 0.0;
@@ -8322,7 +8322,7 @@ class Core {
           public Value update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("AROON update: BadParam", RetCode.BadParam);
-             core.AROON_StreamStep(this, inHigh, inLow);
+             core.AROON_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
              return this.cachedValue;
@@ -8347,7 +8347,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.AROON_StreamStep(scratch, inHigh, inLow);
+             core.AROON_StepImpl(scratch, inHigh, inLow);
              return new Value(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
           }
 
@@ -8368,7 +8368,7 @@ class Core {
              return new AROON_Stream(this);
           }
        }
-       void AROON_StreamStep( AROON_Stream sp, double inHigh, double inLow )
+       void AROON_StepImpl( AROON_Stream sp, double inHigh, double inLow )
        {
           double tmp = 0.0;
           if( sp.today >= 1073741824 ) {
@@ -9145,7 +9145,7 @@ class Core {
           public double update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("AROONOSC update: BadParam", RetCode.BadParam);
-             core.AROONOSC_StreamStep(this, inHigh, inLow);
+             core.AROONOSC_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -9169,7 +9169,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.AROONOSC_StreamStep(scratch, inHigh, inLow);
+             core.AROONOSC_StepImpl(scratch, inHigh, inLow);
              return scratch.cur_outReal;
           }
 
@@ -9190,7 +9190,7 @@ class Core {
              return new AROONOSC_Stream(this);
           }
        }
-       void AROONOSC_StreamStep( AROONOSC_Stream sp, double inHigh, double inLow )
+       void AROONOSC_StepImpl( AROONOSC_Stream sp, double inHigh, double inLow )
        {
           double tmp = 0.0;
           if( sp.today >= 1073741824 ) {
@@ -9738,7 +9738,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ASIN update: BadParam", RetCode.BadParam);
-             core.ASIN_StreamStep(this, inReal);
+             core.ASIN_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -9754,7 +9754,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
              ASIN_Stream scratch = new ASIN_Stream(this);
-             core.ASIN_StreamStep(scratch, inReal);
+             core.ASIN_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -9775,7 +9775,7 @@ class Core {
              return new ASIN_Stream(this);
           }
        }
-       void ASIN_StreamStep( ASIN_Stream sp, double inReal )
+       void ASIN_StepImpl( ASIN_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.asin(inReal);
        }
@@ -10126,7 +10126,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ATAN update: BadParam", RetCode.BadParam);
-             core.ATAN_StreamStep(this, inReal);
+             core.ATAN_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -10142,7 +10142,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
              ATAN_Stream scratch = new ATAN_Stream(this);
-             core.ATAN_StreamStep(scratch, inReal);
+             core.ATAN_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -10163,7 +10163,7 @@ class Core {
              return new ATAN_Stream(this);
           }
        }
-       void ATAN_StreamStep( ATAN_Stream sp, double inReal )
+       void ATAN_StepImpl( ATAN_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.atan(inReal);
        }
@@ -10806,7 +10806,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ATR update: BadParam", RetCode.BadParam);
-             core.ATR_StreamStep(this, inHigh, inLow, inClose);
+             core.ATR_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -10822,7 +10822,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ATR peek: BadParam", RetCode.BadParam);
              ATR_Stream scratch = new ATR_Stream(this);
-             core.ATR_StreamStep(scratch, inHigh, inLow, inClose);
+             core.ATR_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -10843,7 +10843,7 @@ class Core {
              return new ATR_Stream(this);
           }
        }
-       void ATR_StreamStep( ATR_Stream sp, double inHigh, double inLow, double inClose )
+       void ATR_StepImpl( ATR_Stream sp, double inHigh, double inLow, double inClose )
        {
           double val2 = 0.0;
           double greatest = 0.0;
@@ -11460,7 +11460,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
-             core.AVGDEV_StreamStep(this, inReal);
+             core.AVGDEV_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -11476,7 +11476,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
              AVGDEV_Stream scratch = new AVGDEV_Stream(this);
-             core.AVGDEV_StreamStep(scratch, inReal);
+             core.AVGDEV_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -11497,7 +11497,7 @@ class Core {
              return new AVGDEV_Stream(this);
           }
        }
-       void AVGDEV_StreamStep( AVGDEV_Stream sp, double inReal )
+       void AVGDEV_StepImpl( AVGDEV_Stream sp, double inReal )
        {
           double todaySum = 0.0;
           double todayDev = 0.0;
@@ -11940,7 +11940,7 @@ class Core {
           public double update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
-             core.AVGPRICE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.AVGPRICE_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -11956,7 +11956,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
              AVGPRICE_Stream scratch = new AVGPRICE_Stream(this);
-             core.AVGPRICE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.AVGPRICE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -11977,7 +11977,7 @@ class Core {
              return new AVGPRICE_Stream(this);
           }
        }
-       void AVGPRICE_StreamStep( AVGPRICE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void AVGPRICE_StepImpl( AVGPRICE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
        }
@@ -12974,7 +12974,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
-             core.BBANDS_StreamStep(this, inReal);
+             core.BBANDS_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
              return this.cachedValue;
@@ -12999,7 +12999,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.BBANDS_StreamStep(scratch, inReal);
+             core.BBANDS_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
           }
 
@@ -13020,7 +13020,7 @@ class Core {
              return new BBANDS_Stream(this);
           }
        }
-       void BBANDS_StreamStep( BBANDS_Stream sp, double inReal )
+       void BBANDS_StepImpl( BBANDS_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           double tempReal2 = 0.0;
@@ -14094,7 +14094,7 @@ class Core {
           public double update( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("BETA update: BadParam", RetCode.BadParam);
-             core.BETA_StreamStep(this, inReal0, inReal1);
+             core.BETA_StepImpl(this, inReal0, inReal1);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -14118,7 +14118,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.BETA_StreamStep(scratch, inReal0, inReal1);
+             core.BETA_StepImpl(scratch, inReal0, inReal1);
              return scratch.cur_outReal;
           }
 
@@ -14139,7 +14139,7 @@ class Core {
              return new BETA_Stream(this);
           }
        }
-       void BETA_StreamStep( BETA_Stream sp, double inReal0, double inReal1 )
+       void BETA_StepImpl( BETA_Stream sp, double inReal0, double inReal1 )
        {
           double tmp_real = 0.0;
           if( sp.i >= 1073741824 ) {
@@ -14981,7 +14981,7 @@ class Core {
           public double update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("BOP update: BadParam", RetCode.BadParam);
-             core.BOP_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.BOP_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -14997,7 +14997,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("BOP peek: BadParam", RetCode.BadParam);
              BOP_Stream scratch = new BOP_Stream(this);
-             core.BOP_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.BOP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -15018,7 +15018,7 @@ class Core {
              return new BOP_Stream(this);
           }
        }
-       void BOP_StreamStep( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void BOP_StepImpl( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           double tempReal = 0.0;
           tempReal = inHigh - inLow;
@@ -15609,7 +15609,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CCI update: BadParam", RetCode.BadParam);
-             core.CCI_StreamStep(this, inHigh, inLow, inClose);
+             core.CCI_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -15625,7 +15625,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CCI peek: BadParam", RetCode.BadParam);
              CCI_Stream scratch = new CCI_Stream(this);
-             core.CCI_StreamStep(scratch, inHigh, inLow, inClose);
+             core.CCI_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -15646,7 +15646,7 @@ class Core {
              return new CCI_Stream(this);
           }
        }
-       void CCI_StreamStep( CCI_Stream sp, double inHigh, double inLow, double inClose )
+       void CCI_StepImpl( CCI_Stream sp, double inHigh, double inLow, double inClose )
        {
           double lastValue = 0.0;
           lastValue = (inHigh + inLow + inClose) / 3;
@@ -16303,7 +16303,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL2CROWS update: BadParam", RetCode.BadParam);
-             core.CDL2CROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDL2CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -16319,7 +16319,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL2CROWS peek: BadParam", RetCode.BadParam);
              CDL2CROWS_Stream scratch = new CDL2CROWS_Stream(this);
-             core.CDL2CROWS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDL2CROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -16340,7 +16340,7 @@ class Core {
              return new CDL2CROWS_Stream(this);
           }
        }
-       void CDL2CROWS_StreamStep( CDL2CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDL2CROWS_StepImpl( CDL2CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -17033,7 +17033,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3BLACKCROWS update: BadParam", RetCode.BadParam);
-             core.CDL3BLACKCROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDL3BLACKCROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -17057,7 +17057,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDL3BLACKCROWS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDL3BLACKCROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -17078,7 +17078,7 @@ class Core {
              return new CDL3BLACKCROWS_Stream(this);
           }
        }
-       void CDL3BLACKCROWS_StreamStep( CDL3BLACKCROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDL3BLACKCROWS_StepImpl( CDL3BLACKCROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
           int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
@@ -17817,7 +17817,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3INSIDE update: BadParam", RetCode.BadParam);
-             core.CDL3INSIDE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDL3INSIDE_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -17841,7 +17841,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDL3INSIDE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDL3INSIDE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -17862,7 +17862,7 @@ class Core {
              return new CDL3INSIDE_Stream(this);
           }
        }
-       void CDL3INSIDE_StreamStep( CDL3INSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDL3INSIDE_StepImpl( CDL3INSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -18589,7 +18589,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3LINESTRIKE update: BadParam", RetCode.BadParam);
-             core.CDL3LINESTRIKE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDL3LINESTRIKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -18613,7 +18613,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDL3LINESTRIKE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDL3LINESTRIKE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -18634,7 +18634,7 @@ class Core {
              return new CDL3LINESTRIKE_Stream(this);
           }
        }
-       void CDL3LINESTRIKE_StreamStep( CDL3LINESTRIKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDL3LINESTRIKE_StepImpl( CDL3LINESTRIKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int Near_rangeType = sp.cs_Near_rangeType;
           int Near_avgPeriod = sp.cs_Near_avgPeriod;
@@ -19223,7 +19223,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3OUTSIDE update: BadParam", RetCode.BadParam);
-             core.CDL3OUTSIDE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDL3OUTSIDE_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -19239,7 +19239,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
              CDL3OUTSIDE_Stream scratch = new CDL3OUTSIDE_Stream(this);
-             core.CDL3OUTSIDE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDL3OUTSIDE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -19260,7 +19260,7 @@ class Core {
              return new CDL3OUTSIDE_Stream(this);
           }
        }
-       void CDL3OUTSIDE_StreamStep( CDL3OUTSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDL3OUTSIDE_StepImpl( CDL3OUTSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose ) {
              /* white engulfs black */
@@ -20056,7 +20056,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3STARSINSOUTH update: BadParam", RetCode.BadParam);
-             core.CDL3STARSINSOUTH_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDL3STARSINSOUTH_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -20080,7 +20080,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDL3STARSINSOUTH_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDL3STARSINSOUTH_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -20101,7 +20101,7 @@ class Core {
              return new CDL3STARSINSOUTH_Stream(this);
           }
        }
-       void CDL3STARSINSOUTH_StreamStep( CDL3STARSINSOUTH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDL3STARSINSOUTH_StepImpl( CDL3STARSINSOUTH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -21135,7 +21135,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3WHITESOLDIERS update: BadParam", RetCode.BadParam);
-             core.CDL3WHITESOLDIERS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDL3WHITESOLDIERS_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -21159,7 +21159,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDL3WHITESOLDIERS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDL3WHITESOLDIERS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -21180,7 +21180,7 @@ class Core {
              return new CDL3WHITESOLDIERS_Stream(this);
           }
        }
-       void CDL3WHITESOLDIERS_StreamStep( CDL3WHITESOLDIERS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDL3WHITESOLDIERS_StepImpl( CDL3WHITESOLDIERS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
           int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -22140,7 +22140,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLABANDONEDBABY update: BadParam", RetCode.BadParam);
-             core.CDLABANDONEDBABY_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLABANDONEDBABY_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -22164,7 +22164,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLABANDONEDBABY_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLABANDONEDBABY_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -22185,7 +22185,7 @@ class Core {
              return new CDLABANDONEDBABY_Stream(this);
           }
        }
-       void CDLABANDONEDBABY_StreamStep( CDLABANDONEDBABY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLABANDONEDBABY_StepImpl( CDLABANDONEDBABY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -23228,7 +23228,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLADVANCEBLOCK update: BadParam", RetCode.BadParam);
-             core.CDLADVANCEBLOCK_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLADVANCEBLOCK_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -23252,7 +23252,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLADVANCEBLOCK_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLADVANCEBLOCK_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -23273,7 +23273,7 @@ class Core {
              return new CDLADVANCEBLOCK_Stream(this);
           }
        }
-       void CDLADVANCEBLOCK_StreamStep( CDLADVANCEBLOCK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLADVANCEBLOCK_StepImpl( CDLADVANCEBLOCK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -24157,7 +24157,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLBELTHOLD update: BadParam", RetCode.BadParam);
-             core.CDLBELTHOLD_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLBELTHOLD_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -24181,7 +24181,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLBELTHOLD_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLBELTHOLD_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -24202,7 +24202,7 @@ class Core {
              return new CDLBELTHOLD_Stream(this);
           }
        }
-       void CDLBELTHOLD_StreamStep( CDLBELTHOLD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLBELTHOLD_StepImpl( CDLBELTHOLD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -24891,7 +24891,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLBREAKAWAY update: BadParam", RetCode.BadParam);
-             core.CDLBREAKAWAY_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLBREAKAWAY_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -24907,7 +24907,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLBREAKAWAY peek: BadParam", RetCode.BadParam);
              CDLBREAKAWAY_Stream scratch = new CDLBREAKAWAY_Stream(this);
-             core.CDLBREAKAWAY_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLBREAKAWAY_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -24928,7 +24928,7 @@ class Core {
              return new CDLBREAKAWAY_Stream(this);
           }
        }
-       void CDLBREAKAWAY_StreamStep( CDLBREAKAWAY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLBREAKAWAY_StepImpl( CDLBREAKAWAY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -25620,7 +25620,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLCLOSINGMARUBOZU update: BadParam", RetCode.BadParam);
-             core.CDLCLOSINGMARUBOZU_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLCLOSINGMARUBOZU_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -25644,7 +25644,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLCLOSINGMARUBOZU_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLCLOSINGMARUBOZU_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -25665,7 +25665,7 @@ class Core {
              return new CDLCLOSINGMARUBOZU_Stream(this);
           }
        }
-       void CDLCLOSINGMARUBOZU_StreamStep( CDLCLOSINGMARUBOZU_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLCLOSINGMARUBOZU_StepImpl( CDLCLOSINGMARUBOZU_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -26367,7 +26367,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLCONCEALBABYSWALL update: BadParam", RetCode.BadParam);
-             core.CDLCONCEALBABYSWALL_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLCONCEALBABYSWALL_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -26391,7 +26391,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLCONCEALBABYSWALL_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLCONCEALBABYSWALL_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -26412,7 +26412,7 @@ class Core {
              return new CDLCONCEALBABYSWALL_Stream(this);
           }
        }
-       void CDLCONCEALBABYSWALL_StreamStep( CDLCONCEALBABYSWALL_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLCONCEALBABYSWALL_StepImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
           int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
@@ -27156,7 +27156,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLCOUNTERATTACK update: BadParam", RetCode.BadParam);
-             core.CDLCOUNTERATTACK_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLCOUNTERATTACK_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -27180,7 +27180,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLCOUNTERATTACK_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLCOUNTERATTACK_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -27201,7 +27201,7 @@ class Core {
              return new CDLCOUNTERATTACK_Stream(this);
           }
        }
-       void CDLCOUNTERATTACK_StreamStep( CDLCOUNTERATTACK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLCOUNTERATTACK_StepImpl( CDLCOUNTERATTACK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -27903,7 +27903,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDARKCLOUDCOVER update: BadParam", RetCode.BadParam);
-             core.CDLDARKCLOUDCOVER_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLDARKCLOUDCOVER_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -27919,7 +27919,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDARKCLOUDCOVER peek: BadParam", RetCode.BadParam);
              CDLDARKCLOUDCOVER_Stream scratch = new CDLDARKCLOUDCOVER_Stream(this);
-             core.CDLDARKCLOUDCOVER_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLDARKCLOUDCOVER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -27940,7 +27940,7 @@ class Core {
              return new CDLDARKCLOUDCOVER_Stream(this);
           }
        }
-       void CDLDARKCLOUDCOVER_StreamStep( CDLDARKCLOUDCOVER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLDARKCLOUDCOVER_StepImpl( CDLDARKCLOUDCOVER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -28545,7 +28545,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDOJI update: BadParam", RetCode.BadParam);
-             core.CDLDOJI_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -28561,7 +28561,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDOJI peek: BadParam", RetCode.BadParam);
              CDLDOJI_Stream scratch = new CDLDOJI_Stream(this);
-             core.CDLDOJI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLDOJI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -28582,7 +28582,7 @@ class Core {
              return new CDLDOJI_Stream(this);
           }
        }
-       void CDLDOJI_StreamStep( CDLDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLDOJI_StepImpl( CDLDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -29257,7 +29257,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDOJISTAR update: BadParam", RetCode.BadParam);
-             core.CDLDOJISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLDOJISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -29281,7 +29281,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLDOJISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLDOJISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -29302,7 +29302,7 @@ class Core {
              return new CDLDOJISTAR_Stream(this);
           }
        }
-       void CDLDOJISTAR_StreamStep( CDLDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLDOJISTAR_StepImpl( CDLDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -30016,7 +30016,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDRAGONFLYDOJI update: BadParam", RetCode.BadParam);
-             core.CDLDRAGONFLYDOJI_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLDRAGONFLYDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -30040,7 +30040,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLDRAGONFLYDOJI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLDRAGONFLYDOJI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -30061,7 +30061,7 @@ class Core {
              return new CDLDRAGONFLYDOJI_Stream(this);
           }
        }
-       void CDLDRAGONFLYDOJI_StreamStep( CDLDRAGONFLYDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLDRAGONFLYDOJI_StepImpl( CDLDRAGONFLYDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -30649,7 +30649,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLENGULFING update: BadParam", RetCode.BadParam);
-             core.CDLENGULFING_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLENGULFING_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -30665,7 +30665,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
              CDLENGULFING_Stream scratch = new CDLENGULFING_Stream(this);
-             core.CDLENGULFING_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLENGULFING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -30686,7 +30686,7 @@ class Core {
              return new CDLENGULFING_Stream(this);
           }
        }
-       void CDLENGULFING_StreamStep( CDLENGULFING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLENGULFING_StepImpl( CDLENGULFING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) ) {
              /* white engulfs black */
@@ -31422,7 +31422,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLEVENINGDOJISTAR update: BadParam", RetCode.BadParam);
-             core.CDLEVENINGDOJISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLEVENINGDOJISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -31446,7 +31446,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLEVENINGDOJISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLEVENINGDOJISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -31467,7 +31467,7 @@ class Core {
              return new CDLEVENINGDOJISTAR_Stream(this);
           }
        }
-       void CDLEVENINGDOJISTAR_StreamStep( CDLEVENINGDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLEVENINGDOJISTAR_StepImpl( CDLEVENINGDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -32313,7 +32313,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLEVENINGSTAR update: BadParam", RetCode.BadParam);
-             core.CDLEVENINGSTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLEVENINGSTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -32337,7 +32337,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLEVENINGSTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLEVENINGSTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -32358,7 +32358,7 @@ class Core {
              return new CDLEVENINGSTAR_Stream(this);
           }
        }
-       void CDLEVENINGSTAR_StreamStep( CDLEVENINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLEVENINGSTAR_StepImpl( CDLEVENINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -33125,7 +33125,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE update: BadParam", RetCode.BadParam);
-             core.CDLGAPSIDESIDEWHITE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLGAPSIDESIDEWHITE_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -33149,7 +33149,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLGAPSIDESIDEWHITE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLGAPSIDESIDEWHITE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -33170,7 +33170,7 @@ class Core {
              return new CDLGAPSIDESIDEWHITE_Stream(this);
           }
        }
-       void CDLGAPSIDESIDEWHITE_StreamStep( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLGAPSIDESIDEWHITE_StepImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int Equal_rangeType = sp.cs_Equal_rangeType;
           int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -33896,7 +33896,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLGRAVESTONEDOJI update: BadParam", RetCode.BadParam);
-             core.CDLGRAVESTONEDOJI_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLGRAVESTONEDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -33920,7 +33920,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLGRAVESTONEDOJI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLGRAVESTONEDOJI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -33941,7 +33941,7 @@ class Core {
              return new CDLGRAVESTONEDOJI_Stream(this);
           }
        }
-       void CDLGRAVESTONEDOJI_StreamStep( CDLGRAVESTONEDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLGRAVESTONEDOJI_StepImpl( CDLGRAVESTONEDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -34754,7 +34754,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHAMMER update: BadParam", RetCode.BadParam);
-             core.CDLHAMMER_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLHAMMER_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -34778,7 +34778,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLHAMMER_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLHAMMER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -34799,7 +34799,7 @@ class Core {
              return new CDLHAMMER_Stream(this);
           }
        }
-       void CDLHAMMER_StreamStep( CDLHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLHAMMER_StepImpl( CDLHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
           int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -35715,7 +35715,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHANGINGMAN update: BadParam", RetCode.BadParam);
-             core.CDLHANGINGMAN_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLHANGINGMAN_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -35739,7 +35739,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLHANGINGMAN_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLHANGINGMAN_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -35760,7 +35760,7 @@ class Core {
              return new CDLHANGINGMAN_Stream(this);
           }
        }
-       void CDLHANGINGMAN_StreamStep( CDLHANGINGMAN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLHANGINGMAN_StepImpl( CDLHANGINGMAN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
           int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -36589,7 +36589,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHARAMI update: BadParam", RetCode.BadParam);
-             core.CDLHARAMI_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLHARAMI_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -36613,7 +36613,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLHARAMI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLHARAMI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -36634,7 +36634,7 @@ class Core {
              return new CDLHARAMI_Stream(this);
           }
        }
-       void CDLHARAMI_StreamStep( CDLHARAMI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLHARAMI_StepImpl( CDLHARAMI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -37406,7 +37406,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHARAMICROSS update: BadParam", RetCode.BadParam);
-             core.CDLHARAMICROSS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLHARAMICROSS_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -37430,7 +37430,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLHARAMICROSS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLHARAMICROSS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -37451,7 +37451,7 @@ class Core {
              return new CDLHARAMICROSS_Stream(this);
           }
        }
-       void CDLHARAMICROSS_StreamStep( CDLHARAMICROSS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLHARAMICROSS_StepImpl( CDLHARAMICROSS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -38188,7 +38188,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIGHWAVE update: BadParam", RetCode.BadParam);
-             core.CDLHIGHWAVE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLHIGHWAVE_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -38212,7 +38212,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLHIGHWAVE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLHIGHWAVE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -38233,7 +38233,7 @@ class Core {
              return new CDLHIGHWAVE_Stream(this);
           }
        }
-       void CDLHIGHWAVE_StreamStep( CDLHIGHWAVE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLHIGHWAVE_StepImpl( CDLHIGHWAVE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
           int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -38903,7 +38903,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIKKAKE update: BadParam", RetCode.BadParam);
-             core.CDLHIKKAKE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLHIKKAKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -38919,7 +38919,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
              CDLHIKKAKE_Stream scratch = new CDLHIKKAKE_Stream(this);
-             core.CDLHIKKAKE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLHIKKAKE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -38940,7 +38940,7 @@ class Core {
              return new CDLHIKKAKE_Stream(this);
           }
        }
-       void CDLHIKKAKE_StreamStep( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLHIKKAKE_StepImpl( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           if( sp.lag1_inHigh < sp.lag2_inHigh &&
               sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
@@ -39691,7 +39691,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIKKAKEMOD update: BadParam", RetCode.BadParam);
-             core.CDLHIKKAKEMOD_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLHIKKAKEMOD_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -39707,7 +39707,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIKKAKEMOD peek: BadParam", RetCode.BadParam);
              CDLHIKKAKEMOD_Stream scratch = new CDLHIKKAKEMOD_Stream(this);
-             core.CDLHIKKAKEMOD_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLHIKKAKEMOD_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -39728,7 +39728,7 @@ class Core {
              return new CDLHIKKAKEMOD_Stream(this);
           }
        }
-       void CDLHIKKAKEMOD_StreamStep( CDLHIKKAKEMOD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLHIKKAKEMOD_StepImpl( CDLHIKKAKEMOD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int Near_rangeType = sp.cs_Near_rangeType;
           int Near_avgPeriod = sp.cs_Near_avgPeriod;
@@ -40492,7 +40492,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHOMINGPIGEON update: BadParam", RetCode.BadParam);
-             core.CDLHOMINGPIGEON_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLHOMINGPIGEON_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -40516,7 +40516,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLHOMINGPIGEON_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLHOMINGPIGEON_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -40537,7 +40537,7 @@ class Core {
              return new CDLHOMINGPIGEON_Stream(this);
           }
        }
-       void CDLHOMINGPIGEON_StreamStep( CDLHOMINGPIGEON_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLHOMINGPIGEON_StepImpl( CDLHOMINGPIGEON_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -41319,7 +41319,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLIDENTICAL3CROWS update: BadParam", RetCode.BadParam);
-             core.CDLIDENTICAL3CROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLIDENTICAL3CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -41343,7 +41343,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLIDENTICAL3CROWS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLIDENTICAL3CROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -41364,7 +41364,7 @@ class Core {
              return new CDLIDENTICAL3CROWS_Stream(this);
           }
        }
-       void CDLIDENTICAL3CROWS_StreamStep( CDLIDENTICAL3CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLIDENTICAL3CROWS_StepImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int Equal_rangeType = sp.cs_Equal_rangeType;
           int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -42139,7 +42139,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLINNECK update: BadParam", RetCode.BadParam);
-             core.CDLINNECK_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLINNECK_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -42163,7 +42163,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLINNECK_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLINNECK_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -42184,7 +42184,7 @@ class Core {
              return new CDLINNECK_Stream(this);
           }
        }
-       void CDLINNECK_StreamStep( CDLINNECK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLINNECK_StepImpl( CDLINNECK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -42952,7 +42952,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLINVERTEDHAMMER update: BadParam", RetCode.BadParam);
-             core.CDLINVERTEDHAMMER_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLINVERTEDHAMMER_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -42976,7 +42976,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLINVERTEDHAMMER_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLINVERTEDHAMMER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -42997,7 +42997,7 @@ class Core {
              return new CDLINVERTEDHAMMER_Stream(this);
           }
        }
-       void CDLINVERTEDHAMMER_StreamStep( CDLINVERTEDHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLINVERTEDHAMMER_StepImpl( CDLINVERTEDHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
           int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -43785,7 +43785,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLKICKING update: BadParam", RetCode.BadParam);
-             core.CDLKICKING_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLKICKING_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -43809,7 +43809,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLKICKING_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLKICKING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -43830,7 +43830,7 @@ class Core {
              return new CDLKICKING_Stream(this);
           }
        }
-       void CDLKICKING_StreamStep( CDLKICKING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLKICKING_StepImpl( CDLKICKING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -44588,7 +44588,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLKICKINGBYLENGTH update: BadParam", RetCode.BadParam);
-             core.CDLKICKINGBYLENGTH_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLKICKINGBYLENGTH_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -44612,7 +44612,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLKICKINGBYLENGTH_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLKICKINGBYLENGTH_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -44633,7 +44633,7 @@ class Core {
              return new CDLKICKINGBYLENGTH_Stream(this);
           }
        }
-       void CDLKICKINGBYLENGTH_StreamStep( CDLKICKINGBYLENGTH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLKICKINGBYLENGTH_StepImpl( CDLKICKINGBYLENGTH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -45341,7 +45341,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLADDERBOTTOM update: BadParam", RetCode.BadParam);
-             core.CDLLADDERBOTTOM_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLLADDERBOTTOM_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -45357,7 +45357,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLADDERBOTTOM peek: BadParam", RetCode.BadParam);
              CDLLADDERBOTTOM_Stream scratch = new CDLLADDERBOTTOM_Stream(this);
-             core.CDLLADDERBOTTOM_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLLADDERBOTTOM_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -45378,7 +45378,7 @@ class Core {
              return new CDLLADDERBOTTOM_Stream(this);
           }
        }
-       void CDLLADDERBOTTOM_StreamStep( CDLLADDERBOTTOM_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLLADDERBOTTOM_StepImpl( CDLLADDERBOTTOM_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
           int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
@@ -46071,7 +46071,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLONGLEGGEDDOJI update: BadParam", RetCode.BadParam);
-             core.CDLLONGLEGGEDDOJI_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLLONGLEGGEDDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -46095,7 +46095,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLLONGLEGGEDDOJI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLLONGLEGGEDDOJI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -46116,7 +46116,7 @@ class Core {
              return new CDLLONGLEGGEDDOJI_Stream(this);
           }
        }
-       void CDLLONGLEGGEDDOJI_StreamStep( CDLLONGLEGGEDDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLLONGLEGGEDDOJI_StepImpl( CDLLONGLEGGEDDOJI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -46788,7 +46788,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLONGLINE update: BadParam", RetCode.BadParam);
-             core.CDLLONGLINE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLLONGLINE_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -46812,7 +46812,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLLONGLINE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLLONGLINE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -46833,7 +46833,7 @@ class Core {
              return new CDLLONGLINE_Stream(this);
           }
        }
-       void CDLLONGLINE_StreamStep( CDLLONGLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLLONGLINE_StepImpl( CDLLONGLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -47516,7 +47516,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMARUBOZU update: BadParam", RetCode.BadParam);
-             core.CDLMARUBOZU_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLMARUBOZU_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -47540,7 +47540,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLMARUBOZU_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLMARUBOZU_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -47561,7 +47561,7 @@ class Core {
              return new CDLMARUBOZU_Stream(this);
           }
        }
-       void CDLMARUBOZU_StreamStep( CDLMARUBOZU_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLMARUBOZU_StepImpl( CDLMARUBOZU_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -48206,7 +48206,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMATCHINGLOW update: BadParam", RetCode.BadParam);
-             core.CDLMATCHINGLOW_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLMATCHINGLOW_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -48222,7 +48222,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMATCHINGLOW peek: BadParam", RetCode.BadParam);
              CDLMATCHINGLOW_Stream scratch = new CDLMATCHINGLOW_Stream(this);
-             core.CDLMATCHINGLOW_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLMATCHINGLOW_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -48243,7 +48243,7 @@ class Core {
              return new CDLMATCHINGLOW_Stream(this);
           }
        }
-       void CDLMATCHINGLOW_StreamStep( CDLMATCHINGLOW_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLMATCHINGLOW_StepImpl( CDLMATCHINGLOW_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int Equal_rangeType = sp.cs_Equal_rangeType;
           int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -49025,7 +49025,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMATHOLD update: BadParam", RetCode.BadParam);
-             core.CDLMATHOLD_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLMATHOLD_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -49049,7 +49049,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLMATHOLD_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLMATHOLD_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -49070,7 +49070,7 @@ class Core {
              return new CDLMATHOLD_Stream(this);
           }
        }
-       void CDLMATHOLD_StreamStep( CDLMATHOLD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLMATHOLD_StepImpl( CDLMATHOLD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -49968,7 +49968,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMORNINGDOJISTAR update: BadParam", RetCode.BadParam);
-             core.CDLMORNINGDOJISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLMORNINGDOJISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -49992,7 +49992,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLMORNINGDOJISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLMORNINGDOJISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -50013,7 +50013,7 @@ class Core {
              return new CDLMORNINGDOJISTAR_Stream(this);
           }
        }
-       void CDLMORNINGDOJISTAR_StreamStep( CDLMORNINGDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLMORNINGDOJISTAR_StepImpl( CDLMORNINGDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -50867,7 +50867,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMORNINGSTAR update: BadParam", RetCode.BadParam);
-             core.CDLMORNINGSTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLMORNINGSTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -50891,7 +50891,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLMORNINGSTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLMORNINGSTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -50912,7 +50912,7 @@ class Core {
              return new CDLMORNINGSTAR_Stream(this);
           }
        }
-       void CDLMORNINGSTAR_StreamStep( CDLMORNINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLMORNINGSTAR_StepImpl( CDLMORNINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -51673,7 +51673,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLONNECK update: BadParam", RetCode.BadParam);
-             core.CDLONNECK_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLONNECK_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -51697,7 +51697,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLONNECK_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLONNECK_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -51718,7 +51718,7 @@ class Core {
              return new CDLONNECK_Stream(this);
           }
        }
-       void CDLONNECK_StreamStep( CDLONNECK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLONNECK_StepImpl( CDLONNECK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -52404,7 +52404,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLPIERCING update: BadParam", RetCode.BadParam);
-             core.CDLPIERCING_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLPIERCING_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -52428,7 +52428,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLPIERCING_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLPIERCING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -52449,7 +52449,7 @@ class Core {
              return new CDLPIERCING_Stream(this);
           }
        }
-       void CDLPIERCING_StreamStep( CDLPIERCING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLPIERCING_StepImpl( CDLPIERCING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -53179,7 +53179,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLRICKSHAWMAN update: BadParam", RetCode.BadParam);
-             core.CDLRICKSHAWMAN_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLRICKSHAWMAN_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -53203,7 +53203,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLRICKSHAWMAN_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLRICKSHAWMAN_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -53224,7 +53224,7 @@ class Core {
              return new CDLRICKSHAWMAN_Stream(this);
           }
        }
-       void CDLRICKSHAWMAN_StreamStep( CDLRICKSHAWMAN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLRICKSHAWMAN_StepImpl( CDLRICKSHAWMAN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -54062,7 +54062,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLRISEFALL3METHODS update: BadParam", RetCode.BadParam);
-             core.CDLRISEFALL3METHODS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLRISEFALL3METHODS_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -54086,7 +54086,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLRISEFALL3METHODS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLRISEFALL3METHODS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -54107,7 +54107,7 @@ class Core {
              return new CDLRISEFALL3METHODS_Stream(this);
           }
        }
-       void CDLRISEFALL3METHODS_StreamStep( CDLRISEFALL3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLRISEFALL3METHODS_StepImpl( CDLRISEFALL3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -54953,7 +54953,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSEPARATINGLINES update: BadParam", RetCode.BadParam);
-             core.CDLSEPARATINGLINES_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLSEPARATINGLINES_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -54977,7 +54977,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLSEPARATINGLINES_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLSEPARATINGLINES_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -54998,7 +54998,7 @@ class Core {
              return new CDLSEPARATINGLINES_Stream(this);
           }
        }
-       void CDLSEPARATINGLINES_StreamStep( CDLSEPARATINGLINES_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLSEPARATINGLINES_StepImpl( CDLSEPARATINGLINES_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -55811,7 +55811,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSHOOTINGSTAR update: BadParam", RetCode.BadParam);
-             core.CDLSHOOTINGSTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLSHOOTINGSTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -55835,7 +55835,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLSHOOTINGSTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLSHOOTINGSTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -55856,7 +55856,7 @@ class Core {
              return new CDLSHOOTINGSTAR_Stream(this);
           }
        }
-       void CDLSHOOTINGSTAR_StreamStep( CDLSHOOTINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLSHOOTINGSTAR_StepImpl( CDLSHOOTINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
           int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -56601,7 +56601,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSHORTLINE update: BadParam", RetCode.BadParam);
-             core.CDLSHORTLINE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLSHORTLINE_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -56625,7 +56625,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLSHORTLINE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLSHORTLINE_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -56646,7 +56646,7 @@ class Core {
              return new CDLSHORTLINE_Stream(this);
           }
        }
-       void CDLSHORTLINE_StreamStep( CDLSHORTLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLSHORTLINE_StepImpl( CDLSHORTLINE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
           int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -57264,7 +57264,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSPINNINGTOP update: BadParam", RetCode.BadParam);
-             core.CDLSPINNINGTOP_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLSPINNINGTOP_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -57280,7 +57280,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSPINNINGTOP peek: BadParam", RetCode.BadParam);
              CDLSPINNINGTOP_Stream scratch = new CDLSPINNINGTOP_Stream(this);
-             core.CDLSPINNINGTOP_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLSPINNINGTOP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -57301,7 +57301,7 @@ class Core {
              return new CDLSPINNINGTOP_Stream(this);
           }
        }
-       void CDLSPINNINGTOP_StreamStep( CDLSPINNINGTOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLSPINNINGTOP_StepImpl( CDLSPINNINGTOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
           int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -58133,7 +58133,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSTALLEDPATTERN update: BadParam", RetCode.BadParam);
-             core.CDLSTALLEDPATTERN_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLSTALLEDPATTERN_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -58157,7 +58157,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLSTALLEDPATTERN_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLSTALLEDPATTERN_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -58178,7 +58178,7 @@ class Core {
              return new CDLSTALLEDPATTERN_Stream(this);
           }
        }
-       void CDLSTALLEDPATTERN_StreamStep( CDLSTALLEDPATTERN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLSTALLEDPATTERN_StepImpl( CDLSTALLEDPATTERN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -58974,7 +58974,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSTICKSANDWICH update: BadParam", RetCode.BadParam);
-             core.CDLSTICKSANDWICH_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLSTICKSANDWICH_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -58990,7 +58990,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
              CDLSTICKSANDWICH_Stream scratch = new CDLSTICKSANDWICH_Stream(this);
-             core.CDLSTICKSANDWICH_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLSTICKSANDWICH_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -59011,7 +59011,7 @@ class Core {
              return new CDLSTICKSANDWICH_Stream(this);
           }
        }
-       void CDLSTICKSANDWICH_StreamStep( CDLSTICKSANDWICH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLSTICKSANDWICH_StepImpl( CDLSTICKSANDWICH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int Equal_rangeType = sp.cs_Equal_rangeType;
           int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -59740,7 +59740,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTAKURI update: BadParam", RetCode.BadParam);
-             core.CDLTAKURI_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLTAKURI_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -59764,7 +59764,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLTAKURI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLTAKURI_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -59785,7 +59785,7 @@ class Core {
              return new CDLTAKURI_Stream(this);
           }
        }
-       void CDLTAKURI_StreamStep( CDLTAKURI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLTAKURI_StepImpl( CDLTAKURI_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -60492,7 +60492,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTASUKIGAP update: BadParam", RetCode.BadParam);
-             core.CDLTASUKIGAP_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLTASUKIGAP_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -60508,7 +60508,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTASUKIGAP peek: BadParam", RetCode.BadParam);
              CDLTASUKIGAP_Stream scratch = new CDLTASUKIGAP_Stream(this);
-             core.CDLTASUKIGAP_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLTASUKIGAP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -60529,7 +60529,7 @@ class Core {
              return new CDLTASUKIGAP_Stream(this);
           }
        }
-       void CDLTASUKIGAP_StreamStep( CDLTASUKIGAP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLTASUKIGAP_StepImpl( CDLTASUKIGAP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int Near_rangeType = sp.cs_Near_rangeType;
           int Near_avgPeriod = sp.cs_Near_avgPeriod;
@@ -61245,7 +61245,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTHRUSTING update: BadParam", RetCode.BadParam);
-             core.CDLTHRUSTING_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLTHRUSTING_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -61269,7 +61269,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLTHRUSTING_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLTHRUSTING_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -61290,7 +61290,7 @@ class Core {
              return new CDLTHRUSTING_Stream(this);
           }
        }
-       void CDLTHRUSTING_StreamStep( CDLTHRUSTING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLTHRUSTING_StepImpl( CDLTHRUSTING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -61982,7 +61982,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTRISTAR update: BadParam", RetCode.BadParam);
-             core.CDLTRISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLTRISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -61998,7 +61998,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTRISTAR peek: BadParam", RetCode.BadParam);
              CDLTRISTAR_Stream scratch = new CDLTRISTAR_Stream(this);
-             core.CDLTRISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLTRISTAR_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -62019,7 +62019,7 @@ class Core {
              return new CDLTRISTAR_Stream(this);
           }
        }
-       void CDLTRISTAR_StreamStep( CDLTRISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLTRISTAR_StepImpl( CDLTRISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
           int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -62740,7 +62740,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLUNIQUE3RIVER update: BadParam", RetCode.BadParam);
-             core.CDLUNIQUE3RIVER_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLUNIQUE3RIVER_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -62764,7 +62764,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLUNIQUE3RIVER_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLUNIQUE3RIVER_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -62785,7 +62785,7 @@ class Core {
              return new CDLUNIQUE3RIVER_Stream(this);
           }
        }
-       void CDLUNIQUE3RIVER_StreamStep( CDLUNIQUE3RIVER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLUNIQUE3RIVER_StepImpl( CDLUNIQUE3RIVER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -63542,7 +63542,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS update: BadParam", RetCode.BadParam);
-             core.CDLUPSIDEGAP2CROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLUPSIDEGAP2CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -63566,7 +63566,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CDLUPSIDEGAP2CROWS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLUPSIDEGAP2CROWS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -63587,7 +63587,7 @@ class Core {
              return new CDLUPSIDEGAP2CROWS_Stream(this);
           }
        }
-       void CDLUPSIDEGAP2CROWS_StreamStep( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLUPSIDEGAP2CROWS_StepImpl( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
           int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -64213,7 +64213,7 @@ class Core {
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLXSIDEGAP3METHODS update: BadParam", RetCode.BadParam);
-             core.CDLXSIDEGAP3METHODS_StreamStep(this, inOpen, inHigh, inLow, inClose);
+             core.CDLXSIDEGAP3METHODS_StepImpl(this, inOpen, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -64229,7 +64229,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLXSIDEGAP3METHODS peek: BadParam", RetCode.BadParam);
              CDLXSIDEGAP3METHODS_Stream scratch = new CDLXSIDEGAP3METHODS_Stream(this);
-             core.CDLXSIDEGAP3METHODS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+             core.CDLXSIDEGAP3METHODS_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
              return scratch.cur_outInteger;
           }
 
@@ -64250,7 +64250,7 @@ class Core {
              return new CDLXSIDEGAP3METHODS_Stream(this);
           }
        }
-       void CDLXSIDEGAP3METHODS_StreamStep( CDLXSIDEGAP3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+       void CDLXSIDEGAP3METHODS_StepImpl( CDLXSIDEGAP3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
        {
           if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
               ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
@@ -64667,7 +64667,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CEIL update: BadParam", RetCode.BadParam);
-             core.CEIL_StreamStep(this, inReal);
+             core.CEIL_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -64683,7 +64683,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CEIL peek: BadParam", RetCode.BadParam);
              CEIL_Stream scratch = new CEIL_Stream(this);
-             core.CEIL_StreamStep(scratch, inReal);
+             core.CEIL_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -64704,7 +64704,7 @@ class Core {
              return new CEIL_Stream(this);
           }
        }
-       void CEIL_StreamStep( CEIL_Stream sp, double inReal )
+       void CEIL_StepImpl( CEIL_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.ceil(inReal);
        }
@@ -65388,7 +65388,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("CMF update: BadParam", RetCode.BadParam);
-             core.CMF_StreamStep(this, inHigh, inLow, inClose, inVolume);
+             core.CMF_StepImpl(this, inHigh, inLow, inClose, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -65412,7 +65412,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CMF_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+             core.CMF_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -65433,7 +65433,7 @@ class Core {
              return new CMF_Stream(this);
           }
        }
-       void CMF_StreamStep( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+       void CMF_StepImpl( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
        {
           sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
           sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
@@ -66219,7 +66219,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CMO update: BadParam", RetCode.BadParam);
-             core.CMO_StreamStep(this, inReal);
+             core.CMO_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -66235,7 +66235,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CMO peek: BadParam", RetCode.BadParam);
              CMO_Stream scratch = new CMO_Stream(this);
-             core.CMO_StreamStep(scratch, inReal);
+             core.CMO_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -66256,7 +66256,7 @@ class Core {
              return new CMO_Stream(this);
           }
        }
-       void CMO_StreamStep( CMO_Stream sp, double inReal )
+       void CMO_StepImpl( CMO_Stream sp, double inReal )
        {
           double tempValue1 = 0.0;
           double tempValue2 = 0.0;
@@ -67031,7 +67031,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CMOU update: BadParam", RetCode.BadParam);
-             core.CMOU_StreamStep(this, inReal);
+             core.CMOU_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -67047,7 +67047,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CMOU peek: BadParam", RetCode.BadParam);
              CMOU_Stream scratch = new CMOU_Stream(this);
-             core.CMOU_StreamStep(scratch, inReal);
+             core.CMOU_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -67068,7 +67068,7 @@ class Core {
              return new CMOU_Stream(this);
           }
        }
-       void CMOU_StreamStep( CMOU_Stream sp, double inReal )
+       void CMOU_StepImpl( CMOU_Stream sp, double inReal )
        {
           double diff = 0.0;
           double tempReal = 0.0;
@@ -68049,7 +68049,7 @@ class Core {
           public double update( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("CORREL update: BadParam", RetCode.BadParam);
-             core.CORREL_StreamStep(this, inReal0, inReal1);
+             core.CORREL_StepImpl(this, inReal0, inReal1);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -68073,7 +68073,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.CORREL_StreamStep(scratch, inReal0, inReal1);
+             core.CORREL_StepImpl(scratch, inReal0, inReal1);
              return scratch.cur_outReal;
           }
 
@@ -68094,7 +68094,7 @@ class Core {
              return new CORREL_Stream(this);
           }
        }
-       void CORREL_StreamStep( CORREL_Stream sp, double inReal0, double inReal1 )
+       void CORREL_StepImpl( CORREL_Stream sp, double inReal0, double inReal1 )
        {
           double x = 0.0;
           if( sp.today >= 1073741824 ) {
@@ -68835,7 +68835,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("COS update: BadParam", RetCode.BadParam);
-             core.COS_StreamStep(this, inReal);
+             core.COS_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -68851,7 +68851,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("COS peek: BadParam", RetCode.BadParam);
              COS_Stream scratch = new COS_Stream(this);
-             core.COS_StreamStep(scratch, inReal);
+             core.COS_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -68872,7 +68872,7 @@ class Core {
              return new COS_Stream(this);
           }
        }
-       void COS_StreamStep( COS_Stream sp, double inReal )
+       void COS_StepImpl( COS_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.cos(inReal);
        }
@@ -69222,7 +69222,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("COSH update: BadParam", RetCode.BadParam);
-             core.COSH_StreamStep(this, inReal);
+             core.COSH_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -69238,7 +69238,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("COSH peek: BadParam", RetCode.BadParam);
              COSH_Stream scratch = new COSH_Stream(this);
-             core.COSH_StreamStep(scratch, inReal);
+             core.COSH_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -69259,7 +69259,7 @@ class Core {
              return new COSH_Stream(this);
           }
        }
-       void COSH_StreamStep( COSH_Stream sp, double inReal )
+       void COSH_StepImpl( COSH_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.cosh(inReal);
        }
@@ -69845,7 +69845,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("DEMA update: BadParam", RetCode.BadParam);
-             core.DEMA_StreamStep(this, inReal);
+             core.DEMA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -69861,7 +69861,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
              DEMA_Stream scratch = new DEMA_Stream(this);
-             core.DEMA_StreamStep(scratch, inReal);
+             core.DEMA_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -69882,7 +69882,7 @@ class Core {
              return new DEMA_Stream(this);
           }
        }
-       void DEMA_StreamStep( DEMA_Stream sp, double inReal )
+       void DEMA_StepImpl( DEMA_Stream sp, double inReal )
        {
           if( sp.optInTimePeriod == 1 ) {
              sp.cur_outReal = inReal;
@@ -70392,7 +70392,7 @@ class Core {
           public double update( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("DIV update: BadParam", RetCode.BadParam);
-             core.DIV_StreamStep(this, inReal0, inReal1);
+             core.DIV_StepImpl(this, inReal0, inReal1);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -70408,7 +70408,7 @@ class Core {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("DIV peek: BadParam", RetCode.BadParam);
              DIV_Stream scratch = new DIV_Stream(this);
-             core.DIV_StreamStep(scratch, inReal0, inReal1);
+             core.DIV_StepImpl(scratch, inReal0, inReal1);
              return scratch.cur_outReal;
           }
 
@@ -70429,7 +70429,7 @@ class Core {
              return new DIV_Stream(this);
           }
        }
-       void DIV_StreamStep( DIV_Stream sp, double inReal0, double inReal1 )
+       void DIV_StepImpl( DIV_Stream sp, double inReal0, double inReal1 )
        {
           sp.cur_outReal = inReal0 / inReal1;
        }
@@ -71320,7 +71320,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("DX update: BadParam", RetCode.BadParam);
-             core.DX_StreamStep(this, inHigh, inLow, inClose);
+             core.DX_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -71336,7 +71336,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("DX peek: BadParam", RetCode.BadParam);
              DX_Stream scratch = new DX_Stream(this);
-             core.DX_StreamStep(scratch, inHigh, inLow, inClose);
+             core.DX_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -71357,7 +71357,7 @@ class Core {
              return new DX_Stream(this);
           }
        }
-       void DX_StreamStep( DX_Stream sp, double inHigh, double inLow, double inClose )
+       void DX_StepImpl( DX_Stream sp, double inHigh, double inLow, double inClose )
        {
           /* Calculate the prevMinusDM and prevPlusDM */
           sp.tempReal = inHigh;
@@ -72292,7 +72292,7 @@ class Core {
           public double update( double inClose, double inVolume ) {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("EFI update: BadParam", RetCode.BadParam);
-             core.EFI_StreamStep(this, inClose, inVolume);
+             core.EFI_StepImpl(this, inClose, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -72308,7 +72308,7 @@ class Core {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("EFI peek: BadParam", RetCode.BadParam);
              EFI_Stream scratch = new EFI_Stream(this);
-             core.EFI_StreamStep(scratch, inClose, inVolume);
+             core.EFI_StepImpl(scratch, inClose, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -72329,7 +72329,7 @@ class Core {
              return new EFI_Stream(this);
           }
        }
-       void EFI_StreamStep( EFI_Stream sp, double inClose, double inVolume )
+       void EFI_StepImpl( EFI_Stream sp, double inClose, double inVolume )
        {
           if( sp.optInTimePeriod == 1 ) {
              double force = 0.0;
@@ -73044,7 +73044,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("EMA update: BadParam", RetCode.BadParam);
-             core.EMA_StreamStep(this, inReal);
+             core.EMA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -73060,7 +73060,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("EMA peek: BadParam", RetCode.BadParam);
              EMA_Stream scratch = new EMA_Stream(this);
-             core.EMA_StreamStep(scratch, inReal);
+             core.EMA_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -73081,7 +73081,7 @@ class Core {
              return new EMA_Stream(this);
           }
        }
-       void EMA_StreamStep( EMA_Stream sp, double inReal )
+       void EMA_StepImpl( EMA_Stream sp, double inReal )
        {
           if( sp.optInTimePeriod == 1 ) {
              sp.cur_outReal = inReal;
@@ -73519,7 +73519,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("EXP update: BadParam", RetCode.BadParam);
-             core.EXP_StreamStep(this, inReal);
+             core.EXP_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -73535,7 +73535,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("EXP peek: BadParam", RetCode.BadParam);
              EXP_Stream scratch = new EXP_Stream(this);
-             core.EXP_StreamStep(scratch, inReal);
+             core.EXP_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -73556,7 +73556,7 @@ class Core {
              return new EXP_Stream(this);
           }
        }
-       void EXP_StreamStep( EXP_Stream sp, double inReal )
+       void EXP_StepImpl( EXP_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.exp(inReal);
        }
@@ -73904,7 +73904,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("FLOOR update: BadParam", RetCode.BadParam);
-             core.FLOOR_StreamStep(this, inReal);
+             core.FLOOR_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -73920,7 +73920,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
              FLOOR_Stream scratch = new FLOOR_Stream(this);
-             core.FLOOR_StreamStep(scratch, inReal);
+             core.FLOOR_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -73941,7 +73941,7 @@ class Core {
              return new FLOOR_Stream(this);
           }
        }
-       void FLOOR_StreamStep( FLOOR_Stream sp, double inReal )
+       void FLOOR_StepImpl( FLOOR_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.floor(inReal);
        }
@@ -74817,7 +74817,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HMA update: BadParam", RetCode.BadParam);
-             core.HMA_StreamStep(this, inReal);
+             core.HMA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -74841,7 +74841,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.HMA_StreamStep(scratch, inReal);
+             core.HMA_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -74862,7 +74862,7 @@ class Core {
              return new HMA_Stream(this);
           }
        }
-       void HMA_StreamStep( HMA_Stream sp, double inReal )
+       void HMA_StepImpl( HMA_Stream sp, double inReal )
        {
           if( sp.optInTimePeriod == 1 ) {
              sp.cur_outReal = inReal;
@@ -76486,7 +76486,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_DCPERIOD update: BadParam", RetCode.BadParam);
-             core.HT_DCPERIOD_StreamStep(this, inReal);
+             core.HT_DCPERIOD_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -76510,7 +76510,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.HT_DCPERIOD_StreamStep(scratch, inReal);
+             core.HT_DCPERIOD_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -76531,7 +76531,7 @@ class Core {
              return new HT_DCPERIOD_Stream(this);
           }
        }
-       void HT_DCPERIOD_StreamStep( HT_DCPERIOD_Stream sp, double inReal )
+       void HT_DCPERIOD_StepImpl( HT_DCPERIOD_Stream sp, double inReal )
        {
           double adjustedPrevPeriod = 0.0;
           double todayValue = 0.0;
@@ -78374,7 +78374,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_DCPHASE update: BadParam", RetCode.BadParam);
-             core.HT_DCPHASE_StreamStep(this, inReal);
+             core.HT_DCPHASE_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -78398,7 +78398,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.HT_DCPHASE_StreamStep(scratch, inReal);
+             core.HT_DCPHASE_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -78419,7 +78419,7 @@ class Core {
              return new HT_DCPHASE_Stream(this);
           }
        }
-       void HT_DCPHASE_StreamStep( HT_DCPHASE_Stream sp, double inReal )
+       void HT_DCPHASE_StepImpl( HT_DCPHASE_Stream sp, double inReal )
        {
           double adjustedPrevPeriod = 0.0;
           double todayValue = 0.0;
@@ -80269,7 +80269,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
-             core.HT_PHASOR_StreamStep(this, inReal);
+             core.HT_PHASOR_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
              return this.cachedValue;
@@ -80294,7 +80294,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.HT_PHASOR_StreamStep(scratch, inReal);
+             core.HT_PHASOR_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outInPhase, scratch.cur_outQuadrature);
           }
 
@@ -80315,7 +80315,7 @@ class Core {
              return new HT_PHASOR_Stream(this);
           }
        }
-       void HT_PHASOR_StreamStep( HT_PHASOR_Stream sp, double inReal )
+       void HT_PHASOR_StepImpl( HT_PHASOR_Stream sp, double inReal )
        {
           double adjustedPrevPeriod = 0.0;
           double todayValue = 0.0;
@@ -82205,7 +82205,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
-             core.HT_SINE_StreamStep(this, inReal);
+             core.HT_SINE_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
              return this.cachedValue;
@@ -82230,7 +82230,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.HT_SINE_StreamStep(scratch, inReal);
+             core.HT_SINE_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outSine, scratch.cur_outLeadSine);
           }
 
@@ -82251,7 +82251,7 @@ class Core {
              return new HT_SINE_Stream(this);
           }
        }
-       void HT_SINE_StreamStep( HT_SINE_Stream sp, double inReal )
+       void HT_SINE_StepImpl( HT_SINE_Stream sp, double inReal )
        {
           double adjustedPrevPeriod = 0.0;
           double todayValue = 0.0;
@@ -84169,7 +84169,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_TRENDLINE update: BadParam", RetCode.BadParam);
-             core.HT_TRENDLINE_StreamStep(this, inReal);
+             core.HT_TRENDLINE_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -84193,7 +84193,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.HT_TRENDLINE_StreamStep(scratch, inReal);
+             core.HT_TRENDLINE_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -84214,7 +84214,7 @@ class Core {
              return new HT_TRENDLINE_Stream(this);
           }
        }
-       void HT_TRENDLINE_StreamStep( HT_TRENDLINE_Stream sp, double inReal )
+       void HT_TRENDLINE_StepImpl( HT_TRENDLINE_Stream sp, double inReal )
        {
           double adjustedPrevPeriod = 0.0;
           double todayValue = 0.0;
@@ -86341,7 +86341,7 @@ class Core {
           public int update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
-             core.HT_TRENDMODE_StreamStep(this, inReal);
+             core.HT_TRENDMODE_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -86365,7 +86365,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.HT_TRENDMODE_StreamStep(scratch, inReal);
+             core.HT_TRENDMODE_StepImpl(scratch, inReal);
              return scratch.cur_outInteger;
           }
 
@@ -86386,7 +86386,7 @@ class Core {
              return new HT_TRENDMODE_Stream(this);
           }
        }
-       void HT_TRENDMODE_StreamStep( HT_TRENDMODE_Stream sp, double inReal )
+       void HT_TRENDMODE_StepImpl( HT_TRENDMODE_Stream sp, double inReal )
        {
           double adjustedPrevPeriod = 0.0;
           double todayValue = 0.0;
@@ -87675,7 +87675,7 @@ class Core {
           public double update( double inOpen, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("IMI update: BadParam", RetCode.BadParam);
-             core.IMI_StreamStep(this, inOpen, inClose);
+             core.IMI_StepImpl(this, inOpen, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -87699,7 +87699,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.IMI_StreamStep(scratch, inOpen, inClose);
+             core.IMI_StepImpl(scratch, inOpen, inClose);
              return scratch.cur_outReal;
           }
 
@@ -87720,7 +87720,7 @@ class Core {
              return new IMI_Stream(this);
           }
        }
-       void IMI_StreamStep( IMI_Stream sp, double inOpen, double inClose )
+       void IMI_StepImpl( IMI_Stream sp, double inOpen, double inClose )
        {
           double upsum = 0.0;
           double downsum = 0.0;
@@ -88489,7 +88489,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("KAMA update: BadParam", RetCode.BadParam);
-             core.KAMA_StreamStep(this, inReal);
+             core.KAMA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -88505,7 +88505,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("KAMA peek: BadParam", RetCode.BadParam);
              KAMA_Stream scratch = new KAMA_Stream(this);
-             core.KAMA_StreamStep(scratch, inReal);
+             core.KAMA_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -88526,7 +88526,7 @@ class Core {
              return new KAMA_Stream(this);
           }
        }
-       void KAMA_StreamStep( KAMA_Stream sp, double inReal )
+       void KAMA_StepImpl( KAMA_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           double tempReal2 = 0.0;
@@ -89285,7 +89285,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG update: BadParam", RetCode.BadParam);
-             core.LINEARREG_StreamStep(this, inReal);
+             core.LINEARREG_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -89301,7 +89301,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG peek: BadParam", RetCode.BadParam);
              LINEARREG_Stream scratch = new LINEARREG_Stream(this);
-             core.LINEARREG_StreamStep(scratch, inReal);
+             core.LINEARREG_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -89322,7 +89322,7 @@ class Core {
              return new LINEARREG_Stream(this);
           }
        }
-       void LINEARREG_StreamStep( LINEARREG_Stream sp, double inReal )
+       void LINEARREG_StepImpl( LINEARREG_Stream sp, double inReal )
        {
           double m = 0.0;
           double b = 0.0;
@@ -89975,7 +89975,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG_ANGLE update: BadParam", RetCode.BadParam);
-             core.LINEARREG_ANGLE_StreamStep(this, inReal);
+             core.LINEARREG_ANGLE_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -89991,7 +89991,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG_ANGLE peek: BadParam", RetCode.BadParam);
              LINEARREG_ANGLE_Stream scratch = new LINEARREG_ANGLE_Stream(this);
-             core.LINEARREG_ANGLE_StreamStep(scratch, inReal);
+             core.LINEARREG_ANGLE_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -90012,7 +90012,7 @@ class Core {
              return new LINEARREG_ANGLE_Stream(this);
           }
        }
-       void LINEARREG_ANGLE_StreamStep( LINEARREG_ANGLE_Stream sp, double inReal )
+       void LINEARREG_ANGLE_StepImpl( LINEARREG_ANGLE_Stream sp, double inReal )
        {
           double m = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
@@ -90659,7 +90659,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG_INTERCEPT update: BadParam", RetCode.BadParam);
-             core.LINEARREG_INTERCEPT_StreamStep(this, inReal);
+             core.LINEARREG_INTERCEPT_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -90675,7 +90675,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG_INTERCEPT peek: BadParam", RetCode.BadParam);
              LINEARREG_INTERCEPT_Stream scratch = new LINEARREG_INTERCEPT_Stream(this);
-             core.LINEARREG_INTERCEPT_StreamStep(scratch, inReal);
+             core.LINEARREG_INTERCEPT_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -90696,7 +90696,7 @@ class Core {
              return new LINEARREG_INTERCEPT_Stream(this);
           }
        }
-       void LINEARREG_INTERCEPT_StreamStep( LINEARREG_INTERCEPT_Stream sp, double inReal )
+       void LINEARREG_INTERCEPT_StepImpl( LINEARREG_INTERCEPT_Stream sp, double inReal )
        {
           double m = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
@@ -91339,7 +91339,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG_SLOPE update: BadParam", RetCode.BadParam);
-             core.LINEARREG_SLOPE_StreamStep(this, inReal);
+             core.LINEARREG_SLOPE_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -91355,7 +91355,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG_SLOPE peek: BadParam", RetCode.BadParam);
              LINEARREG_SLOPE_Stream scratch = new LINEARREG_SLOPE_Stream(this);
-             core.LINEARREG_SLOPE_StreamStep(scratch, inReal);
+             core.LINEARREG_SLOPE_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -91376,7 +91376,7 @@ class Core {
              return new LINEARREG_SLOPE_Stream(this);
           }
        }
-       void LINEARREG_SLOPE_StreamStep( LINEARREG_SLOPE_Stream sp, double inReal )
+       void LINEARREG_SLOPE_StepImpl( LINEARREG_SLOPE_Stream sp, double inReal )
        {
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inReal[0] = inReal;
@@ -91838,7 +91838,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LN update: BadParam", RetCode.BadParam);
-             core.LN_StreamStep(this, inReal);
+             core.LN_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -91854,7 +91854,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LN peek: BadParam", RetCode.BadParam);
              LN_Stream scratch = new LN_Stream(this);
-             core.LN_StreamStep(scratch, inReal);
+             core.LN_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -91875,7 +91875,7 @@ class Core {
              return new LN_Stream(this);
           }
        }
-       void LN_StreamStep( LN_Stream sp, double inReal )
+       void LN_StepImpl( LN_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.log(inReal);
        }
@@ -92231,7 +92231,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
-             core.LOG10_StreamStep(this, inReal);
+             core.LOG10_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -92247,7 +92247,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
              LOG10_Stream scratch = new LOG10_Stream(this);
-             core.LOG10_StreamStep(scratch, inReal);
+             core.LOG10_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -92268,7 +92268,7 @@ class Core {
              return new LOG10_Stream(this);
           }
        }
-       void LOG10_StreamStep( LOG10_Stream sp, double inReal )
+       void LOG10_StepImpl( LOG10_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.log10(inReal);
        }
@@ -93028,7 +93028,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MA update: BadParam", RetCode.BadParam);
-             core.MA_StreamStep(this, inReal);
+             core.MA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -93052,7 +93052,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.MA_StreamStep(scratch, inReal);
+             core.MA_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -93073,7 +93073,7 @@ class Core {
              return new MA_Stream(this);
           }
        }
-       void MA_StreamStep( MA_Stream sp, double inReal )
+       void MA_StepImpl( MA_Stream sp, double inReal )
        {
           if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
              sp.cur_outReal = inReal;
@@ -94266,7 +94266,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACD update: BadParam", RetCode.BadParam);
-             core.MACD_StreamStep(this, inReal);
+             core.MACD_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
              return this.cachedValue;
@@ -94283,7 +94283,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACD peek: BadParam", RetCode.BadParam);
              MACD_Stream scratch = new MACD_Stream(this);
-             core.MACD_StreamStep(scratch, inReal);
+             core.MACD_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
           }
 
@@ -94304,7 +94304,7 @@ class Core {
              return new MACD_Stream(this);
           }
        }
-       void MACD_StreamStep( MACD_Stream sp, double inReal )
+       void MACD_StepImpl( MACD_Stream sp, double inReal )
        {
           double macdValue = 0.0;
           double tempReal = 0.0;
@@ -95342,7 +95342,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
-             core.MACDEXT_StreamStep(this, inReal);
+             core.MACDEXT_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
              return this.cachedValue;
@@ -95367,7 +95367,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.MACDEXT_StreamStep(scratch, inReal);
+             core.MACDEXT_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
           }
 
@@ -95388,7 +95388,7 @@ class Core {
              return new MACDEXT_Stream(this);
           }
        }
-       void MACDEXT_StreamStep( MACDEXT_Stream sp, double inReal )
+       void MACDEXT_StepImpl( MACDEXT_Stream sp, double inReal )
        {
           double cur_slowMABuffer = 0.0;
           double cur_fastMABuffer = 0.0;
@@ -96260,7 +96260,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
-             core.MACDFIX_StreamStep(this, inReal);
+             core.MACDFIX_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
              return this.cachedValue;
@@ -96277,7 +96277,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
              MACDFIX_Stream scratch = new MACDFIX_Stream(this);
-             core.MACDFIX_StreamStep(scratch, inReal);
+             core.MACDFIX_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
           }
 
@@ -96298,7 +96298,7 @@ class Core {
              return new MACDFIX_Stream(this);
           }
        }
-       void MACDFIX_StreamStep( MACDFIX_Stream sp, double inReal )
+       void MACDFIX_StepImpl( MACDFIX_Stream sp, double inReal )
        {
           double macdValue = 0.0;
           double tempReal = 0.0;
@@ -97818,7 +97818,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
-             core.MAMA_StreamStep(this, inReal);
+             core.MAMA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
              return this.cachedValue;
@@ -97843,7 +97843,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.MAMA_StreamStep(scratch, inReal);
+             core.MAMA_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outMAMA, scratch.cur_outFAMA);
           }
 
@@ -97864,7 +97864,7 @@ class Core {
              return new MAMA_Stream(this);
           }
        }
-       void MAMA_StreamStep( MAMA_Stream sp, double inReal )
+       void MAMA_StepImpl( MAMA_Stream sp, double inReal )
        {
           double adjustedPrevPeriod = 0.0;
           double todayValue = 0.0;
@@ -98907,7 +98907,7 @@ class Core {
           public double update( double inHigh, double inLow, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
-             core.MARKETFI_StreamStep(this, inHigh, inLow, inVolume);
+             core.MARKETFI_StepImpl(this, inHigh, inLow, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -98923,7 +98923,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
              MARKETFI_Stream scratch = new MARKETFI_Stream(this);
-             core.MARKETFI_StreamStep(scratch, inHigh, inLow, inVolume);
+             core.MARKETFI_StepImpl(scratch, inHigh, inLow, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -98944,7 +98944,7 @@ class Core {
              return new MARKETFI_Stream(this);
           }
        }
-       void MARKETFI_StreamStep( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
+       void MARKETFI_StepImpl( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
        {
           /* A zero-volume bar would divide by zero. Neither reference guards
            * it -- they emit +/-Inf, or NaN when the range is zero too -- but
@@ -99880,7 +99880,7 @@ class Core {
           public double update( double inReal, double inPeriods ) {
              if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
                 throw new TaLibArgumentException("MAVP update: BadParam", RetCode.BadParam);
-             core.MAVP_StreamStep(this, inReal, inPeriods);
+             core.MAVP_StepImpl(this, inReal, inPeriods);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -99904,7 +99904,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.MAVP_StreamStep(scratch, inReal, inPeriods);
+             core.MAVP_StepImpl(scratch, inReal, inPeriods);
              return scratch.cur_outReal;
           }
 
@@ -99925,7 +99925,7 @@ class Core {
              return new MAVP_Stream(this);
           }
        }
-       void MAVP_StreamStep( MAVP_Stream sp, double inReal, double inPeriods )
+       void MAVP_StepImpl( MAVP_Stream sp, double inReal, double inPeriods )
        {
           int cp = (int)inPeriods;
           if( cp < sp.optInMinPeriod ) {
@@ -100640,7 +100640,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MAX update: BadParam", RetCode.BadParam);
-             core.MAX_StreamStep(this, inReal);
+             core.MAX_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -100656,7 +100656,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MAX peek: BadParam", RetCode.BadParam);
              MAX_Stream scratch = new MAX_Stream(this);
-             core.MAX_StreamStep(scratch, inReal);
+             core.MAX_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -100677,7 +100677,7 @@ class Core {
              return new MAX_Stream(this);
           }
        }
-       void MAX_StreamStep( MAX_Stream sp, double inReal )
+       void MAX_StepImpl( MAX_Stream sp, double inReal )
        {
           double tmp = 0.0;
           if( sp.today >= 1073741824 ) {
@@ -101303,7 +101303,7 @@ class Core {
           public int update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MAXINDEX update: BadParam", RetCode.BadParam);
-             core.MAXINDEX_StreamStep(this, inReal);
+             core.MAXINDEX_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -101319,7 +101319,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
              MAXINDEX_Stream scratch = new MAXINDEX_Stream(this);
-             core.MAXINDEX_StreamStep(scratch, inReal);
+             core.MAXINDEX_StepImpl(scratch, inReal);
              return scratch.cur_outInteger;
           }
 
@@ -101340,7 +101340,7 @@ class Core {
              return new MAXINDEX_Stream(this);
           }
        }
-       void MAXINDEX_StreamStep( MAXINDEX_Stream sp, double inReal )
+       void MAXINDEX_StepImpl( MAXINDEX_Stream sp, double inReal )
        {
           double tmp = 0.0;
           if( sp.today >= 1073741824 ) {
@@ -101819,7 +101819,7 @@ class Core {
           public double update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MEDPRICE update: BadParam", RetCode.BadParam);
-             core.MEDPRICE_StreamStep(this, inHigh, inLow);
+             core.MEDPRICE_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -101835,7 +101835,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
              MEDPRICE_Stream scratch = new MEDPRICE_Stream(this);
-             core.MEDPRICE_StreamStep(scratch, inHigh, inLow);
+             core.MEDPRICE_StepImpl(scratch, inHigh, inLow);
              return scratch.cur_outReal;
           }
 
@@ -101856,7 +101856,7 @@ class Core {
              return new MEDPRICE_Stream(this);
           }
        }
-       void MEDPRICE_StreamStep( MEDPRICE_Stream sp, double inHigh, double inLow )
+       void MEDPRICE_StepImpl( MEDPRICE_Stream sp, double inHigh, double inLow )
        {
           sp.cur_outReal = (inHigh + inLow) / 2.0;
        }
@@ -102526,7 +102526,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("MFI update: BadParam", RetCode.BadParam);
-             core.MFI_StreamStep(this, inHigh, inLow, inClose, inVolume);
+             core.MFI_StepImpl(this, inHigh, inLow, inClose, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -102550,7 +102550,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.MFI_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+             core.MFI_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -102571,7 +102571,7 @@ class Core {
              return new MFI_Stream(this);
           }
        }
-       void MFI_StreamStep( MFI_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+       void MFI_StepImpl( MFI_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
        {
           sp.posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
           sp.negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];
@@ -103428,7 +103428,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MIDPOINT update: BadParam", RetCode.BadParam);
-             core.MIDPOINT_StreamStep(this, inReal);
+             core.MIDPOINT_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -103444,7 +103444,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
              MIDPOINT_Stream scratch = new MIDPOINT_Stream(this);
-             core.MIDPOINT_StreamStep(scratch, inReal);
+             core.MIDPOINT_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -103465,7 +103465,7 @@ class Core {
              return new MIDPOINT_Stream(this);
           }
        }
-       void MIDPOINT_StreamStep( MIDPOINT_Stream sp, double inReal )
+       void MIDPOINT_StepImpl( MIDPOINT_Stream sp, double inReal )
        {
           if( sp.today >= 1073741824 ) {
              int rebaseShift = sp.trailingIdx & ~sp.xMask;
@@ -104353,7 +104353,7 @@ class Core {
           public double update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MIDPRICE update: BadParam", RetCode.BadParam);
-             core.MIDPRICE_StreamStep(this, inHigh, inLow);
+             core.MIDPRICE_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -104377,7 +104377,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.MIDPRICE_StreamStep(scratch, inHigh, inLow);
+             core.MIDPRICE_StepImpl(scratch, inHigh, inLow);
              return scratch.cur_outReal;
           }
 
@@ -104398,7 +104398,7 @@ class Core {
              return new MIDPRICE_Stream(this);
           }
        }
-       void MIDPRICE_StreamStep( MIDPRICE_Stream sp, double inHigh, double inLow )
+       void MIDPRICE_StepImpl( MIDPRICE_Stream sp, double inHigh, double inLow )
        {
           double tmpLow = 0.0;
           double tmpHigh = 0.0;
@@ -105178,7 +105178,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MIN update: BadParam", RetCode.BadParam);
-             core.MIN_StreamStep(this, inReal);
+             core.MIN_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -105194,7 +105194,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MIN peek: BadParam", RetCode.BadParam);
              MIN_Stream scratch = new MIN_Stream(this);
-             core.MIN_StreamStep(scratch, inReal);
+             core.MIN_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -105215,7 +105215,7 @@ class Core {
              return new MIN_Stream(this);
           }
        }
-       void MIN_StreamStep( MIN_Stream sp, double inReal )
+       void MIN_StepImpl( MIN_Stream sp, double inReal )
        {
           double tmp = 0.0;
           if( sp.today >= 1073741824 ) {
@@ -105839,7 +105839,7 @@ class Core {
           public int update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MININDEX update: BadParam", RetCode.BadParam);
-             core.MININDEX_StreamStep(this, inReal);
+             core.MININDEX_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outInteger;
           }
@@ -105855,7 +105855,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MININDEX peek: BadParam", RetCode.BadParam);
              MININDEX_Stream scratch = new MININDEX_Stream(this);
-             core.MININDEX_StreamStep(scratch, inReal);
+             core.MININDEX_StepImpl(scratch, inReal);
              return scratch.cur_outInteger;
           }
 
@@ -105876,7 +105876,7 @@ class Core {
              return new MININDEX_Stream(this);
           }
        }
-       void MININDEX_StreamStep( MININDEX_Stream sp, double inReal )
+       void MININDEX_StepImpl( MININDEX_Stream sp, double inReal )
        {
           double tmp = 0.0;
           if( sp.today >= 1073741824 ) {
@@ -106716,7 +106716,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MINMAX update: BadParam", RetCode.BadParam);
-             core.MINMAX_StreamStep(this, inReal);
+             core.MINMAX_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
              return this.cachedValue;
@@ -106733,7 +106733,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MINMAX peek: BadParam", RetCode.BadParam);
              MINMAX_Stream scratch = new MINMAX_Stream(this);
-             core.MINMAX_StreamStep(scratch, inReal);
+             core.MINMAX_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outMin, scratch.cur_outMax);
           }
 
@@ -106754,7 +106754,7 @@ class Core {
              return new MINMAX_Stream(this);
           }
        }
-       void MINMAX_StreamStep( MINMAX_Stream sp, double inReal )
+       void MINMAX_StepImpl( MINMAX_Stream sp, double inReal )
        {
           if( sp.today >= 1073741824 ) {
              int rebaseShift = sp.trailingIdx & ~sp.xMask;
@@ -107526,7 +107526,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
-             core.MINMAXINDEX_StreamStep(this, inReal);
+             core.MINMAXINDEX_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
              return this.cachedValue;
@@ -107543,7 +107543,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
              MINMAXINDEX_Stream scratch = new MINMAXINDEX_Stream(this);
-             core.MINMAXINDEX_StreamStep(scratch, inReal);
+             core.MINMAXINDEX_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outMinIdx, scratch.cur_outMaxIdx);
           }
 
@@ -107564,7 +107564,7 @@ class Core {
              return new MINMAXINDEX_Stream(this);
           }
        }
-       void MINMAXINDEX_StreamStep( MINMAXINDEX_Stream sp, double inReal )
+       void MINMAXINDEX_StepImpl( MINMAXINDEX_Stream sp, double inReal )
        {
           if( sp.today >= 1073741824 ) {
              int rebaseShift = sp.trailingIdx & ~sp.xMask;
@@ -108627,7 +108627,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
-             core.MINUS_DI_StreamStep(this, inHigh, inLow, inClose);
+             core.MINUS_DI_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -108643,7 +108643,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
              MINUS_DI_Stream scratch = new MINUS_DI_Stream(this);
-             core.MINUS_DI_StreamStep(scratch, inHigh, inLow, inClose);
+             core.MINUS_DI_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -108664,7 +108664,7 @@ class Core {
              return new MINUS_DI_Stream(this);
           }
        }
-       void MINUS_DI_StreamStep( MINUS_DI_Stream sp, double inHigh, double inLow, double inClose )
+       void MINUS_DI_StepImpl( MINUS_DI_Stream sp, double inHigh, double inLow, double inClose )
        {
           if( sp.optInTimePeriod <= 1 ) {
              sp.tempReal = inHigh;
@@ -109880,7 +109880,7 @@ class Core {
           public double update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MINUS_DM update: BadParam", RetCode.BadParam);
-             core.MINUS_DM_StreamStep(this, inHigh, inLow);
+             core.MINUS_DM_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -109896,7 +109896,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MINUS_DM peek: BadParam", RetCode.BadParam);
              MINUS_DM_Stream scratch = new MINUS_DM_Stream(this);
-             core.MINUS_DM_StreamStep(scratch, inHigh, inLow);
+             core.MINUS_DM_StepImpl(scratch, inHigh, inLow);
              return scratch.cur_outReal;
           }
 
@@ -109917,7 +109917,7 @@ class Core {
              return new MINUS_DM_Stream(this);
           }
        }
-       void MINUS_DM_StreamStep( MINUS_DM_Stream sp, double inHigh, double inLow )
+       void MINUS_DM_StepImpl( MINUS_DM_Stream sp, double inHigh, double inLow )
        {
           if( sp.optInTimePeriod <= 1 ) {
              sp.tempReal = inHigh;
@@ -110708,7 +110708,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MOM update: BadParam", RetCode.BadParam);
-             core.MOM_StreamStep(this, inReal);
+             core.MOM_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -110724,7 +110724,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MOM peek: BadParam", RetCode.BadParam);
              MOM_Stream scratch = new MOM_Stream(this);
-             core.MOM_StreamStep(scratch, inReal);
+             core.MOM_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -110745,7 +110745,7 @@ class Core {
              return new MOM_Stream(this);
           }
        }
-       void MOM_StreamStep( MOM_Stream sp, double inReal )
+       void MOM_StepImpl( MOM_Stream sp, double inReal )
        {
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inReal[0] = inReal;
@@ -111187,7 +111187,7 @@ class Core {
           public double update( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("MULT update: BadParam", RetCode.BadParam);
-             core.MULT_StreamStep(this, inReal0, inReal1);
+             core.MULT_StepImpl(this, inReal0, inReal1);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -111203,7 +111203,7 @@ class Core {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("MULT peek: BadParam", RetCode.BadParam);
              MULT_Stream scratch = new MULT_Stream(this);
-             core.MULT_StreamStep(scratch, inReal0, inReal1);
+             core.MULT_StepImpl(scratch, inReal0, inReal1);
              return scratch.cur_outReal;
           }
 
@@ -111224,7 +111224,7 @@ class Core {
              return new MULT_Stream(this);
           }
        }
-       void MULT_StreamStep( MULT_Stream sp, double inReal0, double inReal1 )
+       void MULT_StepImpl( MULT_Stream sp, double inReal0, double inReal1 )
        {
           sp.cur_outReal = inReal0 * inReal1;
        }
@@ -111937,7 +111937,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("NATR update: BadParam", RetCode.BadParam);
-             core.NATR_StreamStep(this, inHigh, inLow, inClose);
+             core.NATR_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -111953,7 +111953,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("NATR peek: BadParam", RetCode.BadParam);
              NATR_Stream scratch = new NATR_Stream(this);
-             core.NATR_StreamStep(scratch, inHigh, inLow, inClose);
+             core.NATR_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -111974,7 +111974,7 @@ class Core {
              return new NATR_Stream(this);
           }
        }
-       void NATR_StreamStep( NATR_Stream sp, double inHigh, double inLow, double inClose )
+       void NATR_StepImpl( NATR_Stream sp, double inHigh, double inLow, double inClose )
        {
           double val2 = 0.0;
           double greatest = 0.0;
@@ -112648,7 +112648,7 @@ class Core {
           public double update( double inClose, double inVolume ) {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("NVI update: BadParam", RetCode.BadParam);
-             core.NVI_StreamStep(this, inClose, inVolume);
+             core.NVI_StepImpl(this, inClose, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -112664,7 +112664,7 @@ class Core {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("NVI peek: BadParam", RetCode.BadParam);
              NVI_Stream scratch = new NVI_Stream(this);
-             core.NVI_StreamStep(scratch, inClose, inVolume);
+             core.NVI_StepImpl(scratch, inClose, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -112685,7 +112685,7 @@ class Core {
              return new NVI_Stream(this);
           }
        }
-       void NVI_StreamStep( NVI_Stream sp, double inClose, double inVolume )
+       void NVI_StepImpl( NVI_Stream sp, double inClose, double inVolume )
        {
           double tempClose = 0.0;
           double tempVolume = 0.0;
@@ -113147,7 +113147,7 @@ class Core {
           public double update( double inReal, double inVolume ) {
              if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("OBV update: BadParam", RetCode.BadParam);
-             core.OBV_StreamStep(this, inReal, inVolume);
+             core.OBV_StepImpl(this, inReal, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -113163,7 +113163,7 @@ class Core {
              if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("OBV peek: BadParam", RetCode.BadParam);
              OBV_Stream scratch = new OBV_Stream(this);
-             core.OBV_StreamStep(scratch, inReal, inVolume);
+             core.OBV_StepImpl(scratch, inReal, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -113184,7 +113184,7 @@ class Core {
              return new OBV_Stream(this);
           }
        }
-       void OBV_StreamStep( OBV_Stream sp, double inReal, double inVolume )
+       void OBV_StepImpl( OBV_Stream sp, double inReal, double inVolume )
        {
           double tempReal = 0.0;
           tempReal = inReal;
@@ -114126,7 +114126,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("PLUS_DI update: BadParam", RetCode.BadParam);
-             core.PLUS_DI_StreamStep(this, inHigh, inLow, inClose);
+             core.PLUS_DI_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -114142,7 +114142,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("PLUS_DI peek: BadParam", RetCode.BadParam);
              PLUS_DI_Stream scratch = new PLUS_DI_Stream(this);
-             core.PLUS_DI_StreamStep(scratch, inHigh, inLow, inClose);
+             core.PLUS_DI_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -114163,7 +114163,7 @@ class Core {
              return new PLUS_DI_Stream(this);
           }
        }
-       void PLUS_DI_StreamStep( PLUS_DI_Stream sp, double inHigh, double inLow, double inClose )
+       void PLUS_DI_StepImpl( PLUS_DI_Stream sp, double inHigh, double inLow, double inClose )
        {
           if( sp.optInTimePeriod <= 1 ) {
              sp.tempReal = inHigh;
@@ -115378,7 +115378,7 @@ class Core {
           public double update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("PLUS_DM update: BadParam", RetCode.BadParam);
-             core.PLUS_DM_StreamStep(this, inHigh, inLow);
+             core.PLUS_DM_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -115394,7 +115394,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("PLUS_DM peek: BadParam", RetCode.BadParam);
              PLUS_DM_Stream scratch = new PLUS_DM_Stream(this);
-             core.PLUS_DM_StreamStep(scratch, inHigh, inLow);
+             core.PLUS_DM_StepImpl(scratch, inHigh, inLow);
              return scratch.cur_outReal;
           }
 
@@ -115415,7 +115415,7 @@ class Core {
              return new PLUS_DM_Stream(this);
           }
        }
-       void PLUS_DM_StreamStep( PLUS_DM_Stream sp, double inHigh, double inLow )
+       void PLUS_DM_StepImpl( PLUS_DM_Stream sp, double inHigh, double inLow )
        {
           if( sp.optInTimePeriod <= 1 ) {
              sp.tempReal = inHigh;
@@ -116316,7 +116316,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("PPO update: BadParam", RetCode.BadParam);
-             core.PPO_StreamStep(this, inReal);
+             core.PPO_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -116340,7 +116340,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.PPO_StreamStep(scratch, inReal);
+             core.PPO_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -116361,7 +116361,7 @@ class Core {
              return new PPO_Stream(this);
           }
        }
-       void PPO_StreamStep( PPO_Stream sp, double inReal )
+       void PPO_StepImpl( PPO_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           double cur_tempBuffer = 0.0;
@@ -116911,7 +116911,7 @@ class Core {
           public double update( double inClose, double inVolume ) {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("PVI update: BadParam", RetCode.BadParam);
-             core.PVI_StreamStep(this, inClose, inVolume);
+             core.PVI_StepImpl(this, inClose, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -116927,7 +116927,7 @@ class Core {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("PVI peek: BadParam", RetCode.BadParam);
              PVI_Stream scratch = new PVI_Stream(this);
-             core.PVI_StreamStep(scratch, inClose, inVolume);
+             core.PVI_StepImpl(scratch, inClose, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -116948,7 +116948,7 @@ class Core {
              return new PVI_Stream(this);
           }
        }
-       void PVI_StreamStep( PVI_Stream sp, double inClose, double inVolume )
+       void PVI_StepImpl( PVI_Stream sp, double inClose, double inVolume )
        {
           double tempClose = 0.0;
           double tempVolume = 0.0;
@@ -117590,7 +117590,7 @@ class Core {
           public double update( double inVolume ) {
              if( !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("PVO update: BadParam", RetCode.BadParam);
-             core.PVO_StreamStep(this, inVolume);
+             core.PVO_StepImpl(this, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -117614,7 +117614,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.PVO_StreamStep(scratch, inVolume);
+             core.PVO_StepImpl(scratch, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -117635,7 +117635,7 @@ class Core {
              return new PVO_Stream(this);
           }
        }
-       void PVO_StreamStep( PVO_Stream sp, double inVolume )
+       void PVO_StepImpl( PVO_Stream sp, double inVolume )
        {
           double tempReal = 0.0;
           double cur_tempBuffer = 0.0;
@@ -118245,7 +118245,7 @@ class Core {
           public double update( double inOpen, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("QSTICK update: BadParam", RetCode.BadParam);
-             core.QSTICK_StreamStep(this, inOpen, inClose);
+             core.QSTICK_StepImpl(this, inOpen, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -118261,7 +118261,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
              QSTICK_Stream scratch = new QSTICK_Stream(this);
-             core.QSTICK_StreamStep(scratch, inOpen, inClose);
+             core.QSTICK_StepImpl(scratch, inOpen, inClose);
              return scratch.cur_outReal;
           }
 
@@ -118282,7 +118282,7 @@ class Core {
              return new QSTICK_Stream(this);
           }
        }
-       void QSTICK_StreamStep( QSTICK_Stream sp, double inOpen, double inClose )
+       void QSTICK_StepImpl( QSTICK_Stream sp, double inOpen, double inClose )
        {
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_derived[0] = (double)(inClose - inOpen);
@@ -118850,7 +118850,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROC update: BadParam", RetCode.BadParam);
-             core.ROC_StreamStep(this, inReal);
+             core.ROC_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -118866,7 +118866,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROC peek: BadParam", RetCode.BadParam);
              ROC_Stream scratch = new ROC_Stream(this);
-             core.ROC_StreamStep(scratch, inReal);
+             core.ROC_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -118887,7 +118887,7 @@ class Core {
              return new ROC_Stream(this);
           }
        }
-       void ROC_StreamStep( ROC_Stream sp, double inReal )
+       void ROC_StepImpl( ROC_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
@@ -119447,7 +119447,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROCP update: BadParam", RetCode.BadParam);
-             core.ROCP_StreamStep(this, inReal);
+             core.ROCP_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -119463,7 +119463,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROCP peek: BadParam", RetCode.BadParam);
              ROCP_Stream scratch = new ROCP_Stream(this);
-             core.ROCP_StreamStep(scratch, inReal);
+             core.ROCP_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -119484,7 +119484,7 @@ class Core {
              return new ROCP_Stream(this);
           }
        }
-       void ROCP_StreamStep( ROCP_Stream sp, double inReal )
+       void ROCP_StepImpl( ROCP_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
@@ -120047,7 +120047,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROCR update: BadParam", RetCode.BadParam);
-             core.ROCR_StreamStep(this, inReal);
+             core.ROCR_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -120063,7 +120063,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROCR peek: BadParam", RetCode.BadParam);
              ROCR_Stream scratch = new ROCR_Stream(this);
-             core.ROCR_StreamStep(scratch, inReal);
+             core.ROCR_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -120084,7 +120084,7 @@ class Core {
              return new ROCR_Stream(this);
           }
        }
-       void ROCR_StreamStep( ROCR_Stream sp, double inReal )
+       void ROCR_StepImpl( ROCR_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
@@ -120649,7 +120649,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROCR100 update: BadParam", RetCode.BadParam);
-             core.ROCR100_StreamStep(this, inReal);
+             core.ROCR100_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -120665,7 +120665,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROCR100 peek: BadParam", RetCode.BadParam);
              ROCR100_Stream scratch = new ROCR100_Stream(this);
-             core.ROCR100_StreamStep(scratch, inReal);
+             core.ROCR100_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -120686,7 +120686,7 @@ class Core {
              return new ROCR100_Stream(this);
           }
        }
-       void ROCR100_StreamStep( ROCR100_Stream sp, double inReal )
+       void ROCR100_StepImpl( ROCR100_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           if( sp.ringCap_trailingIdx == 0 ) {
@@ -121447,7 +121447,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("RSI update: BadParam", RetCode.BadParam);
-             core.RSI_StreamStep(this, inReal);
+             core.RSI_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -121463,7 +121463,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("RSI peek: BadParam", RetCode.BadParam);
              RSI_Stream scratch = new RSI_Stream(this);
-             core.RSI_StreamStep(scratch, inReal);
+             core.RSI_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -121484,7 +121484,7 @@ class Core {
              return new RSI_Stream(this);
           }
        }
-       void RSI_StreamStep( RSI_Stream sp, double inReal )
+       void RSI_StepImpl( RSI_Stream sp, double inReal )
        {
           double tempValue1 = 0.0;
           double tempValue2 = 0.0;
@@ -122474,7 +122474,7 @@ class Core {
           public double update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("SAR update: BadParam", RetCode.BadParam);
-             core.SAR_StreamStep(this, inHigh, inLow);
+             core.SAR_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -122490,7 +122490,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("SAR peek: BadParam", RetCode.BadParam);
              SAR_Stream scratch = new SAR_Stream(this);
-             core.SAR_StreamStep(scratch, inHigh, inLow);
+             core.SAR_StepImpl(scratch, inHigh, inLow);
              return scratch.cur_outReal;
           }
 
@@ -122511,7 +122511,7 @@ class Core {
              return new SAR_Stream(this);
           }
        }
-       void SAR_StreamStep( SAR_Stream sp, double inHigh, double inLow )
+       void SAR_StepImpl( SAR_Stream sp, double inHigh, double inLow )
        {
           double prevHigh = 0.0;
           double prevLow = 0.0;
@@ -123928,7 +123928,7 @@ class Core {
           public double update( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
-             core.SAREXT_StreamStep(this, inHigh, inLow);
+             core.SAREXT_StepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -123944,7 +123944,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
              SAREXT_Stream scratch = new SAREXT_Stream(this);
-             core.SAREXT_StreamStep(scratch, inHigh, inLow);
+             core.SAREXT_StepImpl(scratch, inHigh, inLow);
              return scratch.cur_outReal;
           }
 
@@ -123965,7 +123965,7 @@ class Core {
              return new SAREXT_Stream(this);
           }
        }
-       void SAREXT_StreamStep( SAREXT_Stream sp, double inHigh, double inLow )
+       void SAREXT_StepImpl( SAREXT_Stream sp, double inHigh, double inLow )
        {
           double prevHigh = 0.0;
           double prevLow = 0.0;
@@ -124771,7 +124771,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SIN update: BadParam", RetCode.BadParam);
-             core.SIN_StreamStep(this, inReal);
+             core.SIN_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -124787,7 +124787,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SIN peek: BadParam", RetCode.BadParam);
              SIN_Stream scratch = new SIN_Stream(this);
-             core.SIN_StreamStep(scratch, inReal);
+             core.SIN_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -124808,7 +124808,7 @@ class Core {
              return new SIN_Stream(this);
           }
        }
-       void SIN_StreamStep( SIN_Stream sp, double inReal )
+       void SIN_StepImpl( SIN_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.sin(inReal);
        }
@@ -125156,7 +125156,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SINH update: BadParam", RetCode.BadParam);
-             core.SINH_StreamStep(this, inReal);
+             core.SINH_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -125172,7 +125172,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SINH peek: BadParam", RetCode.BadParam);
              SINH_Stream scratch = new SINH_Stream(this);
-             core.SINH_StreamStep(scratch, inReal);
+             core.SINH_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -125193,7 +125193,7 @@ class Core {
              return new SINH_Stream(this);
           }
        }
-       void SINH_StreamStep( SINH_Stream sp, double inReal )
+       void SINH_StepImpl( SINH_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.sinh(inReal);
        }
@@ -125678,7 +125678,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SMA update: BadParam", RetCode.BadParam);
-             core.SMA_StreamStep(this, inReal);
+             core.SMA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -125694,7 +125694,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SMA peek: BadParam", RetCode.BadParam);
              SMA_Stream scratch = new SMA_Stream(this);
-             core.SMA_StreamStep(scratch, inReal);
+             core.SMA_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -125715,7 +125715,7 @@ class Core {
              return new SMA_Stream(this);
           }
        }
-       void SMA_StreamStep( SMA_Stream sp, double inReal )
+       void SMA_StepImpl( SMA_Stream sp, double inReal )
        {
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inReal[0] = inReal;
@@ -126874,7 +126874,7 @@ class Core {
           public Value update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
-             core.SMI_StreamStep(this, inHigh, inLow, inClose);
+             core.SMI_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
              return this.cachedValue;
@@ -126899,7 +126899,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.SMI_StreamStep(scratch, inHigh, inLow, inClose);
+             core.SMI_StepImpl(scratch, inHigh, inLow, inClose);
              return new Value(scratch.cur_outSMI, scratch.cur_outSMISignal);
           }
 
@@ -126920,7 +126920,7 @@ class Core {
              return new SMI_Stream(this);
           }
        }
-       void SMI_StreamStep( SMI_Stream sp, double inHigh, double inLow, double inClose )
+       void SMI_StepImpl( SMI_Stream sp, double inHigh, double inLow, double inClose )
        {
           double tmp = 0.0;
           if( sp.today >= 1073741824 ) {
@@ -127648,7 +127648,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SQRT update: BadParam", RetCode.BadParam);
-             core.SQRT_StreamStep(this, inReal);
+             core.SQRT_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -127664,7 +127664,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
              SQRT_Stream scratch = new SQRT_Stream(this);
-             core.SQRT_StreamStep(scratch, inReal);
+             core.SQRT_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -127685,7 +127685,7 @@ class Core {
              return new SQRT_Stream(this);
           }
        }
-       void SQRT_StreamStep( SQRT_Stream sp, double inReal )
+       void SQRT_StepImpl( SQRT_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.sqrt(inReal);
        }
@@ -128182,7 +128182,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
-             core.STDDEV_StreamStep(this, inReal);
+             core.STDDEV_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -128198,7 +128198,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
              STDDEV_Stream scratch = new STDDEV_Stream(this);
-             core.STDDEV_StreamStep(scratch, inReal);
+             core.STDDEV_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -128219,7 +128219,7 @@ class Core {
              return new STDDEV_Stream(this);
           }
        }
-       void STDDEV_StreamStep( STDDEV_Stream sp, double inReal )
+       void STDDEV_StepImpl( STDDEV_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           double cur_outReal = 0.0;
@@ -129255,7 +129255,7 @@ class Core {
           public Value update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("STOCH update: BadParam", RetCode.BadParam);
-             core.STOCH_StreamStep(this, inHigh, inLow, inClose);
+             core.STOCH_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
              return this.cachedValue;
@@ -129280,7 +129280,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.STOCH_StreamStep(scratch, inHigh, inLow, inClose);
+             core.STOCH_StepImpl(scratch, inHigh, inLow, inClose);
              return new Value(scratch.cur_outSlowK, scratch.cur_outSlowD);
           }
 
@@ -129301,7 +129301,7 @@ class Core {
              return new STOCH_Stream(this);
           }
        }
-       void STOCH_StreamStep( STOCH_Stream sp, double inHigh, double inLow, double inClose )
+       void STOCH_StepImpl( STOCH_Stream sp, double inHigh, double inLow, double inClose )
        {
           double tmp = 0.0;
           double cur_tempBuffer = 0.0;
@@ -130500,7 +130500,7 @@ class Core {
           public Value update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
-             core.STOCHF_StreamStep(this, inHigh, inLow, inClose);
+             core.STOCHF_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
              return this.cachedValue;
@@ -130525,7 +130525,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.STOCHF_StreamStep(scratch, inHigh, inLow, inClose);
+             core.STOCHF_StepImpl(scratch, inHigh, inLow, inClose);
              return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
           }
 
@@ -130546,7 +130546,7 @@ class Core {
              return new STOCHF_Stream(this);
           }
        }
-       void STOCHF_StreamStep( STOCHF_Stream sp, double inHigh, double inLow, double inClose )
+       void STOCHF_StepImpl( STOCHF_Stream sp, double inHigh, double inLow, double inClose )
        {
           double tmp = 0.0;
           double cur_tempBuffer = 0.0;
@@ -131497,7 +131497,7 @@ class Core {
           public Value update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
-             core.STOCHRSI_StreamStep(this, inReal);
+             core.STOCHRSI_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
              return this.cachedValue;
@@ -131522,7 +131522,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.STOCHRSI_StreamStep(scratch, inReal);
+             core.STOCHRSI_StepImpl(scratch, inReal);
              return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
           }
 
@@ -131543,7 +131543,7 @@ class Core {
              return new STOCHRSI_Stream(this);
           }
        }
-       void STOCHRSI_StreamStep( STOCHRSI_Stream sp, double inReal )
+       void STOCHRSI_StepImpl( STOCHRSI_Stream sp, double inReal )
        {
           double cur_tempRSIBuffer = 0.0;
           double cur_outFastK = 0.0;
@@ -132008,7 +132008,7 @@ class Core {
           public double update( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("SUB update: BadParam", RetCode.BadParam);
-             core.SUB_StreamStep(this, inReal0, inReal1);
+             core.SUB_StepImpl(this, inReal0, inReal1);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -132024,7 +132024,7 @@ class Core {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("SUB peek: BadParam", RetCode.BadParam);
              SUB_Stream scratch = new SUB_Stream(this);
-             core.SUB_StreamStep(scratch, inReal0, inReal1);
+             core.SUB_StepImpl(scratch, inReal0, inReal1);
              return scratch.cur_outReal;
           }
 
@@ -132045,7 +132045,7 @@ class Core {
              return new SUB_Stream(this);
           }
        }
-       void SUB_StreamStep( SUB_Stream sp, double inReal0, double inReal1 )
+       void SUB_StepImpl( SUB_Stream sp, double inReal0, double inReal1 )
        {
           sp.cur_outReal = inReal0 - inReal1;
        }
@@ -132506,7 +132506,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SUM update: BadParam", RetCode.BadParam);
-             core.SUM_StreamStep(this, inReal);
+             core.SUM_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -132522,7 +132522,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SUM peek: BadParam", RetCode.BadParam);
              SUM_Stream scratch = new SUM_Stream(this);
-             core.SUM_StreamStep(scratch, inReal);
+             core.SUM_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -132543,7 +132543,7 @@ class Core {
              return new SUM_Stream(this);
           }
        }
-       void SUM_StreamStep( SUM_Stream sp, double inReal )
+       void SUM_StepImpl( SUM_Stream sp, double inReal )
        {
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inReal[0] = inReal;
@@ -133331,7 +133331,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("T3 update: BadParam", RetCode.BadParam);
-             core.T3_StreamStep(this, inReal);
+             core.T3_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -133347,7 +133347,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
              T3_Stream scratch = new T3_Stream(this);
-             core.T3_StreamStep(scratch, inReal);
+             core.T3_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -133368,7 +133368,7 @@ class Core {
              return new T3_Stream(this);
           }
        }
-       void T3_StreamStep( T3_Stream sp, double inReal )
+       void T3_StepImpl( T3_Stream sp, double inReal )
        {
           if( sp.optInTimePeriod == 1 ) {
              sp.cur_outReal = inReal;
@@ -133910,7 +133910,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TAN update: BadParam", RetCode.BadParam);
-             core.TAN_StreamStep(this, inReal);
+             core.TAN_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -133926,7 +133926,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TAN peek: BadParam", RetCode.BadParam);
              TAN_Stream scratch = new TAN_Stream(this);
-             core.TAN_StreamStep(scratch, inReal);
+             core.TAN_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -133947,7 +133947,7 @@ class Core {
              return new TAN_Stream(this);
           }
        }
-       void TAN_StreamStep( TAN_Stream sp, double inReal )
+       void TAN_StepImpl( TAN_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.tan(inReal);
        }
@@ -134297,7 +134297,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TANH update: BadParam", RetCode.BadParam);
-             core.TANH_StreamStep(this, inReal);
+             core.TANH_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -134313,7 +134313,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TANH peek: BadParam", RetCode.BadParam);
              TANH_Stream scratch = new TANH_Stream(this);
-             core.TANH_StreamStep(scratch, inReal);
+             core.TANH_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -134334,7 +134334,7 @@ class Core {
              return new TANH_Stream(this);
           }
        }
-       void TANH_StreamStep( TANH_Stream sp, double inReal )
+       void TANH_StepImpl( TANH_Stream sp, double inReal )
        {
           sp.cur_outReal = Math.tanh(inReal);
        }
@@ -134963,7 +134963,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TEMA update: BadParam", RetCode.BadParam);
-             core.TEMA_StreamStep(this, inReal);
+             core.TEMA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -134979,7 +134979,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
              TEMA_Stream scratch = new TEMA_Stream(this);
-             core.TEMA_StreamStep(scratch, inReal);
+             core.TEMA_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -135000,7 +135000,7 @@ class Core {
              return new TEMA_Stream(this);
           }
        }
-       void TEMA_StreamStep( TEMA_Stream sp, double inReal )
+       void TEMA_StepImpl( TEMA_Stream sp, double inReal )
        {
           if( sp.optInTimePeriod == 1 ) {
              sp.cur_outReal = inReal;
@@ -135635,7 +135635,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
-             core.TRANGE_StreamStep(this, inHigh, inLow, inClose);
+             core.TRANGE_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -135651,7 +135651,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
              TRANGE_Stream scratch = new TRANGE_Stream(this);
-             core.TRANGE_StreamStep(scratch, inHigh, inLow, inClose);
+             core.TRANGE_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -135672,7 +135672,7 @@ class Core {
              return new TRANGE_Stream(this);
           }
        }
-       void TRANGE_StreamStep( TRANGE_Stream sp, double inHigh, double inLow, double inClose )
+       void TRANGE_StepImpl( TRANGE_Stream sp, double inHigh, double inLow, double inClose )
        {
           double val2 = 0.0;
           double greatest = 0.0;
@@ -136535,7 +136535,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TRIMA update: BadParam", RetCode.BadParam);
-             core.TRIMA_StreamStep(this, inReal);
+             core.TRIMA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -136559,7 +136559,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.TRIMA_StreamStep(scratch, inReal);
+             core.TRIMA_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -136580,7 +136580,7 @@ class Core {
              return new TRIMA_Stream(this);
           }
        }
-       void TRIMA_StreamStep( TRIMA_Stream sp, double inReal )
+       void TRIMA_StepImpl( TRIMA_Stream sp, double inReal )
        {
           if( sp.optInTimePeriod % 2 == 1 ) {
              if( sp.ringCap_middleIdx == 0 ) {
@@ -137649,7 +137649,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TRIX update: BadParam", RetCode.BadParam);
-             core.TRIX_StreamStep(this, inReal);
+             core.TRIX_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -137665,7 +137665,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
              TRIX_Stream scratch = new TRIX_Stream(this);
-             core.TRIX_StreamStep(scratch, inReal);
+             core.TRIX_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -137686,7 +137686,7 @@ class Core {
              return new TRIX_Stream(this);
           }
        }
-       void TRIX_StreamStep( TRIX_Stream sp, double inReal )
+       void TRIX_StepImpl( TRIX_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           tempReal = sp.prevEMA3;
@@ -138345,7 +138345,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TSF update: BadParam", RetCode.BadParam);
-             core.TSF_StreamStep(this, inReal);
+             core.TSF_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -138361,7 +138361,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TSF peek: BadParam", RetCode.BadParam);
              TSF_Stream scratch = new TSF_Stream(this);
-             core.TSF_StreamStep(scratch, inReal);
+             core.TSF_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -138382,7 +138382,7 @@ class Core {
              return new TSF_Stream(this);
           }
        }
-       void TSF_StreamStep( TSF_Stream sp, double inReal )
+       void TSF_StepImpl( TSF_Stream sp, double inReal )
        {
           double m = 0.0;
           double b = 0.0;
@@ -138871,7 +138871,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("TYPPRICE update: BadParam", RetCode.BadParam);
-             core.TYPPRICE_StreamStep(this, inHigh, inLow, inClose);
+             core.TYPPRICE_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -138887,7 +138887,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
              TYPPRICE_Stream scratch = new TYPPRICE_Stream(this);
-             core.TYPPRICE_StreamStep(scratch, inHigh, inLow, inClose);
+             core.TYPPRICE_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -138908,7 +138908,7 @@ class Core {
              return new TYPPRICE_Stream(this);
           }
        }
-       void TYPPRICE_StreamStep( TYPPRICE_Stream sp, double inHigh, double inLow, double inClose )
+       void TYPPRICE_StepImpl( TYPPRICE_Stream sp, double inHigh, double inLow, double inClose )
        {
           sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
        }
@@ -139803,7 +139803,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ULTOSC update: BadParam", RetCode.BadParam);
-             core.ULTOSC_StreamStep(this, inHigh, inLow, inClose);
+             core.ULTOSC_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -139827,7 +139827,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.ULTOSC_StreamStep(scratch, inHigh, inLow, inClose);
+             core.ULTOSC_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -139848,7 +139848,7 @@ class Core {
              return new ULTOSC_Stream(this);
           }
        }
-       void ULTOSC_StreamStep( ULTOSC_Stream sp, double inHigh, double inLow, double inClose )
+       void ULTOSC_StepImpl( ULTOSC_Stream sp, double inHigh, double inLow, double inClose )
        {
           double trueLow = 0.0;
           double trueRange = 0.0;
@@ -140816,7 +140816,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("VAR update: BadParam", RetCode.BadParam);
-             core.VAR_StreamStep(this, inReal);
+             core.VAR_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -140832,7 +140832,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("VAR peek: BadParam", RetCode.BadParam);
              VAR_Stream scratch = new VAR_Stream(this);
-             core.VAR_StreamStep(scratch, inReal);
+             core.VAR_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -140853,7 +140853,7 @@ class Core {
              return new VAR_Stream(this);
           }
        }
-       void VAR_StreamStep( VAR_Stream sp, double inReal )
+       void VAR_StepImpl( VAR_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           if( sp.i >= 1073741824 ) {
@@ -141646,7 +141646,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("VWAP update: BadParam", RetCode.BadParam);
-             core.VWAP_StreamStep(this, inHigh, inLow, inClose, inVolume);
+             core.VWAP_StepImpl(this, inHigh, inLow, inClose, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -141662,7 +141662,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("VWAP peek: BadParam", RetCode.BadParam);
              VWAP_Stream scratch = new VWAP_Stream(this);
-             core.VWAP_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+             core.VWAP_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -141683,7 +141683,7 @@ class Core {
              return new VWAP_Stream(this);
           }
        }
-       void VWAP_StreamStep( VWAP_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+       void VWAP_StepImpl( VWAP_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
        {
           double typPrice = 0.0;
           double volume = 0.0;
@@ -142464,7 +142464,7 @@ class Core {
           public double update( double inReal, double inVolume ) {
              if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("VWMA update: BadParam", RetCode.BadParam);
-             core.VWMA_StreamStep(this, inReal, inVolume);
+             core.VWMA_StepImpl(this, inReal, inVolume);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -142488,7 +142488,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.VWMA_StreamStep(scratch, inReal, inVolume);
+             core.VWMA_StepImpl(scratch, inReal, inVolume);
              return scratch.cur_outReal;
           }
 
@@ -142509,7 +142509,7 @@ class Core {
              return new VWMA_Stream(this);
           }
        }
-       void VWMA_StreamStep( VWMA_Stream sp, double inReal, double inVolume )
+       void VWMA_StepImpl( VWMA_Stream sp, double inReal, double inVolume )
        {
           double tempReal = 0.0;
           if( sp.optInTimePeriod == 1 ) {
@@ -143166,7 +143166,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("WAD update: BadParam", RetCode.BadParam);
-             core.WAD_StreamStep(this, inHigh, inLow, inClose);
+             core.WAD_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -143182,7 +143182,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("WAD peek: BadParam", RetCode.BadParam);
              WAD_Stream scratch = new WAD_Stream(this);
-             core.WAD_StreamStep(scratch, inHigh, inLow, inClose);
+             core.WAD_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -143203,7 +143203,7 @@ class Core {
              return new WAD_Stream(this);
           }
        }
-       void WAD_StreamStep( WAD_Stream sp, double inHigh, double inLow, double inClose )
+       void WAD_StepImpl( WAD_Stream sp, double inHigh, double inLow, double inClose )
        {
           double close = 0.0;
           close = inClose;
@@ -143658,7 +143658,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
-             core.WCLPRICE_StreamStep(this, inHigh, inLow, inClose);
+             core.WCLPRICE_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -143674,7 +143674,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
              WCLPRICE_Stream scratch = new WCLPRICE_Stream(this);
-             core.WCLPRICE_StreamStep(scratch, inHigh, inLow, inClose);
+             core.WCLPRICE_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -143695,7 +143695,7 @@ class Core {
              return new WCLPRICE_Stream(this);
           }
        }
-       void WCLPRICE_StreamStep( WCLPRICE_Stream sp, double inHigh, double inLow, double inClose )
+       void WCLPRICE_StepImpl( WCLPRICE_Stream sp, double inHigh, double inLow, double inClose )
        {
           sp.cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
        }
@@ -144452,7 +144452,7 @@ class Core {
           public double update( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("WILLR update: BadParam", RetCode.BadParam);
-             core.WILLR_StreamStep(this, inHigh, inLow, inClose);
+             core.WILLR_StepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -144476,7 +144476,7 @@ class Core {
              } else {
                 scratch.copyFrom(this);
              }
-             core.WILLR_StreamStep(scratch, inHigh, inLow, inClose);
+             core.WILLR_StepImpl(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
 
@@ -144497,7 +144497,7 @@ class Core {
              return new WILLR_Stream(this);
           }
        }
-       void WILLR_StreamStep( WILLR_Stream sp, double inHigh, double inLow, double inClose )
+       void WILLR_StepImpl( WILLR_Stream sp, double inHigh, double inLow, double inClose )
        {
           double tmp = 0.0;
           if( sp.today >= 1073741824 ) {
@@ -145260,7 +145260,7 @@ class Core {
           public double update( double inReal ) {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("WMA update: BadParam", RetCode.BadParam);
-             core.WMA_StreamStep(this, inReal);
+             core.WMA_StepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              return this.cur_outReal;
           }
@@ -145276,7 +145276,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("WMA peek: BadParam", RetCode.BadParam);
              WMA_Stream scratch = new WMA_Stream(this);
-             core.WMA_StreamStep(scratch, inReal);
+             core.WMA_StepImpl(scratch, inReal);
              return scratch.cur_outReal;
           }
 
@@ -145297,7 +145297,7 @@ class Core {
              return new WMA_Stream(this);
           }
        }
-       void WMA_StreamStep( WMA_Stream sp, double inReal )
+       void WMA_StepImpl( WMA_Stream sp, double inReal )
        {
           double tempReal = 0.0;
           if( sp.optInTimePeriod == 1 ) {

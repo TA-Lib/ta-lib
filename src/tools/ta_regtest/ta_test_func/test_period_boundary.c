@@ -1178,7 +1178,7 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
  * against batch on its own seed-generated shapes -- and those are benign at
  * period 1, so an arm deleted from the step leaves batch(copy) and
  * stream(recursion) numerically equal and the gate green. Sabotage-proven:
- * removing the arm from TA_EMA_StepInternal alone passes ta_regtest and
+ * removing the arm from TA_EMA_StepImpl alone passes ta_regtest and
  * 15908 stream_verify legs; removing it from TA_S_EMA instead is caught (by
  * the VARIANT gate), so only the streaming half needs this.
  *

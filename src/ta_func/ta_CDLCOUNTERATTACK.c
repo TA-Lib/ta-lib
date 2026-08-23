@@ -309,7 +309,7 @@ struct TA_CDLCOUNTERATTACK_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_CDLCOUNTERATTACK_ReleaseInternal( struct TA_CDLCOUNTERATTACK_Stream *sp )
+static void TA_CDLCOUNTERATTACK_ReleaseImpl( struct TA_CDLCOUNTERATTACK_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_BodyLongTrailingIdx_derived ) TA_Free( sp->ring_BodyLongTrailingIdx_derived );
@@ -320,7 +320,7 @@ static void TA_CDLCOUNTERATTACK_ReleaseInternal( struct TA_CDLCOUNTERATTACK_Stre
 }
 
 /* Private function, not in public API. */
-static void TA_CDLCOUNTERATTACK_StepInternal( struct TA_CDLCOUNTERATTACK_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
+static void TA_CDLCOUNTERATTACK_StepImpl( struct TA_CDLCOUNTERATTACK_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
@@ -480,12 +480,12 @@ static TA_RetCode TA_CDLCOUNTERATTACK_OpenImpl( struct TA_CDLCOUNTERATTACK_Strea
       sp->totIdx = totIdx;
       sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
       sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 2;
-      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
         sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_BodyLongTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_BodyLongTrailingIdx_derived[fillJ % sp->ringCap_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -494,12 +494,12 @@ static TA_RetCode TA_CDLCOUNTERATTACK_OpenImpl( struct TA_CDLCOUNTERATTACK_Strea
       sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
       sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
       sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
-      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
         sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         sp->ringMirror_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_EqualTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        if( !sp->ringMirror_EqualTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_EqualTrailingIdx_derived[fillJ % sp->ringCap_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
@@ -564,7 +564,7 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Update( TA_CDLCOUNTERATTACK_Stream *st
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_CDLCOUNTERATTACK_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLCOUNTERATTACK_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -580,13 +580,13 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Peek( const TA_CDLCOUNTERATTACK_Stream
    memcpy( scratch.ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_BodyLongTrailingIdx > 0 ? stream->ringCap_BodyLongTrailingIdx : 1) );
    scratch.ring_EqualTrailingIdx_derived = stream->ringMirror_EqualTrailingIdx_derived;
    memcpy( scratch.ring_EqualTrailingIdx_derived, stream->ring_EqualTrailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_EqualTrailingIdx > 0 ? stream->ringCap_EqualTrailingIdx : 1) );
-   TA_CDLCOUNTERATTACK_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   TA_CDLCOUNTERATTACK_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Close( TA_CDLCOUNTERATTACK_Stream *stream )
 {
-   TA_CDLCOUNTERATTACK_ReleaseInternal( stream );
+   TA_CDLCOUNTERATTACK_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

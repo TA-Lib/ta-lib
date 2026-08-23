@@ -128,7 +128,7 @@ struct TA_COS_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_COS_StepInternal( struct TA_COS_Stream *sp, double inReal, double *outReal )
+static void TA_COS_StepImpl( struct TA_COS_Stream *sp, double inReal, double *outReal )
 {
    (void)sp;
    *outReal= cos(inReal);
@@ -226,7 +226,7 @@ TA_LIB_API TA_RetCode TA_COS_Update( TA_COS_Stream *stream, double inReal, doubl
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   TA_COS_StepInternal( stream, inReal, outReal );
+   TA_COS_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_COS_Peek( const TA_COS_Stream *stream, double inReal, d
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_COS_StepInternal( &scratch, inReal, outReal );
+   TA_COS_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

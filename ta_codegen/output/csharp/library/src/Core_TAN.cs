@@ -302,7 +302,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TAN", "update", RetCode.BadParam);
-         core.TAN_StreamStep(this, inReal);
+         core.TAN_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -322,7 +322,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TAN", "peek", RetCode.BadParam);
          TAN_Stream scratch = new TAN_Stream(this);
-         core.TAN_StreamStep(scratch, inReal);
+         core.TAN_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -342,7 +342,7 @@ public partial class Core
       }
    }
 
-   internal void TAN_StreamStep( TAN_Stream sp, double inReal )
+   internal void TAN_StepImpl( TAN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Tan(inReal);
    }

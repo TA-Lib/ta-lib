@@ -412,7 +412,7 @@ public partial class Core
       public double Update( double inClose, double inVolume )
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("NVI", "update", RetCode.BadParam);
-         core.NVI_StreamStep(this, inClose, inVolume);
+         core.NVI_StepImpl(this, inClose, inVolume);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -433,7 +433,7 @@ public partial class Core
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("NVI", "peek", RetCode.BadParam);
          NVI_Stream scratch = new NVI_Stream(this);
-         core.NVI_StreamStep(scratch, inClose, inVolume);
+         core.NVI_StepImpl(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -453,7 +453,7 @@ public partial class Core
       }
    }
 
-   internal void NVI_StreamStep( NVI_Stream sp, double inClose, double inVolume )
+   internal void NVI_StepImpl( NVI_Stream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;

@@ -272,7 +272,7 @@
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
-         core.WCLPRICE_StreamStep(this, inHigh, inLow, inClose);
+         core.WCLPRICE_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -288,7 +288,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
          WCLPRICE_Stream scratch = new WCLPRICE_Stream(this);
-         core.WCLPRICE_StreamStep(scratch, inHigh, inLow, inClose);
+         core.WCLPRICE_StepImpl(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -309,7 +309,7 @@
          return new WCLPRICE_Stream(this);
       }
    }
-   void WCLPRICE_StreamStep( WCLPRICE_Stream sp, double inHigh, double inLow, double inClose )
+   void WCLPRICE_StepImpl( WCLPRICE_Stream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
    }

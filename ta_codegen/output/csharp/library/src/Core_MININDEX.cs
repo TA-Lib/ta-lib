@@ -459,7 +459,7 @@ public partial class Core
       public int Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MININDEX", "update", RetCode.BadParam);
-         core.MININDEX_StreamStep(this, inReal);
+         core.MININDEX_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -479,7 +479,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MININDEX", "peek", RetCode.BadParam);
          MININDEX_Stream scratch = new MININDEX_Stream(this);
-         core.MININDEX_StreamStep(scratch, inReal);
+         core.MININDEX_StepImpl(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -499,7 +499,7 @@ public partial class Core
       }
    }
 
-   internal void MININDEX_StreamStep( MININDEX_Stream sp, double inReal )
+   internal void MININDEX_StepImpl( MININDEX_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {

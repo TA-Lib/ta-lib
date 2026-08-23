@@ -700,7 +700,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MA", "update", RetCode.BadParam);
-         core.MA_StreamStep(this, inReal);
+         core.MA_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -726,7 +726,7 @@ public partial class Core
          } else {
             scratch.CopyFrom(this);
          }
-         core.MA_StreamStep(scratch, inReal);
+         core.MA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -746,7 +746,7 @@ public partial class Core
       }
    }
 
-   internal void MA_StreamStep( MA_Stream sp, double inReal )
+   internal void MA_StepImpl( MA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
          sp.cur_outReal = inReal;

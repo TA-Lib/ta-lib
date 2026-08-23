@@ -560,7 +560,7 @@
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MFI update: BadParam", RetCode.BadParam);
-         core.MFI_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.MFI_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -584,7 +584,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.MFI_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         core.MFI_StepImpl(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -605,7 +605,7 @@
          return new MFI_Stream(this);
       }
    }
-   void MFI_StreamStep( MFI_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void MFI_StepImpl( MFI_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       sp.posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
       sp.negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];

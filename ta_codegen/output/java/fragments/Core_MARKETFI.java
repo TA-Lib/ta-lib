@@ -326,7 +326,7 @@
       public double update( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
-         core.MARKETFI_StreamStep(this, inHigh, inLow, inVolume);
+         core.MARKETFI_StepImpl(this, inHigh, inLow, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -342,7 +342,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
          MARKETFI_Stream scratch = new MARKETFI_Stream(this);
-         core.MARKETFI_StreamStep(scratch, inHigh, inLow, inVolume);
+         core.MARKETFI_StepImpl(scratch, inHigh, inLow, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -363,7 +363,7 @@
          return new MARKETFI_Stream(this);
       }
    }
-   void MARKETFI_StreamStep( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
+   void MARKETFI_StepImpl( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
    {
       /* A zero-volume bar would divide by zero. Neither reference guards
        * it -- they emit +/-Inf, or NaN when the range is zero too -- but

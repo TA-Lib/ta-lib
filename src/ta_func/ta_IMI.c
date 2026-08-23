@@ -228,7 +228,7 @@ struct TA_IMI_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_IMI_ReleaseInternal( struct TA_IMI_Stream *sp )
+static void TA_IMI_ReleaseImpl( struct TA_IMI_Stream *sp )
 {
    if( !sp ) return;
    if( sp->win_i_inOpen ) TA_Free( sp->win_i_inOpen );
@@ -239,7 +239,7 @@ static void TA_IMI_ReleaseInternal( struct TA_IMI_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_IMI_StepInternal( struct TA_IMI_Stream *sp, double inOpen, double inClose, double *outReal )
+static void TA_IMI_StepImpl( struct TA_IMI_Stream *sp, double inOpen, double inClose, double *outReal )
 {
    double upsum;
    double downsum;
@@ -352,16 +352,16 @@ static TA_RetCode TA_IMI_OpenImpl( struct TA_IMI_Stream **stream, const double i
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->winCap_i = (int)(optInTimePeriod - 1 + 1);
-      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_IMI_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_IMI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       sp->win_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->win_i_inOpen ) { TA_IMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_i_inOpen ) { TA_IMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->winMirror_i_inOpen ) { TA_IMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_i_inOpen ) { TA_IMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inOpen, inOpen + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
       sp->win_i_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->win_i_inClose ) { TA_IMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->win_i_inClose ) { TA_IMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->winMirror_i_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->winMirror_i_inClose ) { TA_IMI_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->winMirror_i_inClose ) { TA_IMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inClose, inClose + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
       sp->winPos_i = 0;
       sp->outRangeBegIdx = *outBegIdx;
@@ -418,7 +418,7 @@ TA_LIB_API TA_RetCode TA_IMI_Update( TA_IMI_Stream *stream, double inOpen, doubl
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_IMI_StepInternal( stream, inOpen, inClose, outReal );
+   TA_IMI_StepImpl( stream, inOpen, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -434,13 +434,13 @@ TA_LIB_API TA_RetCode TA_IMI_Peek( const TA_IMI_Stream *stream, double inOpen, d
    memcpy( scratch.win_i_inOpen, stream->win_i_inOpen, sizeof(double) * (size_t)stream->winCap_i );
    scratch.win_i_inClose = stream->winMirror_i_inClose;
    memcpy( scratch.win_i_inClose, stream->win_i_inClose, sizeof(double) * (size_t)stream->winCap_i );
-   TA_IMI_StepInternal( &scratch, inOpen, inClose, outReal );
+   TA_IMI_StepImpl( &scratch, inOpen, inClose, outReal );
    return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_IMI_Close( TA_IMI_Stream *stream )
 {
-   TA_IMI_ReleaseInternal( stream );
+   TA_IMI_ReleaseImpl( stream );
    return TA_SUCCESS;
 }
 

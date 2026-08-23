@@ -443,7 +443,7 @@ public partial class Core
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLSPINNINGTOP", "update", RetCode.BadParam);
-         core.CDLSPINNINGTOP_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLSPINNINGTOP_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outInteger;
       }
@@ -466,7 +466,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLSPINNINGTOP", "peek", RetCode.BadParam);
          CDLSPINNINGTOP_Stream scratch = new CDLSPINNINGTOP_Stream(this);
-         core.CDLSPINNINGTOP_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         core.CDLSPINNINGTOP_StepImpl(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -486,7 +486,7 @@ public partial class Core
       }
    }
 
-   internal void CDLSPINNINGTOP_StreamStep( CDLSPINNINGTOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   internal void CDLSPINNINGTOP_StepImpl( CDLSPINNINGTOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;

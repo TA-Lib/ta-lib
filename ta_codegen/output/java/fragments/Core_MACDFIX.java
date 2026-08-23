@@ -605,7 +605,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
-         core.MACDFIX_StreamStep(this, inReal);
+         core.MACDFIX_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
@@ -622,7 +622,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
          MACDFIX_Stream scratch = new MACDFIX_Stream(this);
-         core.MACDFIX_StreamStep(scratch, inReal);
+         core.MACDFIX_StepImpl(scratch, inReal);
          return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
@@ -643,7 +643,7 @@
          return new MACDFIX_Stream(this);
       }
    }
-   void MACDFIX_StreamStep( MACDFIX_Stream sp, double inReal )
+   void MACDFIX_StepImpl( MACDFIX_Stream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;

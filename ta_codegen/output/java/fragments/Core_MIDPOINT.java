@@ -595,7 +595,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MIDPOINT update: BadParam", RetCode.BadParam);
-         core.MIDPOINT_StreamStep(this, inReal);
+         core.MIDPOINT_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -611,7 +611,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
          MIDPOINT_Stream scratch = new MIDPOINT_Stream(this);
-         core.MIDPOINT_StreamStep(scratch, inReal);
+         core.MIDPOINT_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -632,7 +632,7 @@
          return new MIDPOINT_Stream(this);
       }
    }
-   void MIDPOINT_StreamStep( MIDPOINT_Stream sp, double inReal )
+   void MIDPOINT_StepImpl( MIDPOINT_Stream sp, double inReal )
    {
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;

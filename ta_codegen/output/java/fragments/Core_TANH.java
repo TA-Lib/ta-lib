@@ -247,7 +247,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TANH update: BadParam", RetCode.BadParam);
-         core.TANH_StreamStep(this, inReal);
+         core.TANH_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -263,7 +263,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TANH peek: BadParam", RetCode.BadParam);
          TANH_Stream scratch = new TANH_Stream(this);
-         core.TANH_StreamStep(scratch, inReal);
+         core.TANH_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -284,7 +284,7 @@
          return new TANH_Stream(this);
       }
    }
-   void TANH_StreamStep( TANH_Stream sp, double inReal )
+   void TANH_StepImpl( TANH_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.tanh(inReal);
    }

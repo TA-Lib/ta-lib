@@ -1239,7 +1239,7 @@
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
-         core.MAMA_StreamStep(this, inReal);
+         core.MAMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
          return this.cachedValue;
@@ -1264,7 +1264,7 @@
          } else {
             scratch.copyFrom(this);
          }
-         core.MAMA_StreamStep(scratch, inReal);
+         core.MAMA_StepImpl(scratch, inReal);
          return new Value(scratch.cur_outMAMA, scratch.cur_outFAMA);
       }
 
@@ -1285,7 +1285,7 @@
          return new MAMA_Stream(this);
       }
    }
-   void MAMA_StreamStep( MAMA_Stream sp, double inReal )
+   void MAMA_StepImpl( MAMA_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;

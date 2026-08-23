@@ -427,7 +427,7 @@ public partial class Core
       public double Update( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ROCR100", "update", RetCode.BadParam);
-         core.ROCR100_StreamStep(this, inReal);
+         core.ROCR100_StepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
       }
@@ -447,7 +447,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ROCR100", "peek", RetCode.BadParam);
          ROCR100_Stream scratch = new ROCR100_Stream(this);
-         core.ROCR100_StreamStep(scratch, inReal);
+         core.ROCR100_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -467,7 +467,7 @@ public partial class Core
       }
    }
 
-   internal void ROCR100_StreamStep( ROCR100_Stream sp, double inReal )
+   internal void ROCR100_StepImpl( ROCR100_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

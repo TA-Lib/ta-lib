@@ -436,7 +436,7 @@
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_ANGLE update: BadParam", RetCode.BadParam);
-         core.LINEARREG_ANGLE_StreamStep(this, inReal);
+         core.LINEARREG_ANGLE_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -452,7 +452,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_ANGLE peek: BadParam", RetCode.BadParam);
          LINEARREG_ANGLE_Stream scratch = new LINEARREG_ANGLE_Stream(this);
-         core.LINEARREG_ANGLE_StreamStep(scratch, inReal);
+         core.LINEARREG_ANGLE_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -473,7 +473,7 @@
          return new LINEARREG_ANGLE_Stream(this);
       }
    }
-   void LINEARREG_ANGLE_StreamStep( LINEARREG_ANGLE_Stream sp, double inReal )
+   void LINEARREG_ANGLE_StepImpl( LINEARREG_ANGLE_Stream sp, double inReal )
    {
       double m = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

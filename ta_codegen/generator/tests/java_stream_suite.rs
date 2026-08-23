@@ -74,7 +74,7 @@ fn test_java_sma_ring_stream_section() {
     assert!(s.contains("public SMA_Stream copy() {"));
     assert!(!s.contains("public SMA_Stream fork()"), "copy(), never fork()");
     // Step is a package-private Core method writing the cur_ field.
-    assert!(s.contains("void SMA_StreamStep( SMA_Stream sp, double inReal )"));
+    assert!(s.contains("void SMA_StepImpl( SMA_Stream sp, double inReal )"));
     assert!(s.contains("sp.cur_outReal ="));
     // Open body: the early-success no-data guard maps to InsufficientHistory,
     // which the wrapper types. It used to BORROW OutOfRangeEndIndex in band,
@@ -176,7 +176,7 @@ fn test_java_cdl_candle_snapshot() {
     assert!(s.contains("sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;"));
     // ...and the step reads ONLY the snapshot, never the live objects.
     assert!(s.contains("int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;"));
-    let step_start = s.find("void CDL3BLACKCROWS_StreamStep").expect("step");
+    let step_start = s.find("void CDL3BLACKCROWS_StepImpl").expect("step");
     let step_end = s[step_start..].find("private RetCode").expect("open follows") + step_start;
     assert!(
         !s[step_start..step_end].contains("this.candleSettings"),
@@ -192,7 +192,7 @@ fn test_java_cdl_candle_snapshot() {
 fn test_java_trima_dual_mode() {
     let s = java_stream_section("trima");
     // One step, the arm re-derived from the stored param (no mode tag).
-    assert!(s.contains("void TRIMA_StreamStep( TRIMA_Stream sp, double inReal )"));
+    assert!(s.contains("void TRIMA_StepImpl( TRIMA_Stream sp, double inReal )"));
     assert!(s.contains("sp.optInTimePeriod % 2"));
     // Both open arms transcribe under one shared validation head.
     let opens = s.matches("private RetCode TRIMA_OpenImpl").count();
@@ -204,7 +204,7 @@ fn test_java_midprice_stream_uses_the_declared_alternate() {
     let s = java_stream_section("midprice");
     // The stream runs `midprice_ALT1`'s automaton, one unconditional step — the
     // batch block scan never appears as a param-selected branch.
-    assert!(s.contains("void MIDPRICE_StreamStep( MIDPRICE_Stream sp, double inHigh, double inLow )"));
+    assert!(s.contains("void MIDPRICE_StepImpl( MIDPRICE_Stream sp, double inHigh, double inLow )"));
     assert!(
         s.contains("/* Using midprice_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */"),
         "the stream section must name the alternate it resolved to"
