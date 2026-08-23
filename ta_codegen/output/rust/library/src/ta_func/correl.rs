@@ -489,23 +489,15 @@ struct CORREL_StreamState {
     sumY: f64,
     sumX2: f64,
     sumY2: f64,
-    y: f64,
-    trailingX: f64,
-    trailingY: f64,
     shiftX: f64,
     shiftY: f64,
-    ssX: f64,
-    ssY: f64,
-    spXY: f64,
     leavingX: f64,
     leavingY: f64,
-    tempReal: f64,
     invPeriod: f64,
     lookbackTotal: usize,
     trailingIdx: i32,
-    j: i32,
-    windowStart: usize,
     barsSinceReseed: usize,
+    j: i32,
     today: i32,
     xMask: i32,
     x_inReal0: Vec<f64>,
@@ -523,23 +515,15 @@ impl CORREL_StreamState {
         self.sumY = src.sumY;
         self.sumX2 = src.sumX2;
         self.sumY2 = src.sumY2;
-        self.y = src.y;
-        self.trailingX = src.trailingX;
-        self.trailingY = src.trailingY;
         self.shiftX = src.shiftX;
         self.shiftY = src.shiftY;
-        self.ssX = src.ssX;
-        self.ssY = src.ssY;
-        self.spXY = src.spXY;
         self.leavingX = src.leavingX;
         self.leavingY = src.leavingY;
-        self.tempReal = src.tempReal;
         self.invPeriod = src.invPeriod;
         self.lookbackTotal = src.lookbackTotal;
         self.trailingIdx = src.trailingIdx;
-        self.j = src.j;
-        self.windowStart = src.windowStart;
         self.barsSinceReseed = src.barsSinceReseed;
+        self.j = src.j;
         self.today = src.today;
         self.xMask = src.xMask;
         self.x_inReal0.clone_from(&src.x_inReal0);
@@ -556,6 +540,14 @@ impl CORREL_StreamState {
 impl Core {
     fn CORREL_step_impl(&self, sp: &mut CORREL_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         let mut x: f64 = 0.0_f64;
+        let mut y: f64 = 0.0_f64;
+        let mut trailingX: f64 = 0.0_f64;
+        let mut trailingY: f64 = 0.0_f64;
+        let mut ssX: f64 = 0.0_f64;
+        let mut ssY: f64 = 0.0_f64;
+        let mut spXY: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
+        let mut windowStart: usize = 0_usize;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
@@ -568,13 +560,13 @@ impl Core {
         x = sp.x_inReal0[(sp.today & sp.xMask) as usize] - sp.shiftX;
         sp.sumX += x;
         sp.sumX2 += x * x;
-        sp.y = sp.x_inReal1[(sp.today & sp.xMask) as usize] - sp.shiftY;
-        sp.sumXY += x * sp.y;
-        sp.sumY += sp.y;
-        sp.sumY2 += sp.y * sp.y;
-        sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
-        sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
-        sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+        y = sp.x_inReal1[(sp.today & sp.xMask) as usize] - sp.shiftY;
+        sp.sumXY += x * y;
+        sp.sumY += y;
+        sp.sumY2 += y * y;
+        ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+        ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+        spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
         // Re-anchor and rebuild with a fresh two-pass when the shift has gone
         // stale. Same three triggers as TA_VAR: either sum of squares has shrunk
         // below 1e-6 of the squared deviations it is extracted from; OR the value
@@ -601,43 +593,43 @@ impl Core {
         // outputs written so far occupy [0, outIdx-1] while windowStart is
         // startIdx-lookbackTotal+outIdx, which is >= outIdx.
         sp.barsSinceReseed -= 1;
-        if sp.ssX < 0.000001 * sp.sumX2 || sp.ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 {
+        if ssX < 0.000001 * sp.sumX2 || ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-            sp.windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+            windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
             // Both means in one pass over the window: the rebuild below is the
             // only O(period) work on this function's hot path, so it is walked
             // twice, not three times.
-            sp.tempReal = 0.0;
+            tempReal = 0.0;
             sp.shiftY = 0.0;
-            // for( sp.j = (sp.windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
-            sp.j = (sp.windowStart) as i32;
+            // for( sp.j = (windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
+            sp.j = (windowStart) as i32;
             while sp.j <= sp.today {
-                sp.tempReal += sp.x_inReal0[(sp.j & sp.xMask) as usize];
+                tempReal += sp.x_inReal0[(sp.j & sp.xMask) as usize];
                 sp.shiftY += sp.x_inReal1[(sp.j & sp.xMask) as usize];
                 sp.j += 1;
             }
-            sp.shiftX = sp.tempReal * sp.invPeriod;
+            sp.shiftX = tempReal * sp.invPeriod;
             sp.shiftY = sp.shiftY * sp.invPeriod;
             sp.sumY2 = 0.0;
             sp.sumX2 = sp.sumY2;
             sp.sumY = sp.sumX2;
             sp.sumX = sp.sumY;
             sp.sumXY = sp.sumX;
-            // for( sp.j = (sp.windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
-            sp.j = (sp.windowStart) as i32;
+            // for( sp.j = (windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
+            sp.j = (windowStart) as i32;
             while sp.j <= sp.today {
                 x = sp.x_inReal0[(sp.j & sp.xMask) as usize] - sp.shiftX;
                 sp.sumX += x;
                 sp.sumX2 += x * x;
-                sp.y = sp.x_inReal1[(sp.j & sp.xMask) as usize] - sp.shiftY;
-                sp.sumXY += x * sp.y;
-                sp.sumY += sp.y;
-                sp.sumY2 += sp.y * sp.y;
+                y = sp.x_inReal1[(sp.j & sp.xMask) as usize] - sp.shiftY;
+                sp.sumXY += x * y;
+                sp.sumY += y;
+                sp.sumY2 += y * y;
                 sp.j += 1;
             }
-            sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
-            sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
-            sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+            ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+            ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+            spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
             // A sum of squares is non-negative by definition, but this one is
             // extracted as a difference, so its SIGN is not guaranteed on a window
             // sitting inside a flat stretch. Enforce the invariant HERE and not at
@@ -646,17 +638,17 @@ impl Core {
             // positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
             // divide below can rely on both being >= 0 and needs no sign test of
             // its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
-            if sp.ssX < 0.0 {
-                sp.ssX = 0.0;
+            if ssX < 0.0 {
+                ssX = 0.0;
             }
-            if sp.ssY < 0.0 {
-                sp.ssY = 0.0;
+            if ssY < 0.0 {
+                ssY = 0.0;
             }
         }
         // Save the trailing values before writing the output, since the input
         // and output might be the same array.
-        sp.trailingX = sp.x_inReal0[(sp.trailingIdx & sp.xMask) as usize] - sp.shiftX;
-        sp.trailingY = sp.x_inReal1[(sp.trailingIdx & sp.xMask) as usize] - sp.shiftY;
+        trailingX = sp.x_inReal0[(sp.trailingIdx & sp.xMask) as usize] - sp.shiftX;
+        trailingY = sp.x_inReal1[(sp.trailingIdx & sp.xMask) as usize] - sp.shiftY;
         sp.trailingIdx += 1;
         // Output the new coefficient.
         //
@@ -689,26 +681,26 @@ impl Core {
         // correlation. Trading a quarter of the runtime for a case that already
         // behaved this way, on inputs 117 orders past any price, is not a trade
         // worth making. Revisit only if input range-checking is ever added.
-        if sp.ssX > 0.00000000000001 * sp.sumX2 && sp.ssY > 0.00000000000001 * sp.sumY2 {
-            sp.tempReal = sp.spXY / (sp.ssX * sp.ssY).sqrt();
+        if ssX > 0.00000000000001 * sp.sumX2 && ssY > 0.00000000000001 * sp.sumY2 {
+            tempReal = spXY / (ssX * ssY).sqrt();
             // A correlation coefficient cannot leave [-1,1]; rounding in the
             // three sums can still put it a few ulp outside.
-            if sp.tempReal > 1.0 {
-                sp.tempReal = 1.0;
-            } else if sp.tempReal < 0_f64 - 1.0 {
-                sp.tempReal = 0_f64 - 1.0;
+            if tempReal > 1.0 {
+                tempReal = 1.0;
+            } else if tempReal < 0_f64 - 1.0 {
+                tempReal = 0_f64 - 1.0;
             }
-            (*outReal) = sp.tempReal;
+            (*outReal) = tempReal;
         } else {
             (*outReal) = 0.0;
         }
         // Remove the trailing values (prepares the next window).
-        sp.leavingX = sp.trailingX * sp.trailingX;
-        sp.leavingY = sp.trailingY * sp.trailingY;
-        sp.sumX -= sp.trailingX;
+        sp.leavingX = trailingX * trailingX;
+        sp.leavingY = trailingY * trailingY;
+        sp.sumX -= trailingX;
         sp.sumX2 -= sp.leavingX;
-        sp.sumXY -= sp.trailingX * sp.trailingY;
-        sp.sumY -= sp.trailingY;
+        sp.sumXY -= trailingX * trailingY;
+        sp.sumY -= trailingY;
         sp.sumY2 -= sp.leavingY;
         sp.today += 1;
     }
@@ -992,23 +984,15 @@ impl Core {
             sumY,
             sumX2,
             sumY2,
-            y,
-            trailingX,
-            trailingY,
             shiftX,
             shiftY,
-            ssX,
-            ssY,
-            spXY,
             leavingX,
             leavingY,
-            tempReal,
             invPeriod,
             lookbackTotal,
             trailingIdx: (trailingIdx) as i32,
-            j: (j) as i32,
-            windowStart,
             barsSinceReseed,
+            j: (j) as i32,
             today: (today) as i32,
             xMask: (physX - 1) as i32,
             x_inReal0,

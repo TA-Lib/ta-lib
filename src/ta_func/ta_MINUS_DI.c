@@ -685,9 +685,6 @@ struct TA_MINUS_DI_Stream {
    double prevHigh;
    double prevLow;
    double prevClose;
-   double tempReal;
-   double diffP;
-   double diffM;
    double prevMinusDM;
    double prevTR;
 };
@@ -697,15 +694,19 @@ static void TA_MINUS_DI_StepImpl( struct TA_MINUS_DI_Stream *sp, double inHigh, 
 {
    if( sp->optInTimePeriod <= 1 )
    {
-      sp->tempReal = inHigh;
-      sp->diffP = sp->tempReal - sp->prevHigh;
+      double tempReal;
+      double diffP;
+      double diffM;
+
+      tempReal = inHigh;
+      diffP = tempReal - sp->prevHigh;
       /* Plus Delta */
-      sp->prevHigh = sp->tempReal;
-      sp->tempReal = inLow;
-      sp->diffM = sp->prevLow - sp->tempReal;
+      sp->prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp->prevLow - tempReal;
       /* Minus Delta */
-      sp->prevLow = sp->tempReal;
-      if( sp->diffM > 0 && sp->diffP < sp->diffM )
+      sp->prevLow = tempReal;
+      if( diffM > 0 && diffP < diffM )
       {
          /* Case 2 and 4: +DM=0,-DM=diffM */
          double _true_range_0;
@@ -721,13 +722,13 @@ static void TA_MINUS_DI_StepImpl( struct TA_MINUS_DI_Stream *sp, double inHigh, 
             range_0 = tmp_0;
          }
          _true_range_0 = range_0;
-         sp->tempReal = _true_range_0;
-         if( TA_IS_ZERO(sp->tempReal) )
+         tempReal = _true_range_0;
+         if( TA_IS_ZERO(tempReal) )
          {
             *outReal= (double)0.0;
          } else 
          {
-            *outReal= sp->diffM / sp->tempReal;
+            *outReal= diffM / tempReal;
          }
       } else 
       {
@@ -737,19 +738,23 @@ static void TA_MINUS_DI_StepImpl( struct TA_MINUS_DI_Stream *sp, double inHigh, 
    }
    else
    {
+      double tempReal;
+      double diffP;
+      double diffM;
+
       /* Calculate the prevMinusDM */
-      sp->tempReal = inHigh;
-      sp->diffP = sp->tempReal - sp->prevHigh;
+      tempReal = inHigh;
+      diffP = tempReal - sp->prevHigh;
       /* Plus Delta */
-      sp->prevHigh = sp->tempReal;
-      sp->tempReal = inLow;
-      sp->diffM = sp->prevLow - sp->tempReal;
+      sp->prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp->prevLow - tempReal;
       /* Minus Delta */
-      sp->prevLow = sp->tempReal;
-      if( sp->diffM > 0 && sp->diffP < sp->diffM )
+      sp->prevLow = tempReal;
+      if( diffM > 0 && diffP < diffM )
       {
          /* Case 2 and 4: +DM=0,-DM=diffM */
-         sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod + sp->diffM;
+         sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod + diffM;
       } else 
       {
          /* Case 1,3,5 and 7 */
@@ -769,8 +774,8 @@ static void TA_MINUS_DI_StepImpl( struct TA_MINUS_DI_Stream *sp, double inHigh, 
          range_1 = tmp_1;
       }
       _true_range_1 = range_1;
-      sp->tempReal = _true_range_1;
-      sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + sp->tempReal;
+      tempReal = _true_range_1;
+      sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + tempReal;
       sp->prevClose = inClose;
       /* Calculate the DI. The value is rounded (see Wilder book). */
       if( !TA_IS_ZERO(sp->prevTR) )
@@ -821,9 +826,9 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
       double prevHigh = 0.0;
       double prevLow = 0.0;
       double prevClose = 0.0;
-      double tempReal = 0.0;
-      double diffP = 0.0;
-      double diffM = 0.0;
+      double tempReal;
+      double diffP;
+      double diffM;
       /*
        * The DM1 (one period) is base on the largest part of
        * today's range that is outside of yesterdays range.
@@ -1002,9 +1007,6 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
       sp->prevHigh = prevHigh;
       sp->prevLow = prevLow;
       sp->prevClose = prevClose;
-      sp->tempReal = tempReal;
-      sp->diffP = diffP;
-      sp->diffM = diffM;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       *stream = sp;
@@ -1023,9 +1025,9 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
       double prevClose = 0.0;
       double prevMinusDM = 0.0;
       double prevTR = 0.0;
-      double tempReal = 0.0;
-      double diffP = 0.0;
-      double diffM = 0.0;
+      double tempReal;
+      double diffP;
+      double diffM;
       int i;
       /*
        * The DM1 (one period) is base on the largest part of
@@ -1300,9 +1302,6 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
       sp->prevClose = prevClose;
       sp->prevMinusDM = prevMinusDM;
       sp->prevTR = prevTR;
-      sp->tempReal = tempReal;
-      sp->diffP = diffP;
-      sp->diffM = diffM;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       *stream = sp;

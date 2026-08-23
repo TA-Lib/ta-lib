@@ -1663,7 +1663,7 @@ pub fn analyze_region_scoped<'a>(
         circ_extra: &circ_extra,
         parity_field: parity.as_ref().map(|p| p.field.as_str()),
     };
-    let (extrema, (mut state, temps)) = classify_or_extrema(
+    let (extrema, mut classified) = classify_or_extrema(
         &ctx,
         &synthetic_slots,
         &ring_vars,
@@ -1675,7 +1675,8 @@ pub fn analyze_region_scoped<'a>(
         window_count,
         &circs,
     )?;
-    force_circ_index_state(&circs, &mut state, &temps);
+    force_circ_index_state(&mut classified, &circs);
+    let (mut state, temps) = classified;
     // The carried parity field is synthetic (no VarDecl): classify_locals skips
     // it, so append it as an ordinary int state field here (emitter seeds/flips
     // it — see ParitySpec). Appended last: deterministic, after real locals.
@@ -4036,6 +4037,24 @@ struct ClassifyCtx<'a> {
 
 type Classified = (Vec<ScalarField>, Vec<ScalarField>);
 
+/// Move `names` from the temp list back into carried state, preserving each
+/// list's order. Used where an emitter addresses a local through the handle
+/// regardless of what liveness says (the extrema rebase).
+fn force_state<'n>(st: &mut Classified, names: impl IntoIterator<Item = &'n str>) {
+    let forced: BTreeSet<&str> = names.into_iter().collect();
+    let (state, temps) = st;
+    let mut moved: Vec<ScalarField> = Vec::new();
+    temps.retain(|(n, t)| {
+        if forced.contains(n.as_str()) {
+            moved.push((n.clone(), t.clone()));
+            false
+        } else {
+            true
+        }
+    });
+    state.extend(moved);
+}
+
 /// Classify locals; when the bookkeeping-purity gate trips on a cached-index
 /// automaton, retry in absolute-index (extrema) mode: the cursor and every
 /// index local become carried state and inputs read through the automaton
@@ -4082,6 +4101,18 @@ fn classify_or_extrema(
                 ctx.bar_inputs,
             )?;
             let mut st = run(&BTreeSet::new())?; // index locals = plain int state
+            // The automaton's absolute indices stay handle fields whatever
+            // liveness says (#252): the rebase preamble every backend emits
+            // addresses them through the handle, open sizes the ring from the
+            // window start, and Rust's `for( j = a; j <= b; j++ )` fast path
+            // binds an UNDOTTED counter as `usize` — which is the wrong index
+            // space for a ring read (`j & xMask`). The exemption is the index
+            // space itself, not a list of functions.
+            force_state(
+                &mut st,
+                std::iter::once(ex.trailing.as_str())
+                    .chain(ex.index_vars.iter().map(String::as_str)),
+            );
             if !st.0.iter().any(|(n2, _)| n2 == ctx.cursor) {
                 st.0.push((ctx.cursor.to_string(), VarType::Integer));
             }
@@ -4171,18 +4202,21 @@ fn build_extrema(
 /// The CIRCBUF index scalars are read/written inside the opaque
 /// CIRCBUF_NEXT statement (invisible to the expression walkers): force both
 /// into carried state so the transition's expansion has its fields.
-fn force_circ_index_state(
-    circs: &[CircState],
-    state: &mut Vec<ScalarField>,
-    temps: &[ScalarField],
-) {
-    for c in circs {
-        for n2 in [format!("{}_Idx", c.id), format!("maxIdx_{}", c.id)] {
-            if !state.iter().any(|(sn, _)| *sn == n2)
-                && !temps.iter().any(|(tn, _)| *tn == n2)
-            {
-                state.push((n2, VarType::Integer));
-            }
+///
+/// Both directions matter. A pair the walkers never saw is APPENDED; one the
+/// scratch rule (#252) claimed as step-local is MOVED BACK, because
+/// [`drop_bookkeeping`] expands `CIRCBUF_NEXT` onto `names.state(..)`
+/// unconditionally and a temp would leave that expansion addressing a field
+/// the handle does not have.
+fn force_circ_index_state(st: &mut Classified, circs: &[CircState]) {
+    let named: Vec<String> = circs
+        .iter()
+        .flat_map(|c| [format!("{}_Idx", c.id), format!("maxIdx_{}", c.id)])
+        .collect();
+    force_state(st, named.iter().map(String::as_str));
+    for n2 in named {
+        if !st.0.iter().any(|(sn, _)| *sn == n2) {
+            st.0.push((n2, VarType::Integer));
         }
     }
 }
@@ -5077,11 +5111,10 @@ fn classify_locals(
     index_vars.extend(ring_vars.iter().cloned());
     check_bookkeeping_purity(steady_stmts, cursor, counter, &index_vars)?;
 
-    // Carried vs temp split (sound): a candidate is a TEMP only if the
-    // straight-line prefix of the transition assigns it whole (non-compound)
-    // before any read and before the first branching statement; everything
-    // else is carried state.
-    let mut temps_set = written_before_read(steady_stmts, &candidates);
+    // Carried vs temp split (sound): a candidate is a TEMP only if EVERY
+    // path through the transition assigns it whole (non-compound) before
+    // referencing it; everything else is carried state.
+    let mut temps_set = step_local_scratch(steady_stmts, &candidates);
     // Any variable DECLARED inside the steady loop body is per-iteration by
     // C scoping (indeterminate on scope re-entry unless assigned) — always a
     // temp, never carried state (AVGDEV declares its window accumulators
@@ -5413,66 +5446,230 @@ fn output_read_back(s: &Statement, outputs: &[String]) -> Option<String> {
     }
 }
 
-/// Candidates assigned whole (plain, non-compound `v = expr`) in the
-/// straight-line prefix of the transition, before any read of `v` and before
-/// the first branching statement. Sound under-approximation of
-/// "written-before-read on every path".
-fn written_before_read(steady: &[Statement], candidates: &[String]) -> BTreeSet<String> {
-    let cand: BTreeSet<&String> = candidates.iter().collect();
-    let mut initialized: BTreeSet<String> = BTreeSet::new();
-    let mut read_first: BTreeSet<String> = BTreeSet::new();
+/// Where one straight-line path through a statement list ends.
+enum PathEnd {
+    /// The path falls through, with this set of candidates definitely
+    /// assigned whole on it.
+    Fall(BTreeSet<String>),
+    /// The path cannot fall through (`return` / `break` / `continue`), so it
+    /// contributes nothing to the join at the merge point below it.
+    Diverged,
+}
 
-    let note_reads = |e: &Expr, initialized: &BTreeSet<String>, read_first: &mut BTreeSet<String>| {
-        walk_expr(e, &mut |x| {
-            if let Expr::Var(n) = x {
-                if cand.contains(n) && !initialized.contains(n) {
-                    read_first.insert(n.clone());
-                }
-            }
-        });
-    };
+/// Definite-assignment walker over the transition body (issue #252).
+///
+/// Records every candidate REFERENCED at a point where it is not yet
+/// definitely assigned. "Referenced" is deliberately coarser than "read":
+/// [`expr_var_names`] also yields the base name of `arr[i]` and `*p`, so a
+/// fixed-size array written element-wise, an address-of escape, or a compound
+/// `v += ...` all count — none of them assigns the variable WHOLE, and every
+/// one of them makes the previous bar's value observable.
+///
+/// One reference form is invisible here and handled outside: `CIRCBUF_NEXT`
+/// carries its two index locals in the macro's identity, not in an `Expr`, so
+/// [`force_circ_index_state`] puts them back afterwards.
+struct DefAssign<'a> {
+    cand: &'a BTreeSet<String>,
+    read_first: BTreeSet<String>,
+}
 
-    let mut in_prefix = true;
-    for s in steady {
-        if in_prefix {
-            match s {
-                Statement::Comment(_) => continue,
-                Statement::Assign {
-                    target: Expr::Var(v),
-                    value,
-                    compound: false,
-                } => {
-                    note_reads(value, &initialized, &mut read_first);
-                    if cand.contains(v) && !read_first.contains(v) {
-                        initialized.insert(v.clone());
-                    }
-                    continue;
-                }
-                Statement::VarDecl {
-                    name,
-                    init: Some(value),
-                    ..
-                } => {
-                    note_reads(value, &initialized, &mut read_first);
-                    if cand.contains(name) && !read_first.contains(name) {
-                        initialized.insert(name.clone());
-                    }
-                    continue;
-                }
-                _ => in_prefix = false,
-            }
-        }
-        // Tail (and the statement that ended the prefix): any reference to a
-        // not-yet-initialized candidate counts as a read.
+impl DefAssign<'_> {
+    /// Note every candidate `e` mentions that `assigned` does not cover.
+    fn note_expr(&mut self, e: &Expr, assigned: &BTreeSet<String>) {
+        let mut names = BTreeSet::new();
+        expr_var_names(e, &mut names);
+        self.note_names(names, assigned);
+    }
+
+    /// Same, for every expression anywhere in one statement (the catch-all
+    /// used for statement forms this analysis does not model precisely).
+    fn note_stmt(&mut self, s: &Statement, assigned: &BTreeSet<String>) {
         let mut names = BTreeSet::new();
         stmt_var_names(s, &mut names);
+        self.note_names(names, assigned);
+    }
+
+    fn note_names(&mut self, names: BTreeSet<String>, assigned: &BTreeSet<String>) {
         for n in names {
-            if cand.contains(&n) && !initialized.contains(&n) {
-                read_first.insert(n);
+            if self.cand.contains(&n) && !assigned.contains(&n) {
+                self.read_first.insert(n);
             }
         }
     }
-    initialized
+
+    /// Walk a statement list from `assigned`; returns where the path ends.
+    fn stmts(&mut self, list: &[Statement], mut assigned: BTreeSet<String>) -> PathEnd {
+        for (i, s) in list.iter().enumerate() {
+            match self.stmt(s, assigned.clone()) {
+                PathEnd::Fall(next) => assigned = next,
+                PathEnd::Diverged => {
+                    // Statements below a diverging one never execute. They
+                    // are still EMITTED, so keep them conservative: a
+                    // candidate mentioned only there stays carried rather
+                    // than becoming a local the compiler sees unassigned.
+                    for dead in &list[i + 1..] {
+                        self.note_stmt(dead, &assigned);
+                    }
+                    return PathEnd::Diverged;
+                }
+            }
+        }
+        PathEnd::Fall(assigned)
+    }
+
+    #[allow(clippy::too_many_lines)]
+    fn stmt(&mut self, s: &Statement, mut assigned: BTreeSet<String>) -> PathEnd {
+        match s {
+            // Trivia, and a bare declaration: neither references nor
+            // assigns anything.
+            Statement::Comment(_)
+            | Statement::UnrollHint { .. }
+            | Statement::VarDecl { init: None, .. } => PathEnd::Fall(assigned),
+
+            // The only two forms that assign a candidate WHOLE.
+            Statement::Assign {
+                target: Expr::Var(v),
+                value,
+                compound: false,
+            } => {
+                self.note_expr(value, &assigned);
+                if self.cand.contains(v) {
+                    assigned.insert(v.clone());
+                }
+                PathEnd::Fall(assigned)
+            }
+            Statement::VarDecl {
+                name,
+                init: Some(value),
+                ..
+            } => {
+                self.note_expr(value, &assigned);
+                if self.cand.contains(name) {
+                    assigned.insert(name.clone());
+                }
+                PathEnd::Fall(assigned)
+            }
+            Statement::If {
+                condition,
+                then_body,
+                else_body,
+                ..
+            } => {
+                self.note_expr(condition, &assigned);
+                let t = self.stmts(then_body, assigned.clone());
+                let e = self.stmts(else_body, assigned);
+                join(t, e)
+            }
+
+            Statement::Switch {
+                expr,
+                cases,
+                default,
+            } => {
+                self.note_expr(expr, &assigned);
+                let mut acc = if default.is_empty() {
+                    // No default arm: an unmatched subject falls straight
+                    // through, assigning nothing.
+                    PathEnd::Fall(assigned.clone())
+                } else {
+                    self.stmts(default, assigned.clone())
+                };
+                for (_, body) in cases {
+                    let arm = self.stmts(body, assigned.clone());
+                    acc = join(acc, arm);
+                }
+                acc
+            }
+
+            // Loops may run zero times, so nothing they assign is definite
+            // below them: the body is walked only to collect its references,
+            // and the path leaves the loop with the state it entered on.
+            // Sound for `do`/`while` too, which is why they share this arm.
+            Statement::While { condition, body } | Statement::DoWhile { condition, body } => {
+                self.note_expr(condition, &assigned);
+                let _ = self.stmts(body, assigned.clone());
+                PathEnd::Fall(assigned)
+            }
+            Statement::For { var, count, body } => {
+                // `for( var = count; var > 0; var-- )` — the init always runs.
+                self.note_expr(count, &assigned);
+                if self.cand.contains(var) {
+                    assigned.insert(var.clone());
+                }
+                let _ = self.stmts(body, assigned.clone());
+                PathEnd::Fall(assigned)
+            }
+            Statement::ForC {
+                init,
+                condition,
+                update,
+                body,
+            } => {
+                let after_init = match self.stmt(init, assigned) {
+                    PathEnd::Fall(a) => a,
+                    PathEnd::Diverged => return PathEnd::Diverged,
+                };
+                self.note_expr(condition, &after_init);
+                let _ = self.stmts(body, after_init.clone());
+                self.note_stmt(update, &after_init);
+                PathEnd::Fall(after_init)
+            }
+
+            Statement::Block { body } => self.stmts(body, assigned),
+
+            Statement::Return { value } => {
+                if let Some(e) = value {
+                    self.note_expr(e, &assigned);
+                }
+                PathEnd::Diverged
+            }
+            Statement::Break | Statement::Continue => PathEnd::Diverged,
+
+            // Everything else — compound and indexed assignment, bare
+            // expression statements (`x++`, void macro calls), CIRCBUF ops —
+            // is treated as referencing every name it mentions.
+            other => {
+                self.note_stmt(other, &assigned);
+                PathEnd::Fall(assigned)
+            }
+        }
+    }
+}
+
+/// Merge two paths at the statement below them: definite only where both
+/// agree, and a diverging path imposes nothing (it never reaches the merge).
+fn join(a: PathEnd, b: PathEnd) -> PathEnd {
+    match (a, b) {
+        (PathEnd::Diverged, other) | (other, PathEnd::Diverged) => other,
+        (PathEnd::Fall(x), PathEnd::Fall(y)) => {
+            PathEnd::Fall(x.intersection(&y).cloned().collect())
+        }
+    }
+}
+
+/// Candidates that are pure step-local scratch: on EVERY path through one
+/// transition, each is assigned whole (plain `v = expr`) before it is
+/// referenced. Such a variable can never observe the previous bar's value,
+/// so it is a local of the step function instead of a stream-handle field.
+///
+/// The predecessor looked only at the transition's straight-line PREFIX and
+/// carried everything below the first branching statement — which in MFI is
+/// statement one, a running sum's `-=`. Walking every path instead drops 200
+/// fields / 1480 bytes across 54 functions (issue #252).
+///
+/// The complement is carried state, and everything not proved is carried:
+/// the analysis is a sound under-approximation at each construct — a loop
+/// body never establishes assignment below the loop, a switch without a
+/// `default` arm falls through assigning nothing, and any reference form
+/// other than a whole assignment counts as a read.
+fn step_local_scratch(steady: &[Statement], candidates: &[String]) -> BTreeSet<String> {
+    let cand: BTreeSet<String> = candidates.iter().cloned().collect();
+    let mut da = DefAssign {
+        cand: &cand,
+        read_first: BTreeSet::new(),
+    };
+    let _ = da.stmts(steady, BTreeSet::new());
+    cand.difference(&da.read_first).cloned().collect()
 }
 
 fn collect_decl_order(stmts: &[Statement], out: &mut Vec<String>) {
@@ -7697,4 +7894,212 @@ mod tests {
         assert!(dropped.is_empty(), "a surviving raw read keeps the window");
     }
 
+    // -----------------------------------------------------------------
+    // Step-local scratch vs carried state (issue #252)
+    //
+    // The rule is definite assignment over the WHOLE transition, not over
+    // its straight-line prefix: a local is a step temp exactly when every
+    // path assigns it whole before referencing it.
+    // -----------------------------------------------------------------
+
+    /// Wrap per-bar statements in the canonical steady loop, with the
+    /// bookkeeping the analyzer expects (`outIdx`, cursor `i`).
+    fn steady_loop(decls: Vec<Statement>, per_bar: Vec<Statement>) -> Vec<Statement> {
+        let mut body = vec![decl("i", VarType::Integer), decl("outIdx", VarType::Integer)];
+        body.extend(decls);
+        let mut inner = per_bar;
+        inner.push(assign(var("outIdx"), add(var("outIdx"), Expr::IntLiteral(1))));
+        inner.push(assign(var("i"), add(var("i"), Expr::IntLiteral(1))));
+        body.push(Statement::While {
+            condition: le(var("i"), var("endIdx")),
+            body: inner,
+        });
+        body
+    }
+
+    fn iff(condition: Expr, then_body: Vec<Statement>, else_body: Vec<Statement>) -> Statement {
+        Statement::If {
+            condition,
+            then_body,
+            else_body,
+            cond_comments: vec![],
+        }
+    }
+
+    fn names(fields: &[ScalarField]) -> Vec<&str> {
+        fields.iter().map(|(n, _)| n.as_str()).collect()
+    }
+
+    /// Both arms assign it, so nothing from the previous bar can be read.
+    /// The old prefix rule stopped at the `if` and carried `x` for ever.
+    /// The one-armed complement is [`conditional_write_is_carried_state`].
+    #[test]
+    fn scratch_assigned_on_both_branch_arms_is_a_temp() {
+        let f = func_with_body(steady_loop(
+            vec![decl("x", VarType::Real)],
+            vec![
+                iff(
+                    le(acc("inReal", var("i")), Expr::Literal(0.0)),
+                    vec![assign(var("x"), Expr::Literal(1.0))],
+                    vec![assign(var("x"), Expr::Literal(2.0))],
+                ),
+                assign(acc("outReal", var("outIdx")), var("x")),
+            ],
+        ));
+        let m = analyze(&f).expect("analyzes");
+        assert_eq!(names(&m.temps), ["x"]);
+        assert!(m.state.is_empty());
+    }
+
+    /// MFI's shape: a running sum's compound update comes FIRST, and used to
+    /// end the prefix scan — carrying every temp below it. The sum is still
+    /// state; the temp below it is not.
+    #[test]
+    fn temp_below_a_compound_update_is_still_a_temp() {
+        let f = func_with_body(steady_loop(
+            vec![decl("sum", VarType::Real), decl("t", VarType::Real)],
+            vec![
+                Statement::Assign {
+                    target: var("sum"),
+                    value: acc("inReal", var("i")),
+                    compound: true,
+                },
+                assign(
+                    var("t"),
+                    Expr::BinOp(
+                        Box::new(acc("inReal", var("i"))),
+                        BinOp::Mul,
+                        Box::new(Expr::Literal(2.0)),
+                    ),
+                ),
+                assign(acc("outReal", var("outIdx")), add(var("sum"), var("t"))),
+            ],
+        ));
+        let m = analyze(&f).expect("analyzes");
+        assert_eq!(names(&m.state), ["sum"]);
+        assert_eq!(names(&m.temps), ["t"]);
+    }
+
+    /// A loop body may run zero times, so what it assigns is not definite
+    /// below the loop — `acc` stays carried.
+    #[test]
+    fn assignment_inside_an_inner_loop_does_not_escape_it() {
+        let f = func_with_body(steady_loop(
+            vec![decl("acc", VarType::Real)],
+            vec![
+                Statement::For {
+                    var: "k".into(),
+                    count: Expr::IntLiteral(3),
+                    body: vec![assign(var("acc"), acc("inReal", var("i")))],
+                },
+                assign(acc("outReal", var("outIdx")), var("acc")),
+            ],
+        ));
+        let m = analyze(&f).expect("analyzes");
+        assert_eq!(names(&m.state), ["acc"]);
+    }
+
+    /// Seeded before the rescan loop, so every read inside it is covered:
+    /// the accumulator is a temp even though the loop compounds into it.
+    #[test]
+    fn accumulator_seeded_before_its_rescan_loop_is_a_temp() {
+        let f = func_with_body(steady_loop(
+            vec![decl("acc", VarType::Real)],
+            vec![
+                assign(var("acc"), Expr::Literal(0.0)),
+                Statement::For {
+                    var: "k".into(),
+                    count: Expr::IntLiteral(3),
+                    body: vec![Statement::Assign {
+                        target: var("acc"),
+                        value: acc("inReal", var("i")),
+                        compound: true,
+                    }],
+                },
+                assign(acc("outReal", var("outIdx")), var("acc")),
+            ],
+        ));
+        let m = analyze(&f).expect("analyzes");
+        assert_eq!(names(&m.temps), ["acc"]);
+        assert!(m.state.is_empty());
+    }
+
+    /// An arm that cannot fall through imposes nothing at the merge below
+    /// it, so the assignment on the surviving path is definite. Exercised
+    /// against the classifier directly: [`analyze`] refuses a mid-loop
+    /// `return` before this can be reached, and the arm is here so a future
+    /// tier that lifts that refusal inherits the right answer.
+    #[test]
+    fn a_diverging_arm_does_not_block_the_merge() {
+        for diverge in [Statement::Return { value: None }, Statement::Break] {
+            let stmts = vec![
+                iff(
+                    le(acc("inReal", var("i")), Expr::Literal(0.0)),
+                    vec![diverge],
+                    vec![assign(var("x"), Expr::Literal(1.0))],
+                ),
+                assign(acc("outReal", var("outIdx")), var("x")),
+            ];
+            let temps = step_local_scratch(&stmts, &["x".to_string()]);
+            assert!(temps.contains("x"), "the surviving path assigns x whole");
+        }
+    }
+
+    /// ...but a statement BELOW the diverging one is still emitted, so a
+    /// candidate only that statement mentions stays carried rather than
+    /// becoming a local with no reaching assignment.
+    #[test]
+    fn a_read_below_a_diverging_statement_still_carries() {
+        let stmts = vec![
+            Statement::Break,
+            assign(acc("outReal", var("outIdx")), var("x")),
+        ];
+        let temps = step_local_scratch(&stmts, &["x".to_string()]);
+        assert!(temps.is_empty(), "unreachable reads are still conservative");
+    }
+
+    /// A `switch` with no `default` falls straight through on an unmatched
+    /// subject, so it establishes nothing.
+    #[test]
+    fn switch_without_a_default_arm_establishes_nothing() {
+        let arm = |v: f64| vec![assign(var("x"), Expr::Literal(v))];
+        let mk = |default: Vec<Statement>| {
+            func_with_body(steady_loop(
+                vec![decl("x", VarType::Real)],
+                vec![
+                    Statement::Switch {
+                        expr: var("i"),
+                        cases: vec![("0".into(), arm(1.0)), ("1".into(), arm(2.0))],
+                        default,
+                    },
+                    assign(acc("outReal", var("outIdx")), var("x")),
+                ],
+            ))
+        };
+        let no_default = mk(vec![]);
+        let open = analyze(&no_default).expect("analyzes");
+        assert_eq!(names(&open.state), ["x"]);
+        let with_default = mk(arm(3.0));
+        let closed = analyze(&with_default).expect("analyzes");
+        assert_eq!(names(&closed.temps), ["x"]);
+        assert!(closed.state.is_empty());
+    }
+
+    /// Element-wise writes never assign a fixed-size array WHOLE, so one
+    /// stays carried however early the write sits.
+    #[test]
+    fn an_element_wise_written_array_stays_carried() {
+        let f = func_with_body(steady_loop(
+            vec![decl("buf", VarType::RealArray("3".into()))],
+            vec![
+                assign(acc("buf", Expr::IntLiteral(0)), acc("inReal", var("i"))),
+                assign(
+                    acc("outReal", var("outIdx")),
+                    acc("buf", Expr::IntLiteral(0)),
+                ),
+            ],
+        ));
+        let m = analyze(&f).expect("analyzes");
+        assert_eq!(names(&m.state), ["buf"]);
+    }
 }

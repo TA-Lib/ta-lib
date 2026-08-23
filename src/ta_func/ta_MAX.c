@@ -412,8 +412,8 @@ struct TA_MAX_Stream {
    int optInTimePeriod;
    double highest;
    int trailingIdx;
-   int i;
    int highestIdx;
+   int i;
    int today;
    int xCap;
    int xPhys;
@@ -586,8 +586,8 @@ static TA_RetCode TA_MAX_OpenImpl( struct TA_MAX_Stream **stream, const double i
       sp->optInTimePeriod = optInTimePeriod;
       sp->highest = highest;
       sp->trailingIdx = trailingIdx;
-      sp->i = i;
       sp->highestIdx = highestIdx;
+      sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
       if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MAX_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }

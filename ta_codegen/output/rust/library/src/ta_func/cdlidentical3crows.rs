@@ -494,7 +494,6 @@ impl CDLIDENTICAL3CROWS_Stream {
 struct CDLIDENTICAL3CROWS_StreamState {
     ShadowVeryShortPeriodTotal: [f64; 3 as usize],
     EqualPeriodTotal: [f64; 3 as usize],
-    totIdx: usize,
     lag1_inOpen: f64,
     lag2_inOpen: f64,
     lag1_inHigh: f64,
@@ -520,7 +519,6 @@ impl CDLIDENTICAL3CROWS_StreamState {
     fn restore_from(&mut self, src: &Self) {
         self.ShadowVeryShortPeriodTotal = src.ShadowVeryShortPeriodTotal;
         self.EqualPeriodTotal = src.EqualPeriodTotal;
-        self.totIdx = src.totIdx;
         self.lag1_inOpen = src.lag1_inOpen;
         self.lag2_inOpen = src.lag2_inOpen;
         self.lag1_inHigh = src.lag1_inHigh;
@@ -548,6 +546,7 @@ impl CDLIDENTICAL3CROWS_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn CDLIDENTICAL3CROWS_step_impl(&self, sp: &mut CDLIDENTICAL3CROWS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
         #[allow(non_snake_case)]
@@ -611,19 +610,19 @@ impl Core {
         }
         // add the current range and subtract the first range: this is done after the pattern recognition
         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-        // for( sp.totIdx = 2; sp.totIdx >= 0; sp.totIdx -= 1 )
-        sp.totIdx = 2;
+        // for( totIdx = 2; totIdx >= 0; totIdx -= 1 )
+        totIdx = 2;
         loop {
-            sp.ShadowVeryShortPeriodTotal[sp.totIdx] = sp.ShadowVeryShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[((if sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx { sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowVeryShortTrailingIdx } else { sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx })) as usize] - sp.ring_ShadowVeryShortTrailingIdx_derived[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize]);
-            if sp.totIdx == 0 { break; }
-            sp.totIdx -= 1;
+            sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[((if sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx { sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx } else { sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx })) as usize] - sp.ring_ShadowVeryShortTrailingIdx_derived[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize]);
+            if totIdx == 0 { break; }
+            totIdx -= 1;
         }
-        // for( sp.totIdx = 2; sp.totIdx >= 1; sp.totIdx -= 1 )
-        sp.totIdx = 2;
+        // for( totIdx = 2; totIdx >= 1; totIdx -= 1 )
+        totIdx = 2;
         loop {
-            sp.EqualPeriodTotal[sp.totIdx] = sp.EqualPeriodTotal[sp.totIdx] + (sp.ring_EqualTrailingIdx_derived[((if sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.totIdx >= sp.ringCap_EqualTrailingIdx { sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.totIdx - sp.ringCap_EqualTrailingIdx } else { sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.totIdx })) as usize] - sp.ring_EqualTrailingIdx_derived[((sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - sp.totIdx) % sp.ringCap_EqualTrailingIdx) as usize]);
-            if sp.totIdx == 1 { break; }
-            sp.totIdx -= 1;
+            sp.EqualPeriodTotal[totIdx] = sp.EqualPeriodTotal[totIdx] + (sp.ring_EqualTrailingIdx_derived[((if sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx >= sp.ringCap_EqualTrailingIdx { sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx - sp.ringCap_EqualTrailingIdx } else { sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx })) as usize] - sp.ring_EqualTrailingIdx_derived[((sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - totIdx) % sp.ringCap_EqualTrailingIdx) as usize]);
+            if totIdx == 1 { break; }
+            totIdx -= 1;
         }
         sp.lag2_inOpen = sp.lag1_inOpen;
         sp.lag1_inOpen = inOpen;
@@ -943,7 +942,6 @@ impl Core {
         let state = CDLIDENTICAL3CROWS_StreamState {
             ShadowVeryShortPeriodTotal,
             EqualPeriodTotal,
-            totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag1_inHigh: inHigh[historyLen - 1],

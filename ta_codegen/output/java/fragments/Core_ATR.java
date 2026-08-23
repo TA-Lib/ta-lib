@@ -482,7 +482,6 @@
       Core core;
       int optInTimePeriod;
       double prevATR;
-      double val3;
       double lag1_inClose;
       double cur_outReal;
       int outRangeBegIdx;
@@ -506,7 +505,6 @@
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -517,7 +515,6 @@
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -604,6 +601,7 @@
    void ATR_StepImpl( ATR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
+      double val3 = 0.0;
       double greatest = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
@@ -618,9 +616,9 @@
       if( val2 > greatest ) {
          greatest = val2;
       }
-      sp.val3 = Math.abs(tempCY - tempLT);
-      if( sp.val3 > greatest ) {
-         greatest = sp.val3;
+      val3 = Math.abs(tempCY - tempLT);
+      if( val3 > greatest ) {
+         greatest = val3;
       }
       sp.prevATR *= sp.optInTimePeriod - 1;
       sp.prevATR += greatest;
@@ -794,7 +792,6 @@
       /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
       sp.prevATR = prevATR;
-      sp.val3 = val3;
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;

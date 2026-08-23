@@ -563,8 +563,6 @@
       double sumFast;
       double sumSlow;
       double sumSignal;
-      double osc;
-      double tempReal;
       int oscBuffer_Idx;
       int maxIdx_oscBuffer;
       int ringPos_trailingFastIdx;
@@ -601,8 +599,6 @@
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
          this.sumSignal = other.sumSignal;
-         this.osc = other.osc;
-         this.tempReal = other.tempReal;
          this.oscBuffer_Idx = other.oscBuffer_Idx;
          this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
@@ -626,8 +622,6 @@
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
          this.sumSignal = other.sumSignal;
-         this.osc = other.osc;
-         this.tempReal = other.tempReal;
          this.oscBuffer_Idx = other.oscBuffer_Idx;
          this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
@@ -746,6 +740,8 @@
    void AC_StepImpl( AC_Stream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
+      double osc = 0.0;
+      double tempReal = 0.0;
       if( sp.ringCap_trailingFastIdx == 0 ) {
          sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
       }
@@ -758,7 +754,7 @@
       /* Snapshot the oscillator before either total drops its trailing bar,
        * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
        */
-      sp.osc = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
+      osc = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
       sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
       sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
       /* Today's oscillator enters the signal window at its own slot, and the
@@ -766,9 +762,9 @@
        * it -- writing first is what makes the slot the loop is about to
        * overwrite the newest value rather than the oldest one.
        */
-      sp.cb_oscBuffer[sp.oscBuffer_Idx] = sp.osc;
-      sp.sumSignal += sp.osc;
-      sp.tempReal = sp.osc - sp.sumSignal / (double)sp.optInSignalPeriod;
+      sp.cb_oscBuffer[sp.oscBuffer_Idx] = osc;
+      sp.sumSignal += osc;
+      tempReal = osc - sp.sumSignal / (double)sp.optInSignalPeriod;
       sp.oscBuffer_Idx = sp.oscBuffer_Idx + 1;
       if( sp.oscBuffer_Idx > sp.maxIdx_oscBuffer ) {
          sp.oscBuffer_Idx = 0;
@@ -782,7 +778,7 @@
        * that admitting a signal period of 1 would not silently reintroduce
        * the collision ao.c has to guard against.
        */
-      sp.cur_outReal = sp.tempReal;
+      sp.cur_outReal = tempReal;
       sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
       if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
@@ -1007,8 +1003,6 @@
       sp.sumFast = sumFast;
       sp.sumSlow = sumSlow;
       sp.sumSignal = sumSignal;
-      sp.osc = osc;
-      sp.tempReal = tempReal;
       sp.oscBuffer_Idx = oscBuffer_Idx;
       sp.maxIdx_oscBuffer = maxIdx_oscBuffer;
       sp.ringPos_trailingFastIdx = 0;

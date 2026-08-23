@@ -732,10 +732,6 @@ struct TA_SMI_Stream {
    double emaSlowDen;
    double emaFastNum;
    double emaFastDen;
-   double num;
-   double den;
-   double halfDen;
-   double smiValue;
    double prevSignal;
    int trailingIdx;
    int highestIdx;
@@ -770,6 +766,10 @@ static void TA_SMI_ReleaseImpl( struct TA_SMI_Stream *sp )
 static void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal )
 {
    double tmp;
+   double num;
+   double den;
+   double halfDen;
+   double smiValue;
 
    if( sp->today >= 1073741824 )
    {
@@ -825,10 +825,10 @@ static void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double inHigh, double inL
       sp->highestIdx = sp->today;
       sp->highest = tmp;
    }
-   sp->den = sp->highest - sp->lowest;
-   sp->num = sp->x_inClose[sp->today & sp->xMask] - (sp->highest + sp->lowest) * 0.5;
-   sp->emaSlowNum = fma(sp->num - sp->emaSlowNum, sp->kSlow, sp->emaSlowNum);
-   sp->emaSlowDen = fma(sp->den - sp->emaSlowDen, sp->kSlow, sp->emaSlowDen);
+   den = sp->highest - sp->lowest;
+   num = sp->x_inClose[sp->today & sp->xMask] - (sp->highest + sp->lowest) * 0.5;
+   sp->emaSlowNum = fma(num - sp->emaSlowNum, sp->kSlow, sp->emaSlowNum);
+   sp->emaSlowDen = fma(den - sp->emaSlowDen, sp->kSlow, sp->emaSlowDen);
    sp->emaFastNum = fma(sp->emaSlowNum - sp->emaFastNum, sp->kFast, sp->emaFastNum);
    sp->emaFastDen = fma(sp->emaSlowDen - sp->emaFastDen, sp->kFast, sp->emaFastDen);
    /* Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
@@ -837,16 +837,16 @@ static void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double inHigh, double inL
     * H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
     * CCI (#7) and IMI (#112) convention.
     */
-   sp->halfDen = 0.5 * sp->emaFastDen;
-   if( !TA_IS_ZERO(sp->halfDen) )
+   halfDen = 0.5 * sp->emaFastDen;
+   if( !TA_IS_ZERO(halfDen) )
    {
-      sp->smiValue = 100.0 * sp->emaFastNum / sp->halfDen;
+      smiValue = 100.0 * sp->emaFastNum / halfDen;
    } else 
    {
-      sp->smiValue = 0.0;
+      smiValue = 0.0;
    }
-   sp->prevSignal = fma(sp->smiValue - sp->prevSignal, sp->kSignal, sp->prevSignal);
-   *outSMI= sp->smiValue;
+   sp->prevSignal = fma(smiValue - sp->prevSignal, sp->kSignal, sp->prevSignal);
+   *outSMI= smiValue;
    *outSMISignal= sp->prevSignal;
    sp->trailingIdx = sp->trailingIdx + 1;
    sp->today = sp->today + 1;
@@ -908,10 +908,10 @@ static TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double i
       double sumFastNum;
       double sumFastDen;
       double sumSignal;
-      double num = 0.0;
-      double den = 0.0;
-      double halfDen = 0.0;
-      double smiValue = 0.0;
+      double num;
+      double den;
+      double halfDen;
+      double smiValue;
       double prevSignal = 0.0;
       int lookbackTotal;
       int lookbackSlow;
@@ -1197,10 +1197,6 @@ static TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double i
       sp->emaSlowDen = emaSlowDen;
       sp->emaFastNum = emaFastNum;
       sp->emaFastDen = emaFastDen;
-      sp->num = num;
-      sp->den = den;
-      sp->halfDen = halfDen;
-      sp->smiValue = smiValue;
       sp->prevSignal = prevSignal;
       sp->trailingIdx = trailingIdx;
       sp->highestIdx = highestIdx;

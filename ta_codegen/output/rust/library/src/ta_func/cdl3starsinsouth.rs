@@ -600,7 +600,6 @@ struct CDL3STARSINSOUTH_StreamState {
     BodyShortPeriodTotal: f64,
     ShadowLongPeriodTotal: f64,
     ShadowVeryShortPeriodTotal: [f64; 2 as usize],
-    totIdx: usize,
     lag1_inOpen: f64,
     lag2_inOpen: f64,
     lag1_inHigh: f64,
@@ -635,7 +634,6 @@ impl CDL3STARSINSOUTH_StreamState {
         self.BodyShortPeriodTotal = src.BodyShortPeriodTotal;
         self.ShadowLongPeriodTotal = src.ShadowLongPeriodTotal;
         self.ShadowVeryShortPeriodTotal = src.ShadowVeryShortPeriodTotal;
-        self.totIdx = src.totIdx;
         self.lag1_inOpen = src.lag1_inOpen;
         self.lag2_inOpen = src.lag2_inOpen;
         self.lag1_inHigh = src.lag1_inHigh;
@@ -670,6 +668,7 @@ impl CDL3STARSINSOUTH_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn CDL3STARSINSOUTH_step_impl(&self, sp: &mut CDL3STARSINSOUTH_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -815,12 +814,12 @@ impl Core {
             }
         }
         sp.ShadowLongPeriodTotal += _candlerange_5 - sp.ring_ShadowLongTrailingIdx_derived[((sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - 2) % sp.ringCap_ShadowLongTrailingIdx) as usize];
-        // for( sp.totIdx = 1; sp.totIdx >= 0; sp.totIdx -= 1 )
-        sp.totIdx = 1;
+        // for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
+        totIdx = 1;
         loop {
-            sp.ShadowVeryShortPeriodTotal[sp.totIdx] = sp.ShadowVeryShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[((if sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx { sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowVeryShortTrailingIdx } else { sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx })) as usize] - sp.ring_ShadowVeryShortTrailingIdx_derived[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize]);
-            if sp.totIdx == 0 { break; }
-            sp.totIdx -= 1;
+            sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[((if sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx { sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx } else { sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx })) as usize] - sp.ring_ShadowVeryShortTrailingIdx_derived[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize]);
+            if totIdx == 0 { break; }
+            totIdx -= 1;
         }
         let mut _candlerange_6: f64;
         match BodyShort_rangeType {
@@ -1296,7 +1295,6 @@ impl Core {
             BodyShortPeriodTotal,
             ShadowLongPeriodTotal,
             ShadowVeryShortPeriodTotal,
-            totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag1_inHigh: inHigh[historyLen - 1],

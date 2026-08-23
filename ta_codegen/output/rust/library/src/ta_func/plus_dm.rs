@@ -445,9 +445,6 @@ struct PLUS_DM_StreamState {
     optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
-    tempReal: f64,
-    diffP: f64,
-    diffM: f64,
     prevPlusDM: f64,
 }
 
@@ -459,9 +456,6 @@ impl PLUS_DM_StreamState {
         self.optInTimePeriod = src.optInTimePeriod;
         self.prevHigh = src.prevHigh;
         self.prevLow = src.prevLow;
-        self.tempReal = src.tempReal;
-        self.diffP = src.diffP;
-        self.diffM = src.diffM;
         self.prevPlusDM = src.prevPlusDM;
     }
 }
@@ -475,32 +469,38 @@ impl PLUS_DM_StreamState {
 impl Core {
     fn PLUS_DM_step_impl(&self, sp: &mut PLUS_DM_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         if sp.optInTimePeriod <= 1 {
-            sp.tempReal = inHigh;
-            sp.diffP = sp.tempReal - sp.prevHigh;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut diffP: f64 = 0.0_f64;
+            let mut diffM: f64 = 0.0_f64;
+            tempReal = inHigh;
+            diffP = tempReal - sp.prevHigh;
             // Plus Delta
-            sp.prevHigh = sp.tempReal;
-            sp.tempReal = inLow;
-            sp.diffM = sp.prevLow - sp.tempReal;
+            sp.prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = sp.prevLow - tempReal;
             // Minus Delta
-            sp.prevLow = sp.tempReal;
-            if sp.diffP > 0_f64 && sp.diffP > sp.diffM {
+            sp.prevLow = tempReal;
+            if diffP > 0_f64 && diffP > diffM {
                 // Case 1 and 3: +DM=diffP,-DM=0
-                (*outReal) = sp.diffP;
+                (*outReal) = diffP;
             } else {
                 (*outReal) = 0.0;
             }
         } else {
-            sp.tempReal = inHigh;
-            sp.diffP = sp.tempReal - sp.prevHigh;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut diffP: f64 = 0.0_f64;
+            let mut diffM: f64 = 0.0_f64;
+            tempReal = inHigh;
+            diffP = tempReal - sp.prevHigh;
             // Plus Delta
-            sp.prevHigh = sp.tempReal;
-            sp.tempReal = inLow;
-            sp.diffM = sp.prevLow - sp.tempReal;
+            sp.prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = sp.prevLow - tempReal;
             // Minus Delta
-            sp.prevLow = sp.tempReal;
-            if sp.diffP > 0_f64 && sp.diffP > sp.diffM {
+            sp.prevLow = tempReal;
+            if diffP > 0_f64 && diffP > diffM {
                 // Case 1 and 3: +DM=diffP,-DM=0
-                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64) + sp.diffP;
+                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64) + diffP;
             } else {
                 // Case 2,4,5 and 7
                 sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
@@ -659,9 +659,6 @@ impl Core {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
-                tempReal,
-                diffP,
-                diffM,
                 prevPlusDM,
             };
             Ok(PLUS_DM_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -832,9 +829,6 @@ impl Core {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
-                tempReal,
-                diffP,
-                diffM,
                 prevPlusDM,
             };
             Ok(PLUS_DM_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })

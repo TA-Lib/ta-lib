@@ -584,9 +584,6 @@ public partial class Core
       internal int optInTimePeriod;
       internal double prevHigh;
       internal double prevLow;
-      internal double tempReal;
-      internal double diffP;
-      internal double diffM;
       internal double prevPlusDM;
       internal double cur_outReal;
       internal int outRangeBegIdx;
@@ -612,9 +609,6 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevPlusDM = other.prevPlusDM;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -627,9 +621,6 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevPlusDM = other.prevPlusDM;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -724,32 +715,38 @@ public partial class Core
    internal void PLUS_DM_StepImpl( PLUS_DM_Stream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffP > 0 && diffP > diffM ) {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.cur_outReal = sp.diffP;
+            sp.cur_outReal = diffP;
          } else {
             sp.cur_outReal = 0;
          }
       } else {
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffP > 0 && diffP > diffM ) {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + sp.diffP;
+            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + diffP;
          } else {
             /* Case 2,4,5 and 7 */
             sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod;
@@ -900,9 +897,6 @@ public partial class Core
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevPlusDM = prevPlusDM;
          sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
          return RetCode.Success;
@@ -1074,9 +1068,6 @@ public partial class Core
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevPlusDM = prevPlusDM;
          sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
          return RetCode.Success;

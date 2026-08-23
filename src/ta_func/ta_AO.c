@@ -318,7 +318,6 @@ struct TA_AO_Stream {
    int optInSlowPeriod;
    double sumFast;
    double sumSlow;
-   double tempReal;
    int ringPos_trailingFastIdx;
    int ringCap_trailingFastIdx;
    double *ring_trailingFastIdx_derived;
@@ -344,6 +343,7 @@ static void TA_AO_ReleaseImpl( struct TA_AO_Stream *sp )
 static void TA_AO_StepImpl( struct TA_AO_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double medianPrice;
+   double tempReal;
 
    if( sp->ringCap_trailingFastIdx == 0 )
    {
@@ -359,7 +359,7 @@ static void TA_AO_StepImpl( struct TA_AO_Stream *sp, double inHigh, double inLow
    /* Snapshot the oscillator before either total drops its trailing bar,
     * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
     */
-   sp->tempReal = sp->sumFast / (double)sp->optInFastPeriod - sp->sumSlow / (double)sp->optInSlowPeriod;
+   tempReal = sp->sumFast / (double)sp->optInFastPeriod - sp->sumSlow / (double)sp->optInSlowPeriod;
    /* Read both trailing bars before writing the output. When startIdx is
     * clamped to the lookback the longer window's trailing index equals
     * outIdx exactly, so a store hoisted above this would read back the
@@ -368,7 +368,7 @@ static void TA_AO_StepImpl( struct TA_AO_Stream *sp, double inHigh, double inLow
     */
    sp->sumFast -= sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx];
    sp->sumSlow -= sp->ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx];
-   *outReal= sp->tempReal;
+   *outReal= tempReal;
    sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
    sp->ringPos_trailingFastIdx = sp->ringPos_trailingFastIdx + 1;
    if( sp->ringPos_trailingFastIdx >= sp->ringCap_trailingFastIdx )
@@ -419,7 +419,7 @@ static TA_RetCode TA_AO_OpenImpl( struct TA_AO_Stream **stream, const double inH
       double sumFast = 0.0;
       double sumSlow = 0.0;
       double medianPrice;
-      double tempReal = 0.0;
+      double tempReal;
       int i;
       int outIdx;
       int trailingFastIdx;
@@ -536,7 +536,6 @@ static TA_RetCode TA_AO_OpenImpl( struct TA_AO_Stream **stream, const double inH
       sp->optInSlowPeriod = optInSlowPeriod;
       sp->sumFast = sumFast;
       sp->sumSlow = sumSlow;
-      sp->tempReal = tempReal;
       sp->ringCap_trailingFastIdx = (int)(i - trailingFastIdx);
       if( sp->ringCap_trailingFastIdx < 0 || sp->ringCap_trailingFastIdx > historyLen ) { TA_AO_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingFastIdx > 0 ? sp->ringCap_trailingFastIdx : 1);

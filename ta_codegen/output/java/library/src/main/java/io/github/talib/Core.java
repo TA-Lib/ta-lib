@@ -975,8 +975,6 @@ public final class Core {
       double sumFast;
       double sumSlow;
       double sumSignal;
-      double osc;
-      double tempReal;
       int oscBuffer_Idx;
       int maxIdx_oscBuffer;
       int ringPos_trailingFastIdx;
@@ -1013,8 +1011,6 @@ public final class Core {
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
          this.sumSignal = other.sumSignal;
-         this.osc = other.osc;
-         this.tempReal = other.tempReal;
          this.oscBuffer_Idx = other.oscBuffer_Idx;
          this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
@@ -1038,8 +1034,6 @@ public final class Core {
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
          this.sumSignal = other.sumSignal;
-         this.osc = other.osc;
-         this.tempReal = other.tempReal;
          this.oscBuffer_Idx = other.oscBuffer_Idx;
          this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
@@ -1158,6 +1152,8 @@ public final class Core {
    void AC_StepImpl( AC_Stream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
+      double osc = 0.0;
+      double tempReal = 0.0;
       if( sp.ringCap_trailingFastIdx == 0 ) {
          sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
       }
@@ -1170,7 +1166,7 @@ public final class Core {
       /* Snapshot the oscillator before either total drops its trailing bar,
        * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
        */
-      sp.osc = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
+      osc = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
       sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
       sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
       /* Today's oscillator enters the signal window at its own slot, and the
@@ -1178,9 +1174,9 @@ public final class Core {
        * it -- writing first is what makes the slot the loop is about to
        * overwrite the newest value rather than the oldest one.
        */
-      sp.cb_oscBuffer[sp.oscBuffer_Idx] = sp.osc;
-      sp.sumSignal += sp.osc;
-      sp.tempReal = sp.osc - sp.sumSignal / (double)sp.optInSignalPeriod;
+      sp.cb_oscBuffer[sp.oscBuffer_Idx] = osc;
+      sp.sumSignal += osc;
+      tempReal = osc - sp.sumSignal / (double)sp.optInSignalPeriod;
       sp.oscBuffer_Idx = sp.oscBuffer_Idx + 1;
       if( sp.oscBuffer_Idx > sp.maxIdx_oscBuffer ) {
          sp.oscBuffer_Idx = 0;
@@ -1194,7 +1190,7 @@ public final class Core {
        * that admitting a signal period of 1 would not silently reintroduce
        * the collision ao.c has to guard against.
        */
-      sp.cur_outReal = sp.tempReal;
+      sp.cur_outReal = tempReal;
       sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
       if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
@@ -1419,8 +1415,6 @@ public final class Core {
       sp.sumFast = sumFast;
       sp.sumSlow = sumSlow;
       sp.sumSignal = sumSignal;
-      sp.osc = osc;
-      sp.tempReal = tempReal;
       sp.oscBuffer_Idx = oscBuffer_Idx;
       sp.maxIdx_oscBuffer = maxIdx_oscBuffer;
       sp.ringPos_trailingFastIdx = 0;
@@ -1953,9 +1947,6 @@ public final class Core {
       double periodTotalUpper;
       double periodTotalMiddle;
       double periodTotalLower;
-      double tempUpper;
-      double tempMiddle;
-      double tempLower;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inHigh;
@@ -1988,9 +1979,6 @@ public final class Core {
          this.periodTotalUpper = other.periodTotalUpper;
          this.periodTotalMiddle = other.periodTotalMiddle;
          this.periodTotalLower = other.periodTotalLower;
-         this.tempUpper = other.tempUpper;
-         this.tempMiddle = other.tempMiddle;
-         this.tempLower = other.tempLower;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inHigh = other.ring_trailingIdx_inHigh.clone();
@@ -2010,9 +1998,6 @@ public final class Core {
          this.periodTotalUpper = other.periodTotalUpper;
          this.periodTotalMiddle = other.periodTotalMiddle;
          this.periodTotalLower = other.periodTotalLower;
-         this.tempUpper = other.tempUpper;
-         this.tempMiddle = other.tempMiddle;
-         this.tempLower = other.tempLower;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          if( this.ring_trailingIdx_inHigh != null && this.ring_trailingIdx_inHigh.length == other.ring_trailingIdx_inHigh.length ) {
@@ -2151,6 +2136,9 @@ public final class Core {
    }
    void ACCBANDS_StepImpl( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
    {
+      double tempUpper = 0.0;
+      double tempMiddle = 0.0;
+      double tempLower = 0.0;
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inHigh[0] = inHigh;
@@ -2169,9 +2157,9 @@ public final class Core {
       }
       sp.periodTotalMiddle += inClose;
       /* Record the current window sums. */
-      sp.tempUpper = sp.periodTotalUpper;
-      sp.tempMiddle = sp.periodTotalMiddle;
-      sp.tempLower = sp.periodTotalLower;
+      tempUpper = sp.periodTotalUpper;
+      tempMiddle = sp.periodTotalMiddle;
+      tempLower = sp.periodTotalLower;
       /* Remove the trailing bar from each running sum. */
       tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
       if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
@@ -2184,9 +2172,9 @@ public final class Core {
       }
       sp.periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx];
       /* Write the three bands. */
-      sp.cur_outRealUpperBand = sp.tempUpper / (double)sp.optInTimePeriod;
-      sp.cur_outRealMiddleBand = sp.tempMiddle / (double)sp.optInTimePeriod;
-      sp.cur_outRealLowerBand = sp.tempLower / (double)sp.optInTimePeriod;
+      sp.cur_outRealUpperBand = tempUpper / (double)sp.optInTimePeriod;
+      sp.cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
+      sp.cur_outRealLowerBand = tempLower / (double)sp.optInTimePeriod;
       sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
       sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
       sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
@@ -2333,9 +2321,6 @@ public final class Core {
       sp.periodTotalUpper = periodTotalUpper;
       sp.periodTotalMiddle = periodTotalMiddle;
       sp.periodTotalLower = periodTotalLower;
-      sp.tempUpper = tempUpper;
-      sp.tempMiddle = tempMiddle;
-      sp.tempLower = tempLower;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
@@ -5458,11 +5443,6 @@ public final class Core {
       double prevMinusDM;
       double prevPlusDM;
       double prevTR;
-      double tempReal;
-      double diffP;
-      double diffM;
-      double minusDI;
-      double plusDI;
       double prevADX;
       double cur_outReal;
       int outRangeBegIdx;
@@ -5491,11 +5471,6 @@ public final class Core {
          this.prevMinusDM = other.prevMinusDM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
-         this.minusDI = other.minusDI;
-         this.plusDI = other.plusDI;
          this.prevADX = other.prevADX;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -5511,11 +5486,6 @@ public final class Core {
          this.prevMinusDM = other.prevMinusDM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
-         this.minusDI = other.minusDI;
-         this.plusDI = other.plusDI;
          this.prevADX = other.prevADX;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -5601,23 +5571,28 @@ public final class Core {
    }
    void ADX_StepImpl( ADX_Stream sp, double inHigh, double inLow, double inClose )
    {
+      double tempReal = 0.0;
+      double diffP = 0.0;
+      double diffM = 0.0;
+      double minusDI = 0.0;
+      double plusDI = 0.0;
       /* Calculate the prevMinusDM and prevPlusDM */
-      sp.tempReal = inHigh;
-      sp.diffP = sp.tempReal - sp.prevHigh;
+      tempReal = inHigh;
+      diffP = tempReal - sp.prevHigh;
       /* Plus Delta */
-      sp.prevHigh = sp.tempReal;
-      sp.tempReal = inLow;
-      sp.diffM = sp.prevLow - sp.tempReal;
+      sp.prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp.prevLow - tempReal;
       /* Minus Delta */
-      sp.prevLow = sp.tempReal;
+      sp.prevLow = tempReal;
       sp.prevMinusDM -= sp.prevMinusDM / sp.optInTimePeriod;
       sp.prevPlusDM -= sp.prevPlusDM / sp.optInTimePeriod;
-      if( sp.diffM > 0 && sp.diffP < sp.diffM ) {
+      if( diffM > 0 && diffP < diffM ) {
          /* Case 2 and 4: +DM=0,-DM=diffM */
-         sp.prevMinusDM += sp.diffM;
-      } else if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevMinusDM += diffM;
+      } else if( diffP > 0 && diffP > diffM ) {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
-         sp.prevPlusDM += sp.diffP;
+         sp.prevPlusDM += diffP;
       }
       /* Calculate the prevTR */
       double _true_range_0;
@@ -5631,18 +5606,18 @@ public final class Core {
          range_0 = tmp_0;
       }
       _true_range_0 = range_0;
-      sp.tempReal = _true_range_0;
-      sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + sp.tempReal;
+      tempReal = _true_range_0;
+      sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
       sp.prevClose = inClose;
       if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
          /* Calculate the DX. The value is rounded (see Wilder book). */
-         sp.minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
-         sp.plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
-         sp.tempReal = sp.minusDI + sp.plusDI;
-         if( !((-0.00000000000001 < sp.tempReal) && (sp.tempReal < 0.00000000000001)) ) {
-            sp.tempReal = (100.0 * (Math.abs(sp.minusDI - sp.plusDI) / sp.tempReal));
+         minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
+         plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
+         tempReal = minusDI + plusDI;
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
             /* Calculate the ADX */
-            sp.prevADX = ((sp.prevADX * (sp.optInTimePeriod - 1) + sp.tempReal) / sp.optInTimePeriod);
+            sp.prevADX = ((sp.prevADX * (sp.optInTimePeriod - 1) + tempReal) / sp.optInTimePeriod);
          }
       }
       /* Output the ADX */
@@ -6020,11 +5995,6 @@ public final class Core {
       sp.prevMinusDM = prevMinusDM;
       sp.prevPlusDM = prevPlusDM;
       sp.prevTR = prevTR;
-      sp.tempReal = tempReal;
-      sp.diffP = diffP;
-      sp.diffM = diffM;
-      sp.minusDI = minusDI;
-      sp.plusDI = plusDI;
       sp.prevADX = prevADX;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
@@ -7189,7 +7159,6 @@ public final class Core {
       int optInSlowPeriod;
       double sumFast;
       double sumSlow;
-      double tempReal;
       int ringPos_trailingFastIdx;
       int ringCap_trailingFastIdx;
       double[] ring_trailingFastIdx_derived;
@@ -7220,7 +7189,6 @@ public final class Core {
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
          this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
          this.ring_trailingFastIdx_derived = other.ring_trailingFastIdx_derived.clone();
@@ -7238,7 +7206,6 @@ public final class Core {
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
          this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
          if( this.ring_trailingFastIdx_derived != null && this.ring_trailingFastIdx_derived.length == other.ring_trailingFastIdx_derived.length ) {
@@ -7349,6 +7316,7 @@ public final class Core {
    void AO_StepImpl( AO_Stream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
+      double tempReal = 0.0;
       if( sp.ringCap_trailingFastIdx == 0 ) {
          sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
       }
@@ -7361,7 +7329,7 @@ public final class Core {
       /* Snapshot the oscillator before either total drops its trailing bar,
        * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
        */
-      sp.tempReal = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
+      tempReal = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
       /* Read both trailing bars before writing the output. When startIdx is
        * clamped to the lookback the longer window's trailing index equals
        * outIdx exactly, so a store hoisted above this would read back the
@@ -7370,7 +7338,7 @@ public final class Core {
        */
       sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
       sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
-      sp.cur_outReal = sp.tempReal;
+      sp.cur_outReal = tempReal;
       sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
       if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
@@ -7535,7 +7503,6 @@ public final class Core {
       sp.optInSlowPeriod = optInSlowPeriod;
       sp.sumFast = sumFast;
       sp.sumSlow = sumSlow;
-      sp.tempReal = tempReal;
       sp.ringPos_trailingFastIdx = 0;
       sp.ringCap_trailingFastIdx = cap_trailingFastIdx;
       sp.ring_trailingFastIdx_derived = capRing_trailingFastIdx_derived;
@@ -9620,7 +9587,6 @@ public final class Core {
       double lowest;
       double highest;
       double factor;
-      double aroon;
       int trailingIdx;
       int lowestIdx;
       int highestIdx;
@@ -9653,7 +9619,6 @@ public final class Core {
          this.lowest = other.lowest;
          this.highest = other.highest;
          this.factor = other.factor;
-         this.aroon = other.aroon;
          this.trailingIdx = other.trailingIdx;
          this.lowestIdx = other.lowestIdx;
          this.highestIdx = other.highestIdx;
@@ -9673,7 +9638,6 @@ public final class Core {
          this.lowest = other.lowest;
          this.highest = other.highest;
          this.factor = other.factor;
-         this.aroon = other.aroon;
          this.trailingIdx = other.trailingIdx;
          this.lowestIdx = other.lowestIdx;
          this.highestIdx = other.highestIdx;
@@ -9786,6 +9750,7 @@ public final class Core {
    void AROONOSC_StepImpl( AROONOSC_Stream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
+      double aroon = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -9838,11 +9803,11 @@ public final class Core {
        * An arithmetic simplification give us:
        *  Aroon = factor*(highestIdx-lowestIdx)
        */
-      sp.aroon = sp.factor * (sp.highestIdx - sp.lowestIdx);
+      aroon = sp.factor * (sp.highestIdx - sp.lowestIdx);
       /* Note: Do not forget that input and output buffer can be the same,
        *       so writing to the output is the last thing being done here.
        */
-      sp.cur_outReal = sp.aroon;
+      sp.cur_outReal = aroon;
       sp.trailingIdx += 1;
       sp.today += 1;
    }
@@ -9989,7 +9954,6 @@ public final class Core {
       sp.lowest = lowest;
       sp.highest = highest;
       sp.factor = factor;
-      sp.aroon = aroon;
       sp.trailingIdx = trailingIdx;
       sp.lowestIdx = lowestIdx;
       sp.highestIdx = highestIdx;
@@ -11392,7 +11356,6 @@ public final class Core {
       Core core;
       int optInTimePeriod;
       double prevATR;
-      double val3;
       double lag1_inClose;
       double cur_outReal;
       int outRangeBegIdx;
@@ -11416,7 +11379,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -11427,7 +11389,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -11514,6 +11475,7 @@ public final class Core {
    void ATR_StepImpl( ATR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
+      double val3 = 0.0;
       double greatest = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
@@ -11528,9 +11490,9 @@ public final class Core {
       if( val2 > greatest ) {
          greatest = val2;
       }
-      sp.val3 = Math.abs(tempCY - tempLT);
-      if( sp.val3 > greatest ) {
-         greatest = sp.val3;
+      val3 = Math.abs(tempCY - tempLT);
+      if( val3 > greatest ) {
+         greatest = val3;
       }
       sp.prevATR *= sp.optInTimePeriod - 1;
       sp.prevATR += greatest;
@@ -11704,7 +11666,6 @@ public final class Core {
       /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
       sp.prevATR = prevATR;
-      sp.val3 = val3;
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
@@ -14805,20 +14766,13 @@ public final class Core {
       double trailing_last_price_y;
       double shift_x;
       double shift_y;
-      double denom;
-      double denom_scale;
-      double prev_x;
       double leaving_xx;
       double leaving_yy;
       double S_yy;
-      double prev_y;
-      int j;
-      int windowStart;
       int barsSinceReseed;
-      double x;
-      double y;
       double n;
       int trailingIdx;
+      int j;
       int i;
       int xMask;
       double[] x_inReal0;
@@ -14854,20 +14808,13 @@ public final class Core {
          this.trailing_last_price_y = other.trailing_last_price_y;
          this.shift_x = other.shift_x;
          this.shift_y = other.shift_y;
-         this.denom = other.denom;
-         this.denom_scale = other.denom_scale;
-         this.prev_x = other.prev_x;
          this.leaving_xx = other.leaving_xx;
          this.leaving_yy = other.leaving_yy;
          this.S_yy = other.S_yy;
-         this.prev_y = other.prev_y;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
          this.barsSinceReseed = other.barsSinceReseed;
-         this.x = other.x;
-         this.y = other.y;
          this.n = other.n;
          this.trailingIdx = other.trailingIdx;
+         this.j = other.j;
          this.i = other.i;
          this.xMask = other.xMask;
          this.x_inReal0 = other.x_inReal0.clone();
@@ -14890,20 +14837,13 @@ public final class Core {
          this.trailing_last_price_y = other.trailing_last_price_y;
          this.shift_x = other.shift_x;
          this.shift_y = other.shift_y;
-         this.denom = other.denom;
-         this.denom_scale = other.denom_scale;
-         this.prev_x = other.prev_x;
          this.leaving_xx = other.leaving_xx;
          this.leaving_yy = other.leaving_yy;
          this.S_yy = other.S_yy;
-         this.prev_y = other.prev_y;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
          this.barsSinceReseed = other.barsSinceReseed;
-         this.x = other.x;
-         this.y = other.y;
          this.n = other.n;
          this.trailingIdx = other.trailingIdx;
+         this.j = other.j;
          this.i = other.i;
          this.xMask = other.xMask;
          if( this.x_inReal0 != null && this.x_inReal0.length == other.x_inReal0.length ) {
@@ -15012,6 +14952,13 @@ public final class Core {
    void BETA_StepImpl( BETA_Stream sp, double inReal0, double inReal1 )
    {
       double tmp_real = 0.0;
+      double denom = 0.0;
+      double denom_scale = 0.0;
+      double prev_x = 0.0;
+      double prev_y = 0.0;
+      int windowStart = 0;
+      double x = 0.0;
+      double y = 0.0;
       if( sp.i >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.i -= rebaseShift;
@@ -15022,25 +14969,25 @@ public final class Core {
       sp.x_inReal1[sp.i & sp.xMask] = inReal1;
       tmp_real = sp.x_inReal0[sp.i & sp.xMask];
       if( !((-0.00000000000001 < sp.last_price_x) && (sp.last_price_x < 0.00000000000001)) ) {
-         sp.x = (tmp_real - sp.last_price_x) / sp.last_price_x - sp.shift_x;
+         x = (tmp_real - sp.last_price_x) / sp.last_price_x - sp.shift_x;
       } else {
-         sp.x = 0 - sp.shift_x;
+         x = 0 - sp.shift_x;
       }
       sp.last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.i++ & sp.xMask];
       if( !((-0.00000000000001 < sp.last_price_y) && (sp.last_price_y < 0.00000000000001)) ) {
-         sp.y = (tmp_real - sp.last_price_y) / sp.last_price_y - sp.shift_y;
+         y = (tmp_real - sp.last_price_y) / sp.last_price_y - sp.shift_y;
       } else {
-         sp.y = 0 - sp.shift_y;
+         y = 0 - sp.shift_y;
       }
       sp.last_price_y = tmp_real;
-      sp.S_xx += sp.x * sp.x;
-      sp.S_yy += sp.y * sp.y;
-      sp.S_xy += sp.x * sp.y;
-      sp.S_x += sp.x;
-      sp.S_y += sp.y;
-      sp.denom_scale = sp.n * sp.S_xx;
-      sp.denom = sp.denom_scale - sp.S_x * sp.S_x;
+      sp.S_xx += x * x;
+      sp.S_yy += y * y;
+      sp.S_xy += x * y;
+      sp.S_x += x;
+      sp.S_y += y;
+      denom_scale = sp.n * sp.S_xx;
+      denom = denom_scale - sp.S_x * sp.S_x;
       /* Re-anchor and rebuild when the shift has gone stale. The same three
        * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
        * it is extracted from; OR the return that just left sat so far from the
@@ -15087,9 +15034,9 @@ public final class Core {
        * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
        */
       sp.barsSinceReseed -= 1;
-      if( sp.denom < 0.000001 * sp.denom_scale || sp.leaving_xx > 1000.0 * sp.S_xx || sp.leaving_yy > 1000.0 * sp.S_yy || sp.barsSinceReseed <= 0 ) {
+      if( denom < 0.000001 * denom_scale || sp.leaving_xx > 1000.0 * sp.S_xx || sp.leaving_yy > 1000.0 * sp.S_yy || sp.barsSinceReseed <= 0 ) {
          sp.barsSinceReseed = 32 * sp.optInTimePeriod;
-         sp.windowStart = sp.trailingIdx;
+         windowStart = sp.trailingIdx;
          /* Walk the window forward from the price the trailing cursor already
           * carries. A return needs its predecessor, and reading inReal[j-1]
           * would reach one slot BEFORE the window -- which the batch can do and
@@ -15097,50 +15044,50 @@ public final class Core {
           * IS that predecessor, so carrying it forward keeps every read inside
           * [trailingIdx, i-1] and the two paths stay identical.
           */
-         sp.prev_x = sp.trailing_last_price_x;
-         sp.prev_y = sp.trailing_last_price_y;
+         prev_x = sp.trailing_last_price_x;
+         prev_y = sp.trailing_last_price_y;
          tmp_real = 0.0;
          sp.shift_y = 0.0;
-         for( sp.j = sp.windowStart; sp.j < sp.i; sp.j += 1 ) {
-            if( !((-0.00000000000001 < sp.prev_x) && (sp.prev_x < 0.00000000000001)) ) {
-               tmp_real += (sp.x_inReal0[sp.j & sp.xMask] - sp.prev_x) / sp.prev_x;
+         for( sp.j = windowStart; sp.j < sp.i; sp.j += 1 ) {
+            if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               tmp_real += (sp.x_inReal0[sp.j & sp.xMask] - prev_x) / prev_x;
             }
-            sp.prev_x = sp.x_inReal0[sp.j & sp.xMask];
-            if( !((-0.00000000000001 < sp.prev_y) && (sp.prev_y < 0.00000000000001)) ) {
-               sp.shift_y += (sp.x_inReal1[sp.j & sp.xMask] - sp.prev_y) / sp.prev_y;
+            prev_x = sp.x_inReal0[sp.j & sp.xMask];
+            if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               sp.shift_y += (sp.x_inReal1[sp.j & sp.xMask] - prev_y) / prev_y;
             }
-            sp.prev_y = sp.x_inReal1[sp.j & sp.xMask];
+            prev_y = sp.x_inReal1[sp.j & sp.xMask];
          }
          sp.shift_x = tmp_real / sp.n;
          sp.shift_y = sp.shift_y / sp.n;
-         sp.prev_x = sp.trailing_last_price_x;
-         sp.prev_y = sp.trailing_last_price_y;
+         prev_x = sp.trailing_last_price_x;
+         prev_y = sp.trailing_last_price_y;
          sp.S_xx = 0.0;
          sp.S_yy = 0.0;
          sp.S_xy = 0.0;
          sp.S_x = 0.0;
          sp.S_y = 0.0;
-         for( sp.j = sp.windowStart; sp.j < sp.i; sp.j += 1 ) {
-            if( !((-0.00000000000001 < sp.prev_x) && (sp.prev_x < 0.00000000000001)) ) {
-               sp.x = (sp.x_inReal0[sp.j & sp.xMask] - sp.prev_x) / sp.prev_x - sp.shift_x;
+         for( sp.j = windowStart; sp.j < sp.i; sp.j += 1 ) {
+            if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               x = (sp.x_inReal0[sp.j & sp.xMask] - prev_x) / prev_x - sp.shift_x;
             } else {
-               sp.x = 0 - sp.shift_x;
+               x = 0 - sp.shift_x;
             }
-            sp.prev_x = sp.x_inReal0[sp.j & sp.xMask];
-            if( !((-0.00000000000001 < sp.prev_y) && (sp.prev_y < 0.00000000000001)) ) {
-               sp.y = (sp.x_inReal1[sp.j & sp.xMask] - sp.prev_y) / sp.prev_y - sp.shift_y;
+            prev_x = sp.x_inReal0[sp.j & sp.xMask];
+            if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               y = (sp.x_inReal1[sp.j & sp.xMask] - prev_y) / prev_y - sp.shift_y;
             } else {
-               sp.y = 0 - sp.shift_y;
+               y = 0 - sp.shift_y;
             }
-            sp.prev_y = sp.x_inReal1[sp.j & sp.xMask];
-            sp.S_xx += sp.x * sp.x;
-            sp.S_yy += sp.y * sp.y;
-            sp.S_xy += sp.x * sp.y;
-            sp.S_x += sp.x;
-            sp.S_y += sp.y;
+            prev_y = sp.x_inReal1[sp.j & sp.xMask];
+            sp.S_xx += x * x;
+            sp.S_yy += y * y;
+            sp.S_xy += x * y;
+            sp.S_x += x;
+            sp.S_y += y;
          }
-         sp.denom_scale = sp.n * sp.S_xx;
-         sp.denom = sp.denom_scale - sp.S_x * sp.S_x;
+         denom_scale = sp.n * sp.S_xx;
+         denom = denom_scale - sp.S_x * sp.S_x;
          /* n*S_xx - S_x*S_x is non-negative by Cauchy-Schwarz, but it is
           * extracted as a difference, so its SIGN is not guaranteed on a window
           * whose returns are all the same value. Enforce the invariant HERE and
@@ -15149,8 +15096,8 @@ public final class Core {
           * and denom_scale == 0 reduces that trigger to `denom < 0`), so the
           * divide below can rely on it being >= 0.
           */
-         if( sp.denom < 0.0 ) {
-            sp.denom = 0.0;
+         if( denom < 0.0 ) {
+            denom = 0.0;
          }
       }
       /* Always read the trailing before writing the output because the input and output
@@ -15158,17 +15105,17 @@ public final class Core {
        */
       tmp_real = sp.x_inReal0[sp.trailingIdx & sp.xMask];
       if( !((-0.00000000000001 < sp.trailing_last_price_x) && (sp.trailing_last_price_x < 0.00000000000001)) ) {
-         sp.x = (tmp_real - sp.trailing_last_price_x) / sp.trailing_last_price_x - sp.shift_x;
+         x = (tmp_real - sp.trailing_last_price_x) / sp.trailing_last_price_x - sp.shift_x;
       } else {
-         sp.x = 0 - sp.shift_x;
+         x = 0 - sp.shift_x;
       }
       sp.trailing_last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.trailingIdx & sp.xMask];
       sp.trailingIdx += 1;
       if( !((-0.00000000000001 < sp.trailing_last_price_y) && (sp.trailing_last_price_y < 0.00000000000001)) ) {
-         sp.y = (tmp_real - sp.trailing_last_price_y) / sp.trailing_last_price_y - sp.shift_y;
+         y = (tmp_real - sp.trailing_last_price_y) / sp.trailing_last_price_y - sp.shift_y;
       } else {
-         sp.y = 0 - sp.shift_y;
+         y = 0 - sp.shift_y;
       }
       sp.trailing_last_price_y = tmp_real;
       /* Write the output.
@@ -15179,19 +15126,19 @@ public final class Core {
        * returns are small". The literal is TA_EPSILON, and the plain `>` also
        * rejects a negative denominator rather than dividing by it.
        */
-      if( sp.denom > 0.00000000000001 * sp.denom_scale ) {
-         sp.cur_outReal = (sp.n * sp.S_xy - sp.S_x * sp.S_y) / sp.denom;
+      if( denom > 0.00000000000001 * denom_scale ) {
+         sp.cur_outReal = (sp.n * sp.S_xy - sp.S_x * sp.S_y) / denom;
       } else {
          sp.cur_outReal = 0.0;
       }
       /* Remove the calculation starting with the trailingIdx. */
-      sp.leaving_xx = sp.x * sp.x;
-      sp.leaving_yy = sp.y * sp.y;
-      sp.S_xx -= sp.x * sp.x;
-      sp.S_yy -= sp.y * sp.y;
-      sp.S_xy -= sp.x * sp.y;
-      sp.S_x -= sp.x;
-      sp.S_y -= sp.y;
+      sp.leaving_xx = x * x;
+      sp.leaving_yy = y * y;
+      sp.S_xx -= x * x;
+      sp.S_yy -= y * y;
+      sp.S_xy -= x * y;
+      sp.S_x -= x;
+      sp.S_y -= y;
    }
    private RetCode BETA_OpenImpl( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
@@ -15563,20 +15510,13 @@ public final class Core {
       sp.trailing_last_price_y = trailing_last_price_y;
       sp.shift_x = shift_x;
       sp.shift_y = shift_y;
-      sp.denom = denom;
-      sp.denom_scale = denom_scale;
-      sp.prev_x = prev_x;
       sp.leaving_xx = leaving_xx;
       sp.leaving_yy = leaving_yy;
       sp.S_yy = S_yy;
-      sp.prev_y = prev_y;
-      sp.j = j;
-      sp.windowStart = windowStart;
       sp.barsSinceReseed = barsSinceReseed;
-      sp.x = x;
-      sp.y = y;
       sp.n = n;
       sp.trailingIdx = trailingIdx;
+      sp.j = j;
       sp.i = i;
       sp.xMask = physX - 1;
       sp.x_inReal0 = capX_inReal0;
@@ -16518,10 +16458,6 @@ public final class Core {
    public static final class CCI_Stream {
       Core core;
       int optInTimePeriod;
-      double tempReal;
-      double tempReal2;
-      double theAverage;
-      int j;
       int circBuffer_Idx;
       int maxIdx_circBuffer;
       int cbSize_circBuffer;
@@ -16547,10 +16483,6 @@ public final class Core {
       CCI_Stream( CCI_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
-         this.theAverage = other.theAverage;
-         this.j = other.j;
          this.circBuffer_Idx = other.circBuffer_Idx;
          this.maxIdx_circBuffer = other.maxIdx_circBuffer;
          this.cbSize_circBuffer = other.cbSize_circBuffer;
@@ -16563,10 +16495,6 @@ public final class Core {
       void copyFrom( CCI_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
-         this.theAverage = other.theAverage;
-         this.j = other.j;
          this.circBuffer_Idx = other.circBuffer_Idx;
          this.maxIdx_circBuffer = other.maxIdx_circBuffer;
          this.cbSize_circBuffer = other.cbSize_circBuffer;
@@ -16659,26 +16587,30 @@ public final class Core {
    }
    void CCI_StepImpl( CCI_Stream sp, double inHigh, double inLow, double inClose )
    {
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
+      double theAverage = 0.0;
       double lastValue = 0.0;
+      int j = 0;
       lastValue = (inHigh + inLow + inClose) / 3;
       sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
       /* Calculate the average for the whole period. */
-      sp.theAverage = 0;
-      for( sp.j = 0; sp.j < sp.optInTimePeriod; sp.j += 1 ) {
-         sp.theAverage += sp.cb_circBuffer[sp.j];
+      theAverage = 0;
+      for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+         theAverage += sp.cb_circBuffer[j];
       }
-      sp.theAverage /= sp.optInTimePeriod;
+      theAverage /= sp.optInTimePeriod;
       /* Do the summation of the ABS(TypePrice-average)
        * for the whole period.
        */
-      sp.tempReal2 = 0;
-      for( sp.j = 0; sp.j < sp.optInTimePeriod; sp.j += 1 ) {
-         sp.tempReal2 += Math.abs(sp.cb_circBuffer[sp.j] - sp.theAverage);
+      tempReal2 = 0;
+      for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+         tempReal2 += Math.abs(sp.cb_circBuffer[j] - theAverage);
       }
       /* And finally, the CCI... */
-      sp.tempReal = lastValue - sp.theAverage;
-      if( !((-0.00000000000001 < sp.tempReal) && (sp.tempReal < 0.00000000000001)) && !((-0.00000000000001 < sp.tempReal2) && (sp.tempReal2 < 0.00000000000001)) ) {
-         sp.cur_outReal = sp.tempReal / (0.015 * (sp.tempReal2 / sp.optInTimePeriod));
+      tempReal = lastValue - theAverage;
+      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
+         sp.cur_outReal = tempReal / (0.015 * (tempReal2 / sp.optInTimePeriod));
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -16801,10 +16733,6 @@ public final class Core {
          return RetCode.InternalError;
       }
       sp.optInTimePeriod = optInTimePeriod;
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
-      sp.theAverage = theAverage;
-      sp.j = j;
       sp.circBuffer_Idx = circBuffer_Idx;
       sp.maxIdx_circBuffer = maxIdx_circBuffer;
       sp.cbSize_circBuffer = capCb_circBuffer;
@@ -17952,7 +17880,6 @@ public final class Core {
    public static final class CDL3BLACKCROWS_Stream {
       Core core;
       double[] ShadowVeryShortPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag3_inOpen;
@@ -17992,7 +17919,6 @@ public final class Core {
       CDL3BLACKCROWS_Stream( CDL3BLACKCROWS_Stream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -18023,7 +17949,6 @@ public final class Core {
          } else {
             this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -18141,6 +18066,7 @@ public final class Core {
    }
    void CDL3BLACKCROWS_StepImpl( CDL3BLACKCROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
       double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
@@ -18167,8 +18093,8 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 2; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.ShadowVeryShortPeriodTotal[sp.totIdx] = sp.ShadowVeryShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
+      for( totIdx = 2; totIdx >= 0; totIdx -= 1 ) {
+         sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
       }
       sp.lag3_inOpen = sp.lag2_inOpen;
       sp.lag2_inOpen = sp.lag1_inOpen;
@@ -18296,7 +18222,6 @@ public final class Core {
          capRing_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag3_inOpen = inOpen[historyLen - 3];
@@ -19555,7 +19480,6 @@ public final class Core {
    public static final class CDL3LINESTRIKE_Stream {
       Core core;
       double[] NearPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag3_inOpen;
@@ -19596,7 +19520,6 @@ public final class Core {
       CDL3LINESTRIKE_Stream( CDL3LINESTRIKE_Stream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -19628,7 +19551,6 @@ public final class Core {
          } else {
             this.NearPeriodTotal = other.NearPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -19747,6 +19669,7 @@ public final class Core {
    }
    void CDL3LINESTRIKE_StepImpl( CDL3LINESTRIKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;
       double Near_factor = sp.cs_Near_factor;
@@ -19767,8 +19690,8 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 3; sp.totIdx >= 2; sp.totIdx -= 1 ) {
-         sp.NearPeriodTotal[sp.totIdx] = sp.NearPeriodTotal[sp.totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx] - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx]);
+      for( totIdx = 3; totIdx >= 2; totIdx -= 1 ) {
+         sp.NearPeriodTotal[totIdx] = sp.NearPeriodTotal[totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx]);
       }
       sp.lag3_inOpen = sp.lag2_inOpen;
       sp.lag2_inOpen = sp.lag1_inOpen;
@@ -19889,7 +19812,6 @@ public final class Core {
          capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.NearPeriodTotal = NearPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag3_inOpen = inOpen[historyLen - 3];
@@ -21006,7 +20928,6 @@ public final class Core {
       double BodyShortPeriodTotal;
       double ShadowLongPeriodTotal;
       double[] ShadowVeryShortPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag1_inHigh;
@@ -21066,7 +20987,6 @@ public final class Core {
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -21117,7 +21037,6 @@ public final class Core {
          } else {
             this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -21264,6 +21183,7 @@ public final class Core {
    }
    void CDL3STARSINSOUTH_StepImpl( CDL3STARSINSOUTH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -21308,8 +21228,8 @@ public final class Core {
        */
       sp.BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0))) - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 2) % sp.ringCap_BodyLongTrailingIdx];
       sp.ShadowLongPeriodTotal += ((ShadowLong_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((ShadowLong_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((ShadowLong_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0))) - sp.ring_ShadowLongTrailingIdx_derived[(sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - 2) % sp.ringCap_ShadowLongTrailingIdx];
-      for( sp.totIdx = 1; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.ShadowVeryShortPeriodTotal[sp.totIdx] = sp.ShadowVeryShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
+      for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+         sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
       }
       sp.BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyShortTrailingIdx_derived[sp.ringPos_BodyShortTrailingIdx];
       sp.lag2_inOpen = sp.lag1_inOpen;
@@ -21522,7 +21442,6 @@ public final class Core {
       sp.BodyShortPeriodTotal = BodyShortPeriodTotal;
       sp.ShadowLongPeriodTotal = ShadowLongPeriodTotal;
       sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag1_inHigh = inHigh[historyLen - 1];
@@ -22102,7 +22021,6 @@ public final class Core {
       double[] NearPeriodTotal;
       double[] FarPeriodTotal;
       double BodyShortPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag1_inHigh;
@@ -22162,7 +22080,6 @@ public final class Core {
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
          this.FarPeriodTotal = other.FarPeriodTotal.clone();
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -22221,7 +22138,6 @@ public final class Core {
             this.FarPeriodTotal = other.FarPeriodTotal.clone();
          }
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -22368,6 +22284,7 @@ public final class Core {
    }
    void CDL3WHITESOLDIERS_StepImpl( CDL3WHITESOLDIERS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
       double BodyShort_factor = sp.cs_BodyShort_factor;
@@ -22409,12 +22326,12 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 2; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.ShadowVeryShortPeriodTotal[sp.totIdx] = sp.ShadowVeryShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
+      for( totIdx = 2; totIdx >= 0; totIdx -= 1 ) {
+         sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
       }
-      for( sp.totIdx = 2; sp.totIdx >= 1; sp.totIdx -= 1 ) {
-         sp.FarPeriodTotal[sp.totIdx] = sp.FarPeriodTotal[sp.totIdx] + (sp.ring_FarTrailingIdx_derived[(sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.totIdx >= sp.ringCap_FarTrailingIdx) ? sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.totIdx - sp.ringCap_FarTrailingIdx : sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.totIdx] - sp.ring_FarTrailingIdx_derived[(sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - sp.totIdx) % sp.ringCap_FarTrailingIdx]);
-         sp.NearPeriodTotal[sp.totIdx] = sp.NearPeriodTotal[sp.totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx] - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx]);
+      for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
+         sp.FarPeriodTotal[totIdx] = sp.FarPeriodTotal[totIdx] + (sp.ring_FarTrailingIdx_derived[(sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx >= sp.ringCap_FarTrailingIdx) ? sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx - sp.ringCap_FarTrailingIdx : sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx] - sp.ring_FarTrailingIdx_derived[(sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - totIdx) % sp.ringCap_FarTrailingIdx]);
+         sp.NearPeriodTotal[totIdx] = sp.NearPeriodTotal[totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx]);
       }
       sp.BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyShortTrailingIdx_derived[sp.ringPos_BodyShortTrailingIdx];
       sp.lag2_inOpen = sp.lag1_inOpen;
@@ -22638,7 +22555,6 @@ public final class Core {
       sp.NearPeriodTotal = NearPeriodTotal;
       sp.FarPeriodTotal = FarPeriodTotal;
       sp.BodyShortPeriodTotal = BodyShortPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag1_inHigh = inHigh[historyLen - 1];
@@ -24211,7 +24127,6 @@ public final class Core {
       double[] NearPeriodTotal;
       double[] FarPeriodTotal;
       double BodyLongPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag1_inHigh;
@@ -24280,7 +24195,6 @@ public final class Core {
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
          this.FarPeriodTotal = other.FarPeriodTotal.clone();
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -24352,7 +24266,6 @@ public final class Core {
             this.FarPeriodTotal = other.FarPeriodTotal.clone();
          }
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -24511,6 +24424,7 @@ public final class Core {
    }
    void CDLADVANCEBLOCK_StepImpl( CDLADVANCEBLOCK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -24551,15 +24465,15 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 2; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.ShadowShortPeriodTotal[sp.totIdx] = sp.ShadowShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowShortTrailingIdx_derived[(sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowShortTrailingIdx) ? sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowShortTrailingIdx : sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.totIdx] - sp.ring_ShadowShortTrailingIdx_derived[(sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.ringLag_ShadowShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowShortTrailingIdx]);
+      for( totIdx = 2; totIdx >= 0; totIdx -= 1 ) {
+         sp.ShadowShortPeriodTotal[totIdx] = sp.ShadowShortPeriodTotal[totIdx] + (sp.ring_ShadowShortTrailingIdx_derived[(sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx >= sp.ringCap_ShadowShortTrailingIdx) ? sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx - sp.ringCap_ShadowShortTrailingIdx : sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx] - sp.ring_ShadowShortTrailingIdx_derived[(sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.ringLag_ShadowShortTrailingIdx - totIdx) % sp.ringCap_ShadowShortTrailingIdx]);
       }
-      for( sp.totIdx = 1; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.ShadowLongPeriodTotal[sp.totIdx] = sp.ShadowLongPeriodTotal[sp.totIdx] + (sp.ring_ShadowLongTrailingIdx_derived[(sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.totIdx >= sp.ringCap_ShadowLongTrailingIdx) ? sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.totIdx - sp.ringCap_ShadowLongTrailingIdx : sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.totIdx] - sp.ring_ShadowLongTrailingIdx_derived[(sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - sp.totIdx) % sp.ringCap_ShadowLongTrailingIdx]);
+      for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+         sp.ShadowLongPeriodTotal[totIdx] = sp.ShadowLongPeriodTotal[totIdx] + (sp.ring_ShadowLongTrailingIdx_derived[(sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx >= sp.ringCap_ShadowLongTrailingIdx) ? sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx - sp.ringCap_ShadowLongTrailingIdx : sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx] - sp.ring_ShadowLongTrailingIdx_derived[(sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - totIdx) % sp.ringCap_ShadowLongTrailingIdx]);
       }
-      for( sp.totIdx = 2; sp.totIdx >= 1; sp.totIdx -= 1 ) {
-         sp.FarPeriodTotal[sp.totIdx] = sp.FarPeriodTotal[sp.totIdx] + (sp.ring_FarTrailingIdx_derived[(sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.totIdx >= sp.ringCap_FarTrailingIdx) ? sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.totIdx - sp.ringCap_FarTrailingIdx : sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.totIdx] - sp.ring_FarTrailingIdx_derived[(sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - sp.totIdx) % sp.ringCap_FarTrailingIdx]);
-         sp.NearPeriodTotal[sp.totIdx] = sp.NearPeriodTotal[sp.totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx] - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx]);
+      for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
+         sp.FarPeriodTotal[totIdx] = sp.FarPeriodTotal[totIdx] + (sp.ring_FarTrailingIdx_derived[(sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx >= sp.ringCap_FarTrailingIdx) ? sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx - sp.ringCap_FarTrailingIdx : sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx] - sp.ring_FarTrailingIdx_derived[(sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - totIdx) % sp.ringCap_FarTrailingIdx]);
+         sp.NearPeriodTotal[totIdx] = sp.NearPeriodTotal[totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx]);
       }
       sp.BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0))) - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 2) % sp.ringCap_BodyLongTrailingIdx];
       sp.lag2_inOpen = sp.lag1_inOpen;
@@ -24812,7 +24726,6 @@ public final class Core {
       sp.NearPeriodTotal = NearPeriodTotal;
       sp.FarPeriodTotal = FarPeriodTotal;
       sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag1_inHigh = inHigh[historyLen - 1];
@@ -27558,7 +27471,6 @@ public final class Core {
    public static final class CDLCONCEALBABYSWALL_Stream {
       Core core;
       double[] ShadowVeryShortPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag3_inOpen;
@@ -27599,7 +27511,6 @@ public final class Core {
       CDLCONCEALBABYSWALL_Stream( CDLCONCEALBABYSWALL_Stream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -27631,7 +27542,6 @@ public final class Core {
          } else {
             this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -27750,6 +27660,7 @@ public final class Core {
    }
    void CDLCONCEALBABYSWALL_StepImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
       double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
@@ -27775,8 +27686,8 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 3; sp.totIdx >= 1; sp.totIdx -= 1 ) {
-         sp.ShadowVeryShortPeriodTotal[sp.totIdx] = sp.ShadowVeryShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
+      for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
+         sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
       }
       sp.lag3_inOpen = sp.lag2_inOpen;
       sp.lag2_inOpen = sp.lag1_inOpen;
@@ -27904,7 +27815,6 @@ public final class Core {
          capRing_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag3_inOpen = inOpen[historyLen - 3];
@@ -28369,7 +28279,6 @@ public final class Core {
       Core core;
       double EqualPeriodTotal;
       double[] BodyLongPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag1_inHigh;
       double lag1_inLow;
@@ -28410,7 +28319,6 @@ public final class Core {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
          this.lag1_inLow = other.lag1_inLow;
@@ -28442,7 +28350,6 @@ public final class Core {
          } else {
             this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
          this.lag1_inLow = other.lag1_inLow;
@@ -28564,6 +28471,7 @@ public final class Core {
    }
    void CDLCOUNTERATTACK_StepImpl( CDLCOUNTERATTACK_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -28586,8 +28494,8 @@ public final class Core {
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
       sp.EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Equal_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Equal_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - sp.ring_EqualTrailingIdx_derived[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx];
-      for( sp.totIdx = 1; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.BodyLongPeriodTotal[sp.totIdx] = sp.BodyLongPeriodTotal[sp.totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - sp.totIdx) % sp.ringCap_BodyLongTrailingIdx]);
+      for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+         sp.BodyLongPeriodTotal[totIdx] = sp.BodyLongPeriodTotal[totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx]);
       }
       sp.lag1_inOpen = inOpen;
       sp.lag1_inHigh = inHigh;
@@ -28723,7 +28631,6 @@ public final class Core {
       }
       sp.EqualPeriodTotal = EqualPeriodTotal;
       sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag1_inHigh = inHigh[historyLen - 1];
       sp.lag1_inLow = inLow[historyLen - 1];
@@ -42966,7 +42873,6 @@ public final class Core {
       Core core;
       double[] ShadowVeryShortPeriodTotal;
       double[] EqualPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag1_inHigh;
@@ -43011,7 +42917,6 @@ public final class Core {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.EqualPeriodTotal = other.EqualPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -43051,7 +42956,6 @@ public final class Core {
          } else {
             this.EqualPeriodTotal = other.EqualPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -43177,6 +43081,7 @@ public final class Core {
    }
    void CDLIDENTICAL3CROWS_StepImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
       double Equal_factor = sp.cs_Equal_factor;
@@ -43205,11 +43110,11 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 2; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.ShadowVeryShortPeriodTotal[sp.totIdx] = sp.ShadowVeryShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
+      for( totIdx = 2; totIdx >= 0; totIdx -= 1 ) {
+         sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
       }
-      for( sp.totIdx = 2; sp.totIdx >= 1; sp.totIdx -= 1 ) {
-         sp.EqualPeriodTotal[sp.totIdx] = sp.EqualPeriodTotal[sp.totIdx] + (sp.ring_EqualTrailingIdx_derived[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.totIdx >= sp.ringCap_EqualTrailingIdx) ? sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.totIdx - sp.ringCap_EqualTrailingIdx : sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.totIdx] - sp.ring_EqualTrailingIdx_derived[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - sp.totIdx) % sp.ringCap_EqualTrailingIdx]);
+      for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
+         sp.EqualPeriodTotal[totIdx] = sp.EqualPeriodTotal[totIdx] + (sp.ring_EqualTrailingIdx_derived[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx >= sp.ringCap_EqualTrailingIdx) ? sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx - sp.ringCap_EqualTrailingIdx : sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx] - sp.ring_EqualTrailingIdx_derived[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - totIdx) % sp.ringCap_EqualTrailingIdx]);
       }
       sp.lag2_inOpen = sp.lag1_inOpen;
       sp.lag1_inOpen = inOpen;
@@ -43366,7 +43271,6 @@ public final class Core {
       }
       sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
       sp.EqualPeriodTotal = EqualPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag1_inHigh = inHigh[historyLen - 1];
@@ -45519,7 +45423,6 @@ public final class Core {
       Core core;
       double[] ShadowVeryShortPeriodTotal;
       double[] BodyLongPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag1_inHigh;
       double lag1_inLow;
@@ -45560,7 +45463,6 @@ public final class Core {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
          this.lag1_inLow = other.lag1_inLow;
@@ -45596,7 +45498,6 @@ public final class Core {
          } else {
             this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
          this.lag1_inLow = other.lag1_inLow;
@@ -45718,6 +45619,7 @@ public final class Core {
    }
    void CDLKICKING_StepImpl( CDLKICKING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -45742,9 +45644,9 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 1; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.BodyLongPeriodTotal[sp.totIdx] = sp.BodyLongPeriodTotal[sp.totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - sp.totIdx) % sp.ringCap_BodyLongTrailingIdx]);
-         sp.ShadowVeryShortPeriodTotal[sp.totIdx] = sp.ShadowVeryShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
+      for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+         sp.BodyLongPeriodTotal[totIdx] = sp.BodyLongPeriodTotal[totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx]);
+         sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
       }
       sp.lag1_inOpen = inOpen;
       sp.lag1_inHigh = inHigh;
@@ -45885,7 +45787,6 @@ public final class Core {
       }
       sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
       sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag1_inHigh = inHigh[historyLen - 1];
       sp.lag1_inLow = inLow[historyLen - 1];
@@ -46347,7 +46248,6 @@ public final class Core {
       Core core;
       double[] ShadowVeryShortPeriodTotal;
       double[] BodyLongPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag1_inHigh;
       double lag1_inLow;
@@ -46388,7 +46288,6 @@ public final class Core {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
          this.lag1_inLow = other.lag1_inLow;
@@ -46424,7 +46323,6 @@ public final class Core {
          } else {
             this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
          this.lag1_inLow = other.lag1_inLow;
@@ -46546,6 +46444,7 @@ public final class Core {
    }
    void CDLKICKINGBYLENGTH_StepImpl( CDLKICKINGBYLENGTH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -46570,9 +46469,9 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 1; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.BodyLongPeriodTotal[sp.totIdx] = sp.BodyLongPeriodTotal[sp.totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - sp.totIdx) % sp.ringCap_BodyLongTrailingIdx]);
-         sp.ShadowVeryShortPeriodTotal[sp.totIdx] = sp.ShadowVeryShortPeriodTotal[sp.totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - sp.totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
+      for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+         sp.BodyLongPeriodTotal[totIdx] = sp.BodyLongPeriodTotal[totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx]);
+         sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx]);
       }
       sp.lag1_inOpen = inOpen;
       sp.lag1_inHigh = inHigh;
@@ -46714,7 +46613,6 @@ public final class Core {
       }
       sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
       sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag1_inHigh = inHigh[historyLen - 1];
       sp.lag1_inLow = inLow[historyLen - 1];
@@ -50902,7 +50800,6 @@ public final class Core {
       Core core;
       double optInPenetration;
       double[] BodyPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag3_inOpen;
@@ -50955,7 +50852,6 @@ public final class Core {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -50999,7 +50895,6 @@ public final class Core {
          } else {
             this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -51133,6 +51028,7 @@ public final class Core {
    }
    void CDLMATHOLD_StepImpl( CDLMATHOLD_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -51166,8 +51062,8 @@ public final class Core {
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
       sp.BodyPeriodTotal[4] = sp.BodyPeriodTotal[4] + (((BodyLong_rangeType == 0) ? (Math.abs(sp.lag4_inClose - sp.lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag4_inHigh - sp.lag4_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag4_inHigh - (((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inClose) : (sp.lag4_inOpen))) + ((((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inOpen) : (sp.lag4_inClose)) - sp.lag4_inLow)) : 0.0))) - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx]);
-      for( sp.totIdx = 3; sp.totIdx >= 1; sp.totIdx -= 1 ) {
-         sp.BodyPeriodTotal[sp.totIdx] = sp.BodyPeriodTotal[sp.totIdx] + (sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.totIdx >= sp.ringCap_BodyShortTrailingIdx) ? sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.totIdx - sp.ringCap_BodyShortTrailingIdx : sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.totIdx] - sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - sp.totIdx) % sp.ringCap_BodyShortTrailingIdx]);
+      for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
+         sp.BodyPeriodTotal[totIdx] = sp.BodyPeriodTotal[totIdx] + (sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx) ? sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx : sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx] - sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx]);
       }
       sp.lag4_inOpen = sp.lag3_inOpen;
       sp.lag3_inOpen = sp.lag2_inOpen;
@@ -51340,7 +51236,6 @@ public final class Core {
       }
       sp.optInPenetration = optInPenetration;
       sp.BodyPeriodTotal = BodyPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag3_inOpen = inOpen[historyLen - 3];
@@ -54444,7 +54339,6 @@ public final class Core {
    public static final class CDLPIERCING_Stream {
       Core core;
       double[] BodyLongPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag1_inHigh;
       double lag1_inLow;
@@ -54477,7 +54371,6 @@ public final class Core {
       CDLPIERCING_Stream( CDLPIERCING_Stream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
          this.lag1_inLow = other.lag1_inLow;
@@ -54501,7 +54394,6 @@ public final class Core {
          } else {
             this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
          this.lag1_inLow = other.lag1_inLow;
@@ -54612,6 +54504,7 @@ public final class Core {
    }
    void CDLPIERCING_StepImpl( CDLPIERCING_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -54631,8 +54524,8 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 1; sp.totIdx >= 0; sp.totIdx -= 1 ) {
-         sp.BodyLongPeriodTotal[sp.totIdx] = sp.BodyLongPeriodTotal[sp.totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - sp.totIdx) % sp.ringCap_BodyLongTrailingIdx]);
+      for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+         sp.BodyLongPeriodTotal[totIdx] = sp.BodyLongPeriodTotal[totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx]);
       }
       sp.lag1_inOpen = inOpen;
       sp.lag1_inHigh = inHigh;
@@ -54743,7 +54636,6 @@ public final class Core {
          capRing_BodyLongTrailingIdx_derived[fillJ % cap_BodyLongTrailingIdx] = ((BodyLong_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyLong_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyLong_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag1_inHigh = inHigh[historyLen - 1];
       sp.lag1_inLow = inLow[historyLen - 1];
@@ -56091,7 +55983,6 @@ public final class Core {
    public static final class CDLRISEFALL3METHODS_Stream {
       Core core;
       double[] BodyPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag3_inOpen;
@@ -56143,7 +56034,6 @@ public final class Core {
       CDLRISEFALL3METHODS_Stream( CDLRISEFALL3METHODS_Stream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -56186,7 +56076,6 @@ public final class Core {
          } else {
             this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
          }
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -56320,6 +56209,7 @@ public final class Core {
    }
    void CDLRISEFALL3METHODS_StepImpl( CDLRISEFALL3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -56356,8 +56246,8 @@ public final class Core {
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
       sp.BodyPeriodTotal[4] = sp.BodyPeriodTotal[4] + (((BodyLong_rangeType == 0) ? (Math.abs(sp.lag4_inClose - sp.lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag4_inHigh - sp.lag4_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag4_inHigh - (((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inClose) : (sp.lag4_inOpen))) + ((((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inOpen) : (sp.lag4_inClose)) - sp.lag4_inLow)) : 0.0))) - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx]);
-      for( sp.totIdx = 3; sp.totIdx >= 1; sp.totIdx -= 1 ) {
-         sp.BodyPeriodTotal[sp.totIdx] = sp.BodyPeriodTotal[sp.totIdx] + (sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.totIdx >= sp.ringCap_BodyShortTrailingIdx) ? sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.totIdx - sp.ringCap_BodyShortTrailingIdx : sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.totIdx] - sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - sp.totIdx) % sp.ringCap_BodyShortTrailingIdx]);
+      for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
+         sp.BodyPeriodTotal[totIdx] = sp.BodyPeriodTotal[totIdx] + (sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx) ? sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx : sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx] - sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx]);
       }
       sp.BodyPeriodTotal[0] = sp.BodyPeriodTotal[0] + (((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx) % sp.ringCap_BodyLongTrailingIdx]);
       sp.lag4_inOpen = sp.lag3_inOpen;
@@ -56526,7 +56416,6 @@ public final class Core {
          capRing_BodyShortTrailingIdx_derived[fillJ % cap_BodyShortTrailingIdx] = ((BodyShort_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.BodyPeriodTotal = BodyPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag3_inOpen = inOpen[historyLen - 3];
@@ -60254,7 +60143,6 @@ public final class Core {
       double[] NearPeriodTotal;
       double BodyShortPeriodTotal;
       double ShadowVeryShortPeriodTotal;
-      int totIdx;
       double lag1_inOpen;
       double lag2_inOpen;
       double lag1_inHigh;
@@ -60314,7 +60202,6 @@ public final class Core {
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -60369,7 +60256,6 @@ public final class Core {
          }
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.totIdx = other.totIdx;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag1_inHigh = other.lag1_inHigh;
@@ -60516,6 +60402,7 @@ public final class Core {
    }
    void CDLSTALLEDPATTERN_StepImpl( CDLSTALLEDPATTERN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -60554,9 +60441,9 @@ public final class Core {
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( sp.totIdx = 2; sp.totIdx >= 1; sp.totIdx -= 1 ) {
-         sp.BodyLongPeriodTotal[sp.totIdx] = sp.BodyLongPeriodTotal[sp.totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - sp.totIdx) % sp.ringCap_BodyLongTrailingIdx]);
-         sp.NearPeriodTotal[sp.totIdx] = sp.NearPeriodTotal[sp.totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx] - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx]);
+      for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
+         sp.BodyLongPeriodTotal[totIdx] = sp.BodyLongPeriodTotal[totIdx] + (sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx]);
+         sp.NearPeriodTotal[totIdx] = sp.NearPeriodTotal[totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx]);
       }
       sp.BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyShortTrailingIdx_derived[sp.ringPos_BodyShortTrailingIdx];
       sp.ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx];
@@ -60772,7 +60659,6 @@ public final class Core {
       sp.NearPeriodTotal = NearPeriodTotal;
       sp.BodyShortPeriodTotal = BodyShortPeriodTotal;
       sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
-      sp.totIdx = totIdx;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag1_inHigh = inHigh[historyLen - 1];
@@ -67855,11 +67741,6 @@ public final class Core {
       int optInTimePeriod;
       double sumMFV;
       double sumVol;
-      double high;
-      double low;
-      double close;
-      double tmp;
-      double mfv;
       int mfv_Idx;
       int maxIdx_mfv;
       int cbSize_mfv;
@@ -67888,11 +67769,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
          this.sumVol = other.sumVol;
-         this.high = other.high;
-         this.low = other.low;
-         this.close = other.close;
-         this.tmp = other.tmp;
-         this.mfv = other.mfv;
          this.mfv_Idx = other.mfv_Idx;
          this.maxIdx_mfv = other.maxIdx_mfv;
          this.cbSize_mfv = other.cbSize_mfv;
@@ -67908,11 +67784,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
          this.sumVol = other.sumVol;
-         this.high = other.high;
-         this.low = other.low;
-         this.close = other.close;
-         this.tmp = other.tmp;
-         this.mfv = other.mfv;
          this.mfv_Idx = other.mfv_Idx;
          this.maxIdx_mfv = other.maxIdx_mfv;
          this.cbSize_mfv = other.cbSize_mfv;
@@ -68021,20 +67892,25 @@ public final class Core {
    }
    void CMF_StepImpl( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
+      double high = 0.0;
+      double low = 0.0;
+      double close = 0.0;
+      double tmp = 0.0;
+      double mfv = 0.0;
       sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
       sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
-      sp.high = inHigh;
-      sp.low = inLow;
-      sp.close = inClose;
-      sp.tmp = sp.high - sp.low;
-      if( sp.tmp > 0.0 ) {
-         sp.mfv = (sp.close - sp.low - (sp.high - sp.close)) / sp.tmp * inVolume;
+      high = inHigh;
+      low = inLow;
+      close = inClose;
+      tmp = high - low;
+      if( tmp > 0.0 ) {
+         mfv = (close - low - (high - close)) / tmp * inVolume;
       } else {
-         sp.mfv = 0.0;
+         mfv = 0.0;
       }
-      sp.cb_mfv_flow[sp.mfv_Idx] = sp.mfv;
+      sp.cb_mfv_flow[sp.mfv_Idx] = mfv;
       sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
-      sp.sumMFV += sp.mfv;
+      sp.sumMFV += mfv;
       sp.sumVol += inVolume;
       if( sp.sumVol > 0.0 ) {
          sp.cur_outReal = sp.sumMFV / sp.sumVol;
@@ -68183,11 +68059,6 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumMFV = sumMFV;
       sp.sumVol = sumVol;
-      sp.high = high;
-      sp.low = low;
-      sp.close = close;
-      sp.tmp = tmp;
-      sp.mfv = mfv;
       sp.mfv_Idx = mfv_Idx;
       sp.maxIdx_mfv = maxIdx_mfv;
       sp.cbSize_mfv = capCb_mfv;
@@ -69567,7 +69438,6 @@ public final class Core {
       int optInTimePeriod;
       double upSum;
       double downSum;
-      double sum;
       double prevValue;
       double trailingValue;
       int ringPos_trailingIdx;
@@ -69596,7 +69466,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.upSum = other.upSum;
          this.downSum = other.downSum;
-         this.sum = other.sum;
          this.prevValue = other.prevValue;
          this.trailingValue = other.trailingValue;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -69612,7 +69481,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.upSum = other.upSum;
          this.downSum = other.downSum;
-         this.sum = other.sum;
          this.prevValue = other.prevValue;
          this.trailingValue = other.trailingValue;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -69706,6 +69574,7 @@ public final class Core {
    }
    void CMOU_StepImpl( CMOU_Stream sp, double inReal )
    {
+      double sum = 0.0;
       double diff = 0.0;
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -69733,9 +69602,9 @@ public final class Core {
       } else if( diff < 0.0 ) {
          sp.downSum -= diff;
       }
-      sp.sum = sp.upSum + sp.downSum;
-      if( !((-0.00000000000001 < sp.sum) && (sp.sum < 0.00000000000001)) ) {
-         sp.cur_outReal = 100.0 * (sp.upSum - sp.downSum) / sp.sum;
+      sum = sp.upSum + sp.downSum;
+      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+         sp.cur_outReal = 100.0 * (sp.upSum - sp.downSum) / sum;
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -69884,7 +69753,6 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.upSum = upSum;
       sp.downSum = downSum;
-      sp.sum = sum;
       sp.prevValue = prevValue;
       sp.trailingValue = trailingValue;
       sp.ringPos_trailingIdx = 0;
@@ -70569,23 +70437,15 @@ public final class Core {
       double sumY;
       double sumX2;
       double sumY2;
-      double y;
-      double trailingX;
-      double trailingY;
       double shiftX;
       double shiftY;
-      double ssX;
-      double ssY;
-      double spXY;
       double leavingX;
       double leavingY;
-      double tempReal;
       double invPeriod;
       int lookbackTotal;
       int trailingIdx;
-      int j;
-      int windowStart;
       int barsSinceReseed;
+      int j;
       int today;
       int xMask;
       double[] x_inReal0;
@@ -70616,23 +70476,15 @@ public final class Core {
          this.sumY = other.sumY;
          this.sumX2 = other.sumX2;
          this.sumY2 = other.sumY2;
-         this.y = other.y;
-         this.trailingX = other.trailingX;
-         this.trailingY = other.trailingY;
          this.shiftX = other.shiftX;
          this.shiftY = other.shiftY;
-         this.ssX = other.ssX;
-         this.ssY = other.ssY;
-         this.spXY = other.spXY;
          this.leavingX = other.leavingX;
          this.leavingY = other.leavingY;
-         this.tempReal = other.tempReal;
          this.invPeriod = other.invPeriod;
          this.lookbackTotal = other.lookbackTotal;
          this.trailingIdx = other.trailingIdx;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
          this.barsSinceReseed = other.barsSinceReseed;
+         this.j = other.j;
          this.today = other.today;
          this.xMask = other.xMask;
          this.x_inReal0 = other.x_inReal0.clone();
@@ -70650,23 +70502,15 @@ public final class Core {
          this.sumY = other.sumY;
          this.sumX2 = other.sumX2;
          this.sumY2 = other.sumY2;
-         this.y = other.y;
-         this.trailingX = other.trailingX;
-         this.trailingY = other.trailingY;
          this.shiftX = other.shiftX;
          this.shiftY = other.shiftY;
-         this.ssX = other.ssX;
-         this.ssY = other.ssY;
-         this.spXY = other.spXY;
          this.leavingX = other.leavingX;
          this.leavingY = other.leavingY;
-         this.tempReal = other.tempReal;
          this.invPeriod = other.invPeriod;
          this.lookbackTotal = other.lookbackTotal;
          this.trailingIdx = other.trailingIdx;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
          this.barsSinceReseed = other.barsSinceReseed;
+         this.j = other.j;
          this.today = other.today;
          this.xMask = other.xMask;
          if( this.x_inReal0 != null && this.x_inReal0.length == other.x_inReal0.length ) {
@@ -70775,6 +70619,14 @@ public final class Core {
    void CORREL_StepImpl( CORREL_Stream sp, double inReal0, double inReal1 )
    {
       double x = 0.0;
+      double y = 0.0;
+      double trailingX = 0.0;
+      double trailingY = 0.0;
+      double ssX = 0.0;
+      double ssY = 0.0;
+      double spXY = 0.0;
+      double tempReal = 0.0;
+      int windowStart = 0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -70787,13 +70639,13 @@ public final class Core {
       x = sp.x_inReal0[sp.today & sp.xMask] - sp.shiftX;
       sp.sumX += x;
       sp.sumX2 += x * x;
-      sp.y = sp.x_inReal1[sp.today & sp.xMask] - sp.shiftY;
-      sp.sumXY += x * sp.y;
-      sp.sumY += sp.y;
-      sp.sumY2 += sp.y * sp.y;
-      sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
-      sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
-      sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+      y = sp.x_inReal1[sp.today & sp.xMask] - sp.shiftY;
+      sp.sumXY += x * y;
+      sp.sumY += y;
+      sp.sumY2 += y * y;
+      ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+      ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+      spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
       /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
        * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
        * below 1e-6 of the squared deviations it is extracted from; OR the value
@@ -70821,38 +70673,38 @@ public final class Core {
        * startIdx-lookbackTotal+outIdx, which is >= outIdx.
        */
       sp.barsSinceReseed -= 1;
-      if( sp.ssX < 0.000001 * sp.sumX2 || sp.ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 ) {
+      if( ssX < 0.000001 * sp.sumX2 || ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 ) {
          sp.barsSinceReseed = 32 * sp.optInTimePeriod;
-         sp.windowStart = sp.today - sp.lookbackTotal;
+         windowStart = sp.today - sp.lookbackTotal;
          /* Both means in one pass over the window: the rebuild below is the
           * only O(period) work on this function's hot path, so it is walked
           * twice, not three times.
           */
-         sp.tempReal = 0.0;
+         tempReal = 0.0;
          sp.shiftY = 0.0;
-         for( sp.j = sp.windowStart; sp.j <= sp.today; sp.j += 1 ) {
-            sp.tempReal += sp.x_inReal0[sp.j & sp.xMask];
+         for( sp.j = windowStart; sp.j <= sp.today; sp.j += 1 ) {
+            tempReal += sp.x_inReal0[sp.j & sp.xMask];
             sp.shiftY += sp.x_inReal1[sp.j & sp.xMask];
          }
-         sp.shiftX = sp.tempReal * sp.invPeriod;
+         sp.shiftX = tempReal * sp.invPeriod;
          sp.shiftY = sp.shiftY * sp.invPeriod;
          sp.sumY2 = 0.0;
          sp.sumX2 = sp.sumY2;
          sp.sumY = sp.sumX2;
          sp.sumX = sp.sumY;
          sp.sumXY = sp.sumX;
-         for( sp.j = sp.windowStart; sp.j <= sp.today; sp.j += 1 ) {
+         for( sp.j = windowStart; sp.j <= sp.today; sp.j += 1 ) {
             x = sp.x_inReal0[sp.j & sp.xMask] - sp.shiftX;
             sp.sumX += x;
             sp.sumX2 += x * x;
-            sp.y = sp.x_inReal1[sp.j & sp.xMask] - sp.shiftY;
-            sp.sumXY += x * sp.y;
-            sp.sumY += sp.y;
-            sp.sumY2 += sp.y * sp.y;
+            y = sp.x_inReal1[sp.j & sp.xMask] - sp.shiftY;
+            sp.sumXY += x * y;
+            sp.sumY += y;
+            sp.sumY2 += y * y;
          }
-         sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
-         sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
-         sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+         ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+         ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+         spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
          /* A sum of squares is non-negative by definition, but this one is
           * extracted as a difference, so its SIGN is not guaranteed on a window
           * sitting inside a flat stretch. Enforce the invariant HERE and not at
@@ -70862,18 +70714,18 @@ public final class Core {
           * divide below can rely on both being >= 0 and needs no sign test of
           * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
           */
-         if( sp.ssX < 0.0 ) {
-            sp.ssX = 0.0;
+         if( ssX < 0.0 ) {
+            ssX = 0.0;
          }
-         if( sp.ssY < 0.0 ) {
-            sp.ssY = 0.0;
+         if( ssY < 0.0 ) {
+            ssY = 0.0;
          }
       }
       /* Save the trailing values before writing the output, since the input
        * and output might be the same array.
        */
-      sp.trailingX = sp.x_inReal0[sp.trailingIdx & sp.xMask] - sp.shiftX;
-      sp.trailingY = sp.x_inReal1[sp.trailingIdx & sp.xMask] - sp.shiftY;
+      trailingX = sp.x_inReal0[sp.trailingIdx & sp.xMask] - sp.shiftX;
+      trailingY = sp.x_inReal1[sp.trailingIdx & sp.xMask] - sp.shiftY;
       sp.trailingIdx += 1;
       /* Output the new coefficient.
        *
@@ -70907,27 +70759,27 @@ public final class Core {
        * behaved this way, on inputs 117 orders past any price, is not a trade
        * worth making. Revisit only if input range-checking is ever added.
        */
-      if( sp.ssX > 0.00000000000001 * sp.sumX2 && sp.ssY > 0.00000000000001 * sp.sumY2 ) {
-         sp.tempReal = sp.spXY / Math.sqrt(sp.ssX * sp.ssY);
+      if( ssX > 0.00000000000001 * sp.sumX2 && ssY > 0.00000000000001 * sp.sumY2 ) {
+         tempReal = spXY / Math.sqrt(ssX * ssY);
          /* A correlation coefficient cannot leave [-1,1]; rounding in the
           * three sums can still put it a few ulp outside.
           */
-         if( sp.tempReal > 1.0 ) {
-            sp.tempReal = 1.0;
-         } else if( sp.tempReal < 0 - 1.0 ) {
-            sp.tempReal = 0 - 1.0;
+         if( tempReal > 1.0 ) {
+            tempReal = 1.0;
+         } else if( tempReal < 0 - 1.0 ) {
+            tempReal = 0 - 1.0;
          }
-         sp.cur_outReal = sp.tempReal;
+         sp.cur_outReal = tempReal;
       } else {
          sp.cur_outReal = 0.0;
       }
       /* Remove the trailing values (prepares the next window). */
-      sp.leavingX = sp.trailingX * sp.trailingX;
-      sp.leavingY = sp.trailingY * sp.trailingY;
-      sp.sumX -= sp.trailingX;
+      sp.leavingX = trailingX * trailingX;
+      sp.leavingY = trailingY * trailingY;
+      sp.sumX -= trailingX;
       sp.sumX2 -= sp.leavingX;
-      sp.sumXY -= sp.trailingX * sp.trailingY;
-      sp.sumY -= sp.trailingY;
+      sp.sumXY -= trailingX * trailingY;
+      sp.sumY -= trailingY;
       sp.sumY2 -= sp.leavingY;
       sp.today += 1;
    }
@@ -71201,23 +71053,15 @@ public final class Core {
       sp.sumY = sumY;
       sp.sumX2 = sumX2;
       sp.sumY2 = sumY2;
-      sp.y = y;
-      sp.trailingX = trailingX;
-      sp.trailingY = trailingY;
       sp.shiftX = shiftX;
       sp.shiftY = shiftY;
-      sp.ssX = ssX;
-      sp.ssY = ssY;
-      sp.spXY = spXY;
       sp.leavingX = leavingX;
       sp.leavingY = leavingY;
-      sp.tempReal = tempReal;
       sp.invPeriod = invPeriod;
       sp.lookbackTotal = lookbackTotal;
       sp.trailingIdx = trailingIdx;
-      sp.j = j;
-      sp.windowStart = windowStart;
       sp.barsSinceReseed = barsSinceReseed;
+      sp.j = j;
       sp.today = today;
       sp.xMask = physX - 1;
       sp.x_inReal0 = capX_inReal0;
@@ -74053,11 +73897,6 @@ public final class Core {
       double prevMinusDM;
       double prevPlusDM;
       double prevTR;
-      double tempReal;
-      double diffP;
-      double diffM;
-      double minusDI;
-      double plusDI;
       double lastOut_outReal;
       double cur_outReal;
       int outRangeBegIdx;
@@ -74086,11 +73925,6 @@ public final class Core {
          this.prevMinusDM = other.prevMinusDM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
-         this.minusDI = other.minusDI;
-         this.plusDI = other.plusDI;
          this.lastOut_outReal = other.lastOut_outReal;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -74106,11 +73940,6 @@ public final class Core {
          this.prevMinusDM = other.prevMinusDM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
-         this.minusDI = other.minusDI;
-         this.plusDI = other.plusDI;
          this.lastOut_outReal = other.lastOut_outReal;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -74196,23 +74025,28 @@ public final class Core {
    }
    void DX_StepImpl( DX_Stream sp, double inHigh, double inLow, double inClose )
    {
+      double tempReal = 0.0;
+      double diffP = 0.0;
+      double diffM = 0.0;
+      double minusDI = 0.0;
+      double plusDI = 0.0;
       /* Calculate the prevMinusDM and prevPlusDM */
-      sp.tempReal = inHigh;
-      sp.diffP = sp.tempReal - sp.prevHigh;
+      tempReal = inHigh;
+      diffP = tempReal - sp.prevHigh;
       /* Plus Delta */
-      sp.prevHigh = sp.tempReal;
-      sp.tempReal = inLow;
-      sp.diffM = sp.prevLow - sp.tempReal;
+      sp.prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp.prevLow - tempReal;
       /* Minus Delta */
-      sp.prevLow = sp.tempReal;
+      sp.prevLow = tempReal;
       sp.prevMinusDM -= sp.prevMinusDM / sp.optInTimePeriod;
       sp.prevPlusDM -= sp.prevPlusDM / sp.optInTimePeriod;
-      if( sp.diffM > 0 && sp.diffP < sp.diffM ) {
+      if( diffM > 0 && diffP < diffM ) {
          /* Case 2 and 4: +DM=0,-DM=diffM */
-         sp.prevMinusDM += sp.diffM;
-      } else if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevMinusDM += diffM;
+      } else if( diffP > 0 && diffP > diffM ) {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
-         sp.prevPlusDM += sp.diffP;
+         sp.prevPlusDM += diffP;
       }
       /* Calculate the prevTR */
       double _true_range_0;
@@ -74226,17 +74060,17 @@ public final class Core {
          range_0 = tmp_0;
       }
       _true_range_0 = range_0;
-      sp.tempReal = _true_range_0;
-      sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + sp.tempReal;
+      tempReal = _true_range_0;
+      sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
       sp.prevClose = inClose;
       /* Calculate the DX. The value is rounded (see Wilder book). */
       if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
-         sp.minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
-         sp.plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
+         minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
+         plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
          /* This loop is just to accumulate the initial DX */
-         sp.tempReal = sp.minusDI + sp.plusDI;
-         if( !((-0.00000000000001 < sp.tempReal) && (sp.tempReal < 0.00000000000001)) ) {
-            sp.cur_outReal = (100.0 * (Math.abs(sp.minusDI - sp.plusDI) / sp.tempReal));
+         tempReal = minusDI + plusDI;
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            sp.cur_outReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
          } else {
             sp.cur_outReal = sp.lastOut_outReal;
          }
@@ -74556,11 +74390,6 @@ public final class Core {
       sp.prevMinusDM = prevMinusDM;
       sp.prevPlusDM = prevPlusDM;
       sp.prevTR = prevTR;
-      sp.tempReal = tempReal;
-      sp.diffP = diffP;
-      sp.diffM = diffM;
-      sp.minusDI = minusDI;
-      sp.plusDI = plusDI;
       sp.lastOut_outReal = outReal[(outNBElement.value - 1) * outStride];
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
@@ -77613,7 +77442,6 @@ public final class Core {
       double periodSubFull;
       double periodSumFull;
       double trailingFull;
-      double fullOut;
       int halfPeriod;
       int sqrtPeriod;
       double dividerHalf;
@@ -77624,8 +77452,6 @@ public final class Core {
       double periodSubSqrt;
       double periodSumSqrt;
       double trailingSqrt;
-      double halfOut;
-      double diffReal;
       int dRing_Idx;
       int maxIdx_dRing;
       int ringPos_trailingIdxFull;
@@ -77661,7 +77487,6 @@ public final class Core {
          this.periodSubFull = other.periodSubFull;
          this.periodSumFull = other.periodSumFull;
          this.trailingFull = other.trailingFull;
-         this.fullOut = other.fullOut;
          this.halfPeriod = other.halfPeriod;
          this.sqrtPeriod = other.sqrtPeriod;
          this.dividerHalf = other.dividerHalf;
@@ -77672,8 +77497,6 @@ public final class Core {
          this.periodSubSqrt = other.periodSubSqrt;
          this.periodSumSqrt = other.periodSumSqrt;
          this.trailingSqrt = other.trailingSqrt;
-         this.halfOut = other.halfOut;
-         this.diffReal = other.diffReal;
          this.dRing_Idx = other.dRing_Idx;
          this.maxIdx_dRing = other.maxIdx_dRing;
          this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
@@ -77696,7 +77519,6 @@ public final class Core {
          this.periodSubFull = other.periodSubFull;
          this.periodSumFull = other.periodSumFull;
          this.trailingFull = other.trailingFull;
-         this.fullOut = other.fullOut;
          this.halfPeriod = other.halfPeriod;
          this.sqrtPeriod = other.sqrtPeriod;
          this.dividerHalf = other.dividerHalf;
@@ -77707,8 +77529,6 @@ public final class Core {
          this.periodSubSqrt = other.periodSubSqrt;
          this.periodSumSqrt = other.periodSumSqrt;
          this.trailingSqrt = other.trailingSqrt;
-         this.halfOut = other.halfOut;
-         this.diffReal = other.diffReal;
          this.dRing_Idx = other.dRing_Idx;
          this.maxIdx_dRing = other.maxIdx_dRing;
          this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
@@ -77832,6 +77652,7 @@ public final class Core {
       }
       if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
          double tempReal = 0.0;
+         double fullOut = 0.0;
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
@@ -77840,9 +77661,9 @@ public final class Core {
          sp.periodSubFull -= sp.trailingFull;
          sp.periodSumFull += tempReal * sp.optInTimePeriod;
          sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
-         sp.fullOut = sp.periodSumFull / sp.dividerFull;
+         fullOut = sp.periodSumFull / sp.dividerFull;
          sp.periodSumFull -= sp.periodSubFull;
-         sp.cur_outReal = 2.0 * tempReal - sp.fullOut;
+         sp.cur_outReal = 2.0 * tempReal - fullOut;
          sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
          sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
          if( sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
@@ -77850,6 +77671,9 @@ public final class Core {
          }
       } else {
          double tempReal = 0.0;
+         double fullOut = 0.0;
+         double halfOut = 0.0;
+         double diffReal = 0.0;
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
@@ -77861,20 +77685,20 @@ public final class Core {
          sp.periodSubFull -= sp.trailingFull;
          sp.periodSumFull += tempReal * sp.optInTimePeriod;
          sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
-         sp.fullOut = sp.periodSumFull / sp.dividerFull;
+         fullOut = sp.periodSumFull / sp.dividerFull;
          sp.periodSumFull -= sp.periodSubFull;
          sp.periodSubHalf += tempReal;
          sp.periodSubHalf -= sp.trailingHalf;
          sp.periodSumHalf += tempReal * sp.halfPeriod;
          sp.trailingHalf = sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf];
-         sp.halfOut = sp.periodSumHalf / sp.dividerHalf;
+         halfOut = sp.periodSumHalf / sp.dividerHalf;
          sp.periodSumHalf -= sp.periodSubHalf;
-         sp.diffReal = 2.0 * sp.halfOut - sp.fullOut;
-         sp.periodSubSqrt += sp.diffReal;
+         diffReal = 2.0 * halfOut - fullOut;
+         sp.periodSubSqrt += diffReal;
          sp.periodSubSqrt -= sp.trailingSqrt;
-         sp.periodSumSqrt += sp.diffReal * sp.sqrtPeriod;
+         sp.periodSumSqrt += diffReal * sp.sqrtPeriod;
          sp.trailingSqrt = sp.cb_dRing[sp.dRing_Idx];
-         sp.cb_dRing[sp.dRing_Idx] = sp.diffReal;
+         sp.cb_dRing[sp.dRing_Idx] = diffReal;
          sp.dRing_Idx = sp.dRing_Idx + 1;
          if( sp.dRing_Idx > sp.maxIdx_dRing ) {
             sp.dRing_Idx = 0;
@@ -77919,7 +77743,6 @@ public final class Core {
          sp.periodSubFull = 0.0;
          sp.periodSumFull = 0.0;
          sp.trailingFull = 0.0;
-         sp.fullOut = 0.0;
          sp.halfPeriod = 0;
          sp.sqrtPeriod = 0;
          sp.dividerHalf = 0.0;
@@ -77930,8 +77753,6 @@ public final class Core {
          sp.periodSubSqrt = 0.0;
          sp.periodSumSqrt = 0.0;
          sp.trailingSqrt = 0.0;
-         sp.halfOut = 0.0;
-         sp.diffReal = 0.0;
          sp.dRing_Idx = 0;
          sp.maxIdx_dRing = 0;
          sp.ringPos_trailingIdxFull = 0;
@@ -78079,7 +77900,6 @@ public final class Core {
          sp.periodSubFull = periodSubFull;
          sp.periodSumFull = periodSumFull;
          sp.trailingFull = trailingFull;
-         sp.fullOut = fullOut;
          sp.halfPeriod = halfPeriod;
          sp.sqrtPeriod = sqrtPeriod;
          sp.dividerHalf = dividerHalf;
@@ -78090,8 +77910,6 @@ public final class Core {
          sp.periodSubSqrt = periodSubSqrt;
          sp.periodSumSqrt = periodSumSqrt;
          sp.trailingSqrt = trailingSqrt;
-         sp.halfOut = halfOut;
-         sp.diffReal = diffReal;
          sp.dRing_Idx = dRing_Idx;
          sp.maxIdx_dRing = maxIdx_dRing;
          sp.ringPos_trailingIdxFull = 0;
@@ -78305,7 +78123,6 @@ public final class Core {
          sp.periodSubFull = periodSubFull;
          sp.periodSumFull = periodSumFull;
          sp.trailingFull = trailingFull;
-         sp.fullOut = fullOut;
          sp.halfPeriod = halfPeriod;
          sp.sqrtPeriod = sqrtPeriod;
          sp.dividerHalf = dividerHalf;
@@ -78316,8 +78133,6 @@ public final class Core {
          sp.periodSubSqrt = periodSubSqrt;
          sp.periodSumSqrt = periodSumSqrt;
          sp.trailingSqrt = trailingSqrt;
-         sp.halfOut = halfOut;
-         sp.diffReal = diffReal;
          sp.dRing_Idx = dRing_Idx;
          sp.maxIdx_dRing = maxIdx_dRing;
          sp.ringPos_trailingIdxFull = 0;
@@ -79197,47 +79012,37 @@ public final class Core {
     */
    public static final class HT_DCPERIOD_Stream {
       Core core;
-      double tempReal;
-      double tempReal2;
       double period;
       double periodWMASum;
       double periodWMASub;
       double trailingWMAValue;
-      double smoothedValue;
       double a;
       double b;
-      double hilbertTempReal;
       int hilbertIdx;
       double[] detrender_Odd;
       double[] detrender_Even;
-      double detrender;
       double prev_detrender_Odd;
       double prev_detrender_Even;
       double prev_detrender_input_Odd;
       double prev_detrender_input_Even;
       double[] Q1_Odd;
       double[] Q1_Even;
-      double Q1;
       double prev_Q1_Odd;
       double prev_Q1_Even;
       double prev_Q1_input_Odd;
       double prev_Q1_input_Even;
       double[] jI_Odd;
       double[] jI_Even;
-      double jI;
       double prev_jI_Odd;
       double prev_jI_Even;
       double prev_jI_input_Odd;
       double prev_jI_input_Even;
       double[] jQ_Odd;
       double[] jQ_Even;
-      double jQ;
       double prev_jQ_Odd;
       double prev_jQ_Even;
       double prev_jQ_input_Odd;
       double prev_jQ_input_Even;
-      double Q2;
-      double I2;
       double prevQ2;
       double prevI2;
       double Re;
@@ -79272,47 +79077,37 @@ public final class Core {
 
       HT_DCPERIOD_Stream( HT_DCPERIOD_Stream other ) {
          this.core = other.core;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          this.detrender_Odd = other.detrender_Odd.clone();
          this.detrender_Even = other.detrender_Even.clone();
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
          this.prev_detrender_input_Even = other.prev_detrender_input_Even;
          this.Q1_Odd = other.Q1_Odd.clone();
          this.Q1_Even = other.Q1_Even.clone();
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
          this.prev_Q1_input_Even = other.prev_Q1_input_Even;
          this.jI_Odd = other.jI_Odd.clone();
          this.jI_Even = other.jI_Even.clone();
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
          this.prev_jI_input_Even = other.prev_jI_input_Even;
          this.jQ_Odd = other.jQ_Odd.clone();
          this.jQ_Even = other.jQ_Even.clone();
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -79334,16 +79129,12 @@ public final class Core {
 
       void copyFrom( HT_DCPERIOD_Stream other ) {
          this.core = other.core;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
             System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
@@ -79355,7 +79146,6 @@ public final class Core {
          } else {
             this.detrender_Even = other.detrender_Even.clone();
          }
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
@@ -79370,7 +79160,6 @@ public final class Core {
          } else {
             this.Q1_Even = other.Q1_Even.clone();
          }
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
@@ -79385,7 +79174,6 @@ public final class Core {
          } else {
             this.jI_Even = other.jI_Even.clone();
          }
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
@@ -79400,13 +79188,10 @@ public final class Core {
          } else {
             this.jQ_Even = other.jQ_Even.clone();
          }
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -79520,7 +79305,17 @@ public final class Core {
    }
    void HT_DCPERIOD_StepImpl( HT_DCPERIOD_Stream sp, double inReal )
    {
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
       double adjustedPrevPeriod = 0.0;
+      double smoothedValue = 0.0;
+      double hilbertTempReal = 0.0;
+      double detrender = 0.0;
+      double Q1 = 0.0;
+      double jI = 0.0;
+      double jQ = 0.0;
+      double Q2 = 0.0;
+      double I2 = 0.0;
       double todayValue = 0.0;
       if( sp.ringCap_trailingWMAIdx == 0 ) {
          sp.ring_trailingWMAIdx_inReal[0] = inReal;
@@ -79531,51 +79326,51 @@ public final class Core {
       sp.periodWMASub -= sp.trailingWMAValue;
       sp.periodWMASum += todayValue * 4.0;
       sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
-      sp.smoothedValue = sp.periodWMASum * 0.1;
+      smoothedValue = sp.periodWMASum * 0.1;
       sp.periodWMASum -= sp.periodWMASub;
       if( sp.streamParity == 0 ) {
          /* Do the Hilbert Transforms for even price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
-         sp.detrender_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Even;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Even;
          sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
-         sp.detrender += sp.prev_detrender_Even;
-         sp.prev_detrender_input_Even = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
-         sp.Q1_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Even;
+         detrender += sp.prev_detrender_Even;
+         sp.prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Even;
          sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
-         sp.Q1 += sp.prev_Q1_Even;
-         sp.prev_Q1_input_Even = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
-         sp.jI = 0 - sp.jI_Even[sp.hilbertIdx];
-         sp.jI_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Even;
+         Q1 += sp.prev_Q1_Even;
+         sp.prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+         jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Even;
          sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
-         sp.jI += sp.prev_jI_Even;
+         jI += sp.prev_jI_Even;
          sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
-         sp.jQ_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Even;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Even;
          sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
-         sp.jQ += sp.prev_jQ_Even;
-         sp.prev_jQ_input_Even = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
+         jQ += sp.prev_jQ_Even;
+         sp.prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
          if( ++sp.hilbertIdx == 3 ) {
             sp.hilbertIdx = 0;
          }
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -79583,47 +79378,47 @@ public final class Core {
           * used by the "odd" logic later.
           */
          sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
-         sp.I1ForOddPrev2 = sp.detrender;
+         sp.I1ForOddPrev2 = detrender;
       } else {
          /* Do the Hilbert Transforms for odd price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
-         sp.detrender_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Odd;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Odd;
          sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
-         sp.detrender += sp.prev_detrender_Odd;
-         sp.prev_detrender_input_Odd = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
-         sp.Q1_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Odd;
+         detrender += sp.prev_detrender_Odd;
+         sp.prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Odd;
          sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
-         sp.Q1 += sp.prev_Q1_Odd;
-         sp.prev_Q1_input_Odd = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForOddPrev3;
-         sp.jI = 0 - sp.jI_Odd[sp.hilbertIdx];
-         sp.jI_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Odd;
+         Q1 += sp.prev_Q1_Odd;
+         sp.prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+         jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Odd;
          sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
-         sp.jI += sp.prev_jI_Odd;
+         jI += sp.prev_jI_Odd;
          sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
-         sp.jQ_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Odd;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Odd;
          sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
-         sp.jQ += sp.prev_jQ_Odd;
-         sp.prev_jQ_input_Odd = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForOddPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         jQ += sp.prev_jQ_Odd;
+         sp.prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
          /* The varaiable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -79631,31 +79426,31 @@ public final class Core {
           * used by the "even" logic later.
           */
          sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
-         sp.I1ForEvenPrev2 = sp.detrender;
+         sp.I1ForEvenPrev2 = detrender;
       }
       /* Adjust the period for next price bar */
-      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(sp.I2, sp.prevI2, sp.Q2 * sp.prevQ2)));
-      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
-      sp.prevQ2 = sp.Q2;
-      sp.prevI2 = sp.I2;
-      sp.tempReal = sp.period;
+      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(I2, sp.prevI2, Q2 * sp.prevQ2)));
+      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+      sp.prevQ2 = Q2;
+      sp.prevI2 = I2;
+      tempReal = sp.period;
       if( sp.Im != 0.0 && sp.Re != 0.0 ) {
          sp.period = 360.0 / (Math.atan(sp.Im / sp.Re) * sp.rad2Deg);
       }
-      sp.tempReal2 = 1.5 * sp.tempReal;
-      if( sp.period > sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 1.5 * tempReal;
+      if( sp.period > tempReal2 ) {
+         sp.period = tempReal2;
       }
-      sp.tempReal2 = 0.67 * sp.tempReal;
-      if( sp.period < sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 0.67 * tempReal;
+      if( sp.period < tempReal2 ) {
+         sp.period = tempReal2;
       }
       if( sp.period < 6 ) {
          sp.period = 6;
       } else if( sp.period > 50 ) {
          sp.period = 50;
       }
-      sp.period = Math.fma(0.2, sp.period, 0.8 * sp.tempReal);
+      sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       sp.cur_outReal = sp.smoothPeriod;
       /* Ooof... let's do the next price bar now! */
@@ -80014,47 +79809,37 @@ public final class Core {
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
       double[] capRing_trailingWMAIdx_inReal = new double[allocN_trailingWMAIdx];
       System.arraycopy(inReal, historyLen - cap_trailingWMAIdx, capRing_trailingWMAIdx_inReal, 0, cap_trailingWMAIdx);
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
       sp.period = period;
       sp.periodWMASum = periodWMASum;
       sp.periodWMASub = periodWMASub;
       sp.trailingWMAValue = trailingWMAValue;
-      sp.smoothedValue = smoothedValue;
       sp.a = a;
       sp.b = b;
-      sp.hilbertTempReal = hilbertTempReal;
       sp.hilbertIdx = hilbertIdx;
       sp.detrender_Odd = detrender_Odd;
       sp.detrender_Even = detrender_Even;
-      sp.detrender = detrender;
       sp.prev_detrender_Odd = prev_detrender_Odd;
       sp.prev_detrender_Even = prev_detrender_Even;
       sp.prev_detrender_input_Odd = prev_detrender_input_Odd;
       sp.prev_detrender_input_Even = prev_detrender_input_Even;
       sp.Q1_Odd = Q1_Odd;
       sp.Q1_Even = Q1_Even;
-      sp.Q1 = Q1;
       sp.prev_Q1_Odd = prev_Q1_Odd;
       sp.prev_Q1_Even = prev_Q1_Even;
       sp.prev_Q1_input_Odd = prev_Q1_input_Odd;
       sp.prev_Q1_input_Even = prev_Q1_input_Even;
       sp.jI_Odd = jI_Odd;
       sp.jI_Even = jI_Even;
-      sp.jI = jI;
       sp.prev_jI_Odd = prev_jI_Odd;
       sp.prev_jI_Even = prev_jI_Even;
       sp.prev_jI_input_Odd = prev_jI_input_Odd;
       sp.prev_jI_input_Even = prev_jI_input_Even;
       sp.jQ_Odd = jQ_Odd;
       sp.jQ_Even = jQ_Even;
-      sp.jQ = jQ;
       sp.prev_jQ_Odd = prev_jQ_Odd;
       sp.prev_jQ_Even = prev_jQ_Even;
       sp.prev_jQ_input_Odd = prev_jQ_input_Odd;
       sp.prev_jQ_input_Even = prev_jQ_input_Even;
-      sp.Q2 = Q2;
-      sp.I2 = I2;
       sp.prevQ2 = prevQ2;
       sp.prevI2 = prevI2;
       sp.Re = Re;
@@ -81070,48 +80855,37 @@ public final class Core {
     */
    public static final class HT_DCPHASE_Stream {
       Core core;
-      int i;
-      double tempReal;
-      double tempReal2;
       double period;
       double periodWMASum;
       double periodWMASub;
       double trailingWMAValue;
-      double smoothedValue;
       double a;
       double b;
-      double hilbertTempReal;
       int hilbertIdx;
       double[] detrender_Odd;
       double[] detrender_Even;
-      double detrender;
       double prev_detrender_Odd;
       double prev_detrender_Even;
       double prev_detrender_input_Odd;
       double prev_detrender_input_Even;
       double[] Q1_Odd;
       double[] Q1_Even;
-      double Q1;
       double prev_Q1_Odd;
       double prev_Q1_Even;
       double prev_Q1_input_Odd;
       double prev_Q1_input_Even;
       double[] jI_Odd;
       double[] jI_Even;
-      double jI;
       double prev_jI_Odd;
       double prev_jI_Even;
       double prev_jI_input_Odd;
       double prev_jI_input_Even;
       double[] jQ_Odd;
       double[] jQ_Even;
-      double jQ;
       double prev_jQ_Odd;
       double prev_jQ_Even;
       double prev_jQ_input_Odd;
       double prev_jQ_input_Even;
-      double Q2;
-      double I2;
       double prevQ2;
       double prevI2;
       double Re;
@@ -81123,12 +80897,7 @@ public final class Core {
       double rad2Deg;
       double constDeg2RadBy360;
       double smoothPeriod;
-      int idx;
-      int DCPeriodInt;
       double DCPhase;
-      double DCPeriod;
-      double imagPart;
-      double realPart;
       int smoothPrice_Idx;
       int maxIdx_smoothPrice;
       int streamParity;
@@ -81157,48 +80926,37 @@ public final class Core {
 
       HT_DCPHASE_Stream( HT_DCPHASE_Stream other ) {
          this.core = other.core;
-         this.i = other.i;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          this.detrender_Odd = other.detrender_Odd.clone();
          this.detrender_Even = other.detrender_Even.clone();
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
          this.prev_detrender_input_Even = other.prev_detrender_input_Even;
          this.Q1_Odd = other.Q1_Odd.clone();
          this.Q1_Even = other.Q1_Even.clone();
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
          this.prev_Q1_input_Even = other.prev_Q1_input_Even;
          this.jI_Odd = other.jI_Odd.clone();
          this.jI_Even = other.jI_Even.clone();
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
          this.prev_jI_input_Even = other.prev_jI_input_Even;
          this.jQ_Odd = other.jQ_Odd.clone();
          this.jQ_Even = other.jQ_Even.clone();
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -81210,12 +80968,7 @@ public final class Core {
          this.rad2Deg = other.rad2Deg;
          this.constDeg2RadBy360 = other.constDeg2RadBy360;
          this.smoothPeriod = other.smoothPeriod;
-         this.idx = other.idx;
-         this.DCPeriodInt = other.DCPeriodInt;
          this.DCPhase = other.DCPhase;
-         this.DCPeriod = other.DCPeriod;
-         this.imagPart = other.imagPart;
-         this.realPart = other.realPart;
          this.smoothPrice_Idx = other.smoothPrice_Idx;
          this.maxIdx_smoothPrice = other.maxIdx_smoothPrice;
          this.streamParity = other.streamParity;
@@ -81231,17 +80984,12 @@ public final class Core {
 
       void copyFrom( HT_DCPHASE_Stream other ) {
          this.core = other.core;
-         this.i = other.i;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
             System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
@@ -81253,7 +81001,6 @@ public final class Core {
          } else {
             this.detrender_Even = other.detrender_Even.clone();
          }
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
@@ -81268,7 +81015,6 @@ public final class Core {
          } else {
             this.Q1_Even = other.Q1_Even.clone();
          }
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
@@ -81283,7 +81029,6 @@ public final class Core {
          } else {
             this.jI_Even = other.jI_Even.clone();
          }
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
@@ -81298,13 +81043,10 @@ public final class Core {
          } else {
             this.jQ_Even = other.jQ_Even.clone();
          }
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -81316,12 +81058,7 @@ public final class Core {
          this.rad2Deg = other.rad2Deg;
          this.constDeg2RadBy360 = other.constDeg2RadBy360;
          this.smoothPeriod = other.smoothPeriod;
-         this.idx = other.idx;
-         this.DCPeriodInt = other.DCPeriodInt;
          this.DCPhase = other.DCPhase;
-         this.DCPeriod = other.DCPeriod;
-         this.imagPart = other.imagPart;
-         this.realPart = other.realPart;
          this.smoothPrice_Idx = other.smoothPrice_Idx;
          this.maxIdx_smoothPrice = other.maxIdx_smoothPrice;
          this.streamParity = other.streamParity;
@@ -81433,8 +81170,24 @@ public final class Core {
    }
    void HT_DCPHASE_StepImpl( HT_DCPHASE_Stream sp, double inReal )
    {
+      int i = 0;
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
       double adjustedPrevPeriod = 0.0;
+      double smoothedValue = 0.0;
+      double hilbertTempReal = 0.0;
+      double detrender = 0.0;
+      double Q1 = 0.0;
+      double jI = 0.0;
+      double jQ = 0.0;
+      double Q2 = 0.0;
+      double I2 = 0.0;
       double todayValue = 0.0;
+      int idx = 0;
+      int DCPeriodInt = 0;
+      double DCPeriod = 0.0;
+      double imagPart = 0.0;
+      double realPart = 0.0;
       if( sp.ringCap_trailingWMAIdx == 0 ) {
          sp.ring_trailingWMAIdx_inReal[0] = inReal;
       }
@@ -81444,55 +81197,55 @@ public final class Core {
       sp.periodWMASub -= sp.trailingWMAValue;
       sp.periodWMASum += todayValue * 4.0;
       sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
-      sp.smoothedValue = sp.periodWMASum * 0.1;
+      smoothedValue = sp.periodWMASum * 0.1;
       sp.periodWMASum -= sp.periodWMASub;
       /* Remember the smoothedValue into the smoothPrice
        * circular buffer.
        */
-      sp.cb_smoothPrice[sp.smoothPrice_Idx] = sp.smoothedValue;
+      sp.cb_smoothPrice[sp.smoothPrice_Idx] = smoothedValue;
       if( sp.streamParity == 0 ) {
          /* Do the Hilbert Transforms for even price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
-         sp.detrender_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Even;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Even;
          sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
-         sp.detrender += sp.prev_detrender_Even;
-         sp.prev_detrender_input_Even = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
-         sp.Q1_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Even;
+         detrender += sp.prev_detrender_Even;
+         sp.prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Even;
          sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
-         sp.Q1 += sp.prev_Q1_Even;
-         sp.prev_Q1_input_Even = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
-         sp.jI = 0 - sp.jI_Even[sp.hilbertIdx];
-         sp.jI_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Even;
+         Q1 += sp.prev_Q1_Even;
+         sp.prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+         jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Even;
          sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
-         sp.jI += sp.prev_jI_Even;
+         jI += sp.prev_jI_Even;
          sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
-         sp.jQ_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Even;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Even;
          sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
-         sp.jQ += sp.prev_jQ_Even;
-         sp.prev_jQ_input_Even = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
+         jQ += sp.prev_jQ_Even;
+         sp.prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
          if( ++sp.hilbertIdx == 3 ) {
             sp.hilbertIdx = 0;
          }
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -81500,47 +81253,47 @@ public final class Core {
           * used by the "odd" logic later.
           */
          sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
-         sp.I1ForOddPrev2 = sp.detrender;
+         sp.I1ForOddPrev2 = detrender;
       } else {
          /* Do the Hilbert Transforms for odd price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
-         sp.detrender_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Odd;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Odd;
          sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
-         sp.detrender += sp.prev_detrender_Odd;
-         sp.prev_detrender_input_Odd = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
-         sp.Q1_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Odd;
+         detrender += sp.prev_detrender_Odd;
+         sp.prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Odd;
          sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
-         sp.Q1 += sp.prev_Q1_Odd;
-         sp.prev_Q1_input_Odd = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForOddPrev3;
-         sp.jI = 0 - sp.jI_Odd[sp.hilbertIdx];
-         sp.jI_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Odd;
+         Q1 += sp.prev_Q1_Odd;
+         sp.prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+         jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Odd;
          sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
-         sp.jI += sp.prev_jI_Odd;
+         jI += sp.prev_jI_Odd;
          sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
-         sp.jQ_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Odd;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Odd;
          sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
-         sp.jQ += sp.prev_jQ_Odd;
-         sp.prev_jQ_input_Odd = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForOddPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         jQ += sp.prev_jQ_Odd;
+         sp.prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
          /* The varaiable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -81548,66 +81301,66 @@ public final class Core {
           * used by the "even" logic later.
           */
          sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
-         sp.I1ForEvenPrev2 = sp.detrender;
+         sp.I1ForEvenPrev2 = detrender;
       }
       /* Adjust the period for next price bar */
-      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(sp.I2, sp.prevI2, sp.Q2 * sp.prevQ2)));
-      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
-      sp.prevQ2 = sp.Q2;
-      sp.prevI2 = sp.I2;
-      sp.tempReal = sp.period;
+      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(I2, sp.prevI2, Q2 * sp.prevQ2)));
+      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+      sp.prevQ2 = Q2;
+      sp.prevI2 = I2;
+      tempReal = sp.period;
       if( sp.Im != 0.0 && sp.Re != 0.0 ) {
          sp.period = 360.0 / (Math.atan(sp.Im / sp.Re) * sp.rad2Deg);
       }
-      sp.tempReal2 = 1.5 * sp.tempReal;
-      if( sp.period > sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 1.5 * tempReal;
+      if( sp.period > tempReal2 ) {
+         sp.period = tempReal2;
       }
-      sp.tempReal2 = 0.67 * sp.tempReal;
-      if( sp.period < sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 0.67 * tempReal;
+      if( sp.period < tempReal2 ) {
+         sp.period = tempReal2;
       }
       if( sp.period < 6 ) {
          sp.period = 6;
       } else if( sp.period > 50 ) {
          sp.period = 50;
       }
-      sp.period = Math.fma(0.2, sp.period, 0.8 * sp.tempReal);
+      sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Dominant Cycle Phase */
-      sp.DCPeriod = sp.smoothPeriod + 0.5;
-      sp.DCPeriodInt = (int)sp.DCPeriod;
-      sp.realPart = 0.0;
-      sp.imagPart = 0.0;
+      DCPeriod = sp.smoothPeriod + 0.5;
+      DCPeriodInt = (int)DCPeriod;
+      realPart = 0.0;
+      imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
        * value of smoothPrice.
        */
-      sp.idx = sp.smoothPrice_Idx;
-      for( sp.i = 0; sp.i < sp.DCPeriodInt; sp.i += 1 ) {
-         sp.tempReal = (double)sp.i * sp.constDeg2RadBy360 / (double)sp.DCPeriodInt;
-         sp.tempReal2 = sp.cb_smoothPrice[sp.idx];
-         sp.realPart += Math.sin(sp.tempReal) * sp.tempReal2;
-         sp.imagPart += Math.cos(sp.tempReal) * sp.tempReal2;
-         if( sp.idx == 0 ) {
-            sp.idx = 50 - 1;
+      idx = sp.smoothPrice_Idx;
+      for( i = 0; i < DCPeriodInt; i += 1 ) {
+         tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
+         tempReal2 = sp.cb_smoothPrice[idx];
+         realPart += Math.sin(tempReal) * tempReal2;
+         imagPart += Math.cos(tempReal) * tempReal2;
+         if( idx == 0 ) {
+            idx = 50 - 1;
          } else {
-            sp.idx -= 1;
+            idx -= 1;
          }
       }
-      sp.tempReal = Math.abs(sp.imagPart);
-      if( sp.tempReal > 0.0 ) {
-         sp.DCPhase = Math.atan(sp.realPart / sp.imagPart) * sp.rad2Deg;
-      } else if( sp.tempReal <= 0.01 ) {
-         if( sp.realPart < 0.0 ) {
+      tempReal = Math.abs(imagPart);
+      if( tempReal > 0.0 ) {
+         sp.DCPhase = Math.atan(realPart / imagPart) * sp.rad2Deg;
+      } else if( tempReal <= 0.01 ) {
+         if( realPart < 0.0 ) {
             sp.DCPhase -= 90.0;
-         } else if( sp.realPart > 0.0 ) {
+         } else if( realPart > 0.0 ) {
             sp.DCPhase += 90.0;
          }
       }
       sp.DCPhase += 90.0;
       /* Compensate for one bar lag of the weighted moving average */
       sp.DCPhase += 360.0 / sp.smoothPeriod;
-      if( sp.imagPart < 0.0 ) {
+      if( imagPart < 0.0 ) {
          sp.DCPhase += 180.0;
       }
       if( sp.DCPhase > 315.0 ) {
@@ -82046,48 +81799,37 @@ public final class Core {
       if( capCb_smoothPrice > historyLen + 1 ) {
          return RetCode.InternalError;
       }
-      sp.i = i;
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
       sp.period = period;
       sp.periodWMASum = periodWMASum;
       sp.periodWMASub = periodWMASub;
       sp.trailingWMAValue = trailingWMAValue;
-      sp.smoothedValue = smoothedValue;
       sp.a = a;
       sp.b = b;
-      sp.hilbertTempReal = hilbertTempReal;
       sp.hilbertIdx = hilbertIdx;
       sp.detrender_Odd = detrender_Odd;
       sp.detrender_Even = detrender_Even;
-      sp.detrender = detrender;
       sp.prev_detrender_Odd = prev_detrender_Odd;
       sp.prev_detrender_Even = prev_detrender_Even;
       sp.prev_detrender_input_Odd = prev_detrender_input_Odd;
       sp.prev_detrender_input_Even = prev_detrender_input_Even;
       sp.Q1_Odd = Q1_Odd;
       sp.Q1_Even = Q1_Even;
-      sp.Q1 = Q1;
       sp.prev_Q1_Odd = prev_Q1_Odd;
       sp.prev_Q1_Even = prev_Q1_Even;
       sp.prev_Q1_input_Odd = prev_Q1_input_Odd;
       sp.prev_Q1_input_Even = prev_Q1_input_Even;
       sp.jI_Odd = jI_Odd;
       sp.jI_Even = jI_Even;
-      sp.jI = jI;
       sp.prev_jI_Odd = prev_jI_Odd;
       sp.prev_jI_Even = prev_jI_Even;
       sp.prev_jI_input_Odd = prev_jI_input_Odd;
       sp.prev_jI_input_Even = prev_jI_input_Even;
       sp.jQ_Odd = jQ_Odd;
       sp.jQ_Even = jQ_Even;
-      sp.jQ = jQ;
       sp.prev_jQ_Odd = prev_jQ_Odd;
       sp.prev_jQ_Even = prev_jQ_Even;
       sp.prev_jQ_input_Odd = prev_jQ_input_Odd;
       sp.prev_jQ_input_Even = prev_jQ_input_Even;
-      sp.Q2 = Q2;
-      sp.I2 = I2;
       sp.prevQ2 = prevQ2;
       sp.prevI2 = prevI2;
       sp.Re = Re;
@@ -82099,12 +81841,7 @@ public final class Core {
       sp.rad2Deg = rad2Deg;
       sp.constDeg2RadBy360 = constDeg2RadBy360;
       sp.smoothPeriod = smoothPeriod;
-      sp.idx = idx;
-      sp.DCPeriodInt = DCPeriodInt;
       sp.DCPhase = DCPhase;
-      sp.DCPeriod = DCPeriod;
-      sp.imagPart = imagPart;
-      sp.realPart = realPart;
       sp.smoothPrice_Idx = smoothPrice_Idx;
       sp.maxIdx_smoothPrice = maxIdx_smoothPrice;
       sp.streamParity = historyLen % 2;
@@ -83014,47 +82751,37 @@ public final class Core {
     */
    public static final class HT_PHASOR_Stream {
       Core core;
-      double tempReal;
-      double tempReal2;
       double period;
       double periodWMASum;
       double periodWMASub;
       double trailingWMAValue;
-      double smoothedValue;
       double a;
       double b;
-      double hilbertTempReal;
       int hilbertIdx;
       double[] detrender_Odd;
       double[] detrender_Even;
-      double detrender;
       double prev_detrender_Odd;
       double prev_detrender_Even;
       double prev_detrender_input_Odd;
       double prev_detrender_input_Even;
       double[] Q1_Odd;
       double[] Q1_Even;
-      double Q1;
       double prev_Q1_Odd;
       double prev_Q1_Even;
       double prev_Q1_input_Odd;
       double prev_Q1_input_Even;
       double[] jI_Odd;
       double[] jI_Even;
-      double jI;
       double prev_jI_Odd;
       double prev_jI_Even;
       double prev_jI_input_Odd;
       double prev_jI_input_Even;
       double[] jQ_Odd;
       double[] jQ_Even;
-      double jQ;
       double prev_jQ_Odd;
       double prev_jQ_Even;
       double prev_jQ_input_Odd;
       double prev_jQ_input_Even;
-      double Q2;
-      double I2;
       double prevQ2;
       double prevI2;
       double Re;
@@ -83090,47 +82817,37 @@ public final class Core {
 
       HT_PHASOR_Stream( HT_PHASOR_Stream other ) {
          this.core = other.core;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          this.detrender_Odd = other.detrender_Odd.clone();
          this.detrender_Even = other.detrender_Even.clone();
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
          this.prev_detrender_input_Even = other.prev_detrender_input_Even;
          this.Q1_Odd = other.Q1_Odd.clone();
          this.Q1_Even = other.Q1_Even.clone();
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
          this.prev_Q1_input_Even = other.prev_Q1_input_Even;
          this.jI_Odd = other.jI_Odd.clone();
          this.jI_Even = other.jI_Even.clone();
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
          this.prev_jI_input_Even = other.prev_jI_input_Even;
          this.jQ_Odd = other.jQ_Odd.clone();
          this.jQ_Even = other.jQ_Even.clone();
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -83153,16 +82870,12 @@ public final class Core {
 
       void copyFrom( HT_PHASOR_Stream other ) {
          this.core = other.core;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
             System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
@@ -83174,7 +82887,6 @@ public final class Core {
          } else {
             this.detrender_Even = other.detrender_Even.clone();
          }
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
@@ -83189,7 +82901,6 @@ public final class Core {
          } else {
             this.Q1_Even = other.Q1_Even.clone();
          }
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
@@ -83204,7 +82915,6 @@ public final class Core {
          } else {
             this.jI_Even = other.jI_Even.clone();
          }
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
@@ -83219,13 +82929,10 @@ public final class Core {
          } else {
             this.jQ_Even = other.jQ_Even.clone();
          }
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -83361,7 +83068,17 @@ public final class Core {
    }
    void HT_PHASOR_StepImpl( HT_PHASOR_Stream sp, double inReal )
    {
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
       double adjustedPrevPeriod = 0.0;
+      double smoothedValue = 0.0;
+      double hilbertTempReal = 0.0;
+      double detrender = 0.0;
+      double Q1 = 0.0;
+      double jI = 0.0;
+      double jQ = 0.0;
+      double Q2 = 0.0;
+      double I2 = 0.0;
       double todayValue = 0.0;
       if( sp.ringCap_trailingWMAIdx == 0 ) {
          sp.ring_trailingWMAIdx_inReal[0] = inReal;
@@ -83372,53 +83089,53 @@ public final class Core {
       sp.periodWMASub -= sp.trailingWMAValue;
       sp.periodWMASum += todayValue * 4.0;
       sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
-      sp.smoothedValue = sp.periodWMASum * 0.1;
+      smoothedValue = sp.periodWMASum * 0.1;
       sp.periodWMASum -= sp.periodWMASub;
       if( sp.streamParity == 0 ) {
          /* Do the Hilbert Transforms for even price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
-         sp.detrender_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Even;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Even;
          sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
-         sp.detrender += sp.prev_detrender_Even;
-         sp.prev_detrender_input_Even = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
-         sp.Q1_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Even;
+         detrender += sp.prev_detrender_Even;
+         sp.prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Even;
          sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
-         sp.Q1 += sp.prev_Q1_Even;
-         sp.prev_Q1_input_Even = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.cur_outQuadrature = sp.Q1;
+         Q1 += sp.prev_Q1_Even;
+         sp.prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         sp.cur_outQuadrature = Q1;
          sp.cur_outInPhase = sp.I1ForEvenPrev3;
-         sp.hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
-         sp.jI = 0 - sp.jI_Even[sp.hilbertIdx];
-         sp.jI_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Even;
+         hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+         jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Even;
          sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
-         sp.jI += sp.prev_jI_Even;
+         jI += sp.prev_jI_Even;
          sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
-         sp.jQ_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Even;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Even;
          sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
-         sp.jQ += sp.prev_jQ_Even;
-         sp.prev_jQ_input_Even = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
+         jQ += sp.prev_jQ_Even;
+         sp.prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
          if( ++sp.hilbertIdx == 3 ) {
             sp.hilbertIdx = 0;
          }
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -83426,49 +83143,49 @@ public final class Core {
           * used by the "odd" logic later.
           */
          sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
-         sp.I1ForOddPrev2 = sp.detrender;
+         sp.I1ForOddPrev2 = detrender;
       } else {
          /* Do the Hilbert Transforms for odd price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
-         sp.detrender_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Odd;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Odd;
          sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
-         sp.detrender += sp.prev_detrender_Odd;
-         sp.prev_detrender_input_Odd = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
-         sp.Q1_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Odd;
+         detrender += sp.prev_detrender_Odd;
+         sp.prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Odd;
          sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
-         sp.Q1 += sp.prev_Q1_Odd;
-         sp.prev_Q1_input_Odd = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.cur_outQuadrature = sp.Q1;
+         Q1 += sp.prev_Q1_Odd;
+         sp.prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         sp.cur_outQuadrature = Q1;
          sp.cur_outInPhase = sp.I1ForOddPrev3;
-         sp.hilbertTempReal = sp.a * sp.I1ForOddPrev3;
-         sp.jI = 0 - sp.jI_Odd[sp.hilbertIdx];
-         sp.jI_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Odd;
+         hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+         jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Odd;
          sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
-         sp.jI += sp.prev_jI_Odd;
+         jI += sp.prev_jI_Odd;
          sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
-         sp.jQ_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Odd;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Odd;
          sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
-         sp.jQ += sp.prev_jQ_Odd;
-         sp.prev_jQ_input_Odd = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForOddPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         jQ += sp.prev_jQ_Odd;
+         sp.prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
          /* The varaiable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -83476,31 +83193,31 @@ public final class Core {
           * used by the "even" logic later.
           */
          sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
-         sp.I1ForEvenPrev2 = sp.detrender;
+         sp.I1ForEvenPrev2 = detrender;
       }
       /* Adjust the period for next price bar */
-      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(sp.I2, sp.prevI2, sp.Q2 * sp.prevQ2)));
-      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
-      sp.prevQ2 = sp.Q2;
-      sp.prevI2 = sp.I2;
-      sp.tempReal = sp.period;
+      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(I2, sp.prevI2, Q2 * sp.prevQ2)));
+      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+      sp.prevQ2 = Q2;
+      sp.prevI2 = I2;
+      tempReal = sp.period;
       if( sp.Im != 0.0 && sp.Re != 0.0 ) {
          sp.period = 360.0 / (Math.atan(sp.Im / sp.Re) * sp.rad2Deg);
       }
-      sp.tempReal2 = 1.5 * sp.tempReal;
-      if( sp.period > sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 1.5 * tempReal;
+      if( sp.period > tempReal2 ) {
+         sp.period = tempReal2;
       }
-      sp.tempReal2 = 0.67 * sp.tempReal;
-      if( sp.period < sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 0.67 * tempReal;
+      if( sp.period < tempReal2 ) {
+         sp.period = tempReal2;
       }
       if( sp.period < 6 ) {
          sp.period = 6;
       } else if( sp.period > 50 ) {
          sp.period = 50;
       }
-      sp.period = Math.fma(0.2, sp.period, 0.8 * sp.tempReal);
+      sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       /* Ooof... let's do the next price bar now! */
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
@@ -83860,47 +83577,37 @@ public final class Core {
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
       double[] capRing_trailingWMAIdx_inReal = new double[allocN_trailingWMAIdx];
       System.arraycopy(inReal, historyLen - cap_trailingWMAIdx, capRing_trailingWMAIdx_inReal, 0, cap_trailingWMAIdx);
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
       sp.period = period;
       sp.periodWMASum = periodWMASum;
       sp.periodWMASub = periodWMASub;
       sp.trailingWMAValue = trailingWMAValue;
-      sp.smoothedValue = smoothedValue;
       sp.a = a;
       sp.b = b;
-      sp.hilbertTempReal = hilbertTempReal;
       sp.hilbertIdx = hilbertIdx;
       sp.detrender_Odd = detrender_Odd;
       sp.detrender_Even = detrender_Even;
-      sp.detrender = detrender;
       sp.prev_detrender_Odd = prev_detrender_Odd;
       sp.prev_detrender_Even = prev_detrender_Even;
       sp.prev_detrender_input_Odd = prev_detrender_input_Odd;
       sp.prev_detrender_input_Even = prev_detrender_input_Even;
       sp.Q1_Odd = Q1_Odd;
       sp.Q1_Even = Q1_Even;
-      sp.Q1 = Q1;
       sp.prev_Q1_Odd = prev_Q1_Odd;
       sp.prev_Q1_Even = prev_Q1_Even;
       sp.prev_Q1_input_Odd = prev_Q1_input_Odd;
       sp.prev_Q1_input_Even = prev_Q1_input_Even;
       sp.jI_Odd = jI_Odd;
       sp.jI_Even = jI_Even;
-      sp.jI = jI;
       sp.prev_jI_Odd = prev_jI_Odd;
       sp.prev_jI_Even = prev_jI_Even;
       sp.prev_jI_input_Odd = prev_jI_input_Odd;
       sp.prev_jI_input_Even = prev_jI_input_Even;
       sp.jQ_Odd = jQ_Odd;
       sp.jQ_Even = jQ_Even;
-      sp.jQ = jQ;
       sp.prev_jQ_Odd = prev_jQ_Odd;
       sp.prev_jQ_Even = prev_jQ_Even;
       sp.prev_jQ_input_Odd = prev_jQ_input_Odd;
       sp.prev_jQ_input_Even = prev_jQ_input_Even;
-      sp.Q2 = Q2;
-      sp.I2 = I2;
       sp.prevQ2 = prevQ2;
       sp.prevI2 = prevI2;
       sp.Re = Re;
@@ -84936,48 +84643,37 @@ public final class Core {
     */
    public static final class HT_SINE_Stream {
       Core core;
-      int i;
-      double tempReal;
-      double tempReal2;
       double period;
       double periodWMASum;
       double periodWMASub;
       double trailingWMAValue;
-      double smoothedValue;
       double a;
       double b;
-      double hilbertTempReal;
       int hilbertIdx;
       double[] detrender_Odd;
       double[] detrender_Even;
-      double detrender;
       double prev_detrender_Odd;
       double prev_detrender_Even;
       double prev_detrender_input_Odd;
       double prev_detrender_input_Even;
       double[] Q1_Odd;
       double[] Q1_Even;
-      double Q1;
       double prev_Q1_Odd;
       double prev_Q1_Even;
       double prev_Q1_input_Odd;
       double prev_Q1_input_Even;
       double[] jI_Odd;
       double[] jI_Even;
-      double jI;
       double prev_jI_Odd;
       double prev_jI_Even;
       double prev_jI_input_Odd;
       double prev_jI_input_Even;
       double[] jQ_Odd;
       double[] jQ_Even;
-      double jQ;
       double prev_jQ_Odd;
       double prev_jQ_Even;
       double prev_jQ_input_Odd;
       double prev_jQ_input_Even;
-      double Q2;
-      double I2;
       double prevQ2;
       double prevI2;
       double Re;
@@ -84990,12 +84686,7 @@ public final class Core {
       double deg2Rad;
       double constDeg2RadBy360;
       double smoothPeriod;
-      int idx;
-      int DCPeriodInt;
       double DCPhase;
-      double DCPeriod;
-      double imagPart;
-      double realPart;
       int smoothPrice_Idx;
       int maxIdx_smoothPrice;
       int streamParity;
@@ -85026,48 +84717,37 @@ public final class Core {
 
       HT_SINE_Stream( HT_SINE_Stream other ) {
          this.core = other.core;
-         this.i = other.i;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          this.detrender_Odd = other.detrender_Odd.clone();
          this.detrender_Even = other.detrender_Even.clone();
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
          this.prev_detrender_input_Even = other.prev_detrender_input_Even;
          this.Q1_Odd = other.Q1_Odd.clone();
          this.Q1_Even = other.Q1_Even.clone();
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
          this.prev_Q1_input_Even = other.prev_Q1_input_Even;
          this.jI_Odd = other.jI_Odd.clone();
          this.jI_Even = other.jI_Even.clone();
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
          this.prev_jI_input_Even = other.prev_jI_input_Even;
          this.jQ_Odd = other.jQ_Odd.clone();
          this.jQ_Even = other.jQ_Even.clone();
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -85080,12 +84760,7 @@ public final class Core {
          this.deg2Rad = other.deg2Rad;
          this.constDeg2RadBy360 = other.constDeg2RadBy360;
          this.smoothPeriod = other.smoothPeriod;
-         this.idx = other.idx;
-         this.DCPeriodInt = other.DCPeriodInt;
          this.DCPhase = other.DCPhase;
-         this.DCPeriod = other.DCPeriod;
-         this.imagPart = other.imagPart;
-         this.realPart = other.realPart;
          this.smoothPrice_Idx = other.smoothPrice_Idx;
          this.maxIdx_smoothPrice = other.maxIdx_smoothPrice;
          this.streamParity = other.streamParity;
@@ -85103,17 +84778,12 @@ public final class Core {
 
       void copyFrom( HT_SINE_Stream other ) {
          this.core = other.core;
-         this.i = other.i;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
             System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
@@ -85125,7 +84795,6 @@ public final class Core {
          } else {
             this.detrender_Even = other.detrender_Even.clone();
          }
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
@@ -85140,7 +84809,6 @@ public final class Core {
          } else {
             this.Q1_Even = other.Q1_Even.clone();
          }
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
@@ -85155,7 +84823,6 @@ public final class Core {
          } else {
             this.jI_Even = other.jI_Even.clone();
          }
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
@@ -85170,13 +84837,10 @@ public final class Core {
          } else {
             this.jQ_Even = other.jQ_Even.clone();
          }
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -85189,12 +84853,7 @@ public final class Core {
          this.deg2Rad = other.deg2Rad;
          this.constDeg2RadBy360 = other.constDeg2RadBy360;
          this.smoothPeriod = other.smoothPeriod;
-         this.idx = other.idx;
-         this.DCPeriodInt = other.DCPeriodInt;
          this.DCPhase = other.DCPhase;
-         this.DCPeriod = other.DCPeriod;
-         this.imagPart = other.imagPart;
-         this.realPart = other.realPart;
          this.smoothPrice_Idx = other.smoothPrice_Idx;
          this.maxIdx_smoothPrice = other.maxIdx_smoothPrice;
          this.streamParity = other.streamParity;
@@ -85329,8 +84988,24 @@ public final class Core {
    }
    void HT_SINE_StepImpl( HT_SINE_Stream sp, double inReal )
    {
+      int i = 0;
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
       double adjustedPrevPeriod = 0.0;
+      double smoothedValue = 0.0;
+      double hilbertTempReal = 0.0;
+      double detrender = 0.0;
+      double Q1 = 0.0;
+      double jI = 0.0;
+      double jQ = 0.0;
+      double Q2 = 0.0;
+      double I2 = 0.0;
       double todayValue = 0.0;
+      int idx = 0;
+      int DCPeriodInt = 0;
+      double DCPeriod = 0.0;
+      double imagPart = 0.0;
+      double realPart = 0.0;
       if( sp.ringCap_trailingWMAIdx == 0 ) {
          sp.ring_trailingWMAIdx_inReal[0] = inReal;
       }
@@ -85340,55 +85015,55 @@ public final class Core {
       sp.periodWMASub -= sp.trailingWMAValue;
       sp.periodWMASum += todayValue * 4.0;
       sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
-      sp.smoothedValue = sp.periodWMASum * 0.1;
+      smoothedValue = sp.periodWMASum * 0.1;
       sp.periodWMASum -= sp.periodWMASub;
       /* Remember the smoothedValue into the smoothPrice
        * circular buffer.
        */
-      sp.cb_smoothPrice[sp.smoothPrice_Idx] = sp.smoothedValue;
+      sp.cb_smoothPrice[sp.smoothPrice_Idx] = smoothedValue;
       if( sp.streamParity == 0 ) {
          /* Do the Hilbert Transforms for even price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
-         sp.detrender_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Even;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Even;
          sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
-         sp.detrender += sp.prev_detrender_Even;
-         sp.prev_detrender_input_Even = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
-         sp.Q1_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Even;
+         detrender += sp.prev_detrender_Even;
+         sp.prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Even;
          sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
-         sp.Q1 += sp.prev_Q1_Even;
-         sp.prev_Q1_input_Even = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
-         sp.jI = 0 - sp.jI_Even[sp.hilbertIdx];
-         sp.jI_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Even;
+         Q1 += sp.prev_Q1_Even;
+         sp.prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+         jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Even;
          sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
-         sp.jI += sp.prev_jI_Even;
+         jI += sp.prev_jI_Even;
          sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
-         sp.jQ_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Even;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Even;
          sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
-         sp.jQ += sp.prev_jQ_Even;
-         sp.prev_jQ_input_Even = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
+         jQ += sp.prev_jQ_Even;
+         sp.prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
          if( ++sp.hilbertIdx == 3 ) {
             sp.hilbertIdx = 0;
          }
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -85396,47 +85071,47 @@ public final class Core {
           * used by the "odd" logic later.
           */
          sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
-         sp.I1ForOddPrev2 = sp.detrender;
+         sp.I1ForOddPrev2 = detrender;
       } else {
          /* Do the Hilbert Transforms for odd price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
-         sp.detrender_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Odd;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Odd;
          sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
-         sp.detrender += sp.prev_detrender_Odd;
-         sp.prev_detrender_input_Odd = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
-         sp.Q1_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Odd;
+         detrender += sp.prev_detrender_Odd;
+         sp.prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Odd;
          sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
-         sp.Q1 += sp.prev_Q1_Odd;
-         sp.prev_Q1_input_Odd = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForOddPrev3;
-         sp.jI = 0 - sp.jI_Odd[sp.hilbertIdx];
-         sp.jI_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Odd;
+         Q1 += sp.prev_Q1_Odd;
+         sp.prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+         jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Odd;
          sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
-         sp.jI += sp.prev_jI_Odd;
+         jI += sp.prev_jI_Odd;
          sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
-         sp.jQ_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Odd;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Odd;
          sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
-         sp.jQ += sp.prev_jQ_Odd;
-         sp.prev_jQ_input_Odd = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForOddPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         jQ += sp.prev_jQ_Odd;
+         sp.prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
          /* The varaiable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -85444,66 +85119,66 @@ public final class Core {
           * used by the "even" logic later.
           */
          sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
-         sp.I1ForEvenPrev2 = sp.detrender;
+         sp.I1ForEvenPrev2 = detrender;
       }
       /* Adjust the period for next price bar */
-      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(sp.I2, sp.prevI2, sp.Q2 * sp.prevQ2)));
-      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
-      sp.prevQ2 = sp.Q2;
-      sp.prevI2 = sp.I2;
-      sp.tempReal = sp.period;
+      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(I2, sp.prevI2, Q2 * sp.prevQ2)));
+      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+      sp.prevQ2 = Q2;
+      sp.prevI2 = I2;
+      tempReal = sp.period;
       if( sp.Im != 0.0 && sp.Re != 0.0 ) {
          sp.period = 360.0 / (Math.atan(sp.Im / sp.Re) * sp.rad2Deg);
       }
-      sp.tempReal2 = 1.5 * sp.tempReal;
-      if( sp.period > sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 1.5 * tempReal;
+      if( sp.period > tempReal2 ) {
+         sp.period = tempReal2;
       }
-      sp.tempReal2 = 0.67 * sp.tempReal;
-      if( sp.period < sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 0.67 * tempReal;
+      if( sp.period < tempReal2 ) {
+         sp.period = tempReal2;
       }
       if( sp.period < 6 ) {
          sp.period = 6;
       } else if( sp.period > 50 ) {
          sp.period = 50;
       }
-      sp.period = Math.fma(0.2, sp.period, 0.8 * sp.tempReal);
+      sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Dominant Cycle Phase */
-      sp.DCPeriod = sp.smoothPeriod + 0.5;
-      sp.DCPeriodInt = (int)sp.DCPeriod;
-      sp.realPart = 0.0;
-      sp.imagPart = 0.0;
+      DCPeriod = sp.smoothPeriod + 0.5;
+      DCPeriodInt = (int)DCPeriod;
+      realPart = 0.0;
+      imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
        * value of smoothPrice.
        */
-      sp.idx = sp.smoothPrice_Idx;
-      for( sp.i = 0; sp.i < sp.DCPeriodInt; sp.i += 1 ) {
-         sp.tempReal = (double)sp.i * sp.constDeg2RadBy360 / (double)sp.DCPeriodInt;
-         sp.tempReal2 = sp.cb_smoothPrice[sp.idx];
-         sp.realPart += Math.sin(sp.tempReal) * sp.tempReal2;
-         sp.imagPart += Math.cos(sp.tempReal) * sp.tempReal2;
-         if( sp.idx == 0 ) {
-            sp.idx = 50 - 1;
+      idx = sp.smoothPrice_Idx;
+      for( i = 0; i < DCPeriodInt; i += 1 ) {
+         tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
+         tempReal2 = sp.cb_smoothPrice[idx];
+         realPart += Math.sin(tempReal) * tempReal2;
+         imagPart += Math.cos(tempReal) * tempReal2;
+         if( idx == 0 ) {
+            idx = 50 - 1;
          } else {
-            sp.idx -= 1;
+            idx -= 1;
          }
       }
-      sp.tempReal = Math.abs(sp.imagPart);
-      if( sp.tempReal > 0.0 ) {
-         sp.DCPhase = Math.atan(sp.realPart / sp.imagPart) * sp.rad2Deg;
-      } else if( sp.tempReal <= 0.01 ) {
-         if( sp.realPart < 0.0 ) {
+      tempReal = Math.abs(imagPart);
+      if( tempReal > 0.0 ) {
+         sp.DCPhase = Math.atan(realPart / imagPart) * sp.rad2Deg;
+      } else if( tempReal <= 0.01 ) {
+         if( realPart < 0.0 ) {
             sp.DCPhase -= 90.0;
-         } else if( sp.realPart > 0.0 ) {
+         } else if( realPart > 0.0 ) {
             sp.DCPhase += 90.0;
          }
       }
       sp.DCPhase += 90.0;
       /* Compensate for one bar lag of the weighted moving average */
       sp.DCPhase += 360.0 / sp.smoothPeriod;
-      if( sp.imagPart < 0.0 ) {
+      if( imagPart < 0.0 ) {
          sp.DCPhase += 180.0;
       }
       if( sp.DCPhase > 315.0 ) {
@@ -85946,48 +85621,37 @@ public final class Core {
       if( capCb_smoothPrice > historyLen + 1 ) {
          return RetCode.InternalError;
       }
-      sp.i = i;
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
       sp.period = period;
       sp.periodWMASum = periodWMASum;
       sp.periodWMASub = periodWMASub;
       sp.trailingWMAValue = trailingWMAValue;
-      sp.smoothedValue = smoothedValue;
       sp.a = a;
       sp.b = b;
-      sp.hilbertTempReal = hilbertTempReal;
       sp.hilbertIdx = hilbertIdx;
       sp.detrender_Odd = detrender_Odd;
       sp.detrender_Even = detrender_Even;
-      sp.detrender = detrender;
       sp.prev_detrender_Odd = prev_detrender_Odd;
       sp.prev_detrender_Even = prev_detrender_Even;
       sp.prev_detrender_input_Odd = prev_detrender_input_Odd;
       sp.prev_detrender_input_Even = prev_detrender_input_Even;
       sp.Q1_Odd = Q1_Odd;
       sp.Q1_Even = Q1_Even;
-      sp.Q1 = Q1;
       sp.prev_Q1_Odd = prev_Q1_Odd;
       sp.prev_Q1_Even = prev_Q1_Even;
       sp.prev_Q1_input_Odd = prev_Q1_input_Odd;
       sp.prev_Q1_input_Even = prev_Q1_input_Even;
       sp.jI_Odd = jI_Odd;
       sp.jI_Even = jI_Even;
-      sp.jI = jI;
       sp.prev_jI_Odd = prev_jI_Odd;
       sp.prev_jI_Even = prev_jI_Even;
       sp.prev_jI_input_Odd = prev_jI_input_Odd;
       sp.prev_jI_input_Even = prev_jI_input_Even;
       sp.jQ_Odd = jQ_Odd;
       sp.jQ_Even = jQ_Even;
-      sp.jQ = jQ;
       sp.prev_jQ_Odd = prev_jQ_Odd;
       sp.prev_jQ_Even = prev_jQ_Even;
       sp.prev_jQ_input_Odd = prev_jQ_input_Odd;
       sp.prev_jQ_input_Even = prev_jQ_input_Even;
-      sp.Q2 = Q2;
-      sp.I2 = I2;
       sp.prevQ2 = prevQ2;
       sp.prevI2 = prevI2;
       sp.Re = Re;
@@ -86000,12 +85664,7 @@ public final class Core {
       sp.deg2Rad = deg2Rad;
       sp.constDeg2RadBy360 = constDeg2RadBy360;
       sp.smoothPeriod = smoothPeriod;
-      sp.idx = idx;
-      sp.DCPeriodInt = DCPeriodInt;
       sp.DCPhase = DCPhase;
-      sp.DCPeriod = DCPeriod;
-      sp.imagPart = imagPart;
-      sp.realPart = realPart;
       sp.smoothPrice_Idx = smoothPrice_Idx;
       sp.maxIdx_smoothPrice = maxIdx_smoothPrice;
       sp.streamParity = historyLen % 2;
@@ -86963,51 +86622,40 @@ public final class Core {
     */
    public static final class HT_TRENDLINE_Stream {
       Core core;
-      int i;
-      double tempReal;
-      double tempReal2;
       double period;
       double periodWMASum;
       double periodWMASub;
       double trailingWMAValue;
-      double smoothedValue;
       double iTrend1;
       double iTrend2;
       double iTrend3;
       double a;
       double b;
-      double hilbertTempReal;
       int hilbertIdx;
       double[] detrender_Odd;
       double[] detrender_Even;
-      double detrender;
       double prev_detrender_Odd;
       double prev_detrender_Even;
       double prev_detrender_input_Odd;
       double prev_detrender_input_Even;
       double[] Q1_Odd;
       double[] Q1_Even;
-      double Q1;
       double prev_Q1_Odd;
       double prev_Q1_Even;
       double prev_Q1_input_Odd;
       double prev_Q1_input_Even;
       double[] jI_Odd;
       double[] jI_Even;
-      double jI;
       double prev_jI_Odd;
       double prev_jI_Even;
       double prev_jI_input_Odd;
       double prev_jI_input_Even;
       double[] jQ_Odd;
       double[] jQ_Even;
-      double jQ;
       double prev_jQ_Odd;
       double prev_jQ_Even;
       double prev_jQ_input_Odd;
       double prev_jQ_input_Even;
-      double Q2;
-      double I2;
       double prevQ2;
       double prevI2;
       double Re;
@@ -87018,8 +86666,6 @@ public final class Core {
       double I1ForEvenPrev3;
       double rad2Deg;
       double smoothPeriod;
-      int DCPeriodInt;
-      double DCPeriod;
       int streamParity;
       int ringPos_trailingWMAIdx;
       int ringCap_trailingWMAIdx;
@@ -87047,51 +86693,40 @@ public final class Core {
 
       HT_TRENDLINE_Stream( HT_TRENDLINE_Stream other ) {
          this.core = other.core;
-         this.i = other.i;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.iTrend1 = other.iTrend1;
          this.iTrend2 = other.iTrend2;
          this.iTrend3 = other.iTrend3;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          this.detrender_Odd = other.detrender_Odd.clone();
          this.detrender_Even = other.detrender_Even.clone();
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
          this.prev_detrender_input_Even = other.prev_detrender_input_Even;
          this.Q1_Odd = other.Q1_Odd.clone();
          this.Q1_Even = other.Q1_Even.clone();
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
          this.prev_Q1_input_Even = other.prev_Q1_input_Even;
          this.jI_Odd = other.jI_Odd.clone();
          this.jI_Even = other.jI_Even.clone();
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
          this.prev_jI_input_Even = other.prev_jI_input_Even;
          this.jQ_Odd = other.jQ_Odd.clone();
          this.jQ_Even = other.jQ_Even.clone();
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -87102,8 +86737,6 @@ public final class Core {
          this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
          this.rad2Deg = other.rad2Deg;
          this.smoothPeriod = other.smoothPeriod;
-         this.DCPeriodInt = other.DCPeriodInt;
-         this.DCPeriod = other.DCPeriod;
          this.streamParity = other.streamParity;
          this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
          this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
@@ -87118,20 +86751,15 @@ public final class Core {
 
       void copyFrom( HT_TRENDLINE_Stream other ) {
          this.core = other.core;
-         this.i = other.i;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.iTrend1 = other.iTrend1;
          this.iTrend2 = other.iTrend2;
          this.iTrend3 = other.iTrend3;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
             System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
@@ -87143,7 +86771,6 @@ public final class Core {
          } else {
             this.detrender_Even = other.detrender_Even.clone();
          }
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
@@ -87158,7 +86785,6 @@ public final class Core {
          } else {
             this.Q1_Even = other.Q1_Even.clone();
          }
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
@@ -87173,7 +86799,6 @@ public final class Core {
          } else {
             this.jI_Even = other.jI_Even.clone();
          }
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
@@ -87188,13 +86813,10 @@ public final class Core {
          } else {
             this.jQ_Even = other.jQ_Even.clone();
          }
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -87205,8 +86827,6 @@ public final class Core {
          this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
          this.rad2Deg = other.rad2Deg;
          this.smoothPeriod = other.smoothPeriod;
-         this.DCPeriodInt = other.DCPeriodInt;
-         this.DCPeriod = other.DCPeriod;
          this.streamParity = other.streamParity;
          this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
          this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
@@ -87317,8 +86937,21 @@ public final class Core {
    }
    void HT_TRENDLINE_StepImpl( HT_TRENDLINE_Stream sp, double inReal )
    {
+      int i = 0;
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
       double adjustedPrevPeriod = 0.0;
+      double smoothedValue = 0.0;
+      double hilbertTempReal = 0.0;
+      double detrender = 0.0;
+      double Q1 = 0.0;
+      double jI = 0.0;
+      double jQ = 0.0;
+      double Q2 = 0.0;
+      double I2 = 0.0;
       double todayValue = 0.0;
+      int DCPeriodInt = 0;
+      double DCPeriod = 0.0;
       if( sp.ringCap_trailingWMAIdx == 0 ) {
          sp.ring_trailingWMAIdx_inReal[0] = inReal;
       }
@@ -87329,51 +86962,51 @@ public final class Core {
       sp.periodWMASub -= sp.trailingWMAValue;
       sp.periodWMASum += todayValue * 4.0;
       sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
-      sp.smoothedValue = sp.periodWMASum * 0.1;
+      smoothedValue = sp.periodWMASum * 0.1;
       sp.periodWMASum -= sp.periodWMASub;
       if( sp.streamParity == 0 ) {
          /* Do the Hilbert Transforms for even price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
-         sp.detrender_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Even;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Even;
          sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
-         sp.detrender += sp.prev_detrender_Even;
-         sp.prev_detrender_input_Even = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
-         sp.Q1_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Even;
+         detrender += sp.prev_detrender_Even;
+         sp.prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Even;
          sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
-         sp.Q1 += sp.prev_Q1_Even;
-         sp.prev_Q1_input_Even = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
-         sp.jI = 0 - sp.jI_Even[sp.hilbertIdx];
-         sp.jI_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Even;
+         Q1 += sp.prev_Q1_Even;
+         sp.prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+         jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Even;
          sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
-         sp.jI += sp.prev_jI_Even;
+         jI += sp.prev_jI_Even;
          sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
-         sp.jQ_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Even;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Even;
          sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
-         sp.jQ += sp.prev_jQ_Even;
-         sp.prev_jQ_input_Even = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
+         jQ += sp.prev_jQ_Even;
+         sp.prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
          if( ++sp.hilbertIdx == 3 ) {
             sp.hilbertIdx = 0;
          }
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -87381,47 +87014,47 @@ public final class Core {
           * used by the "odd" logic later.
           */
          sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
-         sp.I1ForOddPrev2 = sp.detrender;
+         sp.I1ForOddPrev2 = detrender;
       } else {
          /* Do the Hilbert Transforms for odd price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
-         sp.detrender_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Odd;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Odd;
          sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
-         sp.detrender += sp.prev_detrender_Odd;
-         sp.prev_detrender_input_Odd = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
-         sp.Q1_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Odd;
+         detrender += sp.prev_detrender_Odd;
+         sp.prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Odd;
          sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
-         sp.Q1 += sp.prev_Q1_Odd;
-         sp.prev_Q1_input_Odd = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForOddPrev3;
-         sp.jI = 0 - sp.jI_Odd[sp.hilbertIdx];
-         sp.jI_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Odd;
+         Q1 += sp.prev_Q1_Odd;
+         sp.prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+         jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Odd;
          sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
-         sp.jI += sp.prev_jI_Odd;
+         jI += sp.prev_jI_Odd;
          sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
-         sp.jQ_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Odd;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Odd;
          sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
-         sp.jQ += sp.prev_jQ_Odd;
-         sp.prev_jQ_input_Odd = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForOddPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         jQ += sp.prev_jQ_Odd;
+         sp.prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
          /* The varaiable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -87429,35 +87062,35 @@ public final class Core {
           * used by the "even" logic later.
           */
          sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
-         sp.I1ForEvenPrev2 = sp.detrender;
+         sp.I1ForEvenPrev2 = detrender;
       }
       /* Adjust the period for next price bar */
-      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(sp.I2, sp.prevI2, sp.Q2 * sp.prevQ2)));
-      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
-      sp.prevQ2 = sp.Q2;
-      sp.prevI2 = sp.I2;
-      sp.tempReal = sp.period;
+      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(I2, sp.prevI2, Q2 * sp.prevQ2)));
+      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+      sp.prevQ2 = Q2;
+      sp.prevI2 = I2;
+      tempReal = sp.period;
       if( sp.Im != 0.0 && sp.Re != 0.0 ) {
          sp.period = 360.0 / (Math.atan(sp.Im / sp.Re) * sp.rad2Deg);
       }
-      sp.tempReal2 = 1.5 * sp.tempReal;
-      if( sp.period > sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 1.5 * tempReal;
+      if( sp.period > tempReal2 ) {
+         sp.period = tempReal2;
       }
-      sp.tempReal2 = 0.67 * sp.tempReal;
-      if( sp.period < sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 0.67 * tempReal;
+      if( sp.period < tempReal2 ) {
+         sp.period = tempReal2;
       }
       if( sp.period < 6 ) {
          sp.period = 6;
       } else if( sp.period > 50 ) {
          sp.period = 50;
       }
-      sp.period = Math.fma(0.2, sp.period, 0.8 * sp.tempReal);
+      sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Trendline */
-      sp.DCPeriod = sp.smoothPeriod + 0.5;
-      sp.DCPeriodInt = (int)sp.DCPeriod;
+      DCPeriod = sp.smoothPeriod + 0.5;
+      DCPeriodInt = (int)DCPeriod;
       /* Average the RAW price over the dominant cycle period
        * (Ehlers, "Rocket Science for Traders": the Instantaneous
        * Trendline sums Price — not SmoothPrice, which only feeds
@@ -87470,20 +87103,20 @@ public final class Core {
        * bit-for-bit unchanged, but the constant cap lets the rescan-window
        * machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
        */
-      sp.tempReal = 0.0;
-      for( sp.i = 0; sp.i < 50; sp.i += 1 ) {
-         if( sp.i < sp.DCPeriodInt ) {
-            sp.tempReal += sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - sp.i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - sp.i - sp.winCap_i : sp.winPos_i + sp.winCap_i - sp.i];
+      tempReal = 0.0;
+      for( i = 0; i < 50; i += 1 ) {
+         if( i < DCPeriodInt ) {
+            tempReal += sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
          }
       }
-      if( sp.DCPeriodInt > 0 ) {
-         sp.tempReal = sp.tempReal / (double)sp.DCPeriodInt;
+      if( DCPeriodInt > 0 ) {
+         tempReal = tempReal / (double)DCPeriodInt;
       }
-      sp.tempReal2 = (Math.fma(2.0, sp.iTrend2, Math.fma(4.0, sp.tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
+      tempReal2 = (Math.fma(2.0, sp.iTrend2, Math.fma(4.0, tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
       sp.iTrend3 = sp.iTrend2;
       sp.iTrend2 = sp.iTrend1;
-      sp.iTrend1 = sp.tempReal;
-      sp.cur_outReal = sp.tempReal2;
+      sp.iTrend1 = tempReal;
+      sp.cur_outReal = tempReal2;
       /* Ooof... let's do the next price bar now! */
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
@@ -87890,51 +87523,40 @@ public final class Core {
       }
       double[] capWin_i_inReal = new double[cap_i];
       System.arraycopy(inReal, historyLen - cap_i, capWin_i_inReal, 0, cap_i);
-      sp.i = i;
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
       sp.period = period;
       sp.periodWMASum = periodWMASum;
       sp.periodWMASub = periodWMASub;
       sp.trailingWMAValue = trailingWMAValue;
-      sp.smoothedValue = smoothedValue;
       sp.iTrend1 = iTrend1;
       sp.iTrend2 = iTrend2;
       sp.iTrend3 = iTrend3;
       sp.a = a;
       sp.b = b;
-      sp.hilbertTempReal = hilbertTempReal;
       sp.hilbertIdx = hilbertIdx;
       sp.detrender_Odd = detrender_Odd;
       sp.detrender_Even = detrender_Even;
-      sp.detrender = detrender;
       sp.prev_detrender_Odd = prev_detrender_Odd;
       sp.prev_detrender_Even = prev_detrender_Even;
       sp.prev_detrender_input_Odd = prev_detrender_input_Odd;
       sp.prev_detrender_input_Even = prev_detrender_input_Even;
       sp.Q1_Odd = Q1_Odd;
       sp.Q1_Even = Q1_Even;
-      sp.Q1 = Q1;
       sp.prev_Q1_Odd = prev_Q1_Odd;
       sp.prev_Q1_Even = prev_Q1_Even;
       sp.prev_Q1_input_Odd = prev_Q1_input_Odd;
       sp.prev_Q1_input_Even = prev_Q1_input_Even;
       sp.jI_Odd = jI_Odd;
       sp.jI_Even = jI_Even;
-      sp.jI = jI;
       sp.prev_jI_Odd = prev_jI_Odd;
       sp.prev_jI_Even = prev_jI_Even;
       sp.prev_jI_input_Odd = prev_jI_input_Odd;
       sp.prev_jI_input_Even = prev_jI_input_Even;
       sp.jQ_Odd = jQ_Odd;
       sp.jQ_Even = jQ_Even;
-      sp.jQ = jQ;
       sp.prev_jQ_Odd = prev_jQ_Odd;
       sp.prev_jQ_Even = prev_jQ_Even;
       sp.prev_jQ_input_Odd = prev_jQ_input_Odd;
       sp.prev_jQ_input_Even = prev_jQ_input_Even;
-      sp.Q2 = Q2;
-      sp.I2 = I2;
       sp.prevQ2 = prevQ2;
       sp.prevI2 = prevI2;
       sp.Re = Re;
@@ -87945,8 +87567,6 @@ public final class Core {
       sp.I1ForEvenPrev3 = I1ForEvenPrev3;
       sp.rad2Deg = rad2Deg;
       sp.smoothPeriod = smoothPeriod;
-      sp.DCPeriodInt = DCPeriodInt;
-      sp.DCPeriod = DCPeriod;
       sp.streamParity = historyLen % 2;
       sp.ringPos_trailingWMAIdx = 0;
       sp.ringCap_trailingWMAIdx = cap_trailingWMAIdx;
@@ -89099,52 +88719,40 @@ public final class Core {
     */
    public static final class HT_TRENDMODE_Stream {
       Core core;
-      int i;
-      int j;
-      double tempReal;
-      double tempReal2;
       double period;
       double periodWMASum;
       double periodWMASub;
       double trailingWMAValue;
-      double smoothedValue;
       double iTrend1;
       double iTrend2;
       double iTrend3;
       double a;
       double b;
-      double hilbertTempReal;
       int hilbertIdx;
       double[] detrender_Odd;
       double[] detrender_Even;
-      double detrender;
       double prev_detrender_Odd;
       double prev_detrender_Even;
       double prev_detrender_input_Odd;
       double prev_detrender_input_Even;
       double[] Q1_Odd;
       double[] Q1_Even;
-      double Q1;
       double prev_Q1_Odd;
       double prev_Q1_Even;
       double prev_Q1_input_Odd;
       double prev_Q1_input_Even;
       double[] jI_Odd;
       double[] jI_Even;
-      double jI;
       double prev_jI_Odd;
       double prev_jI_Even;
       double prev_jI_input_Odd;
       double prev_jI_input_Even;
       double[] jQ_Odd;
       double[] jQ_Even;
-      double jQ;
       double prev_jQ_Odd;
       double prev_jQ_Even;
       double prev_jQ_input_Odd;
       double prev_jQ_input_Even;
-      double Q2;
-      double I2;
       double prevQ2;
       double prevI2;
       double Re;
@@ -89157,18 +88765,8 @@ public final class Core {
       double deg2Rad;
       double constDeg2RadBy360;
       double smoothPeriod;
-      int idx;
-      int DCPeriodInt;
       double DCPhase;
-      double DCPeriod;
-      double imagPart;
-      double realPart;
       int daysInTrend;
-      int trend;
-      double prevDCPhase;
-      double trendline;
-      double prevSine;
-      double prevLeadSine;
       double sine;
       double leadSine;
       int smoothPrice_Idx;
@@ -89202,52 +88800,40 @@ public final class Core {
 
       HT_TRENDMODE_Stream( HT_TRENDMODE_Stream other ) {
          this.core = other.core;
-         this.i = other.i;
-         this.j = other.j;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.iTrend1 = other.iTrend1;
          this.iTrend2 = other.iTrend2;
          this.iTrend3 = other.iTrend3;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          this.detrender_Odd = other.detrender_Odd.clone();
          this.detrender_Even = other.detrender_Even.clone();
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
          this.prev_detrender_input_Even = other.prev_detrender_input_Even;
          this.Q1_Odd = other.Q1_Odd.clone();
          this.Q1_Even = other.Q1_Even.clone();
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
          this.prev_Q1_input_Even = other.prev_Q1_input_Even;
          this.jI_Odd = other.jI_Odd.clone();
          this.jI_Even = other.jI_Even.clone();
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
          this.prev_jI_input_Even = other.prev_jI_input_Even;
          this.jQ_Odd = other.jQ_Odd.clone();
          this.jQ_Even = other.jQ_Even.clone();
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -89260,18 +88846,8 @@ public final class Core {
          this.deg2Rad = other.deg2Rad;
          this.constDeg2RadBy360 = other.constDeg2RadBy360;
          this.smoothPeriod = other.smoothPeriod;
-         this.idx = other.idx;
-         this.DCPeriodInt = other.DCPeriodInt;
          this.DCPhase = other.DCPhase;
-         this.DCPeriod = other.DCPeriod;
-         this.imagPart = other.imagPart;
-         this.realPart = other.realPart;
          this.daysInTrend = other.daysInTrend;
-         this.trend = other.trend;
-         this.prevDCPhase = other.prevDCPhase;
-         this.trendline = other.trendline;
-         this.prevSine = other.prevSine;
-         this.prevLeadSine = other.prevLeadSine;
          this.sine = other.sine;
          this.leadSine = other.leadSine;
          this.smoothPrice_Idx = other.smoothPrice_Idx;
@@ -89292,21 +88868,15 @@ public final class Core {
 
       void copyFrom( HT_TRENDMODE_Stream other ) {
          this.core = other.core;
-         this.i = other.i;
-         this.j = other.j;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.iTrend1 = other.iTrend1;
          this.iTrend2 = other.iTrend2;
          this.iTrend3 = other.iTrend3;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
             System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
@@ -89318,7 +88888,6 @@ public final class Core {
          } else {
             this.detrender_Even = other.detrender_Even.clone();
          }
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
@@ -89333,7 +88902,6 @@ public final class Core {
          } else {
             this.Q1_Even = other.Q1_Even.clone();
          }
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
@@ -89348,7 +88916,6 @@ public final class Core {
          } else {
             this.jI_Even = other.jI_Even.clone();
          }
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
@@ -89363,13 +88930,10 @@ public final class Core {
          } else {
             this.jQ_Even = other.jQ_Even.clone();
          }
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -89382,18 +88946,8 @@ public final class Core {
          this.deg2Rad = other.deg2Rad;
          this.constDeg2RadBy360 = other.constDeg2RadBy360;
          this.smoothPeriod = other.smoothPeriod;
-         this.idx = other.idx;
-         this.DCPeriodInt = other.DCPeriodInt;
          this.DCPhase = other.DCPhase;
-         this.DCPeriod = other.DCPeriod;
-         this.imagPart = other.imagPart;
-         this.realPart = other.realPart;
          this.daysInTrend = other.daysInTrend;
-         this.trend = other.trend;
-         this.prevDCPhase = other.prevDCPhase;
-         this.trendline = other.trendline;
-         this.prevSine = other.prevSine;
-         this.prevLeadSine = other.prevLeadSine;
          this.sine = other.sine;
          this.leadSine = other.leadSine;
          this.smoothPrice_Idx = other.smoothPrice_Idx;
@@ -89514,8 +89068,30 @@ public final class Core {
    }
    void HT_TRENDMODE_StepImpl( HT_TRENDMODE_Stream sp, double inReal )
    {
+      int i = 0;
+      int j = 0;
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
       double adjustedPrevPeriod = 0.0;
+      double smoothedValue = 0.0;
+      double hilbertTempReal = 0.0;
+      double detrender = 0.0;
+      double Q1 = 0.0;
+      double jI = 0.0;
+      double jQ = 0.0;
+      double Q2 = 0.0;
+      double I2 = 0.0;
       double todayValue = 0.0;
+      int idx = 0;
+      int DCPeriodInt = 0;
+      double DCPeriod = 0.0;
+      double imagPart = 0.0;
+      double realPart = 0.0;
+      int trend = 0;
+      double prevDCPhase = 0.0;
+      double trendline = 0.0;
+      double prevSine = 0.0;
+      double prevLeadSine = 0.0;
       if( sp.ringCap_trailingWMAIdx == 0 ) {
          sp.ring_trailingWMAIdx_inReal[0] = inReal;
       }
@@ -89526,55 +89102,55 @@ public final class Core {
       sp.periodWMASub -= sp.trailingWMAValue;
       sp.periodWMASum += todayValue * 4.0;
       sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
-      sp.smoothedValue = sp.periodWMASum * 0.1;
+      smoothedValue = sp.periodWMASum * 0.1;
       sp.periodWMASum -= sp.periodWMASub;
       /* Remember the smoothedValue into the smoothPrice
        * circular buffer.
        */
-      sp.cb_smoothPrice[sp.smoothPrice_Idx] = sp.smoothedValue;
+      sp.cb_smoothPrice[sp.smoothPrice_Idx] = smoothedValue;
       if( sp.streamParity == 0 ) {
          /* Do the Hilbert Transforms for even price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
-         sp.detrender_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Even;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Even;
          sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
-         sp.detrender += sp.prev_detrender_Even;
-         sp.prev_detrender_input_Even = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
-         sp.Q1_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Even;
+         detrender += sp.prev_detrender_Even;
+         sp.prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Even;
          sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
-         sp.Q1 += sp.prev_Q1_Even;
-         sp.prev_Q1_input_Even = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
-         sp.jI = 0 - sp.jI_Even[sp.hilbertIdx];
-         sp.jI_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Even;
+         Q1 += sp.prev_Q1_Even;
+         sp.prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+         jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Even;
          sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
-         sp.jI += sp.prev_jI_Even;
+         jI += sp.prev_jI_Even;
          sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
-         sp.jQ_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Even;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Even;
          sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
-         sp.jQ += sp.prev_jQ_Even;
-         sp.prev_jQ_input_Even = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
+         jQ += sp.prev_jQ_Even;
+         sp.prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
          if( ++sp.hilbertIdx == 3 ) {
             sp.hilbertIdx = 0;
          }
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -89582,47 +89158,47 @@ public final class Core {
           * used by the "odd" logic later.
           */
          sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
-         sp.I1ForOddPrev2 = sp.detrender;
+         sp.I1ForOddPrev2 = detrender;
       } else {
          /* Do the Hilbert Transforms for odd price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
-         sp.detrender_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Odd;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Odd;
          sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
-         sp.detrender += sp.prev_detrender_Odd;
-         sp.prev_detrender_input_Odd = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
-         sp.Q1_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Odd;
+         detrender += sp.prev_detrender_Odd;
+         sp.prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Odd;
          sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
-         sp.Q1 += sp.prev_Q1_Odd;
-         sp.prev_Q1_input_Odd = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForOddPrev3;
-         sp.jI = 0 - sp.jI_Odd[sp.hilbertIdx];
-         sp.jI_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Odd;
+         Q1 += sp.prev_Q1_Odd;
+         sp.prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+         jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Odd;
          sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
-         sp.jI += sp.prev_jI_Odd;
+         jI += sp.prev_jI_Odd;
          sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
-         sp.jQ_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Odd;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Odd;
          sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
-         sp.jQ += sp.prev_jQ_Odd;
-         sp.prev_jQ_input_Odd = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForOddPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         jQ += sp.prev_jQ_Odd;
+         sp.prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
          /* The varaiable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -89630,79 +89206,79 @@ public final class Core {
           * used by the "even" logic later.
           */
          sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
-         sp.I1ForEvenPrev2 = sp.detrender;
+         sp.I1ForEvenPrev2 = detrender;
       }
       /* Adjust the period for next price bar */
-      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(sp.I2, sp.prevI2, sp.Q2 * sp.prevQ2)));
-      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
-      sp.prevQ2 = sp.Q2;
-      sp.prevI2 = sp.I2;
-      sp.tempReal = sp.period;
+      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(I2, sp.prevI2, Q2 * sp.prevQ2)));
+      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+      sp.prevQ2 = Q2;
+      sp.prevI2 = I2;
+      tempReal = sp.period;
       if( sp.Im != 0.0 && sp.Re != 0.0 ) {
          sp.period = 360.0 / (Math.atan(sp.Im / sp.Re) * sp.rad2Deg);
       }
-      sp.tempReal2 = 1.5 * sp.tempReal;
-      if( sp.period > sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 1.5 * tempReal;
+      if( sp.period > tempReal2 ) {
+         sp.period = tempReal2;
       }
-      sp.tempReal2 = 0.67 * sp.tempReal;
-      if( sp.period < sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 0.67 * tempReal;
+      if( sp.period < tempReal2 ) {
+         sp.period = tempReal2;
       }
       if( sp.period < 6 ) {
          sp.period = 6;
       } else if( sp.period > 50 ) {
          sp.period = 50;
       }
-      sp.period = Math.fma(0.2, sp.period, 0.8 * sp.tempReal);
+      sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Dominant Cycle Phase */
-      sp.prevDCPhase = sp.DCPhase;
-      sp.DCPeriod = sp.smoothPeriod + 0.5;
-      sp.DCPeriodInt = (int)sp.DCPeriod;
-      sp.realPart = 0.0;
-      sp.imagPart = 0.0;
+      prevDCPhase = sp.DCPhase;
+      DCPeriod = sp.smoothPeriod + 0.5;
+      DCPeriodInt = (int)DCPeriod;
+      realPart = 0.0;
+      imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
        * value of smoothPrice.
        */
-      sp.idx = sp.smoothPrice_Idx;
-      for( sp.i = 0; sp.i < sp.DCPeriodInt; sp.i += 1 ) {
-         sp.tempReal = (double)sp.i * sp.constDeg2RadBy360 / (double)sp.DCPeriodInt;
-         sp.tempReal2 = sp.cb_smoothPrice[sp.idx];
-         sp.realPart += Math.sin(sp.tempReal) * sp.tempReal2;
-         sp.imagPart += Math.cos(sp.tempReal) * sp.tempReal2;
-         if( sp.idx == 0 ) {
-            sp.idx = 50 - 1;
+      idx = sp.smoothPrice_Idx;
+      for( i = 0; i < DCPeriodInt; i += 1 ) {
+         tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
+         tempReal2 = sp.cb_smoothPrice[idx];
+         realPart += Math.sin(tempReal) * tempReal2;
+         imagPart += Math.cos(tempReal) * tempReal2;
+         if( idx == 0 ) {
+            idx = 50 - 1;
          } else {
-            sp.idx -= 1;
+            idx -= 1;
          }
       }
-      sp.tempReal = Math.abs(sp.imagPart);
-      if( sp.tempReal > 0.0 ) {
-         sp.DCPhase = Math.atan(sp.realPart / sp.imagPart) * sp.rad2Deg;
-      } else if( sp.tempReal <= 0.01 ) {
-         if( sp.realPart < 0.0 ) {
+      tempReal = Math.abs(imagPart);
+      if( tempReal > 0.0 ) {
+         sp.DCPhase = Math.atan(realPart / imagPart) * sp.rad2Deg;
+      } else if( tempReal <= 0.01 ) {
+         if( realPart < 0.0 ) {
             sp.DCPhase -= 90.0;
-         } else if( sp.realPart > 0.0 ) {
+         } else if( realPart > 0.0 ) {
             sp.DCPhase += 90.0;
          }
       }
       sp.DCPhase += 90.0;
       /* Compensate for one bar lag of the weighted moving average */
       sp.DCPhase += 360.0 / sp.smoothPeriod;
-      if( sp.imagPart < 0.0 ) {
+      if( imagPart < 0.0 ) {
          sp.DCPhase += 180.0;
       }
       if( sp.DCPhase > 315.0 ) {
          sp.DCPhase -= 360.0;
       }
-      sp.prevSine = sp.sine;
-      sp.prevLeadSine = sp.leadSine;
+      prevSine = sp.sine;
+      prevLeadSine = sp.leadSine;
       sp.sine = Math.sin(sp.DCPhase * sp.deg2Rad);
       sp.leadSine = Math.sin((sp.DCPhase + 45) * sp.deg2Rad);
       /* Compute Trendline */
-      sp.DCPeriod = sp.smoothPeriod + 0.5;
-      sp.DCPeriodInt = (int)sp.DCPeriod;
+      DCPeriod = sp.smoothPeriod + 0.5;
+      DCPeriodInt = (int)DCPeriod;
       /* Average the RAW price over the dominant cycle period.
        * Unlike the DC-phase loop above (which reads the smoothPrice
        * circular buffer), the iTrend average reads the raw price,
@@ -89716,39 +89292,39 @@ public final class Core {
        * bit-for-bit unchanged, but the constant cap lets the rescan-window
        * machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
        */
-      sp.tempReal = 0.0;
-      for( sp.j = 0; sp.j < 50; sp.j += 1 ) {
-         if( sp.j < sp.DCPeriodInt ) {
-            sp.tempReal += sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - sp.j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - sp.j - sp.winCap_j : sp.winPos_j + sp.winCap_j - sp.j];
+      tempReal = 0.0;
+      for( j = 0; j < 50; j += 1 ) {
+         if( j < DCPeriodInt ) {
+            tempReal += sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j];
          }
       }
-      if( sp.DCPeriodInt > 0 ) {
-         sp.tempReal = sp.tempReal / (double)sp.DCPeriodInt;
+      if( DCPeriodInt > 0 ) {
+         tempReal = tempReal / (double)DCPeriodInt;
       }
-      sp.trendline = (Math.fma(2.0, sp.iTrend2, Math.fma(4.0, sp.tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
+      trendline = (Math.fma(2.0, sp.iTrend2, Math.fma(4.0, tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
       sp.iTrend3 = sp.iTrend2;
       sp.iTrend2 = sp.iTrend1;
-      sp.iTrend1 = sp.tempReal;
+      sp.iTrend1 = tempReal;
       /* Compute the trend Mode , and assume trend by default */
-      sp.trend = 1;
+      trend = 1;
       /* Measure days in trend from last crossing of the SineWave Indicator lines */
-      if( sp.sine > sp.leadSine && sp.prevSine <= sp.prevLeadSine || sp.sine < sp.leadSine && sp.prevSine >= sp.prevLeadSine ) {
+      if( sp.sine > sp.leadSine && prevSine <= prevLeadSine || sp.sine < sp.leadSine && prevSine >= prevLeadSine ) {
          sp.daysInTrend = 0;
-         sp.trend = 0;
+         trend = 0;
       }
       sp.daysInTrend += 1;
       if( sp.daysInTrend < 0.5 * sp.smoothPeriod ) {
-         sp.trend = 0;
+         trend = 0;
       }
-      sp.tempReal = sp.DCPhase - sp.prevDCPhase;
-      if( sp.smoothPeriod != 0.0 && (sp.tempReal > 0.67 * 360.0 / sp.smoothPeriod && sp.tempReal < 1.5 * 360.0 / sp.smoothPeriod) ) {
-         sp.trend = 0;
+      tempReal = sp.DCPhase - prevDCPhase;
+      if( sp.smoothPeriod != 0.0 && (tempReal > 0.67 * 360.0 / sp.smoothPeriod && tempReal < 1.5 * 360.0 / sp.smoothPeriod) ) {
+         trend = 0;
       }
-      sp.tempReal = sp.cb_smoothPrice[sp.smoothPrice_Idx];
-      if( sp.trendline != 0.0 && Math.abs((sp.tempReal - sp.trendline) / sp.trendline) >= 0.015 ) {
-         sp.trend = 1;
+      tempReal = sp.cb_smoothPrice[sp.smoothPrice_Idx];
+      if( trendline != 0.0 && Math.abs((tempReal - trendline) / trendline) >= 0.015 ) {
+         trend = 1;
       }
-      sp.cur_outInteger = sp.trend;
+      sp.cur_outInteger = trend;
       /* Ooof... let's do the next price bar now! */
       sp.smoothPrice_Idx = sp.smoothPrice_Idx + 1;
       if( sp.smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
@@ -90270,52 +89846,40 @@ public final class Core {
       if( capCb_smoothPrice > historyLen + 1 ) {
          return RetCode.InternalError;
       }
-      sp.i = i;
-      sp.j = j;
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
       sp.period = period;
       sp.periodWMASum = periodWMASum;
       sp.periodWMASub = periodWMASub;
       sp.trailingWMAValue = trailingWMAValue;
-      sp.smoothedValue = smoothedValue;
       sp.iTrend1 = iTrend1;
       sp.iTrend2 = iTrend2;
       sp.iTrend3 = iTrend3;
       sp.a = a;
       sp.b = b;
-      sp.hilbertTempReal = hilbertTempReal;
       sp.hilbertIdx = hilbertIdx;
       sp.detrender_Odd = detrender_Odd;
       sp.detrender_Even = detrender_Even;
-      sp.detrender = detrender;
       sp.prev_detrender_Odd = prev_detrender_Odd;
       sp.prev_detrender_Even = prev_detrender_Even;
       sp.prev_detrender_input_Odd = prev_detrender_input_Odd;
       sp.prev_detrender_input_Even = prev_detrender_input_Even;
       sp.Q1_Odd = Q1_Odd;
       sp.Q1_Even = Q1_Even;
-      sp.Q1 = Q1;
       sp.prev_Q1_Odd = prev_Q1_Odd;
       sp.prev_Q1_Even = prev_Q1_Even;
       sp.prev_Q1_input_Odd = prev_Q1_input_Odd;
       sp.prev_Q1_input_Even = prev_Q1_input_Even;
       sp.jI_Odd = jI_Odd;
       sp.jI_Even = jI_Even;
-      sp.jI = jI;
       sp.prev_jI_Odd = prev_jI_Odd;
       sp.prev_jI_Even = prev_jI_Even;
       sp.prev_jI_input_Odd = prev_jI_input_Odd;
       sp.prev_jI_input_Even = prev_jI_input_Even;
       sp.jQ_Odd = jQ_Odd;
       sp.jQ_Even = jQ_Even;
-      sp.jQ = jQ;
       sp.prev_jQ_Odd = prev_jQ_Odd;
       sp.prev_jQ_Even = prev_jQ_Even;
       sp.prev_jQ_input_Odd = prev_jQ_input_Odd;
       sp.prev_jQ_input_Even = prev_jQ_input_Even;
-      sp.Q2 = Q2;
-      sp.I2 = I2;
       sp.prevQ2 = prevQ2;
       sp.prevI2 = prevI2;
       sp.Re = Re;
@@ -90328,18 +89892,8 @@ public final class Core {
       sp.deg2Rad = deg2Rad;
       sp.constDeg2RadBy360 = constDeg2RadBy360;
       sp.smoothPeriod = smoothPeriod;
-      sp.idx = idx;
-      sp.DCPeriodInt = DCPeriodInt;
       sp.DCPhase = DCPhase;
-      sp.DCPeriod = DCPeriod;
-      sp.imagPart = imagPart;
-      sp.realPart = realPart;
       sp.daysInTrend = daysInTrend;
-      sp.trend = trend;
-      sp.prevDCPhase = prevDCPhase;
-      sp.trendline = trendline;
-      sp.prevSine = prevSine;
-      sp.prevLeadSine = prevLeadSine;
       sp.sine = sine;
       sp.leadSine = leadSine;
       sp.smoothPrice_Idx = smoothPrice_Idx;
@@ -100988,47 +100542,37 @@ public final class Core {
       Core core;
       double optInFastLimit;
       double optInSlowLimit;
-      double tempReal;
-      double tempReal2;
       double period;
       double periodWMASum;
       double periodWMASub;
       double trailingWMAValue;
-      double smoothedValue;
       double a;
       double b;
-      double hilbertTempReal;
       int hilbertIdx;
       double[] detrender_Odd;
       double[] detrender_Even;
-      double detrender;
       double prev_detrender_Odd;
       double prev_detrender_Even;
       double prev_detrender_input_Odd;
       double prev_detrender_input_Even;
       double[] Q1_Odd;
       double[] Q1_Even;
-      double Q1;
       double prev_Q1_Odd;
       double prev_Q1_Even;
       double prev_Q1_input_Odd;
       double prev_Q1_input_Even;
       double[] jI_Odd;
       double[] jI_Even;
-      double jI;
       double prev_jI_Odd;
       double prev_jI_Even;
       double prev_jI_input_Odd;
       double prev_jI_input_Even;
       double[] jQ_Odd;
       double[] jQ_Even;
-      double jQ;
       double prev_jQ_Odd;
       double prev_jQ_Even;
       double prev_jQ_input_Odd;
       double prev_jQ_input_Even;
-      double Q2;
-      double I2;
       double prevQ2;
       double prevI2;
       double Re;
@@ -101069,47 +100613,37 @@ public final class Core {
          this.core = other.core;
          this.optInFastLimit = other.optInFastLimit;
          this.optInSlowLimit = other.optInSlowLimit;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          this.detrender_Odd = other.detrender_Odd.clone();
          this.detrender_Even = other.detrender_Even.clone();
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
          this.prev_detrender_input_Even = other.prev_detrender_input_Even;
          this.Q1_Odd = other.Q1_Odd.clone();
          this.Q1_Even = other.Q1_Even.clone();
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
          this.prev_Q1_input_Even = other.prev_Q1_input_Even;
          this.jI_Odd = other.jI_Odd.clone();
          this.jI_Even = other.jI_Even.clone();
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
          this.prev_jI_input_Even = other.prev_jI_input_Even;
          this.jQ_Odd = other.jQ_Odd.clone();
          this.jQ_Even = other.jQ_Even.clone();
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -101137,16 +100671,12 @@ public final class Core {
          this.core = other.core;
          this.optInFastLimit = other.optInFastLimit;
          this.optInSlowLimit = other.optInSlowLimit;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
             System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
@@ -101158,7 +100688,6 @@ public final class Core {
          } else {
             this.detrender_Even = other.detrender_Even.clone();
          }
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
@@ -101173,7 +100702,6 @@ public final class Core {
          } else {
             this.Q1_Even = other.Q1_Even.clone();
          }
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
@@ -101188,7 +100716,6 @@ public final class Core {
          } else {
             this.jI_Even = other.jI_Even.clone();
          }
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
@@ -101203,13 +100730,10 @@ public final class Core {
          } else {
             this.jQ_Even = other.jQ_Even.clone();
          }
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -101348,7 +100872,17 @@ public final class Core {
    }
    void MAMA_StepImpl( MAMA_Stream sp, double inReal )
    {
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
       double adjustedPrevPeriod = 0.0;
+      double smoothedValue = 0.0;
+      double hilbertTempReal = 0.0;
+      double detrender = 0.0;
+      double Q1 = 0.0;
+      double jI = 0.0;
+      double jQ = 0.0;
+      double Q2 = 0.0;
+      double I2 = 0.0;
       double todayValue = 0.0;
       if( sp.ringCap_trailingWMAIdx == 0 ) {
          sp.ring_trailingWMAIdx_inReal[0] = inReal;
@@ -101359,51 +100893,51 @@ public final class Core {
       sp.periodWMASub -= sp.trailingWMAValue;
       sp.periodWMASum += todayValue * 4.0;
       sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
-      sp.smoothedValue = sp.periodWMASum * 0.1;
+      smoothedValue = sp.periodWMASum * 0.1;
       sp.periodWMASum -= sp.periodWMASub;
       if( sp.streamParity == 0 ) {
          /* Do the Hilbert Transforms for even price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
-         sp.detrender_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Even;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Even;
          sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
-         sp.detrender += sp.prev_detrender_Even;
-         sp.prev_detrender_input_Even = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
-         sp.Q1_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Even;
+         detrender += sp.prev_detrender_Even;
+         sp.prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Even;
          sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
-         sp.Q1 += sp.prev_Q1_Even;
-         sp.prev_Q1_input_Even = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
-         sp.jI = 0 - sp.jI_Even[sp.hilbertIdx];
-         sp.jI_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Even;
+         Q1 += sp.prev_Q1_Even;
+         sp.prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+         jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Even;
          sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
-         sp.jI += sp.prev_jI_Even;
+         jI += sp.prev_jI_Even;
          sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
-         sp.jQ_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Even;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Even;
          sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
-         sp.jQ += sp.prev_jQ_Even;
-         sp.prev_jQ_input_Even = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
+         jQ += sp.prev_jQ_Even;
+         sp.prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
          if( ++sp.hilbertIdx == 3 ) {
             sp.hilbertIdx = 0;
          }
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -101411,53 +100945,53 @@ public final class Core {
           * used by the "odd" logic later.
           */
          sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
-         sp.I1ForOddPrev2 = sp.detrender;
+         sp.I1ForOddPrev2 = detrender;
          /* Put Alpha in tempReal2 */
          if( sp.I1ForEvenPrev3 != 0.0 ) {
-            sp.tempReal2 = Math.atan(sp.Q1 / sp.I1ForEvenPrev3) * sp.rad2Deg;
+            tempReal2 = Math.atan(Q1 / sp.I1ForEvenPrev3) * sp.rad2Deg;
          } else {
-            sp.tempReal2 = 0.0;
+            tempReal2 = 0.0;
          }
       } else {
          /* Do the Hilbert Transforms for odd price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
-         sp.detrender_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Odd;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Odd;
          sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
-         sp.detrender += sp.prev_detrender_Odd;
-         sp.prev_detrender_input_Odd = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
-         sp.Q1_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Odd;
+         detrender += sp.prev_detrender_Odd;
+         sp.prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Odd;
          sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
-         sp.Q1 += sp.prev_Q1_Odd;
-         sp.prev_Q1_input_Odd = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForOddPrev3;
-         sp.jI = 0 - sp.jI_Odd[sp.hilbertIdx];
-         sp.jI_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Odd;
+         Q1 += sp.prev_Q1_Odd;
+         sp.prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+         jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Odd;
          sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
-         sp.jI += sp.prev_jI_Odd;
+         jI += sp.prev_jI_Odd;
          sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
-         sp.jQ_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Odd;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Odd;
          sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
-         sp.jQ += sp.prev_jQ_Odd;
-         sp.prev_jQ_input_Odd = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
-         sp.Q2 = Math.fma(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.fma(0.2, sp.I1ForOddPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         jQ += sp.prev_jQ_Odd;
+         sp.prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.fma(0.2, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
          /* The varaiable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -101465,61 +100999,61 @@ public final class Core {
           * used by the "odd" logic later.
           */
          sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
-         sp.I1ForEvenPrev2 = sp.detrender;
+         sp.I1ForEvenPrev2 = detrender;
          /* Put Alpha in tempReal2 */
          if( sp.I1ForOddPrev3 != 0.0 ) {
-            sp.tempReal2 = Math.atan(sp.Q1 / sp.I1ForOddPrev3) * sp.rad2Deg;
+            tempReal2 = Math.atan(Q1 / sp.I1ForOddPrev3) * sp.rad2Deg;
          } else {
-            sp.tempReal2 = 0.0;
+            tempReal2 = 0.0;
          }
       }
       /* Put Delta Phase into tempReal */
-      sp.tempReal = sp.prevPhase - sp.tempReal2;
-      sp.prevPhase = sp.tempReal2;
-      if( sp.tempReal < 1.0 ) {
-         sp.tempReal = 1.0;
+      tempReal = sp.prevPhase - tempReal2;
+      sp.prevPhase = tempReal2;
+      if( tempReal < 1.0 ) {
+         tempReal = 1.0;
       }
       /* Put Alpha into tempReal */
-      if( sp.tempReal > 1.0 ) {
-         sp.tempReal = sp.optInFastLimit / sp.tempReal;
-         if( sp.tempReal < sp.optInSlowLimit ) {
-            sp.tempReal = sp.optInSlowLimit;
+      if( tempReal > 1.0 ) {
+         tempReal = sp.optInFastLimit / tempReal;
+         if( tempReal < sp.optInSlowLimit ) {
+            tempReal = sp.optInSlowLimit;
          }
       } else {
-         sp.tempReal = sp.optInFastLimit;
+         tempReal = sp.optInFastLimit;
       }
       /* Calculate MAMA, FAMA */
-      sp.mama = Math.fma(1 - sp.tempReal, sp.mama, sp.tempReal * todayValue);
-      sp.tempReal *= 0.5;
-      sp.fama = Math.fma(1 - sp.tempReal, sp.fama, sp.tempReal * sp.mama);
+      sp.mama = Math.fma(1 - tempReal, sp.mama, tempReal * todayValue);
+      tempReal *= 0.5;
+      sp.fama = Math.fma(1 - tempReal, sp.fama, tempReal * sp.mama);
       /* FAMA is nullable (issue #125): its write carries no outIdx advance so
        * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
        */
       sp.cur_outFAMA = sp.fama;
       sp.cur_outMAMA = sp.mama;
       /* Adjust the period for next price bar */
-      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(sp.I2, sp.prevI2, sp.Q2 * sp.prevQ2)));
-      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
-      sp.prevQ2 = sp.Q2;
-      sp.prevI2 = sp.I2;
-      sp.tempReal = sp.period;
+      sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(I2, sp.prevI2, Q2 * sp.prevQ2)));
+      sp.Im = Math.fma(0.8, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+      sp.prevQ2 = Q2;
+      sp.prevI2 = I2;
+      tempReal = sp.period;
       if( sp.Im != 0.0 && sp.Re != 0.0 ) {
          sp.period = 360.0 / (Math.atan(sp.Im / sp.Re) * sp.rad2Deg);
       }
-      sp.tempReal2 = 1.5 * sp.tempReal;
-      if( sp.period > sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 1.5 * tempReal;
+      if( sp.period > tempReal2 ) {
+         sp.period = tempReal2;
       }
-      sp.tempReal2 = 0.67 * sp.tempReal;
-      if( sp.period < sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 0.67 * tempReal;
+      if( sp.period < tempReal2 ) {
+         sp.period = tempReal2;
       }
       if( sp.period < 6 ) {
          sp.period = 6;
       } else if( sp.period > 50 ) {
          sp.period = 50;
       }
-      sp.period = Math.fma(0.2, sp.period, 0.8 * sp.tempReal);
+      sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       /* Ooof... let's do the next price bar now! */
       sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
       sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
@@ -101927,47 +101461,37 @@ public final class Core {
       System.arraycopy(inReal, historyLen - cap_trailingWMAIdx, capRing_trailingWMAIdx_inReal, 0, cap_trailingWMAIdx);
       sp.optInFastLimit = optInFastLimit;
       sp.optInSlowLimit = optInSlowLimit;
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
       sp.period = period;
       sp.periodWMASum = periodWMASum;
       sp.periodWMASub = periodWMASub;
       sp.trailingWMAValue = trailingWMAValue;
-      sp.smoothedValue = smoothedValue;
       sp.a = a;
       sp.b = b;
-      sp.hilbertTempReal = hilbertTempReal;
       sp.hilbertIdx = hilbertIdx;
       sp.detrender_Odd = detrender_Odd;
       sp.detrender_Even = detrender_Even;
-      sp.detrender = detrender;
       sp.prev_detrender_Odd = prev_detrender_Odd;
       sp.prev_detrender_Even = prev_detrender_Even;
       sp.prev_detrender_input_Odd = prev_detrender_input_Odd;
       sp.prev_detrender_input_Even = prev_detrender_input_Even;
       sp.Q1_Odd = Q1_Odd;
       sp.Q1_Even = Q1_Even;
-      sp.Q1 = Q1;
       sp.prev_Q1_Odd = prev_Q1_Odd;
       sp.prev_Q1_Even = prev_Q1_Even;
       sp.prev_Q1_input_Odd = prev_Q1_input_Odd;
       sp.prev_Q1_input_Even = prev_Q1_input_Even;
       sp.jI_Odd = jI_Odd;
       sp.jI_Even = jI_Even;
-      sp.jI = jI;
       sp.prev_jI_Odd = prev_jI_Odd;
       sp.prev_jI_Even = prev_jI_Even;
       sp.prev_jI_input_Odd = prev_jI_input_Odd;
       sp.prev_jI_input_Even = prev_jI_input_Even;
       sp.jQ_Odd = jQ_Odd;
       sp.jQ_Even = jQ_Even;
-      sp.jQ = jQ;
       sp.prev_jQ_Odd = prev_jQ_Odd;
       sp.prev_jQ_Even = prev_jQ_Even;
       sp.prev_jQ_input_Odd = prev_jQ_input_Odd;
       sp.prev_jQ_input_Even = prev_jQ_input_Even;
-      sp.Q2 = Q2;
-      sp.I2 = I2;
       sp.prevQ2 = prevQ2;
       sp.prevI2 = prevI2;
       sp.Re = Re;
@@ -104100,8 +103624,8 @@ public final class Core {
       int optInTimePeriod;
       double highest;
       int trailingIdx;
-      int i;
       int highestIdx;
+      int i;
       int today;
       int xMask;
       double[] x_inReal;
@@ -104128,8 +103652,8 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          this.x_inReal = other.x_inReal.clone();
@@ -104143,8 +103667,8 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
@@ -104371,8 +103895,8 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.highest = highest;
       sp.trailingIdx = trailingIdx;
-      sp.i = i;
       sp.highestIdx = highestIdx;
+      sp.i = i;
       sp.today = today;
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
@@ -104788,8 +104312,8 @@ public final class Core {
       int optInTimePeriod;
       double highest;
       int trailingIdx;
-      int i;
       int highestIdx;
+      int i;
       int today;
       int xMask;
       double[] x_inReal;
@@ -104816,8 +104340,8 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          this.x_inReal = other.x_inReal.clone();
@@ -104831,8 +104355,8 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
@@ -105049,8 +104573,8 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.highest = highest;
       sp.trailingIdx = trailingIdx;
-      sp.i = i;
       sp.highestIdx = highestIdx;
+      sp.i = i;
       sp.today = today;
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
@@ -106105,13 +105629,6 @@ public final class Core {
       double posSumMF;
       double negSumMF;
       double prevValue;
-      double tempValue1;
-      double tempValue2;
-      double tempValue3;
-      double moneyFlow;
-      double posFlow;
-      double negFlow;
-      double posClamped;
       int nullRun;
       int mflow_Idx;
       int maxIdx_mflow;
@@ -106142,13 +105659,6 @@ public final class Core {
          this.posSumMF = other.posSumMF;
          this.negSumMF = other.negSumMF;
          this.prevValue = other.prevValue;
-         this.tempValue1 = other.tempValue1;
-         this.tempValue2 = other.tempValue2;
-         this.tempValue3 = other.tempValue3;
-         this.moneyFlow = other.moneyFlow;
-         this.posFlow = other.posFlow;
-         this.negFlow = other.negFlow;
-         this.posClamped = other.posClamped;
          this.nullRun = other.nullRun;
          this.mflow_Idx = other.mflow_Idx;
          this.maxIdx_mflow = other.maxIdx_mflow;
@@ -106166,13 +105676,6 @@ public final class Core {
          this.posSumMF = other.posSumMF;
          this.negSumMF = other.negSumMF;
          this.prevValue = other.prevValue;
-         this.tempValue1 = other.tempValue1;
-         this.tempValue2 = other.tempValue2;
-         this.tempValue3 = other.tempValue3;
-         this.moneyFlow = other.moneyFlow;
-         this.posFlow = other.posFlow;
-         this.negFlow = other.negFlow;
-         this.posClamped = other.posClamped;
          this.nullRun = other.nullRun;
          this.mflow_Idx = other.mflow_Idx;
          this.maxIdx_mflow = other.maxIdx_mflow;
@@ -106282,35 +105785,42 @@ public final class Core {
    }
    void MFI_StepImpl( MFI_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
+      double tempValue1 = 0.0;
+      double tempValue2 = 0.0;
+      double tempValue3 = 0.0;
+      double moneyFlow = 0.0;
+      double posFlow = 0.0;
+      double negFlow = 0.0;
+      double posClamped = 0.0;
       sp.posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
       sp.negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];
-      sp.tempValue1 = (inHigh + inLow + inClose) / 3.0;
-      sp.tempValue2 = sp.tempValue1 - sp.prevValue;
+      tempValue1 = (inHigh + inLow + inClose) / 3.0;
+      tempValue2 = tempValue1 - sp.prevValue;
       /* Dead-zone scaled to the two typical prices being compared (issue #107).
        * Captured before prevValue/tempValue1 are repurposed below.
        */
-      sp.tempValue3 = Math.abs(sp.tempValue1) + Math.abs(sp.prevValue);
-      sp.prevValue = sp.tempValue1;
-      sp.tempValue1 *= inVolume;
-      sp.moneyFlow = (Math.abs(sp.tempValue2) <= 0.00000000000001 * (sp.tempValue3)) ? 0.0 : sp.tempValue1;
-      sp.posFlow = (sp.tempValue2 < 0.0) ? 0.0 : sp.moneyFlow;
-      sp.negFlow = (sp.tempValue2 < 0.0) ? sp.moneyFlow : 0.0;
-      sp.cb_mflow_positive[sp.mflow_Idx] = sp.posFlow;
-      sp.cb_mflow_negative[sp.mflow_Idx] = sp.negFlow;
-      sp.posSumMF += sp.posFlow;
-      sp.negSumMF += sp.negFlow;
-      sp.nullRun = (sp.moneyFlow == 0.0) ? sp.nullRun + 1 : 0;
+      tempValue3 = Math.abs(tempValue1) + Math.abs(sp.prevValue);
+      sp.prevValue = tempValue1;
+      tempValue1 *= inVolume;
+      moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+      posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+      negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+      sp.cb_mflow_positive[sp.mflow_Idx] = posFlow;
+      sp.cb_mflow_negative[sp.mflow_Idx] = negFlow;
+      sp.posSumMF += posFlow;
+      sp.negSumMF += negFlow;
+      sp.nullRun = (moneyFlow == 0.0) ? sp.nullRun + 1 : 0;
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.posSumMF = 0.0;
          sp.negSumMF = 0.0;
       }
-      sp.tempValue1 = sp.posSumMF + sp.negSumMF;
-      sp.posClamped = (sp.posSumMF < 0.0) ? 0.0 : ((sp.posSumMF > sp.tempValue1) ? sp.tempValue1 : sp.posSumMF);
-      if( sp.tempValue1 <= 0.0 ) {
+      tempValue1 = sp.posSumMF + sp.negSumMF;
+      posClamped = (sp.posSumMF < 0.0) ? 0.0 : ((sp.posSumMF > tempValue1) ? tempValue1 : sp.posSumMF);
+      if( tempValue1 <= 0.0 ) {
          sp.cur_outReal = 0.0;
       } else {
-         sp.cur_outReal = 100.0 * (sp.posClamped / sp.tempValue1);
+         sp.cur_outReal = 100.0 * (posClamped / tempValue1);
       }
       sp.mflow_Idx = sp.mflow_Idx + 1;
       if( sp.mflow_Idx > sp.maxIdx_mflow ) {
@@ -106507,13 +106017,6 @@ public final class Core {
       sp.posSumMF = posSumMF;
       sp.negSumMF = negSumMF;
       sp.prevValue = prevValue;
-      sp.tempValue1 = tempValue1;
-      sp.tempValue2 = tempValue2;
-      sp.tempValue3 = tempValue3;
-      sp.moneyFlow = moneyFlow;
-      sp.posFlow = posFlow;
-      sp.negFlow = negFlow;
-      sp.posClamped = posClamped;
       sp.nullRun = nullRun;
       sp.mflow_Idx = mflow_Idx;
       sp.maxIdx_mflow = maxIdx_mflow;
@@ -107107,8 +106610,6 @@ public final class Core {
       int optInTimePeriod;
       double lowest;
       double highest;
-      double tmpLow;
-      double tmpHigh;
       int trailingIdx;
       int lowestIdx;
       int highestIdx;
@@ -107139,8 +106640,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
          this.highest = other.highest;
-         this.tmpLow = other.tmpLow;
-         this.tmpHigh = other.tmpHigh;
          this.trailingIdx = other.trailingIdx;
          this.lowestIdx = other.lowestIdx;
          this.highestIdx = other.highestIdx;
@@ -107158,8 +106657,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
          this.highest = other.highest;
-         this.tmpLow = other.tmpLow;
-         this.tmpHigh = other.tmpHigh;
          this.trailingIdx = other.trailingIdx;
          this.lowestIdx = other.lowestIdx;
          this.highestIdx = other.highestIdx;
@@ -107255,6 +106752,8 @@ public final class Core {
    }
    void MIDPOINT_StepImpl( MIDPOINT_Stream sp, double inReal )
    {
+      double tmpLow = 0.0;
+      double tmpHigh = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -107264,37 +106763,37 @@ public final class Core {
          sp.lowestIdx -= rebaseShift;
       }
       sp.x_inReal[sp.today & sp.xMask] = inReal;
-      sp.tmpHigh = sp.x_inReal[sp.today & sp.xMask];
-      sp.tmpLow = sp.tmpHigh;
+      tmpHigh = sp.x_inReal[sp.today & sp.xMask];
+      tmpLow = tmpHigh;
       if( sp.highestIdx < sp.trailingIdx ) {
          sp.highestIdx = sp.trailingIdx;
          sp.highest = sp.x_inReal[sp.highestIdx & sp.xMask];
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpHigh = sp.x_inReal[sp.i & sp.xMask];
-            if( sp.tmpHigh > sp.highest ) {
+            tmpHigh = sp.x_inReal[sp.i & sp.xMask];
+            if( tmpHigh > sp.highest ) {
                sp.highestIdx = sp.i;
-               sp.highest = sp.tmpHigh;
+               sp.highest = tmpHigh;
             }
          }
-      } else if( sp.tmpHigh >= sp.highest ) {
+      } else if( tmpHigh >= sp.highest ) {
          sp.highestIdx = sp.today;
-         sp.highest = sp.tmpHigh;
+         sp.highest = tmpHigh;
       }
       if( sp.lowestIdx < sp.trailingIdx ) {
          sp.lowestIdx = sp.trailingIdx;
          sp.lowest = sp.x_inReal[sp.lowestIdx & sp.xMask];
          sp.i = sp.lowestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpLow = sp.x_inReal[sp.i & sp.xMask];
-            if( sp.tmpLow < sp.lowest ) {
+            tmpLow = sp.x_inReal[sp.i & sp.xMask];
+            if( tmpLow < sp.lowest ) {
                sp.lowestIdx = sp.i;
-               sp.lowest = sp.tmpLow;
+               sp.lowest = tmpLow;
             }
          }
-      } else if( sp.tmpLow <= sp.lowest ) {
+      } else if( tmpLow <= sp.lowest ) {
          sp.lowestIdx = sp.today;
-         sp.lowest = sp.tmpLow;
+         sp.lowest = tmpLow;
       }
       sp.cur_outReal = (sp.highest + sp.lowest) / 2.0;
       sp.trailingIdx += 1;
@@ -107441,8 +106940,6 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.lowest = lowest;
       sp.highest = highest;
-      sp.tmpLow = tmpLow;
-      sp.tmpHigh = tmpHigh;
       sp.trailingIdx = trailingIdx;
       sp.lowestIdx = lowestIdx;
       sp.highestIdx = highestIdx;
@@ -110476,12 +109973,10 @@ public final class Core {
       int optInTimePeriod;
       double highest;
       double lowest;
-      double tmpHigh;
-      double tmpLow;
       int trailingIdx;
-      int i;
       int highestIdx;
       int lowestIdx;
+      int i;
       int today;
       int xMask;
       double[] x_inReal;
@@ -110510,12 +110005,10 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.lowest = other.lowest;
-         this.tmpHigh = other.tmpHigh;
-         this.tmpLow = other.tmpLow;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
          this.lowestIdx = other.lowestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          this.x_inReal = other.x_inReal.clone();
@@ -110531,12 +110024,10 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.lowest = other.lowest;
-         this.tmpHigh = other.tmpHigh;
-         this.tmpLow = other.tmpLow;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
          this.lowestIdx = other.lowestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
@@ -110651,6 +110142,8 @@ public final class Core {
    }
    void MINMAX_StepImpl( MINMAX_Stream sp, double inReal )
    {
+      double tmpHigh = 0.0;
+      double tmpLow = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -110660,37 +110153,37 @@ public final class Core {
          sp.lowestIdx -= rebaseShift;
       }
       sp.x_inReal[sp.today & sp.xMask] = inReal;
-      sp.tmpHigh = sp.x_inReal[sp.today & sp.xMask];
-      sp.tmpLow = sp.tmpHigh;
+      tmpHigh = sp.x_inReal[sp.today & sp.xMask];
+      tmpLow = tmpHigh;
       if( sp.highestIdx < sp.trailingIdx ) {
          sp.highestIdx = sp.trailingIdx;
          sp.highest = sp.x_inReal[sp.highestIdx & sp.xMask];
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpHigh = sp.x_inReal[sp.i & sp.xMask];
-            if( sp.tmpHigh > sp.highest ) {
+            tmpHigh = sp.x_inReal[sp.i & sp.xMask];
+            if( tmpHigh > sp.highest ) {
                sp.highestIdx = sp.i;
-               sp.highest = sp.tmpHigh;
+               sp.highest = tmpHigh;
             }
          }
-      } else if( sp.tmpHigh >= sp.highest ) {
+      } else if( tmpHigh >= sp.highest ) {
          sp.highestIdx = sp.today;
-         sp.highest = sp.tmpHigh;
+         sp.highest = tmpHigh;
       }
       if( sp.lowestIdx < sp.trailingIdx ) {
          sp.lowestIdx = sp.trailingIdx;
          sp.lowest = sp.x_inReal[sp.lowestIdx & sp.xMask];
          sp.i = sp.lowestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpLow = sp.x_inReal[sp.i & sp.xMask];
-            if( sp.tmpLow < sp.lowest ) {
+            tmpLow = sp.x_inReal[sp.i & sp.xMask];
+            if( tmpLow < sp.lowest ) {
                sp.lowestIdx = sp.i;
-               sp.lowest = sp.tmpLow;
+               sp.lowest = tmpLow;
             }
          }
-      } else if( sp.tmpLow <= sp.lowest ) {
+      } else if( tmpLow <= sp.lowest ) {
          sp.lowestIdx = sp.today;
-         sp.lowest = sp.tmpLow;
+         sp.lowest = tmpLow;
       }
       sp.cur_outMax = sp.highest;
       sp.cur_outMin = sp.lowest;
@@ -110833,12 +110326,10 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.highest = highest;
       sp.lowest = lowest;
-      sp.tmpHigh = tmpHigh;
-      sp.tmpLow = tmpLow;
       sp.trailingIdx = trailingIdx;
-      sp.i = i;
       sp.highestIdx = highestIdx;
       sp.lowestIdx = lowestIdx;
+      sp.i = i;
       sp.today = today;
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
@@ -111318,12 +110809,10 @@ public final class Core {
       int optInTimePeriod;
       double highest;
       double lowest;
-      double tmpHigh;
-      double tmpLow;
       int trailingIdx;
-      int i;
       int highestIdx;
       int lowestIdx;
+      int i;
       int today;
       int xMask;
       double[] x_inReal;
@@ -111352,12 +110841,10 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.lowest = other.lowest;
-         this.tmpHigh = other.tmpHigh;
-         this.tmpLow = other.tmpLow;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
          this.lowestIdx = other.lowestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          this.x_inReal = other.x_inReal.clone();
@@ -111373,12 +110860,10 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.lowest = other.lowest;
-         this.tmpHigh = other.tmpHigh;
-         this.tmpLow = other.tmpLow;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
          this.lowestIdx = other.lowestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
@@ -111493,6 +110978,8 @@ public final class Core {
    }
    void MINMAXINDEX_StepImpl( MINMAXINDEX_Stream sp, double inReal )
    {
+      double tmpHigh = 0.0;
+      double tmpLow = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -111502,37 +110989,37 @@ public final class Core {
          sp.lowestIdx -= rebaseShift;
       }
       sp.x_inReal[sp.today & sp.xMask] = inReal;
-      sp.tmpHigh = sp.x_inReal[sp.today & sp.xMask];
-      sp.tmpLow = sp.tmpHigh;
+      tmpHigh = sp.x_inReal[sp.today & sp.xMask];
+      tmpLow = tmpHigh;
       if( sp.highestIdx < sp.trailingIdx ) {
          sp.highestIdx = sp.trailingIdx;
          sp.highest = sp.x_inReal[sp.highestIdx & sp.xMask];
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpHigh = sp.x_inReal[sp.i & sp.xMask];
-            if( sp.tmpHigh > sp.highest ) {
+            tmpHigh = sp.x_inReal[sp.i & sp.xMask];
+            if( tmpHigh > sp.highest ) {
                sp.highestIdx = sp.i;
-               sp.highest = sp.tmpHigh;
+               sp.highest = tmpHigh;
             }
          }
-      } else if( sp.tmpHigh >= sp.highest ) {
+      } else if( tmpHigh >= sp.highest ) {
          sp.highestIdx = sp.today;
-         sp.highest = sp.tmpHigh;
+         sp.highest = tmpHigh;
       }
       if( sp.lowestIdx < sp.trailingIdx ) {
          sp.lowestIdx = sp.trailingIdx;
          sp.lowest = sp.x_inReal[sp.lowestIdx & sp.xMask];
          sp.i = sp.lowestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpLow = sp.x_inReal[sp.i & sp.xMask];
-            if( sp.tmpLow < sp.lowest ) {
+            tmpLow = sp.x_inReal[sp.i & sp.xMask];
+            if( tmpLow < sp.lowest ) {
                sp.lowestIdx = sp.i;
-               sp.lowest = sp.tmpLow;
+               sp.lowest = tmpLow;
             }
          }
-      } else if( sp.tmpLow <= sp.lowest ) {
+      } else if( tmpLow <= sp.lowest ) {
          sp.lowestIdx = sp.today;
-         sp.lowest = sp.tmpLow;
+         sp.lowest = tmpLow;
       }
       sp.cur_outMaxIdx = sp.highestIdx;
       sp.cur_outMinIdx = sp.lowestIdx;
@@ -111658,12 +111145,10 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.highest = highest;
       sp.lowest = lowest;
-      sp.tmpHigh = tmpHigh;
-      sp.tmpLow = tmpLow;
       sp.trailingIdx = trailingIdx;
-      sp.i = i;
       sp.highestIdx = highestIdx;
       sp.lowestIdx = lowestIdx;
+      sp.i = i;
       sp.today = today;
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
@@ -112484,9 +111969,6 @@ public final class Core {
       double prevHigh;
       double prevLow;
       double prevClose;
-      double tempReal;
-      double diffP;
-      double diffM;
       double prevMinusDM;
       double prevTR;
       double cur_outReal;
@@ -112513,9 +111995,6 @@ public final class Core {
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
          this.prevClose = other.prevClose;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevMinusDM = other.prevMinusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
@@ -112529,9 +112008,6 @@ public final class Core {
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
          this.prevClose = other.prevClose;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevMinusDM = other.prevMinusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
@@ -112619,15 +112095,18 @@ public final class Core {
    void MINUS_DI_StepImpl( MINUS_DI_Stream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffM > 0 && sp.diffP < sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffM > 0 && diffP < diffM ) {
             /* Case 2 and 4: +DM=0,-DM=diffM */
             double _true_range_0;
             double range_0 = sp.prevHigh - sp.prevLow;
@@ -112640,29 +112119,32 @@ public final class Core {
                range_0 = tmp_0;
             }
             _true_range_0 = range_0;
-            sp.tempReal = _true_range_0;
-            if( ((-0.00000000000001 < sp.tempReal) && (sp.tempReal < 0.00000000000001)) ) {
+            tempReal = _true_range_0;
+            if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                sp.cur_outReal = (double)0.0;
             } else {
-               sp.cur_outReal = sp.diffM / sp.tempReal;
+               sp.cur_outReal = diffM / tempReal;
             }
          } else {
             sp.cur_outReal = (double)0.0;
          }
          sp.prevClose = inClose;
       } else {
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
          /* Calculate the prevMinusDM */
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffM > 0 && sp.diffP < sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffM > 0 && diffP < diffM ) {
             /* Case 2 and 4: +DM=0,-DM=diffM */
-            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod + sp.diffM;
+            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod + diffM;
          } else {
             /* Case 1,3,5 and 7 */
             sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod;
@@ -112679,8 +112161,8 @@ public final class Core {
             range_1 = tmp_1;
          }
          _true_range_1 = range_1;
-         sp.tempReal = _true_range_1;
-         sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + sp.tempReal;
+         tempReal = _true_range_1;
+         sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
          if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
@@ -112882,9 +112364,6 @@ public final class Core {
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevMinusDM = prevMinusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -113148,9 +112627,6 @@ public final class Core {
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevMinusDM = prevMinusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -113767,9 +113243,6 @@ public final class Core {
       int optInTimePeriod;
       double prevHigh;
       double prevLow;
-      double tempReal;
-      double diffP;
-      double diffM;
       double prevMinusDM;
       double cur_outReal;
       int outRangeBegIdx;
@@ -113794,9 +113267,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevMinusDM = other.prevMinusDM;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -113808,9 +113278,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevMinusDM = other.prevMinusDM;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -113897,32 +113364,38 @@ public final class Core {
    void MINUS_DM_StepImpl( MINUS_DM_Stream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffM > 0 && sp.diffP < sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffM > 0 && diffP < diffM ) {
             /* Case 2 and 4: +DM=0,-DM=diffM */
-            sp.cur_outReal = sp.diffM;
+            sp.cur_outReal = diffM;
          } else {
             sp.cur_outReal = 0;
          }
       } else {
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffM > 0 && sp.diffP < sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffM > 0 && diffP < diffM ) {
             /* Case 2 and 4: +DM=0,-DM=diffM */
-            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod + sp.diffM;
+            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod + diffM;
          } else {
             /* Case 1,3,5 and 7 */
             sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod;
@@ -114070,9 +113543,6 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevMinusDM = prevMinusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -114244,9 +113714,6 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevMinusDM = prevMinusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -115904,8 +115371,6 @@ public final class Core {
       Core core;
       int optInTimePeriod;
       double prevATR;
-      double tempValue;
-      double val3;
       double lag1_inClose;
       double cur_outReal;
       int outRangeBegIdx;
@@ -115929,8 +115394,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
-         this.tempValue = other.tempValue;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -115941,8 +115404,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
-         this.tempValue = other.tempValue;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -116028,7 +115489,9 @@ public final class Core {
    }
    void NATR_StepImpl( NATR_Stream sp, double inHigh, double inLow, double inClose )
    {
+      double tempValue = 0.0;
       double val2 = 0.0;
+      double val3 = 0.0;
       double greatest = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
@@ -116043,9 +115506,9 @@ public final class Core {
       if( val2 > greatest ) {
          greatest = val2;
       }
-      sp.val3 = Math.abs(tempCY - tempLT);
-      if( sp.val3 > greatest ) {
-         greatest = sp.val3;
+      val3 = Math.abs(tempCY - tempLT);
+      if( val3 > greatest ) {
+         greatest = val3;
       }
       sp.prevATR *= sp.optInTimePeriod - 1;
       sp.prevATR += greatest;
@@ -116054,9 +115517,9 @@ public final class Core {
          /* No smoothing: emit the raw True Range (unnormalized). */
          sp.cur_outReal = sp.prevATR;
       } else {
-         sp.tempValue = inClose;
-         if( !((-0.00000000000001 < sp.tempValue) && (sp.tempValue < 0.00000000000001)) ) {
-            sp.cur_outReal = sp.prevATR / sp.tempValue * 100.0;
+         tempValue = inClose;
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            sp.cur_outReal = sp.prevATR / tempValue * 100.0;
          } else {
             sp.cur_outReal = 0.0;
          }
@@ -116271,8 +115734,6 @@ public final class Core {
       /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
       sp.prevATR = prevATR;
-      sp.tempValue = tempValue;
-      sp.val3 = val3;
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
@@ -116644,7 +116105,6 @@ public final class Core {
       double prevNVI;
       double prevClose;
       double prevVolume;
-      double tempNVI;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
@@ -116668,7 +116128,6 @@ public final class Core {
          this.prevNVI = other.prevNVI;
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
-         this.tempNVI = other.tempNVI;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -116679,7 +116138,6 @@ public final class Core {
          this.prevNVI = other.prevNVI;
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
-         this.tempNVI = other.tempNVI;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -116766,6 +116224,7 @@ public final class Core {
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
+      double tempNVI = 0.0;
       tempClose = inClose;
       tempVolume = inVolume;
       /* prevClose != 0 guards the percentage-change division: a zero previous
@@ -116784,10 +116243,10 @@ public final class Core {
           * fusion detector and silently re-round every bar, not just the
           * overflowing one.
           */
-         sp.tempNVI = sp.prevNVI;
-         sp.tempNVI += (tempClose - sp.prevClose) / sp.prevClose * sp.tempNVI;
-         if( (Double.isFinite(sp.tempNVI)) ) {
-            sp.prevNVI = sp.tempNVI;
+         tempNVI = sp.prevNVI;
+         tempNVI += (tempClose - sp.prevClose) / sp.prevClose * tempNVI;
+         if( (Double.isFinite(tempNVI)) ) {
+            sp.prevNVI = tempNVI;
          }
       }
       sp.cur_outReal = sp.prevNVI;
@@ -116859,7 +116318,6 @@ public final class Core {
       sp.prevNVI = prevNVI;
       sp.prevClose = prevClose;
       sp.prevVolume = prevVolume;
-      sp.tempNVI = tempNVI;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
@@ -118158,9 +117616,6 @@ public final class Core {
       double prevHigh;
       double prevLow;
       double prevClose;
-      double tempReal;
-      double diffP;
-      double diffM;
       double prevPlusDM;
       double prevTR;
       double cur_outReal;
@@ -118187,9 +117642,6 @@ public final class Core {
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
          this.prevClose = other.prevClose;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
@@ -118203,9 +117655,6 @@ public final class Core {
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
          this.prevClose = other.prevClose;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
@@ -118293,15 +117742,18 @@ public final class Core {
    void PLUS_DI_StepImpl( PLUS_DI_Stream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffP > 0 && diffP > diffM ) {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
             double _true_range_0;
             double range_0 = sp.prevHigh - sp.prevLow;
@@ -118314,29 +117766,32 @@ public final class Core {
                range_0 = tmp_0;
             }
             _true_range_0 = range_0;
-            sp.tempReal = _true_range_0;
-            if( ((-0.00000000000001 < sp.tempReal) && (sp.tempReal < 0.00000000000001)) ) {
+            tempReal = _true_range_0;
+            if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                sp.cur_outReal = (double)0.0;
             } else {
-               sp.cur_outReal = sp.diffP / sp.tempReal;
+               sp.cur_outReal = diffP / tempReal;
             }
          } else {
             sp.cur_outReal = (double)0.0;
          }
          sp.prevClose = inClose;
       } else {
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
          /* Calculate the prevPlusDM */
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffP > 0 && diffP > diffM ) {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + sp.diffP;
+            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + diffP;
          } else {
             /* Case 2,4,5 and 7 */
             sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod;
@@ -118353,8 +117808,8 @@ public final class Core {
             range_1 = tmp_1;
          }
          _true_range_1 = range_1;
-         sp.tempReal = _true_range_1;
-         sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + sp.tempReal;
+         tempReal = _true_range_1;
+         sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
          if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
@@ -118556,9 +118011,6 @@ public final class Core {
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevPlusDM = prevPlusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -118822,9 +118274,6 @@ public final class Core {
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevPlusDM = prevPlusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -119440,9 +118889,6 @@ public final class Core {
       int optInTimePeriod;
       double prevHigh;
       double prevLow;
-      double tempReal;
-      double diffP;
-      double diffM;
       double prevPlusDM;
       double cur_outReal;
       int outRangeBegIdx;
@@ -119467,9 +118913,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevPlusDM = other.prevPlusDM;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -119481,9 +118924,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevPlusDM = other.prevPlusDM;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -119570,32 +119010,38 @@ public final class Core {
    void PLUS_DM_StepImpl( PLUS_DM_Stream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffP > 0 && diffP > diffM ) {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.cur_outReal = sp.diffP;
+            sp.cur_outReal = diffP;
          } else {
             sp.cur_outReal = 0;
          }
       } else {
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffP > 0 && diffP > diffM ) {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + sp.diffP;
+            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + diffP;
          } else {
             /* Case 2,4,5 and 7 */
             sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod;
@@ -119743,9 +119189,6 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevPlusDM = prevPlusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -119917,9 +119360,6 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevPlusDM = prevPlusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -121032,7 +120472,6 @@ public final class Core {
       double prevPVI;
       double prevClose;
       double prevVolume;
-      double tempPVI;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
@@ -121056,7 +120495,6 @@ public final class Core {
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
-         this.tempPVI = other.tempPVI;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -121067,7 +120505,6 @@ public final class Core {
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
-         this.tempPVI = other.tempPVI;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -121154,6 +120591,7 @@ public final class Core {
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
+      double tempPVI = 0.0;
       tempClose = inClose;
       tempVolume = inVolume;
       /* prevClose != 0 guards the percentage-change division: a zero previous
@@ -121172,10 +120610,10 @@ public final class Core {
           * fusion detector and silently re-round every bar, not just the
           * overflowing one.
           */
-         sp.tempPVI = sp.prevPVI;
-         sp.tempPVI += (tempClose - sp.prevClose) / sp.prevClose * sp.tempPVI;
-         if( (Double.isFinite(sp.tempPVI)) ) {
-            sp.prevPVI = sp.tempPVI;
+         tempPVI = sp.prevPVI;
+         tempPVI += (tempClose - sp.prevClose) / sp.prevClose * tempPVI;
+         if( (Double.isFinite(tempPVI)) ) {
+            sp.prevPVI = tempPVI;
          }
       }
       sp.cur_outReal = sp.prevPVI;
@@ -121247,7 +120685,6 @@ public final class Core {
       sp.prevPVI = prevPVI;
       sp.prevClose = prevClose;
       sp.prevVolume = prevVolume;
-      sp.tempPVI = tempPVI;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
@@ -122405,7 +121842,6 @@ public final class Core {
       Core core;
       int optInTimePeriod;
       double periodTotal;
-      double tempReal;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_derived;
@@ -122431,7 +121867,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_derived = other.ring_trailingIdx_derived.clone();
@@ -122444,7 +121879,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          if( this.ring_trailingIdx_derived != null && this.ring_trailingIdx_derived.length == other.ring_trailingIdx_derived.length ) {
@@ -122536,13 +121970,14 @@ public final class Core {
    }
    void QSTICK_StepImpl( QSTICK_Stream sp, double inOpen, double inClose )
    {
+      double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_derived[0] = (double)(inClose - inOpen);
       }
       sp.periodTotal += (double)(inClose - inOpen);
-      sp.tempReal = sp.periodTotal;
+      tempReal = sp.periodTotal;
       sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
-      sp.cur_outReal = sp.tempReal / (double)sp.optInTimePeriod;
+      sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
       sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (double)(inClose - inOpen);
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
       if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
@@ -122649,7 +122084,6 @@ public final class Core {
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
-      sp.tempReal = tempReal;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_derived = capRing_trailingIdx_derived;
@@ -130088,7 +129522,6 @@ public final class Core {
       Core core;
       int optInTimePeriod;
       double periodTotal;
-      double tempReal;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
@@ -130114,7 +129547,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -130127,7 +129559,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
@@ -130219,13 +129650,14 @@ public final class Core {
    }
    void SMA_StepImpl( SMA_Stream sp, double inReal )
    {
+      double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
       }
       sp.periodTotal += (double)inReal;
-      sp.tempReal = sp.periodTotal;
+      tempReal = sp.periodTotal;
       sp.periodTotal -= (double)sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-      sp.cur_outReal = sp.tempReal / (double)sp.optInTimePeriod;
+      sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
       if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
@@ -130312,7 +129744,6 @@ public final class Core {
       System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
-      sp.tempReal = tempReal;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -131227,10 +130658,6 @@ public final class Core {
       double emaSlowDen;
       double emaFastNum;
       double emaFastDen;
-      double num;
-      double den;
-      double halfDen;
-      double smiValue;
       double prevSignal;
       int trailingIdx;
       int highestIdx;
@@ -131276,10 +130703,6 @@ public final class Core {
          this.emaSlowDen = other.emaSlowDen;
          this.emaFastNum = other.emaFastNum;
          this.emaFastDen = other.emaFastDen;
-         this.num = other.num;
-         this.den = other.den;
-         this.halfDen = other.halfDen;
-         this.smiValue = other.smiValue;
          this.prevSignal = other.prevSignal;
          this.trailingIdx = other.trailingIdx;
          this.highestIdx = other.highestIdx;
@@ -131312,10 +130735,6 @@ public final class Core {
          this.emaSlowDen = other.emaSlowDen;
          this.emaFastNum = other.emaFastNum;
          this.emaFastDen = other.emaFastDen;
-         this.num = other.num;
-         this.den = other.den;
-         this.halfDen = other.halfDen;
-         this.smiValue = other.smiValue;
          this.prevSignal = other.prevSignal;
          this.trailingIdx = other.trailingIdx;
          this.highestIdx = other.highestIdx;
@@ -131457,6 +130876,10 @@ public final class Core {
    void SMI_StepImpl( SMI_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
+      double num = 0.0;
+      double den = 0.0;
+      double halfDen = 0.0;
+      double smiValue = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -131502,10 +130925,10 @@ public final class Core {
          sp.highestIdx = sp.today;
          sp.highest = tmp;
       }
-      sp.den = sp.highest - sp.lowest;
-      sp.num = sp.x_inClose[sp.today & sp.xMask] - (sp.highest + sp.lowest) * 0.5;
-      sp.emaSlowNum = Math.fma(sp.num - sp.emaSlowNum, sp.kSlow, sp.emaSlowNum);
-      sp.emaSlowDen = Math.fma(sp.den - sp.emaSlowDen, sp.kSlow, sp.emaSlowDen);
+      den = sp.highest - sp.lowest;
+      num = sp.x_inClose[sp.today & sp.xMask] - (sp.highest + sp.lowest) * 0.5;
+      sp.emaSlowNum = Math.fma(num - sp.emaSlowNum, sp.kSlow, sp.emaSlowNum);
+      sp.emaSlowDen = Math.fma(den - sp.emaSlowDen, sp.kSlow, sp.emaSlowDen);
       sp.emaFastNum = Math.fma(sp.emaSlowNum - sp.emaFastNum, sp.kFast, sp.emaFastNum);
       sp.emaFastDen = Math.fma(sp.emaSlowDen - sp.emaFastDen, sp.kFast, sp.emaFastDen);
       /* Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
@@ -131514,14 +130937,14 @@ public final class Core {
        * H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
        * CCI (#7) and IMI (#112) convention.
        */
-      sp.halfDen = 0.5 * sp.emaFastDen;
-      if( !((-0.00000000000001 < sp.halfDen) && (sp.halfDen < 0.00000000000001)) ) {
-         sp.smiValue = 100.0 * sp.emaFastNum / sp.halfDen;
+      halfDen = 0.5 * sp.emaFastDen;
+      if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+         smiValue = 100.0 * sp.emaFastNum / halfDen;
       } else {
-         sp.smiValue = 0.0;
+         smiValue = 0.0;
       }
-      sp.prevSignal = Math.fma(sp.smiValue - sp.prevSignal, sp.kSignal, sp.prevSignal);
-      sp.cur_outSMI = sp.smiValue;
+      sp.prevSignal = Math.fma(smiValue - sp.prevSignal, sp.kSignal, sp.prevSignal);
+      sp.cur_outSMI = smiValue;
       sp.cur_outSMISignal = sp.prevSignal;
       sp.trailingIdx = sp.trailingIdx + 1;
       sp.today = sp.today + 1;
@@ -131842,10 +131265,6 @@ public final class Core {
       sp.emaSlowDen = emaSlowDen;
       sp.emaFastNum = emaFastNum;
       sp.emaFastDen = emaFastDen;
-      sp.num = num;
-      sp.den = den;
-      sp.halfDen = halfDen;
-      sp.smiValue = smiValue;
       sp.prevSignal = prevSignal;
       sp.trailingIdx = trailingIdx;
       sp.highestIdx = highestIdx;
@@ -137121,7 +136540,6 @@ public final class Core {
       Core core;
       int optInTimePeriod;
       double periodTotal;
-      double tempReal;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
@@ -137147,7 +136565,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -137160,7 +136577,6 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
@@ -137252,13 +136668,14 @@ public final class Core {
    }
    void SUM_StepImpl( SUM_Stream sp, double inReal )
    {
+      double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
       }
       sp.periodTotal += inReal;
-      sp.tempReal = sp.periodTotal;
+      tempReal = sp.periodTotal;
       sp.periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-      sp.cur_outReal = sp.tempReal;
+      sp.cur_outReal = tempReal;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
       if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
@@ -137341,7 +136758,6 @@ public final class Core {
       System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
-      sp.tempReal = tempReal;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -140389,7 +139805,6 @@ public final class Core {
     */
    public static final class TRANGE_Stream {
       Core core;
-      double val3;
       double lag1_inClose;
       double cur_outReal;
       int outRangeBegIdx;
@@ -140411,7 +139826,6 @@ public final class Core {
 
       TRANGE_Stream( TRANGE_Stream other ) {
          this.core = other.core;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -140420,7 +139834,6 @@ public final class Core {
 
       void copyFrom( TRANGE_Stream other ) {
          this.core = other.core;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -140507,6 +139920,7 @@ public final class Core {
    void TRANGE_StepImpl( TRANGE_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
+      double val3 = 0.0;
       double greatest = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
@@ -140521,9 +139935,9 @@ public final class Core {
       if( val2 > greatest ) {
          greatest = val2;
       }
-      sp.val3 = Math.abs(tempCY - tempLT);
-      if( sp.val3 > greatest ) {
-         greatest = sp.val3;
+      val3 = Math.abs(tempCY - tempLT);
+      if( val3 > greatest ) {
+         greatest = val3;
       }
       sp.cur_outReal = greatest;
       sp.lag1_inClose = inClose;
@@ -140599,7 +140013,6 @@ public final class Core {
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
-      sp.val3 = val3;
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
@@ -144632,7 +144045,6 @@ public final class Core {
       double b1Total;
       double b2Total;
       double b3Total;
-      double output;
       int trailingPos1;
       int trailingPos2;
       int term_Idx;
@@ -144670,7 +144082,6 @@ public final class Core {
          this.b1Total = other.b1Total;
          this.b2Total = other.b2Total;
          this.b3Total = other.b3Total;
-         this.output = other.output;
          this.trailingPos1 = other.trailingPos1;
          this.trailingPos2 = other.trailingPos2;
          this.term_Idx = other.term_Idx;
@@ -144695,7 +144106,6 @@ public final class Core {
          this.b1Total = other.b1Total;
          this.b2Total = other.b2Total;
          this.b3Total = other.b3Total;
-         this.output = other.output;
          this.trailingPos1 = other.trailingPos1;
          this.trailingPos2 = other.trailingPos2;
          this.term_Idx = other.term_Idx;
@@ -144811,6 +144221,7 @@ public final class Core {
       double trueRange = 0.0;
       double closeMinusTrueLow = 0.0;
       double tempDouble = 0.0;
+      double output = 0.0;
       double tempHT = 0.0;
       double tempLT = 0.0;
       double tempCY = 0.0;
@@ -144838,15 +144249,15 @@ public final class Core {
       sp.b2Total += trueRange;
       sp.b3Total += trueRange;
       /* Calculate the oscillator value for today */
-      sp.output = 0.0;
+      output = 0.0;
       if( !((-0.00000000000001 < sp.b1Total) && (sp.b1Total < 0.00000000000001)) ) {
-         sp.output += 4.0 * (sp.a1Total / sp.b1Total);
+         output += 4.0 * (sp.a1Total / sp.b1Total);
       }
       if( !((-0.00000000000001 < sp.b2Total) && (sp.b2Total < 0.00000000000001)) ) {
-         sp.output += 2.0 * (sp.a2Total / sp.b2Total);
+         output += 2.0 * (sp.a2Total / sp.b2Total);
       }
       if( !((-0.00000000000001 < sp.b3Total) && (sp.b3Total < 0.00000000000001)) ) {
-         sp.output += sp.a3Total / sp.b3Total;
+         output += sp.a3Total / sp.b3Total;
       }
       /* Remove the trailing terms to prepare for next day. Each was evaluated
        * once, when its bar entered the ring.
@@ -144875,7 +144286,7 @@ public final class Core {
        * to have the input array to be also the output
        * array.
        */
-      sp.cur_outReal = 100.0 * (sp.output / 7.0);
+      sp.cur_outReal = 100.0 * (output / 7.0);
       /* Increment indexes */
       sp.lag1_inClose = inClose;
    }
@@ -145127,7 +144538,6 @@ public final class Core {
       sp.b1Total = b1Total;
       sp.b2Total = b2Total;
       sp.b3Total = b3Total;
-      sp.output = output;
       sp.trailingPos1 = trailingPos1;
       sp.trailingPos2 = trailingPos2;
       sp.term_Idx = term_Idx;
@@ -145713,14 +145123,12 @@ public final class Core {
       double shift;
       double periodTotal1;
       double periodTotal2;
-      double meanValue1;
-      double variance;
       double invPeriod;
-      int j;
       int trailingIdx;
-      int windowStart;
       int nbInitialElementNeeded;
       int barsSinceReseed;
+      int j;
+      int windowStart;
       int i;
       int xMask;
       double[] x_inReal;
@@ -145749,14 +145157,12 @@ public final class Core {
          this.shift = other.shift;
          this.periodTotal1 = other.periodTotal1;
          this.periodTotal2 = other.periodTotal2;
-         this.meanValue1 = other.meanValue1;
-         this.variance = other.variance;
          this.invPeriod = other.invPeriod;
-         this.j = other.j;
          this.trailingIdx = other.trailingIdx;
-         this.windowStart = other.windowStart;
          this.nbInitialElementNeeded = other.nbInitialElementNeeded;
          this.barsSinceReseed = other.barsSinceReseed;
+         this.j = other.j;
+         this.windowStart = other.windowStart;
          this.i = other.i;
          this.xMask = other.xMask;
          this.x_inReal = other.x_inReal.clone();
@@ -145772,14 +145178,12 @@ public final class Core {
          this.shift = other.shift;
          this.periodTotal1 = other.periodTotal1;
          this.periodTotal2 = other.periodTotal2;
-         this.meanValue1 = other.meanValue1;
-         this.variance = other.variance;
          this.invPeriod = other.invPeriod;
-         this.j = other.j;
          this.trailingIdx = other.trailingIdx;
-         this.windowStart = other.windowStart;
          this.nbInitialElementNeeded = other.nbInitialElementNeeded;
          this.barsSinceReseed = other.barsSinceReseed;
+         this.j = other.j;
+         this.windowStart = other.windowStart;
          this.i = other.i;
          this.xMask = other.xMask;
          if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
@@ -145872,6 +145276,8 @@ public final class Core {
    void VAR_StepImpl( VAR_Stream sp, double inReal )
    {
       double tempReal = 0.0;
+      double meanValue1 = 0.0;
+      double variance = 0.0;
       if( sp.i >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.i -= rebaseShift;
@@ -145885,8 +145291,8 @@ public final class Core {
       sp.periodTotal1 += tempReal;
       tempReal *= tempReal;
       sp.periodTotal2 += tempReal;
-      sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
-      sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+      meanValue1 = sp.periodTotal1 * sp.invPeriod;
+      variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
       /* Remove the trailing value (prepares the next window). */
       tempReal = sp.x_inReal[sp.trailingIdx & sp.xMask] - sp.shift;
       sp.periodTotal1 -= tempReal;
@@ -145907,7 +145313,7 @@ public final class Core {
        * reseeding it every bar. Guarantees a non-negative output.
        */
       sp.barsSinceReseed -= 1;
-      if( sp.variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 ) {
+      if( variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 ) {
          sp.barsSinceReseed = 32 * sp.optInTimePeriod;
          sp.windowStart = sp.i - sp.nbInitialElementNeeded;
          tempReal = 0.0;
@@ -145923,8 +145329,8 @@ public final class Core {
             tempReal *= tempReal;
             sp.periodTotal2 += tempReal;
          }
-         sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
-         sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+         meanValue1 = sp.periodTotal1 * sp.invPeriod;
+         variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
          /* Floor the fresh figure at the same ratio the trigger above uses, now
           * measured against the RE-ANCHORED sums. With the shift AT the window
           * mean the deviations sum to ~0, so a real window has variance ~
@@ -145974,8 +145380,8 @@ public final class Core {
           * THIS - the alternative is an unconditional clamp at the output write,
           * which needs no such argument but does cost ~3%.
           */
-         if( sp.variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
-            sp.variance = 0.0;
+         if( variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
+            variance = 0.0;
          }
          /* Re-remove the trailing value under the new shift so the carried state
           * matches the non-reseed path.
@@ -145985,7 +145391,7 @@ public final class Core {
          tempReal *= tempReal;
          sp.periodTotal2 -= tempReal;
       }
-      sp.cur_outReal = sp.variance;
+      sp.cur_outReal = variance;
       sp.i += 1;
    }
    private RetCode VAR_OpenImpl( VAR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
@@ -146194,14 +145600,12 @@ public final class Core {
       sp.shift = shift;
       sp.periodTotal1 = periodTotal1;
       sp.periodTotal2 = periodTotal2;
-      sp.meanValue1 = meanValue1;
-      sp.variance = variance;
       sp.invPeriod = invPeriod;
-      sp.j = j;
       sp.trailingIdx = trailingIdx;
-      sp.windowStart = windowStart;
       sp.nbInitialElementNeeded = nbInitialElementNeeded;
       sp.barsSinceReseed = barsSinceReseed;
+      sp.j = j;
+      sp.windowStart = windowStart;
       sp.i = i;
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
@@ -147489,8 +146893,6 @@ public final class Core {
       int optInTimePeriod;
       double sumPV;
       double sumV;
-      double tempPV;
-      double tempV;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
@@ -147518,8 +146920,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
-         this.tempPV = other.tempPV;
-         this.tempV = other.tempV;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -147534,8 +146934,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
-         this.tempPV = other.tempPV;
-         this.tempV = other.tempV;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
@@ -147643,6 +147041,8 @@ public final class Core {
    }
    void VWMA_StepImpl( VWMA_Stream sp, double inReal, double inVolume )
    {
+      double tempPV = 0.0;
+      double tempV = 0.0;
       double tempReal = 0.0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -147659,15 +147059,15 @@ public final class Core {
        * add-new / snapshot / subtract-old order of TA_SMA. That order is what
        * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
        */
-      sp.tempPV = sp.sumPV;
-      sp.tempV = sp.sumV;
+      tempPV = sp.sumPV;
+      tempV = sp.sumV;
       /* Read the trailing values before writing the output, since the caller
        * may pass the same buffer for an input and the output.
        */
       tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
       sp.sumPV -= tempReal;
       sp.sumV -= sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
-      sp.cur_outReal = sp.tempPV / (double)sp.optInTimePeriod / (sp.tempV / (double)sp.optInTimePeriod);
+      sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -147713,8 +147113,6 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.sumPV = 0.0;
          sp.sumV = 0.0;
-         sp.tempPV = 0.0;
-         sp.tempV = 0.0;
          sp.ringPos_trailingIdx = 0;
          sp.ringCap_trailingIdx = 0;
          sp.ring_trailingIdx_inReal = new double[1];
@@ -147808,8 +147206,6 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumPV = sumPV;
       sp.sumV = sumV;
-      sp.tempPV = tempPV;
-      sp.tempV = tempV;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -148244,7 +147640,6 @@ public final class Core {
       Core core;
       double sum;
       double prevClose;
-      double trueExtreme;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
@@ -148267,7 +147662,6 @@ public final class Core {
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
-         this.trueExtreme = other.trueExtreme;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -148277,7 +147671,6 @@ public final class Core {
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
-         this.trueExtreme = other.trueExtreme;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -148363,19 +147756,20 @@ public final class Core {
    void WAD_StepImpl( WAD_Stream sp, double inHigh, double inLow, double inClose )
    {
       double close = 0.0;
+      double trueExtreme = 0.0;
       close = inClose;
       if( close > sp.prevClose ) {
-         sp.trueExtreme = inLow;
-         if( sp.prevClose < sp.trueExtreme ) {
-            sp.trueExtreme = sp.prevClose;
+         trueExtreme = inLow;
+         if( sp.prevClose < trueExtreme ) {
+            trueExtreme = sp.prevClose;
          }
-         sp.sum += close - sp.trueExtreme;
+         sp.sum += close - trueExtreme;
       } else if( close < sp.prevClose ) {
-         sp.trueExtreme = inHigh;
-         if( sp.prevClose > sp.trueExtreme ) {
-            sp.trueExtreme = sp.prevClose;
+         trueExtreme = inHigh;
+         if( sp.prevClose > trueExtreme ) {
+            trueExtreme = sp.prevClose;
          }
-         sp.sum += close - sp.trueExtreme;
+         sp.sum += close - trueExtreme;
       }
       sp.cur_outReal = sp.sum;
       sp.prevClose = close;
@@ -148466,7 +147860,6 @@ public final class Core {
       /* Capture the live batch state into the handle. */
       sp.sum = sum;
       sp.prevClose = prevClose;
-      sp.trueExtreme = trueExtreme;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }

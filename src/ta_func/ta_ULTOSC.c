@@ -633,7 +633,6 @@ struct TA_ULTOSC_Stream {
    double b1Total;
    double b2Total;
    double b3Total;
-   double output;
    int trailingPos1;
    int trailingPos2;
    int term_Idx;
@@ -664,6 +663,7 @@ static void TA_ULTOSC_StepImpl( struct TA_ULTOSC_Stream *sp, double inHigh, doub
    double trueRange;
    double closeMinusTrueLow;
    double tempDouble;
+   double output;
    double tempHT;
    double tempLT;
    double tempCY;
@@ -694,18 +694,18 @@ static void TA_ULTOSC_StepImpl( struct TA_ULTOSC_Stream *sp, double inHigh, doub
    sp->b2Total += trueRange;
    sp->b3Total += trueRange;
    /* Calculate the oscillator value for today */
-   sp->output = 0.0;
+   output = 0.0;
    if( !TA_IS_ZERO(sp->b1Total) )
    {
-      sp->output += 4.0 * (sp->a1Total / sp->b1Total);
+      output += 4.0 * (sp->a1Total / sp->b1Total);
    }
    if( !TA_IS_ZERO(sp->b2Total) )
    {
-      sp->output += 2.0 * (sp->a2Total / sp->b2Total);
+      output += 2.0 * (sp->a2Total / sp->b2Total);
    }
    if( !TA_IS_ZERO(sp->b3Total) )
    {
-      sp->output += sp->a3Total / sp->b3Total;
+      output += sp->a3Total / sp->b3Total;
    }
    /* Remove the trailing terms to prepare for next day. Each was evaluated
     * once, when its bar entered the ring.
@@ -737,7 +737,7 @@ static void TA_ULTOSC_StepImpl( struct TA_ULTOSC_Stream *sp, double inHigh, doub
     * to have the input array to be also the output
     * array.
     */
-   *outReal= 100.0 * (sp->output / 7.0);
+   *outReal= 100.0 * (output / 7.0);
    /* Increment indexes */
    sp->lag1_inClose = inClose;
 }
@@ -799,7 +799,7 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
       double trueRange;
       double closeMinusTrueLow;
       double tempDouble;
-      double output = 0.0;
+      double output;
       double tempHT;
       double tempLT;
       double tempCY;
@@ -1036,7 +1036,6 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
       sp->b1Total = b1Total;
       sp->b2Total = b2Total;
       sp->b3Total = b3Total;
-      sp->output = output;
       sp->trailingPos1 = trailingPos1;
       sp->trailingPos2 = trailingPos2;
       sp->term_Idx = term_Idx;

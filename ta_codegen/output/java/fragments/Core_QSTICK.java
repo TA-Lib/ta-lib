@@ -343,7 +343,6 @@
       Core core;
       int optInTimePeriod;
       double periodTotal;
-      double tempReal;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_derived;
@@ -369,7 +368,6 @@
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_derived = other.ring_trailingIdx_derived.clone();
@@ -382,7 +380,6 @@
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          if( this.ring_trailingIdx_derived != null && this.ring_trailingIdx_derived.length == other.ring_trailingIdx_derived.length ) {
@@ -474,13 +471,14 @@
    }
    void QSTICK_StepImpl( QSTICK_Stream sp, double inOpen, double inClose )
    {
+      double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_derived[0] = (double)(inClose - inOpen);
       }
       sp.periodTotal += (double)(inClose - inOpen);
-      sp.tempReal = sp.periodTotal;
+      tempReal = sp.periodTotal;
       sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
-      sp.cur_outReal = sp.tempReal / (double)sp.optInTimePeriod;
+      sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
       sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (double)(inClose - inOpen);
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
       if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
@@ -587,7 +585,6 @@
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
-      sp.tempReal = tempReal;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_derived = capRing_trailingIdx_derived;

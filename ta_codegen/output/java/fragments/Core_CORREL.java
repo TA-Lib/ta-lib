@@ -603,23 +603,15 @@
       double sumY;
       double sumX2;
       double sumY2;
-      double y;
-      double trailingX;
-      double trailingY;
       double shiftX;
       double shiftY;
-      double ssX;
-      double ssY;
-      double spXY;
       double leavingX;
       double leavingY;
-      double tempReal;
       double invPeriod;
       int lookbackTotal;
       int trailingIdx;
-      int j;
-      int windowStart;
       int barsSinceReseed;
+      int j;
       int today;
       int xMask;
       double[] x_inReal0;
@@ -650,23 +642,15 @@
          this.sumY = other.sumY;
          this.sumX2 = other.sumX2;
          this.sumY2 = other.sumY2;
-         this.y = other.y;
-         this.trailingX = other.trailingX;
-         this.trailingY = other.trailingY;
          this.shiftX = other.shiftX;
          this.shiftY = other.shiftY;
-         this.ssX = other.ssX;
-         this.ssY = other.ssY;
-         this.spXY = other.spXY;
          this.leavingX = other.leavingX;
          this.leavingY = other.leavingY;
-         this.tempReal = other.tempReal;
          this.invPeriod = other.invPeriod;
          this.lookbackTotal = other.lookbackTotal;
          this.trailingIdx = other.trailingIdx;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
          this.barsSinceReseed = other.barsSinceReseed;
+         this.j = other.j;
          this.today = other.today;
          this.xMask = other.xMask;
          this.x_inReal0 = other.x_inReal0.clone();
@@ -684,23 +668,15 @@
          this.sumY = other.sumY;
          this.sumX2 = other.sumX2;
          this.sumY2 = other.sumY2;
-         this.y = other.y;
-         this.trailingX = other.trailingX;
-         this.trailingY = other.trailingY;
          this.shiftX = other.shiftX;
          this.shiftY = other.shiftY;
-         this.ssX = other.ssX;
-         this.ssY = other.ssY;
-         this.spXY = other.spXY;
          this.leavingX = other.leavingX;
          this.leavingY = other.leavingY;
-         this.tempReal = other.tempReal;
          this.invPeriod = other.invPeriod;
          this.lookbackTotal = other.lookbackTotal;
          this.trailingIdx = other.trailingIdx;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
          this.barsSinceReseed = other.barsSinceReseed;
+         this.j = other.j;
          this.today = other.today;
          this.xMask = other.xMask;
          if( this.x_inReal0 != null && this.x_inReal0.length == other.x_inReal0.length ) {
@@ -809,6 +785,14 @@
    void CORREL_StepImpl( CORREL_Stream sp, double inReal0, double inReal1 )
    {
       double x = 0.0;
+      double y = 0.0;
+      double trailingX = 0.0;
+      double trailingY = 0.0;
+      double ssX = 0.0;
+      double ssY = 0.0;
+      double spXY = 0.0;
+      double tempReal = 0.0;
+      int windowStart = 0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -821,13 +805,13 @@
       x = sp.x_inReal0[sp.today & sp.xMask] - sp.shiftX;
       sp.sumX += x;
       sp.sumX2 += x * x;
-      sp.y = sp.x_inReal1[sp.today & sp.xMask] - sp.shiftY;
-      sp.sumXY += x * sp.y;
-      sp.sumY += sp.y;
-      sp.sumY2 += sp.y * sp.y;
-      sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
-      sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
-      sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+      y = sp.x_inReal1[sp.today & sp.xMask] - sp.shiftY;
+      sp.sumXY += x * y;
+      sp.sumY += y;
+      sp.sumY2 += y * y;
+      ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+      ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+      spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
       /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
        * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
        * below 1e-6 of the squared deviations it is extracted from; OR the value
@@ -855,38 +839,38 @@
        * startIdx-lookbackTotal+outIdx, which is >= outIdx.
        */
       sp.barsSinceReseed -= 1;
-      if( sp.ssX < 0.000001 * sp.sumX2 || sp.ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 ) {
+      if( ssX < 0.000001 * sp.sumX2 || ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 ) {
          sp.barsSinceReseed = 32 * sp.optInTimePeriod;
-         sp.windowStart = sp.today - sp.lookbackTotal;
+         windowStart = sp.today - sp.lookbackTotal;
          /* Both means in one pass over the window: the rebuild below is the
           * only O(period) work on this function's hot path, so it is walked
           * twice, not three times.
           */
-         sp.tempReal = 0.0;
+         tempReal = 0.0;
          sp.shiftY = 0.0;
-         for( sp.j = sp.windowStart; sp.j <= sp.today; sp.j += 1 ) {
-            sp.tempReal += sp.x_inReal0[sp.j & sp.xMask];
+         for( sp.j = windowStart; sp.j <= sp.today; sp.j += 1 ) {
+            tempReal += sp.x_inReal0[sp.j & sp.xMask];
             sp.shiftY += sp.x_inReal1[sp.j & sp.xMask];
          }
-         sp.shiftX = sp.tempReal * sp.invPeriod;
+         sp.shiftX = tempReal * sp.invPeriod;
          sp.shiftY = sp.shiftY * sp.invPeriod;
          sp.sumY2 = 0.0;
          sp.sumX2 = sp.sumY2;
          sp.sumY = sp.sumX2;
          sp.sumX = sp.sumY;
          sp.sumXY = sp.sumX;
-         for( sp.j = sp.windowStart; sp.j <= sp.today; sp.j += 1 ) {
+         for( sp.j = windowStart; sp.j <= sp.today; sp.j += 1 ) {
             x = sp.x_inReal0[sp.j & sp.xMask] - sp.shiftX;
             sp.sumX += x;
             sp.sumX2 += x * x;
-            sp.y = sp.x_inReal1[sp.j & sp.xMask] - sp.shiftY;
-            sp.sumXY += x * sp.y;
-            sp.sumY += sp.y;
-            sp.sumY2 += sp.y * sp.y;
+            y = sp.x_inReal1[sp.j & sp.xMask] - sp.shiftY;
+            sp.sumXY += x * y;
+            sp.sumY += y;
+            sp.sumY2 += y * y;
          }
-         sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
-         sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
-         sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+         ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+         ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+         spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
          /* A sum of squares is non-negative by definition, but this one is
           * extracted as a difference, so its SIGN is not guaranteed on a window
           * sitting inside a flat stretch. Enforce the invariant HERE and not at
@@ -896,18 +880,18 @@
           * divide below can rely on both being >= 0 and needs no sign test of
           * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
           */
-         if( sp.ssX < 0.0 ) {
-            sp.ssX = 0.0;
+         if( ssX < 0.0 ) {
+            ssX = 0.0;
          }
-         if( sp.ssY < 0.0 ) {
-            sp.ssY = 0.0;
+         if( ssY < 0.0 ) {
+            ssY = 0.0;
          }
       }
       /* Save the trailing values before writing the output, since the input
        * and output might be the same array.
        */
-      sp.trailingX = sp.x_inReal0[sp.trailingIdx & sp.xMask] - sp.shiftX;
-      sp.trailingY = sp.x_inReal1[sp.trailingIdx & sp.xMask] - sp.shiftY;
+      trailingX = sp.x_inReal0[sp.trailingIdx & sp.xMask] - sp.shiftX;
+      trailingY = sp.x_inReal1[sp.trailingIdx & sp.xMask] - sp.shiftY;
       sp.trailingIdx += 1;
       /* Output the new coefficient.
        *
@@ -941,27 +925,27 @@
        * behaved this way, on inputs 117 orders past any price, is not a trade
        * worth making. Revisit only if input range-checking is ever added.
        */
-      if( sp.ssX > 0.00000000000001 * sp.sumX2 && sp.ssY > 0.00000000000001 * sp.sumY2 ) {
-         sp.tempReal = sp.spXY / Math.sqrt(sp.ssX * sp.ssY);
+      if( ssX > 0.00000000000001 * sp.sumX2 && ssY > 0.00000000000001 * sp.sumY2 ) {
+         tempReal = spXY / Math.sqrt(ssX * ssY);
          /* A correlation coefficient cannot leave [-1,1]; rounding in the
           * three sums can still put it a few ulp outside.
           */
-         if( sp.tempReal > 1.0 ) {
-            sp.tempReal = 1.0;
-         } else if( sp.tempReal < 0 - 1.0 ) {
-            sp.tempReal = 0 - 1.0;
+         if( tempReal > 1.0 ) {
+            tempReal = 1.0;
+         } else if( tempReal < 0 - 1.0 ) {
+            tempReal = 0 - 1.0;
          }
-         sp.cur_outReal = sp.tempReal;
+         sp.cur_outReal = tempReal;
       } else {
          sp.cur_outReal = 0.0;
       }
       /* Remove the trailing values (prepares the next window). */
-      sp.leavingX = sp.trailingX * sp.trailingX;
-      sp.leavingY = sp.trailingY * sp.trailingY;
-      sp.sumX -= sp.trailingX;
+      sp.leavingX = trailingX * trailingX;
+      sp.leavingY = trailingY * trailingY;
+      sp.sumX -= trailingX;
       sp.sumX2 -= sp.leavingX;
-      sp.sumXY -= sp.trailingX * sp.trailingY;
-      sp.sumY -= sp.trailingY;
+      sp.sumXY -= trailingX * trailingY;
+      sp.sumY -= trailingY;
       sp.sumY2 -= sp.leavingY;
       sp.today += 1;
    }
@@ -1235,23 +1219,15 @@
       sp.sumY = sumY;
       sp.sumX2 = sumX2;
       sp.sumY2 = sumY2;
-      sp.y = y;
-      sp.trailingX = trailingX;
-      sp.trailingY = trailingY;
       sp.shiftX = shiftX;
       sp.shiftY = shiftY;
-      sp.ssX = ssX;
-      sp.ssY = ssY;
-      sp.spXY = spXY;
       sp.leavingX = leavingX;
       sp.leavingY = leavingY;
-      sp.tempReal = tempReal;
       sp.invPeriod = invPeriod;
       sp.lookbackTotal = lookbackTotal;
       sp.trailingIdx = trailingIdx;
-      sp.j = j;
-      sp.windowStart = windowStart;
       sp.barsSinceReseed = barsSinceReseed;
+      sp.j = j;
       sp.today = today;
       sp.xMask = physX - 1;
       sp.x_inReal0 = capX_inReal0;

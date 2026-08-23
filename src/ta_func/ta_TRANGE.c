@@ -224,7 +224,6 @@ struct TA_TRANGE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   double val3;
    double lag1_inClose;
 };
 
@@ -232,6 +231,7 @@ struct TA_TRANGE_Stream {
 static void TA_TRANGE_StepImpl( struct TA_TRANGE_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double val2;
+   double val3;
    double greatest;
    double tempCY;
    double tempLT;
@@ -248,10 +248,10 @@ static void TA_TRANGE_StepImpl( struct TA_TRANGE_Stream *sp, double inHigh, doub
    {
       greatest = val2;
    }
-   sp->val3 = fabs(tempCY - tempLT);
-   if( sp->val3 > greatest )
+   val3 = fabs(tempCY - tempLT);
+   if( val3 > greatest )
    {
-      greatest = sp->val3;
+      greatest = val3;
    }
    *outReal= greatest;
    sp->lag1_inClose = inClose;
@@ -285,7 +285,7 @@ static TA_RetCode TA_TRANGE_OpenImpl( struct TA_TRANGE_Stream **stream, const do
       int today;
       int outIdx;
       double val2;
-      double val3 = 0.0;
+      double val3;
       double greatest;
       double tempCY;
       double tempLT;
@@ -347,7 +347,6 @@ static TA_RetCode TA_TRANGE_OpenImpl( struct TA_TRANGE_Stream **stream, const do
       sp = (struct TA_TRANGE_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
-      sp->val3 = val3;
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;

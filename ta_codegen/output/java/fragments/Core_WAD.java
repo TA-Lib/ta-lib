@@ -354,7 +354,6 @@
       Core core;
       double sum;
       double prevClose;
-      double trueExtreme;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
@@ -377,7 +376,6 @@
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
-         this.trueExtreme = other.trueExtreme;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -387,7 +385,6 @@
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
-         this.trueExtreme = other.trueExtreme;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -473,19 +470,20 @@
    void WAD_StepImpl( WAD_Stream sp, double inHigh, double inLow, double inClose )
    {
       double close = 0.0;
+      double trueExtreme = 0.0;
       close = inClose;
       if( close > sp.prevClose ) {
-         sp.trueExtreme = inLow;
-         if( sp.prevClose < sp.trueExtreme ) {
-            sp.trueExtreme = sp.prevClose;
+         trueExtreme = inLow;
+         if( sp.prevClose < trueExtreme ) {
+            trueExtreme = sp.prevClose;
          }
-         sp.sum += close - sp.trueExtreme;
+         sp.sum += close - trueExtreme;
       } else if( close < sp.prevClose ) {
-         sp.trueExtreme = inHigh;
-         if( sp.prevClose > sp.trueExtreme ) {
-            sp.trueExtreme = sp.prevClose;
+         trueExtreme = inHigh;
+         if( sp.prevClose > trueExtreme ) {
+            trueExtreme = sp.prevClose;
          }
-         sp.sum += close - sp.trueExtreme;
+         sp.sum += close - trueExtreme;
       }
       sp.cur_outReal = sp.sum;
       sp.prevClose = close;
@@ -576,7 +574,6 @@
       /* Capture the live batch state into the handle. */
       sp.sum = sum;
       sp.prevClose = prevClose;
-      sp.trueExtreme = trueExtreme;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }

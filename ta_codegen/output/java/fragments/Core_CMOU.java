@@ -416,7 +416,6 @@
       int optInTimePeriod;
       double upSum;
       double downSum;
-      double sum;
       double prevValue;
       double trailingValue;
       int ringPos_trailingIdx;
@@ -445,7 +444,6 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.upSum = other.upSum;
          this.downSum = other.downSum;
-         this.sum = other.sum;
          this.prevValue = other.prevValue;
          this.trailingValue = other.trailingValue;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -461,7 +459,6 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.upSum = other.upSum;
          this.downSum = other.downSum;
-         this.sum = other.sum;
          this.prevValue = other.prevValue;
          this.trailingValue = other.trailingValue;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -555,6 +552,7 @@
    }
    void CMOU_StepImpl( CMOU_Stream sp, double inReal )
    {
+      double sum = 0.0;
       double diff = 0.0;
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -582,9 +580,9 @@
       } else if( diff < 0.0 ) {
          sp.downSum -= diff;
       }
-      sp.sum = sp.upSum + sp.downSum;
-      if( !((-0.00000000000001 < sp.sum) && (sp.sum < 0.00000000000001)) ) {
-         sp.cur_outReal = 100.0 * (sp.upSum - sp.downSum) / sp.sum;
+      sum = sp.upSum + sp.downSum;
+      if( !((-0.00000000000001 < sum) && (sum < 0.00000000000001)) ) {
+         sp.cur_outReal = 100.0 * (sp.upSum - sp.downSum) / sum;
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -733,7 +731,6 @@
       sp.optInTimePeriod = optInTimePeriod;
       sp.upSum = upSum;
       sp.downSum = downSum;
-      sp.sum = sum;
       sp.prevValue = prevValue;
       sp.trailingValue = trailingValue;
       sp.ringPos_trailingIdx = 0;

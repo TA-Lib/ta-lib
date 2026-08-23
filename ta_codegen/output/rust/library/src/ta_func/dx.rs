@@ -555,11 +555,6 @@ struct DX_StreamState {
     prevMinusDM: f64,
     prevPlusDM: f64,
     prevTR: f64,
-    tempReal: f64,
-    diffP: f64,
-    diffM: f64,
-    minusDI: f64,
-    plusDI: f64,
     lastOut_outReal: f64,
 }
 
@@ -575,11 +570,6 @@ impl DX_StreamState {
         self.prevMinusDM = src.prevMinusDM;
         self.prevPlusDM = src.prevPlusDM;
         self.prevTR = src.prevTR;
-        self.tempReal = src.tempReal;
-        self.diffP = src.diffP;
-        self.diffM = src.diffM;
-        self.minusDI = src.minusDI;
-        self.plusDI = src.plusDI;
         self.lastOut_outReal = src.lastOut_outReal;
     }
 }
@@ -592,23 +582,28 @@ impl DX_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn DX_step_impl(&self, sp: &mut DX_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        let mut diffP: f64 = 0.0_f64;
+        let mut diffM: f64 = 0.0_f64;
+        let mut minusDI: f64 = 0.0_f64;
+        let mut plusDI: f64 = 0.0_f64;
         // Calculate the prevMinusDM and prevPlusDM
-        sp.tempReal = inHigh;
-        sp.diffP = sp.tempReal - sp.prevHigh;
+        tempReal = inHigh;
+        diffP = tempReal - sp.prevHigh;
         // Plus Delta
-        sp.prevHigh = sp.tempReal;
-        sp.tempReal = inLow;
-        sp.diffM = sp.prevLow - sp.tempReal;
+        sp.prevHigh = tempReal;
+        tempReal = inLow;
+        diffM = sp.prevLow - tempReal;
         // Minus Delta
-        sp.prevLow = sp.tempReal;
+        sp.prevLow = tempReal;
         sp.prevMinusDM -= sp.prevMinusDM / ((sp.optInTimePeriod) as f64);
         sp.prevPlusDM -= sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
-        if sp.diffM > 0_f64 && sp.diffP < sp.diffM {
+        if diffM > 0_f64 && diffP < diffM {
             // Case 2 and 4: +DM=0,-DM=diffM
-            sp.prevMinusDM += sp.diffM;
-        } else if sp.diffP > 0_f64 && sp.diffP > sp.diffM {
+            sp.prevMinusDM += diffM;
+        } else if diffP > 0_f64 && diffP > diffM {
             // Case 1 and 3: +DM=diffP,-DM=0
-            sp.prevPlusDM += sp.diffP;
+            sp.prevPlusDM += diffP;
         }
         // Calculate the prevTR
         let mut _true_range_0: f64;
@@ -622,17 +617,17 @@ impl Core {
             range_0 = tmp_0;
         }
         _true_range_0 = range_0;
-        sp.tempReal = _true_range_0;
-        sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + sp.tempReal;
+        tempReal = _true_range_0;
+        sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + tempReal;
         sp.prevClose = inClose;
         // Calculate the DX. The value is rounded (see Wilder book).
         if !((sp.prevTR).abs() < 1e-14) {
-            sp.minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
-            sp.plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
+            minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
+            plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
             // This loop is just to accumulate the initial DX
-            sp.tempReal = sp.minusDI + sp.plusDI;
-            if !((sp.tempReal).abs() < 1e-14) {
-                (*outReal) = (100.0 * ((sp.minusDI - sp.plusDI).abs() / sp.tempReal));
+            tempReal = minusDI + plusDI;
+            if !((tempReal).abs() < 1e-14) {
+                (*outReal) = (100.0 * ((minusDI - plusDI).abs() / tempReal));
             } else {
                 (*outReal) = sp.lastOut_outReal;
             }
@@ -957,11 +952,6 @@ impl Core {
             prevMinusDM,
             prevPlusDM,
             prevTR,
-            tempReal,
-            diffP,
-            diffM,
-            minusDI,
-            plusDI,
             lastOut_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(DX_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })

@@ -490,13 +490,6 @@ struct TA_MFI_Stream {
    double posSumMF;
    double negSumMF;
    double prevValue;
-   double tempValue1;
-   double tempValue2;
-   double tempValue3;
-   double moneyFlow;
-   double posFlow;
-   double negFlow;
-   double posClamped;
    int nullRun;
    int mflow_Idx;
    int maxIdx_mflow;
@@ -521,38 +514,46 @@ static void TA_MFI_ReleaseImpl( struct TA_MFI_Stream *sp )
 /* Private function, not in public API. */
 static void TA_MFI_StepImpl( struct TA_MFI_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
+   double tempValue1;
+   double tempValue2;
+   double tempValue3;
+   double moneyFlow;
+   double posFlow;
+   double negFlow;
+   double posClamped;
+
    sp->posSumMF -= sp->cb_mflow_positive[sp->mflow_Idx];
    sp->negSumMF -= sp->cb_mflow_negative[sp->mflow_Idx];
-   sp->tempValue1 = (inHigh + inLow + inClose) / 3.0;
-   sp->tempValue2 = sp->tempValue1 - sp->prevValue;
+   tempValue1 = (inHigh + inLow + inClose) / 3.0;
+   tempValue2 = tempValue1 - sp->prevValue;
    /* Dead-zone scaled to the two typical prices being compared (issue #107).
     * Captured before prevValue/tempValue1 are repurposed below.
     */
-   sp->tempValue3 = fabs(sp->tempValue1) + fabs(sp->prevValue);
-   sp->prevValue = sp->tempValue1;
-   sp->tempValue1 *= inVolume;
-   sp->moneyFlow = TA_IS_ZERO_SCALED(sp->tempValue2, sp->tempValue3) ? 0.0 : sp->tempValue1;
-   sp->posFlow = (sp->tempValue2 < 0.0) ? 0.0 : sp->moneyFlow;
-   sp->negFlow = (sp->tempValue2 < 0.0) ? sp->moneyFlow : 0.0;
-   sp->cb_mflow_positive[sp->mflow_Idx] = sp->posFlow;
-   sp->cb_mflow_negative[sp->mflow_Idx] = sp->negFlow;
-   sp->posSumMF += sp->posFlow;
-   sp->negSumMF += sp->negFlow;
-   sp->nullRun = (sp->moneyFlow == 0.0) ? sp->nullRun + 1 : 0;
+   tempValue3 = fabs(tempValue1) + fabs(sp->prevValue);
+   sp->prevValue = tempValue1;
+   tempValue1 *= inVolume;
+   moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
+   posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+   negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+   sp->cb_mflow_positive[sp->mflow_Idx] = posFlow;
+   sp->cb_mflow_negative[sp->mflow_Idx] = negFlow;
+   sp->posSumMF += posFlow;
+   sp->negSumMF += negFlow;
+   sp->nullRun = (moneyFlow == 0.0) ? sp->nullRun + 1 : 0;
    if( sp->nullRun >= sp->optInTimePeriod )
    {
       sp->nullRun = sp->optInTimePeriod;
       sp->posSumMF = 0.0;
       sp->negSumMF = 0.0;
    }
-   sp->tempValue1 = sp->posSumMF + sp->negSumMF;
-   sp->posClamped = (sp->posSumMF < 0.0) ? 0.0 : ((sp->posSumMF > sp->tempValue1) ? sp->tempValue1 : sp->posSumMF);
-   if( sp->tempValue1 <= 0.0 )
+   tempValue1 = sp->posSumMF + sp->negSumMF;
+   posClamped = (sp->posSumMF < 0.0) ? 0.0 : ((sp->posSumMF > tempValue1) ? tempValue1 : sp->posSumMF);
+   if( tempValue1 <= 0.0 )
    {
       *outReal= 0.0;
    } else 
    {
-      *outReal= 100.0 * (sp->posClamped / sp->tempValue1);
+      *outReal= 100.0 * (posClamped / tempValue1);
    }
    sp->mflow_Idx = sp->mflow_Idx + 1;
    if( sp->mflow_Idx > sp->maxIdx_mflow )
@@ -599,13 +600,13 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
       double posSumMF = 0.0;
       double negSumMF = 0.0;
       double prevValue = 0.0;
-      double tempValue1 = 0.0;
-      double tempValue2 = 0.0;
-      double tempValue3 = 0.0;
-      double moneyFlow = 0.0;
-      double posFlow = 0.0;
-      double negFlow = 0.0;
-      double posClamped = 0.0;
+      double tempValue1;
+      double tempValue2;
+      double tempValue3;
+      double moneyFlow;
+      double posFlow;
+      double negFlow;
+      double posClamped;
       int lookbackTotal;
       int outIdx;
       int i;
@@ -791,13 +792,6 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
       sp->posSumMF = posSumMF;
       sp->negSumMF = negSumMF;
       sp->prevValue = prevValue;
-      sp->tempValue1 = tempValue1;
-      sp->tempValue2 = tempValue2;
-      sp->tempValue3 = tempValue3;
-      sp->moneyFlow = moneyFlow;
-      sp->posFlow = posFlow;
-      sp->negFlow = negFlow;
-      sp->posClamped = posClamped;
       sp->nullRun = nullRun;
       sp->mflow_Idx = mflow_Idx;
       sp->maxIdx_mflow = maxIdx_mflow;

@@ -551,7 +551,6 @@ struct TA_HMA_Stream {
    double periodSubFull;
    double periodSumFull;
    double trailingFull;
-   double fullOut;
    int halfPeriod;
    int sqrtPeriod;
    double dividerHalf;
@@ -562,8 +561,6 @@ struct TA_HMA_Stream {
    double periodSubSqrt;
    double periodSumSqrt;
    double trailingSqrt;
-   double halfOut;
-   double diffReal;
    int dRing_Idx;
    int maxIdx_dRing;
    int ringPos_trailingIdxFull;
@@ -603,6 +600,7 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
    if( sp->optInTimePeriod == 2 || sp->optInTimePeriod == 3 )
    {
       double tempReal;
+      double fullOut;
 
       if( sp->ringCap_trailingIdxFull == 0 )
       {
@@ -613,9 +611,9 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       sp->periodSubFull -= sp->trailingFull;
       sp->periodSumFull += tempReal * sp->optInTimePeriod;
       sp->trailingFull = sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull];
-      sp->fullOut = sp->periodSumFull / sp->dividerFull;
+      fullOut = sp->periodSumFull / sp->dividerFull;
       sp->periodSumFull -= sp->periodSubFull;
-      *outReal= 2.0 * tempReal - sp->fullOut;
+      *outReal= 2.0 * tempReal - fullOut;
       sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] = inReal;
       sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
       if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
@@ -626,6 +624,9 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
    else
    {
       double tempReal;
+      double fullOut;
+      double halfOut;
+      double diffReal;
 
       if( sp->ringCap_trailingIdxFull == 0 )
       {
@@ -640,20 +641,20 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       sp->periodSubFull -= sp->trailingFull;
       sp->periodSumFull += tempReal * sp->optInTimePeriod;
       sp->trailingFull = sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull];
-      sp->fullOut = sp->periodSumFull / sp->dividerFull;
+      fullOut = sp->periodSumFull / sp->dividerFull;
       sp->periodSumFull -= sp->periodSubFull;
       sp->periodSubHalf += tempReal;
       sp->periodSubHalf -= sp->trailingHalf;
       sp->periodSumHalf += tempReal * sp->halfPeriod;
       sp->trailingHalf = sp->ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf];
-      sp->halfOut = sp->periodSumHalf / sp->dividerHalf;
+      halfOut = sp->periodSumHalf / sp->dividerHalf;
       sp->periodSumHalf -= sp->periodSubHalf;
-      sp->diffReal = 2.0 * sp->halfOut - sp->fullOut;
-      sp->periodSubSqrt += sp->diffReal;
+      diffReal = 2.0 * halfOut - fullOut;
+      sp->periodSubSqrt += diffReal;
       sp->periodSubSqrt -= sp->trailingSqrt;
-      sp->periodSumSqrt += sp->diffReal * sp->sqrtPeriod;
+      sp->periodSumSqrt += diffReal * sp->sqrtPeriod;
       sp->trailingSqrt = sp->cb_dRing[sp->dRing_Idx];
-      sp->cb_dRing[sp->dRing_Idx] = sp->diffReal;
+      sp->cb_dRing[sp->dRing_Idx] = diffReal;
       sp->dRing_Idx = sp->dRing_Idx + 1;
       if( sp->dRing_Idx > sp->maxIdx_dRing )
       {
@@ -766,7 +767,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       double periodSumFull = 0.0;
       double trailingFull = 0.0;
       double tempReal;
-      double fullOut = 0.0;
+      double fullOut;
       /* The de-lagged series needs only its last sqrt(n) values, so the whole
        * computation runs in one pass over a single window into the input:
        * three interleaved WMA rolling sums plus this small ring. The ring has
@@ -860,7 +861,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       sp->periodSubFull = periodSubFull;
       sp->periodSumFull = periodSumFull;
       sp->trailingFull = trailingFull;
-      sp->fullOut = fullOut;
       sp->ringCap_trailingIdxFull = (int)(today - trailingIdxFull);
       if( sp->ringCap_trailingIdxFull < 0 || sp->ringCap_trailingIdxFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
@@ -906,9 +906,9 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       double periodSumSqrt = 0.0;
       double trailingSqrt = 0.0;
       double tempReal;
-      double fullOut = 0.0;
-      double halfOut = 0.0;
-      double diffReal = 0.0;
+      double fullOut;
+      double halfOut;
+      double diffReal;
       /* The de-lagged series needs only its last sqrt(n) values, so the whole
        * computation runs in one pass over a single window into the input:
        * three interleaved WMA rolling sums plus this small ring. The ring has
@@ -1094,9 +1094,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       sp->periodSubSqrt = periodSubSqrt;
       sp->periodSumSqrt = periodSumSqrt;
       sp->trailingSqrt = trailingSqrt;
-      sp->fullOut = fullOut;
-      sp->halfOut = halfOut;
-      sp->diffReal = diffReal;
       sp->dRing_Idx = dRing_Idx;
       sp->maxIdx_dRing = maxIdx_dRing;
       sp->ringCap_trailingIdxFull = (int)(today - trailingIdxFull);

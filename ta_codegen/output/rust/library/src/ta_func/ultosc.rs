@@ -523,7 +523,6 @@ struct ULTOSC_StreamState {
     b1Total: f64,
     b2Total: f64,
     b3Total: f64,
-    output: f64,
     trailingPos1: usize,
     trailingPos2: usize,
     term_Idx: usize,
@@ -548,7 +547,6 @@ impl ULTOSC_StreamState {
         self.b1Total = src.b1Total;
         self.b2Total = src.b2Total;
         self.b3Total = src.b3Total;
-        self.output = src.output;
         self.trailingPos1 = src.trailingPos1;
         self.trailingPos2 = src.trailingPos2;
         self.term_Idx = src.term_Idx;
@@ -572,6 +570,7 @@ impl Core {
         let mut trueRange: f64 = 0.0_f64;
         let mut closeMinusTrueLow: f64 = 0.0_f64;
         let mut tempDouble: f64 = 0.0_f64;
+        let mut output: f64 = 0.0_f64;
         let mut tempHT: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
         let mut tempCY: f64 = 0.0_f64;
@@ -599,15 +598,15 @@ impl Core {
         sp.b2Total += trueRange;
         sp.b3Total += trueRange;
         // Calculate the oscillator value for today
-        sp.output = 0.0;
+        output = 0.0;
         if !((sp.b1Total).abs() < 1e-14) {
-            sp.output += 4.0 * (sp.a1Total / sp.b1Total);
+            output += 4.0 * (sp.a1Total / sp.b1Total);
         }
         if !((sp.b2Total).abs() < 1e-14) {
-            sp.output += 2.0 * (sp.a2Total / sp.b2Total);
+            output += 2.0 * (sp.a2Total / sp.b2Total);
         }
         if !((sp.b3Total).abs() < 1e-14) {
-            sp.output += sp.a3Total / sp.b3Total;
+            output += sp.a3Total / sp.b3Total;
         }
         // Remove the trailing terms to prepare for next day. Each was evaluated
         // once, when its bar entered the ring.
@@ -634,7 +633,7 @@ impl Core {
         // taken care of because the caller is allowed
         // to have the input array to be also the output
         // array.
-        (*outReal) = 100.0 * (sp.output / 7.0);
+        (*outReal) = 100.0 * (output / 7.0);
         // Increment indexes
         sp.lag1_inClose = inClose;
     }
@@ -897,7 +896,6 @@ impl Core {
             b1Total,
             b2Total,
             b3Total,
-            output,
             trailingPos1,
             trailingPos2,
             term_Idx,

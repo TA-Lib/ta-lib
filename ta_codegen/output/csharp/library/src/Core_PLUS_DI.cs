@@ -792,9 +792,6 @@ public partial class Core
       internal double prevHigh;
       internal double prevLow;
       internal double prevClose;
-      internal double tempReal;
-      internal double diffP;
-      internal double diffM;
       internal double prevPlusDM;
       internal double prevTR;
       internal double cur_outReal;
@@ -822,9 +819,6 @@ public partial class Core
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
          this.prevClose = other.prevClose;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
@@ -839,9 +833,6 @@ public partial class Core
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
          this.prevClose = other.prevClose;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
@@ -940,15 +931,18 @@ public partial class Core
    internal void PLUS_DI_StepImpl( PLUS_DI_Stream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffP > 0 && diffP > diffM ) {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
             double _true_range_0 = 0;
             double range_0 = sp.prevHigh - sp.prevLow;
@@ -961,29 +955,32 @@ public partial class Core
                range_0 = tmp_0;
             }
             _true_range_0 = range_0;
-            sp.tempReal = _true_range_0;
-            if( ((-0.00000000000001 < sp.tempReal) && (sp.tempReal < 0.00000000000001)) ) {
+            tempReal = _true_range_0;
+            if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                sp.cur_outReal = (double)0.0;
             } else {
-               sp.cur_outReal = sp.diffP / sp.tempReal;
+               sp.cur_outReal = diffP / tempReal;
             }
          } else {
             sp.cur_outReal = (double)0.0;
          }
          sp.prevClose = inClose;
       } else {
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
          /* Calculate the prevPlusDM */
-         sp.tempReal = inHigh;
-         sp.diffP = sp.tempReal - sp.prevHigh;
+         tempReal = inHigh;
+         diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
-         sp.prevHigh = sp.tempReal;
-         sp.tempReal = inLow;
-         sp.diffM = sp.prevLow - sp.tempReal;
+         sp.prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = sp.prevLow - tempReal;
          /* Minus Delta */
-         sp.prevLow = sp.tempReal;
-         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevLow = tempReal;
+         if( diffP > 0 && diffP > diffM ) {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + sp.diffP;
+            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + diffP;
          } else {
             /* Case 2,4,5 and 7 */
             sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod;
@@ -1000,8 +997,8 @@ public partial class Core
             range_1 = tmp_1;
          }
          _true_range_1 = range_1;
-         sp.tempReal = _true_range_1;
-         sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + sp.tempReal;
+         tempReal = _true_range_1;
+         sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
          if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
@@ -1206,9 +1203,6 @@ public partial class Core
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevPlusDM = prevPlusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
@@ -1472,9 +1466,6 @@ public partial class Core
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
-         sp.tempReal = tempReal;
-         sp.diffP = diffP;
-         sp.diffM = diffM;
          sp.prevPlusDM = prevPlusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement - 1) * outStride];

@@ -384,8 +384,8 @@ public partial class Core
       internal int optInTimePeriod;
       internal double highest;
       internal int trailingIdx;
-      internal int i;
       internal int highestIdx;
+      internal int i;
       internal int today;
       internal int xMask;
       internal double[] x_inReal = [];
@@ -413,8 +413,8 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          this.x_inReal = new double[other.x_inReal.Length];
@@ -430,8 +430,8 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          if( this.x_inReal.Length != other.x_inReal.Length ) {
@@ -655,8 +655,8 @@ public partial class Core
       sp.optInTimePeriod = optInTimePeriod;
       sp.highest = highest;
       sp.trailingIdx = trailingIdx;
-      sp.i = i;
       sp.highestIdx = highestIdx;
+      sp.i = i;
       sp.today = today;
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;

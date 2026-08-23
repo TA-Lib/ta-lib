@@ -681,7 +681,6 @@ public partial class Core
       internal double periodSubFull;
       internal double periodSumFull;
       internal double trailingFull;
-      internal double fullOut;
       internal int halfPeriod;
       internal int sqrtPeriod;
       internal double dividerHalf;
@@ -692,8 +691,6 @@ public partial class Core
       internal double periodSubSqrt;
       internal double periodSumSqrt;
       internal double trailingSqrt;
-      internal double halfOut;
-      internal double diffReal;
       internal int dRing_Idx;
       internal int maxIdx_dRing;
       internal int ringPos_trailingIdxFull;
@@ -729,7 +726,6 @@ public partial class Core
          this.periodSubFull = other.periodSubFull;
          this.periodSumFull = other.periodSumFull;
          this.trailingFull = other.trailingFull;
-         this.fullOut = other.fullOut;
          this.halfPeriod = other.halfPeriod;
          this.sqrtPeriod = other.sqrtPeriod;
          this.dividerHalf = other.dividerHalf;
@@ -740,8 +736,6 @@ public partial class Core
          this.periodSubSqrt = other.periodSubSqrt;
          this.periodSumSqrt = other.periodSumSqrt;
          this.trailingSqrt = other.trailingSqrt;
-         this.halfOut = other.halfOut;
-         this.diffReal = other.diffReal;
          this.dRing_Idx = other.dRing_Idx;
          this.maxIdx_dRing = other.maxIdx_dRing;
          this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
@@ -768,7 +762,6 @@ public partial class Core
          this.periodSubFull = other.periodSubFull;
          this.periodSumFull = other.periodSumFull;
          this.trailingFull = other.trailingFull;
-         this.fullOut = other.fullOut;
          this.halfPeriod = other.halfPeriod;
          this.sqrtPeriod = other.sqrtPeriod;
          this.dividerHalf = other.dividerHalf;
@@ -779,8 +772,6 @@ public partial class Core
          this.periodSubSqrt = other.periodSubSqrt;
          this.periodSumSqrt = other.periodSumSqrt;
          this.trailingSqrt = other.trailingSqrt;
-         this.halfOut = other.halfOut;
-         this.diffReal = other.diffReal;
          this.dRing_Idx = other.dRing_Idx;
          this.maxIdx_dRing = other.maxIdx_dRing;
          this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
@@ -904,6 +895,7 @@ public partial class Core
       }
       if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
          double tempReal = 0.0;
+         double fullOut = 0.0;
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
@@ -912,9 +904,9 @@ public partial class Core
          sp.periodSubFull -= sp.trailingFull;
          sp.periodSumFull += tempReal * sp.optInTimePeriod;
          sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
-         sp.fullOut = sp.periodSumFull / sp.dividerFull;
+         fullOut = sp.periodSumFull / sp.dividerFull;
          sp.periodSumFull -= sp.periodSubFull;
-         sp.cur_outReal = 2.0 * tempReal - sp.fullOut;
+         sp.cur_outReal = 2.0 * tempReal - fullOut;
          sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
          sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
          if( sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
@@ -922,6 +914,9 @@ public partial class Core
          }
       } else {
          double tempReal = 0.0;
+         double fullOut = 0.0;
+         double halfOut = 0.0;
+         double diffReal = 0.0;
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
@@ -933,20 +928,20 @@ public partial class Core
          sp.periodSubFull -= sp.trailingFull;
          sp.periodSumFull += tempReal * sp.optInTimePeriod;
          sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
-         sp.fullOut = sp.periodSumFull / sp.dividerFull;
+         fullOut = sp.periodSumFull / sp.dividerFull;
          sp.periodSumFull -= sp.periodSubFull;
          sp.periodSubHalf += tempReal;
          sp.periodSubHalf -= sp.trailingHalf;
          sp.periodSumHalf += tempReal * sp.halfPeriod;
          sp.trailingHalf = sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf];
-         sp.halfOut = sp.periodSumHalf / sp.dividerHalf;
+         halfOut = sp.periodSumHalf / sp.dividerHalf;
          sp.periodSumHalf -= sp.periodSubHalf;
-         sp.diffReal = 2.0 * sp.halfOut - sp.fullOut;
-         sp.periodSubSqrt += sp.diffReal;
+         diffReal = 2.0 * halfOut - fullOut;
+         sp.periodSubSqrt += diffReal;
          sp.periodSubSqrt -= sp.trailingSqrt;
-         sp.periodSumSqrt += sp.diffReal * sp.sqrtPeriod;
+         sp.periodSumSqrt += diffReal * sp.sqrtPeriod;
          sp.trailingSqrt = sp.cb_dRing[sp.dRing_Idx];
-         sp.cb_dRing[sp.dRing_Idx] = sp.diffReal;
+         sp.cb_dRing[sp.dRing_Idx] = diffReal;
          sp.dRing_Idx = sp.dRing_Idx + 1;
          if( sp.dRing_Idx > sp.maxIdx_dRing ) {
             sp.dRing_Idx = 0;
@@ -994,7 +989,6 @@ public partial class Core
          sp.periodSubFull = 0.0;
          sp.periodSumFull = 0.0;
          sp.trailingFull = 0.0;
-         sp.fullOut = 0.0;
          sp.halfPeriod = 0;
          sp.sqrtPeriod = 0;
          sp.dividerHalf = 0.0;
@@ -1005,8 +999,6 @@ public partial class Core
          sp.periodSubSqrt = 0.0;
          sp.periodSumSqrt = 0.0;
          sp.trailingSqrt = 0.0;
-         sp.halfOut = 0.0;
-         sp.diffReal = 0.0;
          sp.dRing_Idx = 0;
          sp.maxIdx_dRing = 0;
          sp.ringPos_trailingIdxFull = 0;
@@ -1154,7 +1146,6 @@ public partial class Core
          sp.periodSubFull = periodSubFull;
          sp.periodSumFull = periodSumFull;
          sp.trailingFull = trailingFull;
-         sp.fullOut = fullOut;
          sp.halfPeriod = halfPeriod;
          sp.sqrtPeriod = sqrtPeriod;
          sp.dividerHalf = dividerHalf;
@@ -1165,8 +1156,6 @@ public partial class Core
          sp.periodSubSqrt = periodSubSqrt;
          sp.periodSumSqrt = periodSumSqrt;
          sp.trailingSqrt = trailingSqrt;
-         sp.halfOut = halfOut;
-         sp.diffReal = diffReal;
          sp.dRing_Idx = dRing_Idx;
          sp.maxIdx_dRing = maxIdx_dRing;
          sp.ringPos_trailingIdxFull = 0;
@@ -1380,7 +1369,6 @@ public partial class Core
          sp.periodSubFull = periodSubFull;
          sp.periodSumFull = periodSumFull;
          sp.trailingFull = trailingFull;
-         sp.fullOut = fullOut;
          sp.halfPeriod = halfPeriod;
          sp.sqrtPeriod = sqrtPeriod;
          sp.dividerHalf = dividerHalf;
@@ -1391,8 +1379,6 @@ public partial class Core
          sp.periodSubSqrt = periodSubSqrt;
          sp.periodSumSqrt = periodSumSqrt;
          sp.trailingSqrt = trailingSqrt;
-         sp.halfOut = halfOut;
-         sp.diffReal = diffReal;
          sp.dRing_Idx = dRing_Idx;
          sp.maxIdx_dRing = maxIdx_dRing;
          sp.ringPos_trailingIdxFull = 0;

@@ -408,7 +408,6 @@ impl CDLPIERCING_Stream {
 #[allow(non_snake_case, dead_code)]
 struct CDLPIERCING_StreamState {
     BodyLongPeriodTotal: [f64; 2 as usize],
-    totIdx: usize,
     lag1_inOpen: f64,
     lag1_inHigh: f64,
     lag1_inLow: f64,
@@ -425,7 +424,6 @@ impl CDLPIERCING_StreamState {
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
         self.BodyLongPeriodTotal = src.BodyLongPeriodTotal;
-        self.totIdx = src.totIdx;
         self.lag1_inOpen = src.lag1_inOpen;
         self.lag1_inHigh = src.lag1_inHigh;
         self.lag1_inLow = src.lag1_inLow;
@@ -445,6 +443,7 @@ impl CDLPIERCING_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn CDLPIERCING_step_impl(&self, sp: &mut CDLPIERCING_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -481,12 +480,12 @@ impl Core {
         }
         // add the current range and subtract the first range: this is done after the pattern recognition
         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-        // for( sp.totIdx = 1; sp.totIdx >= 0; sp.totIdx -= 1 )
-        sp.totIdx = 1;
+        // for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
+        totIdx = 1;
         loop {
-            sp.BodyLongPeriodTotal[sp.totIdx] = sp.BodyLongPeriodTotal[sp.totIdx] + (sp.ring_BodyLongTrailingIdx_derived[((if sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx >= sp.ringCap_BodyLongTrailingIdx { sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx - sp.ringCap_BodyLongTrailingIdx } else { sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.totIdx })) as usize] - sp.ring_BodyLongTrailingIdx_derived[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - sp.totIdx) % sp.ringCap_BodyLongTrailingIdx) as usize]);
-            if sp.totIdx == 0 { break; }
-            sp.totIdx -= 1;
+            sp.BodyLongPeriodTotal[totIdx] = sp.BodyLongPeriodTotal[totIdx] + (sp.ring_BodyLongTrailingIdx_derived[((if sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx { sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx } else { sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx })) as usize] - sp.ring_BodyLongTrailingIdx_derived[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx) as usize]);
+            if totIdx == 0 { break; }
+            totIdx -= 1;
         }
         sp.lag1_inOpen = inOpen;
         sp.lag1_inHigh = inHigh;
@@ -674,7 +673,6 @@ impl Core {
         }
         let state = CDLPIERCING_StreamState {
             BodyLongPeriodTotal,
-            totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inHigh: inHigh[historyLen - 1],
             lag1_inLow: inLow[historyLen - 1],

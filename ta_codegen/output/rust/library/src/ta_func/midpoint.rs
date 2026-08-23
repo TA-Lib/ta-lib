@@ -428,8 +428,6 @@ struct MIDPOINT_StreamState {
     optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
-    tmpLow: f64,
-    tmpHigh: f64,
     trailingIdx: i32,
     lowestIdx: i32,
     highestIdx: i32,
@@ -447,8 +445,6 @@ impl MIDPOINT_StreamState {
         self.optInTimePeriod = src.optInTimePeriod;
         self.lowest = src.lowest;
         self.highest = src.highest;
-        self.tmpLow = src.tmpLow;
-        self.tmpHigh = src.tmpHigh;
         self.trailingIdx = src.trailingIdx;
         self.lowestIdx = src.lowestIdx;
         self.highestIdx = src.highestIdx;
@@ -467,6 +463,8 @@ impl MIDPOINT_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn MIDPOINT_step_impl(&self, sp: &mut MIDPOINT_StreamState, inReal: f64, outReal: &mut f64) {
+        let mut tmpLow: f64 = 0.0_f64;
+        let mut tmpHigh: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
@@ -476,37 +474,37 @@ impl Core {
             sp.lowestIdx -= rebaseShift;
         }
         sp.x_inReal[(sp.today & sp.xMask) as usize] = inReal;
-        sp.tmpHigh = sp.x_inReal[(sp.today & sp.xMask) as usize];
-        sp.tmpLow = sp.tmpHigh;
+        tmpHigh = sp.x_inReal[(sp.today & sp.xMask) as usize];
+        tmpLow = tmpHigh;
         if sp.highestIdx < sp.trailingIdx {
             sp.highestIdx = sp.trailingIdx;
             sp.highest = sp.x_inReal[(sp.highestIdx & sp.xMask) as usize];
             sp.i = sp.highestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
-                sp.tmpHigh = sp.x_inReal[(sp.i & sp.xMask) as usize];
-                if sp.tmpHigh > sp.highest {
+                tmpHigh = sp.x_inReal[(sp.i & sp.xMask) as usize];
+                if tmpHigh > sp.highest {
                     sp.highestIdx = sp.i;
-                    sp.highest = sp.tmpHigh;
+                    sp.highest = tmpHigh;
                 }
             }
-        } else if sp.tmpHigh >= sp.highest {
+        } else if tmpHigh >= sp.highest {
             sp.highestIdx = sp.today;
-            sp.highest = sp.tmpHigh;
+            sp.highest = tmpHigh;
         }
         if sp.lowestIdx < sp.trailingIdx {
             sp.lowestIdx = sp.trailingIdx;
             sp.lowest = sp.x_inReal[(sp.lowestIdx & sp.xMask) as usize];
             sp.i = sp.lowestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
-                sp.tmpLow = sp.x_inReal[(sp.i & sp.xMask) as usize];
-                if sp.tmpLow < sp.lowest {
+                tmpLow = sp.x_inReal[(sp.i & sp.xMask) as usize];
+                if tmpLow < sp.lowest {
                     sp.lowestIdx = sp.i;
-                    sp.lowest = sp.tmpLow;
+                    sp.lowest = tmpLow;
                 }
             }
-        } else if sp.tmpLow <= sp.lowest {
+        } else if tmpLow <= sp.lowest {
             sp.lowestIdx = sp.today;
-            sp.lowest = sp.tmpLow;
+            sp.lowest = tmpLow;
         }
         (*outReal) = (sp.highest + sp.lowest) / 2.0;
         sp.trailingIdx += 1;
@@ -661,8 +659,6 @@ impl Core {
             optInTimePeriod,
             lowest,
             highest,
-            tmpLow,
-            tmpHigh,
             trailingIdx: (trailingIdx) as i32,
             lowestIdx: (lowestIdx) as i32,
             highestIdx: (highestIdx) as i32,

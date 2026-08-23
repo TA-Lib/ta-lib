@@ -335,7 +335,6 @@ struct TA_AROONOSC_Stream {
    double lowest;
    double highest;
    double factor;
-   double aroon;
    int trailingIdx;
    int lowestIdx;
    int highestIdx;
@@ -365,6 +364,7 @@ static void TA_AROONOSC_ReleaseImpl( struct TA_AROONOSC_Stream *sp )
 static void TA_AROONOSC_StepImpl( struct TA_AROONOSC_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double tmp;
+   double aroon;
 
    if( sp->today >= 1073741824 )
    {
@@ -429,11 +429,11 @@ static void TA_AROONOSC_StepImpl( struct TA_AROONOSC_Stream *sp, double inHigh, 
     * An arithmetic simplification give us:
     *  Aroon = factor*(highestIdx-lowestIdx)
     */
-   sp->aroon = sp->factor * (sp->highestIdx - sp->lowestIdx);
+   aroon = sp->factor * (sp->highestIdx - sp->lowestIdx);
    /* Note: Do not forget that input and output buffer can be the same,
     *       so writing to the output is the last thing being done here.
     */
-   *outReal= sp->aroon;
+   *outReal= aroon;
    sp->trailingIdx += 1;
    sp->today += 1;
 }
@@ -471,7 +471,7 @@ static TA_RetCode TA_AROONOSC_OpenImpl( struct TA_AROONOSC_Stream **stream, cons
       double highest = 0.0;
       double tmp;
       double factor = 0.0;
-      double aroon = 0.0;
+      double aroon;
       int outIdx;
       int trailingIdx = 0;
       int lowestIdx = 0;
@@ -593,7 +593,6 @@ static TA_RetCode TA_AROONOSC_OpenImpl( struct TA_AROONOSC_Stream **stream, cons
       sp->lowest = lowest;
       sp->highest = highest;
       sp->factor = factor;
-      sp->aroon = aroon;
       sp->trailingIdx = trailingIdx;
       sp->lowestIdx = lowestIdx;
       sp->highestIdx = highestIdx;

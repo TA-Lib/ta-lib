@@ -384,7 +384,6 @@ struct AO_StreamState {
     optInSlowPeriod: i32,
     sumFast: f64,
     sumSlow: f64,
-    tempReal: f64,
     ringPos_trailingFastIdx: usize,
     ringCap_trailingFastIdx: usize,
     ring_trailingFastIdx_derived: Vec<f64>,
@@ -402,7 +401,6 @@ impl AO_StreamState {
         self.optInSlowPeriod = src.optInSlowPeriod;
         self.sumFast = src.sumFast;
         self.sumSlow = src.sumSlow;
-        self.tempReal = src.tempReal;
         self.ringPos_trailingFastIdx = src.ringPos_trailingFastIdx;
         self.ringCap_trailingFastIdx = src.ringCap_trailingFastIdx;
         self.ring_trailingFastIdx_derived.clone_from(&src.ring_trailingFastIdx_derived);
@@ -421,6 +419,7 @@ impl AO_StreamState {
 impl Core {
     fn AO_step_impl(&self, sp: &mut AO_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut medianPrice: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingFastIdx == 0 {
             sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
         }
@@ -432,7 +431,7 @@ impl Core {
         sp.sumSlow += medianPrice;
         // Snapshot the oscillator before either total drops its trailing bar,
         // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
-        sp.tempReal = sp.sumFast / (sp.optInFastPeriod as f64) - sp.sumSlow / (sp.optInSlowPeriod as f64);
+        tempReal = sp.sumFast / (sp.optInFastPeriod as f64) - sp.sumSlow / (sp.optInSlowPeriod as f64);
         // Read both trailing bars before writing the output. When startIdx is
         // clamped to the lookback the longer window's trailing index equals
         // outIdx exactly, so a store hoisted above this would read back the
@@ -440,7 +439,7 @@ impl Core {
         // over inHigh or inLow.
         sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
         sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
-        (*outReal) = sp.tempReal;
+        (*outReal) = tempReal;
         sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
         sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
         if sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
@@ -615,7 +614,6 @@ impl Core {
             optInSlowPeriod,
             sumFast,
             sumSlow,
-            tempReal,
             ringPos_trailingFastIdx: 0_usize,
             ringCap_trailingFastIdx: cap_trailingFastIdx as usize,
             ring_trailingFastIdx_derived,

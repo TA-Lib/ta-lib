@@ -351,7 +351,6 @@ struct AROONOSC_StreamState {
     lowest: f64,
     highest: f64,
     factor: f64,
-    aroon: f64,
     trailingIdx: i32,
     lowestIdx: i32,
     highestIdx: i32,
@@ -371,7 +370,6 @@ impl AROONOSC_StreamState {
         self.lowest = src.lowest;
         self.highest = src.highest;
         self.factor = src.factor;
-        self.aroon = src.aroon;
         self.trailingIdx = src.trailingIdx;
         self.lowestIdx = src.lowestIdx;
         self.highestIdx = src.highestIdx;
@@ -392,6 +390,7 @@ impl AROONOSC_StreamState {
 impl Core {
     fn AROONOSC_step_impl(&self, sp: &mut AROONOSC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
+        let mut aroon: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
@@ -443,10 +442,10 @@ impl Core {
         //
         // An arithmetic simplification give us:
         //  Aroon = factor*(highestIdx-lowestIdx)
-        sp.aroon = sp.factor * (((sp.highestIdx - sp.lowestIdx)) as f64);
+        aroon = sp.factor * (((sp.highestIdx - sp.lowestIdx)) as f64);
         // Note: Do not forget that input and output buffer can be the same,
         //       so writing to the output is the last thing being done here.
-        (*outReal) = sp.aroon;
+        (*outReal) = aroon;
         sp.trailingIdx += 1;
         sp.today += 1;
     }
@@ -599,7 +598,6 @@ impl Core {
             lowest,
             highest,
             factor,
-            aroon,
             trailingIdx: (trailingIdx) as i32,
             lowestIdx: (lowestIdx) as i32,
             highestIdx: (highestIdx) as i32,

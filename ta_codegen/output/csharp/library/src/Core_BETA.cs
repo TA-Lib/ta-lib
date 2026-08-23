@@ -820,20 +820,13 @@ public partial class Core
       internal double trailing_last_price_y;
       internal double shift_x;
       internal double shift_y;
-      internal double denom;
-      internal double denom_scale;
-      internal double prev_x;
       internal double leaving_xx;
       internal double leaving_yy;
       internal double S_yy;
-      internal double prev_y;
-      internal int j;
-      internal int windowStart;
       internal int barsSinceReseed;
-      internal double x;
-      internal double y;
       internal double n;
       internal int trailingIdx;
+      internal int j;
       internal int i;
       internal int xMask;
       internal double[] x_inReal0 = [];
@@ -869,20 +862,13 @@ public partial class Core
          this.trailing_last_price_y = other.trailing_last_price_y;
          this.shift_x = other.shift_x;
          this.shift_y = other.shift_y;
-         this.denom = other.denom;
-         this.denom_scale = other.denom_scale;
-         this.prev_x = other.prev_x;
          this.leaving_xx = other.leaving_xx;
          this.leaving_yy = other.leaving_yy;
          this.S_yy = other.S_yy;
-         this.prev_y = other.prev_y;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
          this.barsSinceReseed = other.barsSinceReseed;
-         this.x = other.x;
-         this.y = other.y;
          this.n = other.n;
          this.trailingIdx = other.trailingIdx;
+         this.j = other.j;
          this.i = other.i;
          this.xMask = other.xMask;
          this.x_inReal0 = new double[other.x_inReal0.Length];
@@ -908,20 +894,13 @@ public partial class Core
          this.trailing_last_price_y = other.trailing_last_price_y;
          this.shift_x = other.shift_x;
          this.shift_y = other.shift_y;
-         this.denom = other.denom;
-         this.denom_scale = other.denom_scale;
-         this.prev_x = other.prev_x;
          this.leaving_xx = other.leaving_xx;
          this.leaving_yy = other.leaving_yy;
          this.S_yy = other.S_yy;
-         this.prev_y = other.prev_y;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
          this.barsSinceReseed = other.barsSinceReseed;
-         this.x = other.x;
-         this.y = other.y;
          this.n = other.n;
          this.trailingIdx = other.trailingIdx;
+         this.j = other.j;
          this.i = other.i;
          this.xMask = other.xMask;
          if( this.x_inReal0.Length != other.x_inReal0.Length ) {
@@ -1034,6 +1013,13 @@ public partial class Core
    internal void BETA_StepImpl( BETA_Stream sp, double inReal0, double inReal1 )
    {
       double tmp_real = 0.0;
+      double denom = 0.0;
+      double denom_scale = 0.0;
+      double prev_x = 0.0;
+      double prev_y = 0.0;
+      int windowStart = 0;
+      double x = 0.0;
+      double y = 0.0;
       if( sp.i >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.i -= rebaseShift;
@@ -1044,25 +1030,25 @@ public partial class Core
       sp.x_inReal1[sp.i & sp.xMask] = inReal1;
       tmp_real = sp.x_inReal0[sp.i & sp.xMask];
       if( !((-0.00000000000001 < sp.last_price_x) && (sp.last_price_x < 0.00000000000001)) ) {
-         sp.x = (tmp_real - sp.last_price_x) / sp.last_price_x - sp.shift_x;
+         x = (tmp_real - sp.last_price_x) / sp.last_price_x - sp.shift_x;
       } else {
-         sp.x = 0 - sp.shift_x;
+         x = 0 - sp.shift_x;
       }
       sp.last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.i++ & sp.xMask];
       if( !((-0.00000000000001 < sp.last_price_y) && (sp.last_price_y < 0.00000000000001)) ) {
-         sp.y = (tmp_real - sp.last_price_y) / sp.last_price_y - sp.shift_y;
+         y = (tmp_real - sp.last_price_y) / sp.last_price_y - sp.shift_y;
       } else {
-         sp.y = 0 - sp.shift_y;
+         y = 0 - sp.shift_y;
       }
       sp.last_price_y = tmp_real;
-      sp.S_xx += sp.x * sp.x;
-      sp.S_yy += sp.y * sp.y;
-      sp.S_xy += sp.x * sp.y;
-      sp.S_x += sp.x;
-      sp.S_y += sp.y;
-      sp.denom_scale = sp.n * sp.S_xx;
-      sp.denom = sp.denom_scale - sp.S_x * sp.S_x;
+      sp.S_xx += x * x;
+      sp.S_yy += y * y;
+      sp.S_xy += x * y;
+      sp.S_x += x;
+      sp.S_y += y;
+      denom_scale = sp.n * sp.S_xx;
+      denom = denom_scale - sp.S_x * sp.S_x;
       /* Re-anchor and rebuild when the shift has gone stale. The same three
        * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
        * it is extracted from; OR the return that just left sat so far from the
@@ -1109,9 +1095,9 @@ public partial class Core
        * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
        */
       sp.barsSinceReseed -= 1;
-      if( sp.denom < 0.000001 * sp.denom_scale || sp.leaving_xx > 1000.0 * sp.S_xx || sp.leaving_yy > 1000.0 * sp.S_yy || sp.barsSinceReseed <= 0 ) {
+      if( denom < 0.000001 * denom_scale || sp.leaving_xx > 1000.0 * sp.S_xx || sp.leaving_yy > 1000.0 * sp.S_yy || sp.barsSinceReseed <= 0 ) {
          sp.barsSinceReseed = 32 * sp.optInTimePeriod;
-         sp.windowStart = sp.trailingIdx;
+         windowStart = sp.trailingIdx;
          /* Walk the window forward from the price the trailing cursor already
           * carries. A return needs its predecessor, and reading inReal[j-1]
           * would reach one slot BEFORE the window -- which the batch can do and
@@ -1119,50 +1105,50 @@ public partial class Core
           * IS that predecessor, so carrying it forward keeps every read inside
           * [trailingIdx, i-1] and the two paths stay identical.
           */
-         sp.prev_x = sp.trailing_last_price_x;
-         sp.prev_y = sp.trailing_last_price_y;
+         prev_x = sp.trailing_last_price_x;
+         prev_y = sp.trailing_last_price_y;
          tmp_real = 0.0;
          sp.shift_y = 0.0;
-         for( sp.j = sp.windowStart; sp.j < sp.i; sp.j += 1 ) {
-            if( !((-0.00000000000001 < sp.prev_x) && (sp.prev_x < 0.00000000000001)) ) {
-               tmp_real += (sp.x_inReal0[sp.j & sp.xMask] - sp.prev_x) / sp.prev_x;
+         for( sp.j = windowStart; sp.j < sp.i; sp.j += 1 ) {
+            if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               tmp_real += (sp.x_inReal0[sp.j & sp.xMask] - prev_x) / prev_x;
             }
-            sp.prev_x = sp.x_inReal0[sp.j & sp.xMask];
-            if( !((-0.00000000000001 < sp.prev_y) && (sp.prev_y < 0.00000000000001)) ) {
-               sp.shift_y += (sp.x_inReal1[sp.j & sp.xMask] - sp.prev_y) / sp.prev_y;
+            prev_x = sp.x_inReal0[sp.j & sp.xMask];
+            if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               sp.shift_y += (sp.x_inReal1[sp.j & sp.xMask] - prev_y) / prev_y;
             }
-            sp.prev_y = sp.x_inReal1[sp.j & sp.xMask];
+            prev_y = sp.x_inReal1[sp.j & sp.xMask];
          }
          sp.shift_x = tmp_real / sp.n;
          sp.shift_y = sp.shift_y / sp.n;
-         sp.prev_x = sp.trailing_last_price_x;
-         sp.prev_y = sp.trailing_last_price_y;
+         prev_x = sp.trailing_last_price_x;
+         prev_y = sp.trailing_last_price_y;
          sp.S_xx = 0.0;
          sp.S_yy = 0.0;
          sp.S_xy = 0.0;
          sp.S_x = 0.0;
          sp.S_y = 0.0;
-         for( sp.j = sp.windowStart; sp.j < sp.i; sp.j += 1 ) {
-            if( !((-0.00000000000001 < sp.prev_x) && (sp.prev_x < 0.00000000000001)) ) {
-               sp.x = (sp.x_inReal0[sp.j & sp.xMask] - sp.prev_x) / sp.prev_x - sp.shift_x;
+         for( sp.j = windowStart; sp.j < sp.i; sp.j += 1 ) {
+            if( !((-0.00000000000001 < prev_x) && (prev_x < 0.00000000000001)) ) {
+               x = (sp.x_inReal0[sp.j & sp.xMask] - prev_x) / prev_x - sp.shift_x;
             } else {
-               sp.x = 0 - sp.shift_x;
+               x = 0 - sp.shift_x;
             }
-            sp.prev_x = sp.x_inReal0[sp.j & sp.xMask];
-            if( !((-0.00000000000001 < sp.prev_y) && (sp.prev_y < 0.00000000000001)) ) {
-               sp.y = (sp.x_inReal1[sp.j & sp.xMask] - sp.prev_y) / sp.prev_y - sp.shift_y;
+            prev_x = sp.x_inReal0[sp.j & sp.xMask];
+            if( !((-0.00000000000001 < prev_y) && (prev_y < 0.00000000000001)) ) {
+               y = (sp.x_inReal1[sp.j & sp.xMask] - prev_y) / prev_y - sp.shift_y;
             } else {
-               sp.y = 0 - sp.shift_y;
+               y = 0 - sp.shift_y;
             }
-            sp.prev_y = sp.x_inReal1[sp.j & sp.xMask];
-            sp.S_xx += sp.x * sp.x;
-            sp.S_yy += sp.y * sp.y;
-            sp.S_xy += sp.x * sp.y;
-            sp.S_x += sp.x;
-            sp.S_y += sp.y;
+            prev_y = sp.x_inReal1[sp.j & sp.xMask];
+            sp.S_xx += x * x;
+            sp.S_yy += y * y;
+            sp.S_xy += x * y;
+            sp.S_x += x;
+            sp.S_y += y;
          }
-         sp.denom_scale = sp.n * sp.S_xx;
-         sp.denom = sp.denom_scale - sp.S_x * sp.S_x;
+         denom_scale = sp.n * sp.S_xx;
+         denom = denom_scale - sp.S_x * sp.S_x;
          /* n*S_xx - S_x*S_x is non-negative by Cauchy-Schwarz, but it is
           * extracted as a difference, so its SIGN is not guaranteed on a window
           * whose returns are all the same value. Enforce the invariant HERE and
@@ -1171,8 +1157,8 @@ public partial class Core
           * and denom_scale == 0 reduces that trigger to `denom < 0`), so the
           * divide below can rely on it being >= 0.
           */
-         if( sp.denom < 0.0 ) {
-            sp.denom = 0.0;
+         if( denom < 0.0 ) {
+            denom = 0.0;
          }
       }
       /* Always read the trailing before writing the output because the input and output
@@ -1180,17 +1166,17 @@ public partial class Core
        */
       tmp_real = sp.x_inReal0[sp.trailingIdx & sp.xMask];
       if( !((-0.00000000000001 < sp.trailing_last_price_x) && (sp.trailing_last_price_x < 0.00000000000001)) ) {
-         sp.x = (tmp_real - sp.trailing_last_price_x) / sp.trailing_last_price_x - sp.shift_x;
+         x = (tmp_real - sp.trailing_last_price_x) / sp.trailing_last_price_x - sp.shift_x;
       } else {
-         sp.x = 0 - sp.shift_x;
+         x = 0 - sp.shift_x;
       }
       sp.trailing_last_price_x = tmp_real;
       tmp_real = sp.x_inReal1[sp.trailingIdx & sp.xMask];
       sp.trailingIdx += 1;
       if( !((-0.00000000000001 < sp.trailing_last_price_y) && (sp.trailing_last_price_y < 0.00000000000001)) ) {
-         sp.y = (tmp_real - sp.trailing_last_price_y) / sp.trailing_last_price_y - sp.shift_y;
+         y = (tmp_real - sp.trailing_last_price_y) / sp.trailing_last_price_y - sp.shift_y;
       } else {
-         sp.y = 0 - sp.shift_y;
+         y = 0 - sp.shift_y;
       }
       sp.trailing_last_price_y = tmp_real;
       /* Write the output.
@@ -1201,19 +1187,19 @@ public partial class Core
        * returns are small". The literal is TA_EPSILON, and the plain `>` also
        * rejects a negative denominator rather than dividing by it.
        */
-      if( sp.denom > 0.00000000000001 * sp.denom_scale ) {
-         sp.cur_outReal = (sp.n * sp.S_xy - sp.S_x * sp.S_y) / sp.denom;
+      if( denom > 0.00000000000001 * denom_scale ) {
+         sp.cur_outReal = (sp.n * sp.S_xy - sp.S_x * sp.S_y) / denom;
       } else {
          sp.cur_outReal = 0.0;
       }
       /* Remove the calculation starting with the trailingIdx. */
-      sp.leaving_xx = sp.x * sp.x;
-      sp.leaving_yy = sp.y * sp.y;
-      sp.S_xx -= sp.x * sp.x;
-      sp.S_yy -= sp.y * sp.y;
-      sp.S_xy -= sp.x * sp.y;
-      sp.S_x -= sp.x;
-      sp.S_y -= sp.y;
+      sp.leaving_xx = x * x;
+      sp.leaving_yy = y * y;
+      sp.S_xx -= x * x;
+      sp.S_yy -= y * y;
+      sp.S_xy -= x * y;
+      sp.S_x -= x;
+      sp.S_y -= y;
    }
 
    private RetCode BETA_OpenImpl( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
@@ -1588,20 +1574,13 @@ public partial class Core
       sp.trailing_last_price_y = trailing_last_price_y;
       sp.shift_x = shift_x;
       sp.shift_y = shift_y;
-      sp.denom = denom;
-      sp.denom_scale = denom_scale;
-      sp.prev_x = prev_x;
       sp.leaving_xx = leaving_xx;
       sp.leaving_yy = leaving_yy;
       sp.S_yy = S_yy;
-      sp.prev_y = prev_y;
-      sp.j = j;
-      sp.windowStart = windowStart;
       sp.barsSinceReseed = barsSinceReseed;
-      sp.x = x;
-      sp.y = y;
       sp.n = n;
       sp.trailingIdx = trailingIdx;
+      sp.j = j;
       sp.i = i;
       sp.xMask = physX - 1;
       sp.x_inReal0 = capX_inReal0;

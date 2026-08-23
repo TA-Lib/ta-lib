@@ -421,11 +421,6 @@ struct CMF_StreamState {
     optInTimePeriod: i32,
     sumMFV: f64,
     sumVol: f64,
-    high: f64,
-    low: f64,
-    close: f64,
-    tmp: f64,
-    mfv: f64,
     mfv_Idx: usize,
     maxIdx_mfv: usize,
     cbSize_mfv: usize,
@@ -441,11 +436,6 @@ impl CMF_StreamState {
         self.optInTimePeriod = src.optInTimePeriod;
         self.sumMFV = src.sumMFV;
         self.sumVol = src.sumVol;
-        self.high = src.high;
-        self.low = src.low;
-        self.close = src.close;
-        self.tmp = src.tmp;
-        self.mfv = src.mfv;
         self.mfv_Idx = src.mfv_Idx;
         self.maxIdx_mfv = src.maxIdx_mfv;
         self.cbSize_mfv = src.cbSize_mfv;
@@ -462,20 +452,25 @@ impl CMF_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn CMF_step_impl(&self, sp: &mut CMF_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+        let mut high: f64 = 0.0_f64;
+        let mut low: f64 = 0.0_f64;
+        let mut close: f64 = 0.0_f64;
+        let mut tmp: f64 = 0.0_f64;
+        let mut mfv: f64 = 0.0_f64;
         sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
         sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
-        sp.high = inHigh;
-        sp.low = inLow;
-        sp.close = inClose;
-        sp.tmp = sp.high - sp.low;
-        if sp.tmp > 0.0 {
-            sp.mfv = (sp.close - sp.low - (sp.high - sp.close)) / sp.tmp * inVolume;
+        high = inHigh;
+        low = inLow;
+        close = inClose;
+        tmp = high - low;
+        if tmp > 0.0 {
+            mfv = (close - low - (high - close)) / tmp * inVolume;
         } else {
-            sp.mfv = 0.0;
+            mfv = 0.0;
         }
-        sp.cb_mfv_flow[sp.mfv_Idx] = sp.mfv;
+        sp.cb_mfv_flow[sp.mfv_Idx] = mfv;
         sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
-        sp.sumMFV += sp.mfv;
+        sp.sumMFV += mfv;
         sp.sumVol += inVolume;
         if sp.sumVol > 0.0 {
             (*outReal) = sp.sumMFV / sp.sumVol;
@@ -631,11 +626,6 @@ impl Core {
             optInTimePeriod,
             sumMFV,
             sumVol,
-            high,
-            low,
-            close,
-            tmp,
-            mfv,
             mfv_Idx,
             maxIdx_mfv,
             cbSize_mfv: cbSize_mfv,

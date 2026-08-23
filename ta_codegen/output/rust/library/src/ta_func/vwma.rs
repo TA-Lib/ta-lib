@@ -356,8 +356,6 @@ struct VWMA_StreamState {
     optInTimePeriod: i32,
     sumPV: f64,
     sumV: f64,
-    tempPV: f64,
-    tempV: f64,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
@@ -372,8 +370,6 @@ impl VWMA_StreamState {
         self.optInTimePeriod = src.optInTimePeriod;
         self.sumPV = src.sumPV;
         self.sumV = src.sumV;
-        self.tempPV = src.tempPV;
-        self.tempV = src.tempV;
         self.ringPos_trailingIdx = src.ringPos_trailingIdx;
         self.ringCap_trailingIdx = src.ringCap_trailingIdx;
         self.ring_trailingIdx_inReal.clone_from(&src.ring_trailingIdx_inReal);
@@ -389,6 +385,8 @@ impl VWMA_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn VWMA_step_impl(&self, sp: &mut VWMA_StreamState, inReal: f64, inVolume: f64, outReal: &mut f64) {
+        let mut tempPV: f64 = 0.0_f64;
+        let mut tempV: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
@@ -404,14 +402,14 @@ impl Core {
         // Snapshot both sums before removing the trailing bar, mirroring the
         // add-new / snapshot / subtract-old order of TA_SMA. That order is what
         // makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
-        sp.tempPV = sp.sumPV;
-        sp.tempV = sp.sumV;
+        tempPV = sp.sumPV;
+        tempV = sp.sumV;
         // Read the trailing values before writing the output, since the caller
         // may pass the same buffer for an input and the output.
         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
         sp.sumPV -= tempReal;
         sp.sumV -= sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
-        (*outReal) = sp.tempPV / (sp.optInTimePeriod as f64) / (sp.tempV / (sp.optInTimePeriod as f64));
+        (*outReal) = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -456,8 +454,6 @@ impl Core {
                 optInTimePeriod: optInTimePeriod,
                 sumPV: 0.0_f64,
                 sumV: 0.0_f64,
-                tempPV: 0.0_f64,
-                tempV: 0.0_f64,
                 ringPos_trailingIdx: 0_usize,
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
@@ -560,8 +556,6 @@ impl Core {
             optInTimePeriod,
             sumPV,
             sumV,
-            tempPV,
-            tempV,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,

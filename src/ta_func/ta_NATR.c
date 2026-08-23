@@ -478,15 +478,15 @@ struct TA_NATR_Stream {
    int outRangeCount;
    int optInTimePeriod;
    double prevATR;
-   double tempValue;
-   double val3;
    double lag1_inClose;
 };
 
 /* Private function, not in public API. */
 static void TA_NATR_StepImpl( struct TA_NATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
+   double tempValue;
    double val2;
+   double val3;
    double greatest;
    double tempCY;
    double tempLT;
@@ -503,10 +503,10 @@ static void TA_NATR_StepImpl( struct TA_NATR_Stream *sp, double inHigh, double i
    {
       greatest = val2;
    }
-   sp->val3 = fabs(tempCY - tempLT);
-   if( sp->val3 > greatest )
+   val3 = fabs(tempCY - tempLT);
+   if( val3 > greatest )
    {
-      greatest = sp->val3;
+      greatest = val3;
    }
    sp->prevATR *= sp->optInTimePeriod - 1;
    sp->prevATR += greatest;
@@ -517,10 +517,10 @@ static void TA_NATR_StepImpl( struct TA_NATR_Stream *sp, double inHigh, double i
       *outReal= sp->prevATR;
    } else 
    {
-      sp->tempValue = inClose;
-      if( !TA_IS_ZERO(sp->tempValue) )
+      tempValue = inClose;
+      if( !TA_IS_ZERO(tempValue) )
       {
-         *outReal= sp->prevATR / sp->tempValue * 100.0;
+         *outReal= sp->prevATR / tempValue * 100.0;
       } else 
       {
          *outReal= 0.0;
@@ -565,9 +565,9 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
       int nbATR;
       double prevATR = 0.0;
       double periodTotal;
-      double tempValue = 0.0;
+      double tempValue;
       double val2;
-      double val3 = 0.0;
+      double val3;
       double greatest;
       double tempCY;
       double tempLT;
@@ -769,8 +769,6 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevATR = prevATR;
-      sp->tempValue = tempValue;
-      sp->val3 = val3;
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;

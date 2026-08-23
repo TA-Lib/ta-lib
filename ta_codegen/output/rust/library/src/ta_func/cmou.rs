@@ -360,7 +360,6 @@ struct CMOU_StreamState {
     optInTimePeriod: i32,
     upSum: f64,
     downSum: f64,
-    sum: f64,
     prevValue: f64,
     trailingValue: f64,
     ringPos_trailingIdx: usize,
@@ -376,7 +375,6 @@ impl CMOU_StreamState {
         self.optInTimePeriod = src.optInTimePeriod;
         self.upSum = src.upSum;
         self.downSum = src.downSum;
-        self.sum = src.sum;
         self.prevValue = src.prevValue;
         self.trailingValue = src.trailingValue;
         self.ringPos_trailingIdx = src.ringPos_trailingIdx;
@@ -393,6 +391,7 @@ impl CMOU_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn CMOU_step_impl(&self, sp: &mut CMOU_StreamState, inReal: f64, outReal: &mut f64) {
+        let mut sum: f64 = 0.0_f64;
         let mut diff: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
@@ -419,9 +418,9 @@ impl Core {
         } else if diff < 0.0 {
             sp.downSum -= diff;
         }
-        sp.sum = sp.upSum + sp.downSum;
-        if !((sp.sum).abs() < 1e-14) {
-            (*outReal) = 100.0 * (sp.upSum - sp.downSum) / sp.sum;
+        sum = sp.upSum + sp.downSum;
+        if !((sum).abs() < 1e-14) {
+            (*outReal) = 100.0 * (sp.upSum - sp.downSum) / sum;
         } else {
             (*outReal) = 0.0;
         }
@@ -579,7 +578,6 @@ impl Core {
             optInTimePeriod,
             upSum,
             downSum,
-            sum,
             prevValue,
             trailingValue,
             ringPos_trailingIdx: 0_usize,

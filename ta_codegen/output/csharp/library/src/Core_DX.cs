@@ -753,11 +753,6 @@ public partial class Core
       internal double prevMinusDM;
       internal double prevPlusDM;
       internal double prevTR;
-      internal double tempReal;
-      internal double diffP;
-      internal double diffM;
-      internal double minusDI;
-      internal double plusDI;
       internal double lastOut_outReal;
       internal double cur_outReal;
       internal int outRangeBegIdx;
@@ -786,11 +781,6 @@ public partial class Core
          this.prevMinusDM = other.prevMinusDM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
-         this.minusDI = other.minusDI;
-         this.plusDI = other.plusDI;
          this.lastOut_outReal = other.lastOut_outReal;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -807,11 +797,6 @@ public partial class Core
          this.prevMinusDM = other.prevMinusDM;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
-         this.tempReal = other.tempReal;
-         this.diffP = other.diffP;
-         this.diffM = other.diffM;
-         this.minusDI = other.minusDI;
-         this.plusDI = other.plusDI;
          this.lastOut_outReal = other.lastOut_outReal;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -908,23 +893,28 @@ public partial class Core
 
    internal void DX_StepImpl( DX_Stream sp, double inHigh, double inLow, double inClose )
    {
+      double tempReal = 0.0;
+      double diffP = 0.0;
+      double diffM = 0.0;
+      double minusDI = 0.0;
+      double plusDI = 0.0;
       /* Calculate the prevMinusDM and prevPlusDM */
-      sp.tempReal = inHigh;
-      sp.diffP = sp.tempReal - sp.prevHigh;
+      tempReal = inHigh;
+      diffP = tempReal - sp.prevHigh;
       /* Plus Delta */
-      sp.prevHigh = sp.tempReal;
-      sp.tempReal = inLow;
-      sp.diffM = sp.prevLow - sp.tempReal;
+      sp.prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp.prevLow - tempReal;
       /* Minus Delta */
-      sp.prevLow = sp.tempReal;
+      sp.prevLow = tempReal;
       sp.prevMinusDM -= sp.prevMinusDM / sp.optInTimePeriod;
       sp.prevPlusDM -= sp.prevPlusDM / sp.optInTimePeriod;
-      if( sp.diffM > 0 && sp.diffP < sp.diffM ) {
+      if( diffM > 0 && diffP < diffM ) {
          /* Case 2 and 4: +DM=0,-DM=diffM */
-         sp.prevMinusDM += sp.diffM;
-      } else if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+         sp.prevMinusDM += diffM;
+      } else if( diffP > 0 && diffP > diffM ) {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
-         sp.prevPlusDM += sp.diffP;
+         sp.prevPlusDM += diffP;
       }
       /* Calculate the prevTR */
       double _true_range_0 = 0;
@@ -938,17 +928,17 @@ public partial class Core
          range_0 = tmp_0;
       }
       _true_range_0 = range_0;
-      sp.tempReal = _true_range_0;
-      sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + sp.tempReal;
+      tempReal = _true_range_0;
+      sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
       sp.prevClose = inClose;
       /* Calculate the DX. The value is rounded (see Wilder book). */
       if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
-         sp.minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
-         sp.plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
+         minusDI = (100.0 * (sp.prevMinusDM / sp.prevTR));
+         plusDI = (100.0 * (sp.prevPlusDM / sp.prevTR));
          /* This loop is just to accumulate the initial DX */
-         sp.tempReal = sp.minusDI + sp.plusDI;
-         if( !((-0.00000000000001 < sp.tempReal) && (sp.tempReal < 0.00000000000001)) ) {
-            sp.cur_outReal = (100.0 * (Math.Abs(sp.minusDI - sp.plusDI) / sp.tempReal));
+         tempReal = minusDI + plusDI;
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            sp.cur_outReal = (100.0 * (Math.Abs(minusDI - plusDI) / tempReal));
          } else {
             sp.cur_outReal = sp.lastOut_outReal;
          }
@@ -1271,11 +1261,6 @@ public partial class Core
       sp.prevMinusDM = prevMinusDM;
       sp.prevPlusDM = prevPlusDM;
       sp.prevTR = prevTR;
-      sp.tempReal = tempReal;
-      sp.diffP = diffP;
-      sp.diffM = diffM;
-      sp.minusDI = minusDI;
-      sp.plusDI = plusDI;
       sp.lastOut_outReal = outReal[(outNBElement - 1) * outStride];
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;

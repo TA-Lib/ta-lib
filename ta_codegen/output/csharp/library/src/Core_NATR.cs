@@ -597,8 +597,6 @@ public partial class Core
       internal Core core;
       internal int optInTimePeriod;
       internal double prevATR;
-      internal double tempValue;
-      internal double val3;
       internal double lag1_inClose;
       internal double cur_outReal;
       internal int outRangeBegIdx;
@@ -622,8 +620,6 @@ public partial class Core
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
-         this.tempValue = other.tempValue;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -635,8 +631,6 @@ public partial class Core
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
-         this.tempValue = other.tempValue;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -733,7 +727,9 @@ public partial class Core
 
    internal void NATR_StepImpl( NATR_Stream sp, double inHigh, double inLow, double inClose )
    {
+      double tempValue = 0.0;
       double val2 = 0.0;
+      double val3 = 0.0;
       double greatest = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
@@ -748,9 +744,9 @@ public partial class Core
       if( val2 > greatest ) {
          greatest = val2;
       }
-      sp.val3 = Math.Abs(tempCY - tempLT);
-      if( sp.val3 > greatest ) {
-         greatest = sp.val3;
+      val3 = Math.Abs(tempCY - tempLT);
+      if( val3 > greatest ) {
+         greatest = val3;
       }
       sp.prevATR *= sp.optInTimePeriod - 1;
       sp.prevATR += greatest;
@@ -759,9 +755,9 @@ public partial class Core
          /* No smoothing: emit the raw True Range (unnormalized). */
          sp.cur_outReal = sp.prevATR;
       } else {
-         sp.tempValue = inClose;
-         if( !((-0.00000000000001 < sp.tempValue) && (sp.tempValue < 0.00000000000001)) ) {
-            sp.cur_outReal = sp.prevATR / sp.tempValue * 100.0;
+         tempValue = inClose;
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            sp.cur_outReal = sp.prevATR / tempValue * 100.0;
          } else {
             sp.cur_outReal = 0.0;
          }
@@ -979,8 +975,6 @@ public partial class Core
       /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
       sp.prevATR = prevATR;
-      sp.tempValue = tempValue;
-      sp.val3 = val3;
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;

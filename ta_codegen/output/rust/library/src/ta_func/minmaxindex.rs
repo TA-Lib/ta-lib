@@ -327,12 +327,10 @@ struct MINMAXINDEX_StreamState {
     optInTimePeriod: i32,
     highest: f64,
     lowest: f64,
-    tmpHigh: f64,
-    tmpLow: f64,
     trailingIdx: i32,
-    i: i32,
     highestIdx: i32,
     lowestIdx: i32,
+    i: i32,
     today: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
@@ -346,12 +344,10 @@ impl MINMAXINDEX_StreamState {
         self.optInTimePeriod = src.optInTimePeriod;
         self.highest = src.highest;
         self.lowest = src.lowest;
-        self.tmpHigh = src.tmpHigh;
-        self.tmpLow = src.tmpLow;
         self.trailingIdx = src.trailingIdx;
-        self.i = src.i;
         self.highestIdx = src.highestIdx;
         self.lowestIdx = src.lowestIdx;
+        self.i = src.i;
         self.today = src.today;
         self.xMask = src.xMask;
         self.x_inReal.clone_from(&src.x_inReal);
@@ -366,6 +362,8 @@ impl MINMAXINDEX_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn MINMAXINDEX_step_impl(&self, sp: &mut MINMAXINDEX_StreamState, inReal: f64, outMinIdx: &mut i32, outMaxIdx: &mut i32) {
+        let mut tmpHigh: f64 = 0.0_f64;
+        let mut tmpLow: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
@@ -375,37 +373,37 @@ impl Core {
             sp.lowestIdx -= rebaseShift;
         }
         sp.x_inReal[(sp.today & sp.xMask) as usize] = inReal;
-        sp.tmpHigh = sp.x_inReal[(sp.today & sp.xMask) as usize];
-        sp.tmpLow = sp.tmpHigh;
+        tmpHigh = sp.x_inReal[(sp.today & sp.xMask) as usize];
+        tmpLow = tmpHigh;
         if sp.highestIdx < sp.trailingIdx {
             sp.highestIdx = sp.trailingIdx;
             sp.highest = sp.x_inReal[(sp.highestIdx & sp.xMask) as usize];
             sp.i = sp.highestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
-                sp.tmpHigh = sp.x_inReal[(sp.i & sp.xMask) as usize];
-                if sp.tmpHigh > sp.highest {
+                tmpHigh = sp.x_inReal[(sp.i & sp.xMask) as usize];
+                if tmpHigh > sp.highest {
                     sp.highestIdx = sp.i;
-                    sp.highest = sp.tmpHigh;
+                    sp.highest = tmpHigh;
                 }
             }
-        } else if sp.tmpHigh >= sp.highest {
+        } else if tmpHigh >= sp.highest {
             sp.highestIdx = sp.today;
-            sp.highest = sp.tmpHigh;
+            sp.highest = tmpHigh;
         }
         if sp.lowestIdx < sp.trailingIdx {
             sp.lowestIdx = sp.trailingIdx;
             sp.lowest = sp.x_inReal[(sp.lowestIdx & sp.xMask) as usize];
             sp.i = sp.lowestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
-                sp.tmpLow = sp.x_inReal[(sp.i & sp.xMask) as usize];
-                if sp.tmpLow < sp.lowest {
+                tmpLow = sp.x_inReal[(sp.i & sp.xMask) as usize];
+                if tmpLow < sp.lowest {
                     sp.lowestIdx = sp.i;
-                    sp.lowest = sp.tmpLow;
+                    sp.lowest = tmpLow;
                 }
             }
-        } else if sp.tmpLow <= sp.lowest {
+        } else if tmpLow <= sp.lowest {
             sp.lowestIdx = sp.today;
-            sp.lowest = sp.tmpLow;
+            sp.lowest = tmpLow;
         }
         (*outMaxIdx) = (sp.highestIdx) as i32;
         (*outMinIdx) = (sp.lowestIdx) as i32;
@@ -540,12 +538,10 @@ impl Core {
             optInTimePeriod,
             highest,
             lowest,
-            tmpHigh,
-            tmpLow,
             trailingIdx: (trailingIdx) as i32,
-            i: (i) as i32,
             highestIdx: (highestIdx) as i32,
             lowestIdx: (lowestIdx) as i32,
+            i: (i) as i32,
             today: (today) as i32,
             xMask: (physX - 1) as i32,
             x_inReal,

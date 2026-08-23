@@ -7440,7 +7440,7 @@ fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
     // unconditionally in each arm (the nested `today >= startIdx` gate stripped).
     assert!(step_body.contains("if( sp->streamParity == 0 )"), "parity branch in the step");
     assert_eq!(
-        step_body.matches("*outQuadrature= sp->Q1;").count(),
+        step_body.matches("*outQuadrature= Q1;").count(),
         2,
         "outQuadrature written unconditionally in BOTH parity arms (nested gate stripped)"
     );
@@ -7476,8 +7476,8 @@ fn test_c_ht_dcphase_circ_ring_fixed_coexist() {
     assert!(s.contains("double *ring_trailingWMAIdx_inReal;"), "WMA trailing ring");
     assert!(s.contains("double detrender_Even[3];"), "fixed Hilbert array");
     assert!(s.contains("double DCPhase;"), "DCPhase carried across bars");
-    assert!(s.contains("sp->cb_smoothPrice[sp->smoothPrice_Idx] = sp->smoothedValue;"), "circbuf write");
-    assert!(s.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf backward rescan read");
+    assert!(s.contains("sp->cb_smoothPrice[sp->smoothPrice_Idx] = smoothedValue;"), "circbuf write");
+    assert!(s.contains("sp->cb_smoothPrice[idx]"), "circbuf backward rescan read");
     assert!(s.contains("memcpy( sp->cb_smoothPrice, smoothPrice"), "circbuf captured (contents+phase) in Open");
     assert!(s.contains("*outReal= sp->DCPhase;"), "unconditional DCPhase output (gate stripped)");
 }
@@ -7526,8 +7526,8 @@ fn test_c_folded_window_read_is_cursor_relative_and_de_moduloed() {
     let pos = "sp->ringPos_ShadowVeryShortTrailingIdx";
     let cap = "sp->ringCap_ShadowVeryShortTrailingIdx";
     let want = format!(
-        "sp->{ring}[({pos} + {cap} - sp->totIdx >= {cap}) ? \
-         {pos} + {cap} - sp->totIdx - {cap} : {pos} + {cap} - sp->totIdx]"
+        "sp->{ring}[({pos} + {cap} - totIdx >= {cap}) ? \
+         {pos} + {cap} - totIdx - {cap} : {pos} + {cap} - totIdx]"
     );
     assert!(
         step.contains(&want),
@@ -7537,7 +7537,7 @@ fn test_c_folded_window_read_is_cursor_relative_and_de_moduloed() {
     // the two are different reads of one buffer and must not be conflated.
     assert!(
         step.contains(&format!(
-            "sp->{ring}[({pos} + {cap} - sp->ringLag_ShadowVeryShortTrailingIdx - sp->totIdx) % {cap}]"
+            "sp->{ring}[({pos} + {cap} - sp->ringLag_ShadowVeryShortTrailingIdx - totIdx) % {cap}]"
         )),
         "the trailing read is unchanged"
     );
@@ -7942,9 +7942,9 @@ fn test_c_ht_trendline_raw_price_window() {
     assert!(!s.contains("cb_smoothPrice"), "no smoothPrice circbuf (removed, issue #88)");
     let step = s.split("TA_HT_TRENDLINE_StepImpl").nth(1).unwrap();
     let step = &step[..step.find("TA_HT_TRENDLINE_OpenImpl").unwrap_or(step.len())];
-    assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i >= sp->winCap_i) ?"), "de-modulo window read of bar today-i");
-    assert!(step.contains("if( sp->i < sp->DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
-    assert!(step.contains("*outReal= sp->tempReal2;"), "unconditional trendline output");
+    assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ?"), "de-modulo window read of bar today-i");
+    assert!(step.contains("if( i < DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
+    assert!(step.contains("*outReal= tempReal2;"), "unconditional trendline output");
 }
 
 /// Pin HT_TRENDMODE: the full HT union — WMA ring + smoothPrice circbuf + a
@@ -7958,8 +7958,8 @@ fn test_c_ht_trendmode_full_union() {
     let step = s.split("TA_HT_TRENDMODE_StepImpl").nth(1).unwrap();
     let step = &step[..step.find("TA_HT_TRENDMODE_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("*outInteger="), "integer trend-mode output, unconditional");
-    assert!(step.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf DC-phase read");
-    assert!(step.contains("sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j >= sp->winCap_j) ?"), "de-modulo window trendline read");
+    assert!(step.contains("sp->cb_smoothPrice[idx]"), "circbuf DC-phase read");
+    assert!(step.contains("sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ?"), "de-modulo window trendline read");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
 }
 

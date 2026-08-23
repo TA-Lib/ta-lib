@@ -577,9 +577,6 @@ struct PLUS_DI_StreamState {
     prevHigh: f64,
     prevLow: f64,
     prevClose: f64,
-    tempReal: f64,
-    diffP: f64,
-    diffM: f64,
     prevPlusDM: f64,
     prevTR: f64,
 }
@@ -593,9 +590,6 @@ impl PLUS_DI_StreamState {
         self.prevHigh = src.prevHigh;
         self.prevLow = src.prevLow;
         self.prevClose = src.prevClose;
-        self.tempReal = src.tempReal;
-        self.diffP = src.diffP;
-        self.diffM = src.diffM;
         self.prevPlusDM = src.prevPlusDM;
         self.prevTR = src.prevTR;
     }
@@ -610,15 +604,18 @@ impl PLUS_DI_StreamState {
 impl Core {
     fn PLUS_DI_step_impl(&self, sp: &mut PLUS_DI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         if sp.optInTimePeriod <= 1 {
-            sp.tempReal = inHigh;
-            sp.diffP = sp.tempReal - sp.prevHigh;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut diffP: f64 = 0.0_f64;
+            let mut diffM: f64 = 0.0_f64;
+            tempReal = inHigh;
+            diffP = tempReal - sp.prevHigh;
             // Plus Delta
-            sp.prevHigh = sp.tempReal;
-            sp.tempReal = inLow;
-            sp.diffM = sp.prevLow - sp.tempReal;
+            sp.prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = sp.prevLow - tempReal;
             // Minus Delta
-            sp.prevLow = sp.tempReal;
-            if sp.diffP > 0_f64 && sp.diffP > sp.diffM {
+            sp.prevLow = tempReal;
+            if diffP > 0_f64 && diffP > diffM {
                 // Case 1 and 3: +DM=diffP,-DM=0
                 let mut _true_range_0: f64;
                 let mut range_0: f64 = sp.prevHigh - sp.prevLow;
@@ -631,29 +628,32 @@ impl Core {
                     range_0 = tmp_0;
                 }
                 _true_range_0 = range_0;
-                sp.tempReal = _true_range_0;
-                if (sp.tempReal).abs() < 1e-14 {
+                tempReal = _true_range_0;
+                if (tempReal).abs() < 1e-14 {
                     (*outReal) = 0.0 as f64;
                 } else {
-                    (*outReal) = sp.diffP / sp.tempReal;
+                    (*outReal) = diffP / tempReal;
                 }
             } else {
                 (*outReal) = 0.0 as f64;
             }
             sp.prevClose = inClose;
         } else {
+            let mut tempReal: f64 = 0.0_f64;
+            let mut diffP: f64 = 0.0_f64;
+            let mut diffM: f64 = 0.0_f64;
             // Calculate the prevPlusDM
-            sp.tempReal = inHigh;
-            sp.diffP = sp.tempReal - sp.prevHigh;
+            tempReal = inHigh;
+            diffP = tempReal - sp.prevHigh;
             // Plus Delta
-            sp.prevHigh = sp.tempReal;
-            sp.tempReal = inLow;
-            sp.diffM = sp.prevLow - sp.tempReal;
+            sp.prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = sp.prevLow - tempReal;
             // Minus Delta
-            sp.prevLow = sp.tempReal;
-            if sp.diffP > 0_f64 && sp.diffP > sp.diffM {
+            sp.prevLow = tempReal;
+            if diffP > 0_f64 && diffP > diffM {
                 // Case 1 and 3: +DM=diffP,-DM=0
-                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64) + sp.diffP;
+                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64) + diffP;
             } else {
                 // Case 2,4,5 and 7
                 sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
@@ -670,8 +670,8 @@ impl Core {
                 range_1 = tmp_1;
             }
             _true_range_1 = range_1;
-            sp.tempReal = _true_range_1;
-            sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + sp.tempReal;
+            tempReal = _true_range_1;
+            sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + tempReal;
             sp.prevClose = inClose;
             // Calculate the DI. The value is rounded (see Wilder book).
             if !((sp.prevTR).abs() < 1e-14) {
@@ -883,9 +883,6 @@ impl Core {
                 prevHigh,
                 prevLow,
                 prevClose,
-                tempReal,
-                diffP,
-                diffM,
                 prevPlusDM,
                 prevTR,
             };
@@ -1146,9 +1143,6 @@ impl Core {
                 prevHigh,
                 prevLow,
                 prevClose,
-                tempReal,
-                diffP,
-                diffM,
                 prevPlusDM,
                 prevTR,
             };

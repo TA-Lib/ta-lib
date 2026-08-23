@@ -387,7 +387,6 @@ impl CDL3LINESTRIKE_Stream {
 #[allow(non_snake_case, dead_code)]
 struct CDL3LINESTRIKE_StreamState {
     NearPeriodTotal: [f64; 4 as usize],
-    totIdx: usize,
     lag1_inOpen: f64,
     lag2_inOpen: f64,
     lag3_inOpen: f64,
@@ -412,7 +411,6 @@ impl CDL3LINESTRIKE_StreamState {
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
         self.NearPeriodTotal = src.NearPeriodTotal;
-        self.totIdx = src.totIdx;
         self.lag1_inOpen = src.lag1_inOpen;
         self.lag2_inOpen = src.lag2_inOpen;
         self.lag3_inOpen = src.lag3_inOpen;
@@ -440,6 +438,7 @@ impl CDL3LINESTRIKE_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn CDL3LINESTRIKE_step_impl(&self, sp: &mut CDL3LINESTRIKE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
         #[allow(non_snake_case)]
@@ -477,12 +476,12 @@ impl Core {
         }
         // add the current range and subtract the first range: this is done after the pattern recognition
         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-        // for( sp.totIdx = 3; sp.totIdx >= 2; sp.totIdx -= 1 )
-        sp.totIdx = 3;
+        // for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+        totIdx = 3;
         loop {
-            sp.NearPeriodTotal[sp.totIdx] = sp.NearPeriodTotal[sp.totIdx] + (sp.ring_NearTrailingIdx_derived[((if sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx >= sp.ringCap_NearTrailingIdx { sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx - sp.ringCap_NearTrailingIdx } else { sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.totIdx })) as usize] - sp.ring_NearTrailingIdx_derived[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize]);
-            if sp.totIdx == 2 { break; }
-            sp.totIdx -= 1;
+            sp.NearPeriodTotal[totIdx] = sp.NearPeriodTotal[totIdx] + (sp.ring_NearTrailingIdx_derived[((if sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx { sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx } else { sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx })) as usize] - sp.ring_NearTrailingIdx_derived[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx) as usize]);
+            if totIdx == 2 { break; }
+            totIdx -= 1;
         }
         sp.lag3_inOpen = sp.lag2_inOpen;
         sp.lag2_inOpen = sp.lag1_inOpen;
@@ -680,7 +679,6 @@ impl Core {
         }
         let state = CDL3LINESTRIKE_StreamState {
             NearPeriodTotal,
-            totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag3_inOpen: inOpen[historyLen - 3],

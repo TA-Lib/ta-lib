@@ -645,10 +645,6 @@ struct SMI_StreamState {
     emaSlowDen: f64,
     emaFastNum: f64,
     emaFastDen: f64,
-    num: f64,
-    den: f64,
-    halfDen: f64,
-    smiValue: f64,
     prevSignal: f64,
     trailingIdx: i32,
     highestIdx: i32,
@@ -679,10 +675,6 @@ impl SMI_StreamState {
         self.emaSlowDen = src.emaSlowDen;
         self.emaFastNum = src.emaFastNum;
         self.emaFastDen = src.emaFastDen;
-        self.num = src.num;
-        self.den = src.den;
-        self.halfDen = src.halfDen;
-        self.smiValue = src.smiValue;
         self.prevSignal = src.prevSignal;
         self.trailingIdx = src.trailingIdx;
         self.highestIdx = src.highestIdx;
@@ -705,6 +697,10 @@ impl SMI_StreamState {
 impl Core {
     fn SMI_step_impl(&self, sp: &mut SMI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSMI: &mut f64, outSMISignal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
+        let mut num: f64 = 0.0_f64;
+        let mut den: f64 = 0.0_f64;
+        let mut halfDen: f64 = 0.0_f64;
+        let mut smiValue: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
@@ -750,10 +746,10 @@ impl Core {
             sp.highestIdx = sp.today;
             sp.highest = tmp;
         }
-        sp.den = sp.highest - sp.lowest;
-        sp.num = sp.x_inClose[(sp.today & sp.xMask) as usize] - (sp.highest + sp.lowest) * 0.5;
-        sp.emaSlowNum = (sp.num - sp.emaSlowNum as f64).mul_add(sp.kSlow, sp.emaSlowNum);
-        sp.emaSlowDen = (sp.den - sp.emaSlowDen as f64).mul_add(sp.kSlow, sp.emaSlowDen);
+        den = sp.highest - sp.lowest;
+        num = sp.x_inClose[(sp.today & sp.xMask) as usize] - (sp.highest + sp.lowest) * 0.5;
+        sp.emaSlowNum = (num - sp.emaSlowNum as f64).mul_add(sp.kSlow, sp.emaSlowNum);
+        sp.emaSlowDen = (den - sp.emaSlowDen as f64).mul_add(sp.kSlow, sp.emaSlowDen);
         sp.emaFastNum = (sp.emaSlowNum - sp.emaFastNum as f64).mul_add(sp.kFast, sp.emaFastNum);
         sp.emaFastDen = (sp.emaSlowDen - sp.emaFastDen as f64).mul_add(sp.kFast, sp.emaFastDen);
         // Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
@@ -761,14 +757,14 @@ impl Core {
         // into noise (issue #107 / STOCHRSI). A window whose bars are all
         // H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
         // CCI (#7) and IMI (#112) convention.
-        sp.halfDen = 0.5 * sp.emaFastDen;
-        if !((sp.halfDen).abs() < 1e-14) {
-            sp.smiValue = 100.0 * sp.emaFastNum / sp.halfDen;
+        halfDen = 0.5 * sp.emaFastDen;
+        if !((halfDen).abs() < 1e-14) {
+            smiValue = 100.0 * sp.emaFastNum / halfDen;
         } else {
-            sp.smiValue = 0.0;
+            smiValue = 0.0;
         }
-        sp.prevSignal = (sp.smiValue - sp.prevSignal as f64).mul_add(sp.kSignal, sp.prevSignal);
-        (*outSMI) = sp.smiValue;
+        sp.prevSignal = (smiValue - sp.prevSignal as f64).mul_add(sp.kSignal, sp.prevSignal);
+        (*outSMI) = smiValue;
         (*outSMISignal) = sp.prevSignal;
         sp.trailingIdx = sp.trailingIdx + 1;
         sp.today = sp.today + 1;
@@ -1098,10 +1094,6 @@ impl Core {
             emaSlowDen,
             emaFastNum,
             emaFastDen,
-            num,
-            den,
-            halfDen,
-            smiValue,
             prevSignal,
             trailingIdx: (trailingIdx) as i32,
             highestIdx: (highestIdx) as i32,

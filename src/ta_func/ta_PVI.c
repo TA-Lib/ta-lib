@@ -201,7 +201,6 @@ struct TA_PVI_Stream {
    double prevPVI;
    double prevClose;
    double prevVolume;
-   double tempPVI;
 };
 
 /* Private function, not in public API. */
@@ -209,6 +208,7 @@ static void TA_PVI_StepImpl( struct TA_PVI_Stream *sp, double inClose, double in
 {
    double tempClose;
    double tempVolume;
+   double tempPVI;
 
    tempClose = inClose;
    tempVolume = inVolume;
@@ -229,11 +229,11 @@ static void TA_PVI_StepImpl( struct TA_PVI_Stream *sp, double inClose, double in
        * fusion detector and silently re-round every bar, not just the
        * overflowing one.
        */
-      sp->tempPVI = sp->prevPVI;
-      sp->tempPVI += (tempClose - sp->prevClose) / sp->prevClose * sp->tempPVI;
-      if( TA_IS_FINITE(sp->tempPVI) )
+      tempPVI = sp->prevPVI;
+      tempPVI += (tempClose - sp->prevClose) / sp->prevClose * tempPVI;
+      if( TA_IS_FINITE(tempPVI) )
       {
-         sp->prevPVI = sp->tempPVI;
+         sp->prevPVI = tempPVI;
       }
    }
    *outReal= sp->prevPVI;
@@ -273,7 +273,7 @@ static TA_RetCode TA_PVI_OpenImpl( struct TA_PVI_Stream **stream, const double i
       double prevVolume = 0.0;
       double tempClose;
       double tempVolume;
-      double tempPVI = 0.0;
+      double tempPVI;
       /* The index is a running cumulative value seeded at 1000, updated only on
        * bars whose volume increased versus the prior bar (Positive Volume).
        */
@@ -323,7 +323,6 @@ static TA_RetCode TA_PVI_OpenImpl( struct TA_PVI_Stream **stream, const double i
       sp->prevPVI = prevPVI;
       sp->prevClose = prevClose;
       sp->prevVolume = prevVolume;
-      sp->tempPVI = tempPVI;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       *stream = sp;

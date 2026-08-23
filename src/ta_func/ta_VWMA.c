@@ -294,8 +294,6 @@ struct TA_VWMA_Stream {
    int optInTimePeriod;
    double sumPV;
    double sumV;
-   double tempPV;
-   double tempV;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inReal;
@@ -318,6 +316,8 @@ static void TA_VWMA_ReleaseImpl( struct TA_VWMA_Stream *sp )
 /* Private function, not in public API. */
 static void TA_VWMA_StepImpl( struct TA_VWMA_Stream *sp, double inReal, double inVolume, double *outReal )
 {
+   double tempPV;
+   double tempV;
    double tempReal;
 
    if( sp->optInTimePeriod == 1 )
@@ -337,15 +337,15 @@ static void TA_VWMA_StepImpl( struct TA_VWMA_Stream *sp, double inReal, double i
     * add-new / snapshot / subtract-old order of TA_SMA. That order is what
     * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
     */
-   sp->tempPV = sp->sumPV;
-   sp->tempV = sp->sumV;
+   tempPV = sp->sumPV;
+   tempV = sp->sumV;
    /* Read the trailing values before writing the output, since the caller
     * may pass the same buffer for an input and the output.
     */
    tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] * sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx];
    sp->sumPV -= tempReal;
    sp->sumV -= sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx];
-   *outReal= sp->tempPV / (double)sp->optInTimePeriod / (sp->tempV / (double)sp->optInTimePeriod);
+   *outReal= tempPV / (double)sp->optInTimePeriod / (tempV / (double)sp->optInTimePeriod);
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] = inVolume;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
@@ -431,8 +431,8 @@ static TA_RetCode TA_VWMA_OpenImpl( struct TA_VWMA_Stream **stream, const double
    {
       double sumPV = 0.0;
       double sumV = 0.0;
-      double tempPV = 0.0;
-      double tempV = 0.0;
+      double tempPV;
+      double tempV;
       double tempReal;
       int i;
       int outIdx;
@@ -515,8 +515,6 @@ static TA_RetCode TA_VWMA_OpenImpl( struct TA_VWMA_Stream **stream, const double
       sp->optInTimePeriod = optInTimePeriod;
       sp->sumPV = sumPV;
       sp->sumV = sumV;
-      sp->tempPV = tempPV;
-      sp->tempV = tempV;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_VWMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);

@@ -399,7 +399,6 @@ impl ATR_Stream {
 struct ATR_StreamState {
     optInTimePeriod: i32,
     prevATR: f64,
-    val3: f64,
     lag1_inClose: f64,
 }
 
@@ -410,7 +409,6 @@ impl ATR_StreamState {
     fn restore_from(&mut self, src: &Self) {
         self.optInTimePeriod = src.optInTimePeriod;
         self.prevATR = src.prevATR;
-        self.val3 = src.val3;
         self.lag1_inClose = src.lag1_inClose;
     }
 }
@@ -424,6 +422,7 @@ impl ATR_StreamState {
 impl Core {
     fn ATR_step_impl(&self, sp: &mut ATR_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut val2: f64 = 0.0_f64;
+        let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
         let mut tempCY: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
@@ -438,9 +437,9 @@ impl Core {
         if val2 > greatest {
             greatest = val2;
         }
-        sp.val3 = (tempCY - tempLT).abs();
-        if sp.val3 > greatest {
-            greatest = sp.val3;
+        val3 = (tempCY - tempLT).abs();
+        if val3 > greatest {
+            greatest = val3;
         }
         sp.prevATR *= ((sp.optInTimePeriod - 1) as f64);
         sp.prevATR += greatest;
@@ -616,7 +615,6 @@ impl Core {
         let state = ATR_StreamState {
             optInTimePeriod,
             prevATR,
-            val3,
             lag1_inClose: inClose[historyLen - 1],
         };
         Ok(ATR_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })

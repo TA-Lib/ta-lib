@@ -1116,52 +1116,40 @@ public partial class Core
    public sealed class HT_TRENDMODE_Stream
    {
       internal Core core;
-      internal int i;
-      internal int j;
-      internal double tempReal;
-      internal double tempReal2;
       internal double period;
       internal double periodWMASum;
       internal double periodWMASub;
       internal double trailingWMAValue;
-      internal double smoothedValue;
       internal double iTrend1;
       internal double iTrend2;
       internal double iTrend3;
       internal double a;
       internal double b;
-      internal double hilbertTempReal;
       internal int hilbertIdx;
       internal double[] detrender_Odd = [];
       internal double[] detrender_Even = [];
-      internal double detrender;
       internal double prev_detrender_Odd;
       internal double prev_detrender_Even;
       internal double prev_detrender_input_Odd;
       internal double prev_detrender_input_Even;
       internal double[] Q1_Odd = [];
       internal double[] Q1_Even = [];
-      internal double Q1;
       internal double prev_Q1_Odd;
       internal double prev_Q1_Even;
       internal double prev_Q1_input_Odd;
       internal double prev_Q1_input_Even;
       internal double[] jI_Odd = [];
       internal double[] jI_Even = [];
-      internal double jI;
       internal double prev_jI_Odd;
       internal double prev_jI_Even;
       internal double prev_jI_input_Odd;
       internal double prev_jI_input_Even;
       internal double[] jQ_Odd = [];
       internal double[] jQ_Even = [];
-      internal double jQ;
       internal double prev_jQ_Odd;
       internal double prev_jQ_Even;
       internal double prev_jQ_input_Odd;
       internal double prev_jQ_input_Even;
-      internal double Q2;
-      internal double I2;
       internal double prevQ2;
       internal double prevI2;
       internal double Re;
@@ -1174,18 +1162,8 @@ public partial class Core
       internal double deg2Rad;
       internal double constDeg2RadBy360;
       internal double smoothPeriod;
-      internal int idx;
-      internal int DCPeriodInt;
       internal double DCPhase;
-      internal double DCPeriod;
-      internal double imagPart;
-      internal double realPart;
       internal int daysInTrend;
-      internal int trend;
-      internal double prevDCPhase;
-      internal double trendline;
-      internal double prevSine;
-      internal double prevLeadSine;
       internal double sine;
       internal double leadSine;
       internal int smoothPrice_Idx;
@@ -1220,27 +1198,20 @@ public partial class Core
       internal HT_TRENDMODE_Stream( HT_TRENDMODE_Stream other )
       {
          this.core = other.core;
-         this.i = other.i;
-         this.j = other.j;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.iTrend1 = other.iTrend1;
          this.iTrend2 = other.iTrend2;
          this.iTrend3 = other.iTrend3;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          this.detrender_Odd = new double[other.detrender_Odd.Length];
          Array.Copy( other.detrender_Odd, this.detrender_Odd, other.detrender_Odd.Length );
          this.detrender_Even = new double[other.detrender_Even.Length];
          Array.Copy( other.detrender_Even, this.detrender_Even, other.detrender_Even.Length );
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
@@ -1249,7 +1220,6 @@ public partial class Core
          Array.Copy( other.Q1_Odd, this.Q1_Odd, other.Q1_Odd.Length );
          this.Q1_Even = new double[other.Q1_Even.Length];
          Array.Copy( other.Q1_Even, this.Q1_Even, other.Q1_Even.Length );
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
@@ -1258,7 +1228,6 @@ public partial class Core
          Array.Copy( other.jI_Odd, this.jI_Odd, other.jI_Odd.Length );
          this.jI_Even = new double[other.jI_Even.Length];
          Array.Copy( other.jI_Even, this.jI_Even, other.jI_Even.Length );
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
@@ -1267,13 +1236,10 @@ public partial class Core
          Array.Copy( other.jQ_Odd, this.jQ_Odd, other.jQ_Odd.Length );
          this.jQ_Even = new double[other.jQ_Even.Length];
          Array.Copy( other.jQ_Even, this.jQ_Even, other.jQ_Even.Length );
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -1286,18 +1252,8 @@ public partial class Core
          this.deg2Rad = other.deg2Rad;
          this.constDeg2RadBy360 = other.constDeg2RadBy360;
          this.smoothPeriod = other.smoothPeriod;
-         this.idx = other.idx;
-         this.DCPeriodInt = other.DCPeriodInt;
          this.DCPhase = other.DCPhase;
-         this.DCPeriod = other.DCPeriod;
-         this.imagPart = other.imagPart;
-         this.realPart = other.realPart;
          this.daysInTrend = other.daysInTrend;
-         this.trend = other.trend;
-         this.prevDCPhase = other.prevDCPhase;
-         this.trendline = other.trendline;
-         this.prevSine = other.prevSine;
-         this.prevLeadSine = other.prevLeadSine;
          this.sine = other.sine;
          this.leadSine = other.leadSine;
          this.smoothPrice_Idx = other.smoothPrice_Idx;
@@ -1322,21 +1278,15 @@ public partial class Core
       internal void CopyFrom( HT_TRENDMODE_Stream other )
       {
          this.core = other.core;
-         this.i = other.i;
-         this.j = other.j;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
          this.periodWMASub = other.periodWMASub;
          this.trailingWMAValue = other.trailingWMAValue;
-         this.smoothedValue = other.smoothedValue;
          this.iTrend1 = other.iTrend1;
          this.iTrend2 = other.iTrend2;
          this.iTrend3 = other.iTrend3;
          this.a = other.a;
          this.b = other.b;
-         this.hilbertTempReal = other.hilbertTempReal;
          this.hilbertIdx = other.hilbertIdx;
          if( this.detrender_Odd.Length != other.detrender_Odd.Length ) {
             this.detrender_Odd = new double[other.detrender_Odd.Length];
@@ -1346,7 +1296,6 @@ public partial class Core
             this.detrender_Even = new double[other.detrender_Even.Length];
          }
          Array.Copy( other.detrender_Even, this.detrender_Even, other.detrender_Even.Length );
-         this.detrender = other.detrender;
          this.prev_detrender_Odd = other.prev_detrender_Odd;
          this.prev_detrender_Even = other.prev_detrender_Even;
          this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
@@ -1359,7 +1308,6 @@ public partial class Core
             this.Q1_Even = new double[other.Q1_Even.Length];
          }
          Array.Copy( other.Q1_Even, this.Q1_Even, other.Q1_Even.Length );
-         this.Q1 = other.Q1;
          this.prev_Q1_Odd = other.prev_Q1_Odd;
          this.prev_Q1_Even = other.prev_Q1_Even;
          this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
@@ -1372,7 +1320,6 @@ public partial class Core
             this.jI_Even = new double[other.jI_Even.Length];
          }
          Array.Copy( other.jI_Even, this.jI_Even, other.jI_Even.Length );
-         this.jI = other.jI;
          this.prev_jI_Odd = other.prev_jI_Odd;
          this.prev_jI_Even = other.prev_jI_Even;
          this.prev_jI_input_Odd = other.prev_jI_input_Odd;
@@ -1385,13 +1332,10 @@ public partial class Core
             this.jQ_Even = new double[other.jQ_Even.Length];
          }
          Array.Copy( other.jQ_Even, this.jQ_Even, other.jQ_Even.Length );
-         this.jQ = other.jQ;
          this.prev_jQ_Odd = other.prev_jQ_Odd;
          this.prev_jQ_Even = other.prev_jQ_Even;
          this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
          this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.Q2 = other.Q2;
-         this.I2 = other.I2;
          this.prevQ2 = other.prevQ2;
          this.prevI2 = other.prevI2;
          this.Re = other.Re;
@@ -1404,18 +1348,8 @@ public partial class Core
          this.deg2Rad = other.deg2Rad;
          this.constDeg2RadBy360 = other.constDeg2RadBy360;
          this.smoothPeriod = other.smoothPeriod;
-         this.idx = other.idx;
-         this.DCPeriodInt = other.DCPeriodInt;
          this.DCPhase = other.DCPhase;
-         this.DCPeriod = other.DCPeriod;
-         this.imagPart = other.imagPart;
-         this.realPart = other.realPart;
          this.daysInTrend = other.daysInTrend;
-         this.trend = other.trend;
-         this.prevDCPhase = other.prevDCPhase;
-         this.trendline = other.trendline;
-         this.prevSine = other.prevSine;
-         this.prevLeadSine = other.prevLeadSine;
          this.sine = other.sine;
          this.leadSine = other.leadSine;
          this.smoothPrice_Idx = other.smoothPrice_Idx;
@@ -1536,8 +1470,30 @@ public partial class Core
 
    internal void HT_TRENDMODE_StepImpl( HT_TRENDMODE_Stream sp, double inReal )
    {
+      int i = 0;
+      int j = 0;
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
       double adjustedPrevPeriod = 0.0;
+      double smoothedValue = 0.0;
+      double hilbertTempReal = 0.0;
+      double detrender = 0.0;
+      double Q1 = 0.0;
+      double jI = 0.0;
+      double jQ = 0.0;
+      double Q2 = 0.0;
+      double I2 = 0.0;
       double todayValue = 0.0;
+      int idx = 0;
+      int DCPeriodInt = 0;
+      double DCPeriod = 0.0;
+      double imagPart = 0.0;
+      double realPart = 0.0;
+      int trend = 0;
+      double prevDCPhase = 0.0;
+      double trendline = 0.0;
+      double prevSine = 0.0;
+      double prevLeadSine = 0.0;
       if( sp.ringCap_trailingWMAIdx == 0 ) {
          sp.ring_trailingWMAIdx_inReal[0] = inReal;
       }
@@ -1548,55 +1504,55 @@ public partial class Core
       sp.periodWMASub -= sp.trailingWMAValue;
       sp.periodWMASum += todayValue * 4.0;
       sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
-      sp.smoothedValue = sp.periodWMASum * 0.1;
+      smoothedValue = sp.periodWMASum * 0.1;
       sp.periodWMASum -= sp.periodWMASub;
       /* Remember the smoothedValue into the smoothPrice
        * circular buffer.
        */
-      sp.cb_smoothPrice[sp.smoothPrice_Idx] = sp.smoothedValue;
+      sp.cb_smoothPrice[sp.smoothPrice_Idx] = smoothedValue;
       if( sp.streamParity == 0 ) {
          /* Do the Hilbert Transforms for even price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
-         sp.detrender_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Even;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Even;
          sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
-         sp.detrender += sp.prev_detrender_Even;
-         sp.prev_detrender_input_Even = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
-         sp.Q1_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Even;
+         detrender += sp.prev_detrender_Even;
+         sp.prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Even;
          sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
-         sp.Q1 += sp.prev_Q1_Even;
-         sp.prev_Q1_input_Even = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
-         sp.jI = 0 - sp.jI_Even[sp.hilbertIdx];
-         sp.jI_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Even;
+         Q1 += sp.prev_Q1_Even;
+         sp.prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+         jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Even;
          sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
-         sp.jI += sp.prev_jI_Even;
+         jI += sp.prev_jI_Even;
          sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
-         sp.jQ_Even[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Even;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Even;
          sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
-         sp.jQ += sp.prev_jQ_Even;
-         sp.prev_jQ_input_Even = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
+         jQ += sp.prev_jQ_Even;
+         sp.prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
          if( ++sp.hilbertIdx == 3 ) {
             sp.hilbertIdx = 0;
          }
-         sp.Q2 = Math.FusedMultiplyAdd(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.FusedMultiplyAdd(0.2, sp.I1ForEvenPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         Q2 = Math.FusedMultiplyAdd(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.FusedMultiplyAdd(0.2, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
          /* The variable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -1604,47 +1560,47 @@ public partial class Core
           * used by the "odd" logic later.
           */
          sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
-         sp.I1ForOddPrev2 = sp.detrender;
+         sp.I1ForOddPrev2 = detrender;
       } else {
          /* Do the Hilbert Transforms for odd price bar */
-         sp.hilbertTempReal = sp.a * sp.smoothedValue;
-         sp.detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
-         sp.detrender_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.detrender += sp.hilbertTempReal;
-         sp.detrender -= sp.prev_detrender_Odd;
+         hilbertTempReal = sp.a * smoothedValue;
+         detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= sp.prev_detrender_Odd;
          sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
-         sp.detrender += sp.prev_detrender_Odd;
-         sp.prev_detrender_input_Odd = sp.smoothedValue;
-         sp.detrender *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.detrender;
-         sp.Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
-         sp.Q1_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.Q1 += sp.hilbertTempReal;
-         sp.Q1 -= sp.prev_Q1_Odd;
+         detrender += sp.prev_detrender_Odd;
+         sp.prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * detrender;
+         Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= sp.prev_Q1_Odd;
          sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
-         sp.Q1 += sp.prev_Q1_Odd;
-         sp.prev_Q1_input_Odd = sp.detrender;
-         sp.Q1 *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.I1ForOddPrev3;
-         sp.jI = 0 - sp.jI_Odd[sp.hilbertIdx];
-         sp.jI_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jI += sp.hilbertTempReal;
-         sp.jI -= sp.prev_jI_Odd;
+         Q1 += sp.prev_Q1_Odd;
+         sp.prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+         jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= sp.prev_jI_Odd;
          sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
-         sp.jI += sp.prev_jI_Odd;
+         jI += sp.prev_jI_Odd;
          sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
-         sp.jI *= adjustedPrevPeriod;
-         sp.hilbertTempReal = sp.a * sp.Q1;
-         sp.jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
-         sp.jQ_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
-         sp.jQ += sp.hilbertTempReal;
-         sp.jQ -= sp.prev_jQ_Odd;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = sp.a * Q1;
+         jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= sp.prev_jQ_Odd;
          sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
-         sp.jQ += sp.prev_jQ_Odd;
-         sp.prev_jQ_input_Odd = sp.Q1;
-         sp.jQ *= adjustedPrevPeriod;
-         sp.Q2 = Math.FusedMultiplyAdd(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
-         sp.I2 = Math.FusedMultiplyAdd(0.2, sp.I1ForOddPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         jQ += sp.prev_jQ_Odd;
+         sp.prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = Math.FusedMultiplyAdd(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+         I2 = Math.FusedMultiplyAdd(0.2, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
          /* The varaiable I1 is the detrender delayed for
           * 3 price bars.
           *
@@ -1652,79 +1608,79 @@ public partial class Core
           * used by the "even" logic later.
           */
          sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
-         sp.I1ForEvenPrev2 = sp.detrender;
+         sp.I1ForEvenPrev2 = detrender;
       }
       /* Adjust the period for next price bar */
-      sp.Re = Math.FusedMultiplyAdd(0.8, sp.Re, 0.2 * (Math.FusedMultiplyAdd(sp.I2, sp.prevI2, sp.Q2 * sp.prevQ2)));
-      sp.Im = Math.FusedMultiplyAdd(0.8, sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
-      sp.prevQ2 = sp.Q2;
-      sp.prevI2 = sp.I2;
-      sp.tempReal = sp.period;
+      sp.Re = Math.FusedMultiplyAdd(0.8, sp.Re, 0.2 * (Math.FusedMultiplyAdd(I2, sp.prevI2, Q2 * sp.prevQ2)));
+      sp.Im = Math.FusedMultiplyAdd(0.8, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+      sp.prevQ2 = Q2;
+      sp.prevI2 = I2;
+      tempReal = sp.period;
       if( sp.Im != 0.0 && sp.Re != 0.0 ) {
          sp.period = 360.0 / (Math.Atan(sp.Im / sp.Re) * sp.rad2Deg);
       }
-      sp.tempReal2 = 1.5 * sp.tempReal;
-      if( sp.period > sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 1.5 * tempReal;
+      if( sp.period > tempReal2 ) {
+         sp.period = tempReal2;
       }
-      sp.tempReal2 = 0.67 * sp.tempReal;
-      if( sp.period < sp.tempReal2 ) {
-         sp.period = sp.tempReal2;
+      tempReal2 = 0.67 * tempReal;
+      if( sp.period < tempReal2 ) {
+         sp.period = tempReal2;
       }
       if( sp.period < 6 ) {
          sp.period = 6;
       } else if( sp.period > 50 ) {
          sp.period = 50;
       }
-      sp.period = Math.FusedMultiplyAdd(0.2, sp.period, 0.8 * sp.tempReal);
+      sp.period = Math.FusedMultiplyAdd(0.2, sp.period, 0.8 * tempReal);
       sp.smoothPeriod = Math.FusedMultiplyAdd(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Dominant Cycle Phase */
-      sp.prevDCPhase = sp.DCPhase;
-      sp.DCPeriod = sp.smoothPeriod + 0.5;
-      sp.DCPeriodInt = (int)sp.DCPeriod;
-      sp.realPart = 0.0;
-      sp.imagPart = 0.0;
+      prevDCPhase = sp.DCPhase;
+      DCPeriod = sp.smoothPeriod + 0.5;
+      DCPeriodInt = (int)DCPeriod;
+      realPart = 0.0;
+      imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
        * value of smoothPrice.
        */
-      sp.idx = sp.smoothPrice_Idx;
-      for( sp.i = 0; sp.i < sp.DCPeriodInt; sp.i += 1 ) {
-         sp.tempReal = (double)sp.i * sp.constDeg2RadBy360 / (double)sp.DCPeriodInt;
-         sp.tempReal2 = sp.cb_smoothPrice[sp.idx];
-         sp.realPart += Math.Sin(sp.tempReal) * sp.tempReal2;
-         sp.imagPart += Math.Cos(sp.tempReal) * sp.tempReal2;
-         if( sp.idx == 0 ) {
-            sp.idx = 50 - 1;
+      idx = sp.smoothPrice_Idx;
+      for( i = 0; i < DCPeriodInt; i += 1 ) {
+         tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
+         tempReal2 = sp.cb_smoothPrice[idx];
+         realPart += Math.Sin(tempReal) * tempReal2;
+         imagPart += Math.Cos(tempReal) * tempReal2;
+         if( idx == 0 ) {
+            idx = 50 - 1;
          } else {
-            sp.idx -= 1;
+            idx -= 1;
          }
       }
-      sp.tempReal = Math.Abs(sp.imagPart);
-      if( sp.tempReal > 0.0 ) {
-         sp.DCPhase = Math.Atan(sp.realPart / sp.imagPart) * sp.rad2Deg;
-      } else if( sp.tempReal <= 0.01 ) {
-         if( sp.realPart < 0.0 ) {
+      tempReal = Math.Abs(imagPart);
+      if( tempReal > 0.0 ) {
+         sp.DCPhase = Math.Atan(realPart / imagPart) * sp.rad2Deg;
+      } else if( tempReal <= 0.01 ) {
+         if( realPart < 0.0 ) {
             sp.DCPhase -= 90.0;
-         } else if( sp.realPart > 0.0 ) {
+         } else if( realPart > 0.0 ) {
             sp.DCPhase += 90.0;
          }
       }
       sp.DCPhase += 90.0;
       /* Compensate for one bar lag of the weighted moving average */
       sp.DCPhase += 360.0 / sp.smoothPeriod;
-      if( sp.imagPart < 0.0 ) {
+      if( imagPart < 0.0 ) {
          sp.DCPhase += 180.0;
       }
       if( sp.DCPhase > 315.0 ) {
          sp.DCPhase -= 360.0;
       }
-      sp.prevSine = sp.sine;
-      sp.prevLeadSine = sp.leadSine;
+      prevSine = sp.sine;
+      prevLeadSine = sp.leadSine;
       sp.sine = Math.Sin(sp.DCPhase * sp.deg2Rad);
       sp.leadSine = Math.Sin((sp.DCPhase + 45) * sp.deg2Rad);
       /* Compute Trendline */
-      sp.DCPeriod = sp.smoothPeriod + 0.5;
-      sp.DCPeriodInt = (int)sp.DCPeriod;
+      DCPeriod = sp.smoothPeriod + 0.5;
+      DCPeriodInt = (int)DCPeriod;
       /* Average the RAW price over the dominant cycle period.
        * Unlike the DC-phase loop above (which reads the smoothPrice
        * circular buffer), the iTrend average reads the raw price,
@@ -1738,39 +1694,39 @@ public partial class Core
        * bit-for-bit unchanged, but the constant cap lets the rescan-window
        * machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
        */
-      sp.tempReal = 0.0;
-      for( sp.j = 0; sp.j < 50; sp.j += 1 ) {
-         if( sp.j < sp.DCPeriodInt ) {
-            sp.tempReal += sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - sp.j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - sp.j - sp.winCap_j : sp.winPos_j + sp.winCap_j - sp.j];
+      tempReal = 0.0;
+      for( j = 0; j < 50; j += 1 ) {
+         if( j < DCPeriodInt ) {
+            tempReal += sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j];
          }
       }
-      if( sp.DCPeriodInt > 0 ) {
-         sp.tempReal = sp.tempReal / (double)sp.DCPeriodInt;
+      if( DCPeriodInt > 0 ) {
+         tempReal = tempReal / (double)DCPeriodInt;
       }
-      sp.trendline = (Math.FusedMultiplyAdd(2.0, sp.iTrend2, Math.FusedMultiplyAdd(4.0, sp.tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
+      trendline = (Math.FusedMultiplyAdd(2.0, sp.iTrend2, Math.FusedMultiplyAdd(4.0, tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
       sp.iTrend3 = sp.iTrend2;
       sp.iTrend2 = sp.iTrend1;
-      sp.iTrend1 = sp.tempReal;
+      sp.iTrend1 = tempReal;
       /* Compute the trend Mode , and assume trend by default */
-      sp.trend = 1;
+      trend = 1;
       /* Measure days in trend from last crossing of the SineWave Indicator lines */
-      if( sp.sine > sp.leadSine && sp.prevSine <= sp.prevLeadSine || sp.sine < sp.leadSine && sp.prevSine >= sp.prevLeadSine ) {
+      if( sp.sine > sp.leadSine && prevSine <= prevLeadSine || sp.sine < sp.leadSine && prevSine >= prevLeadSine ) {
          sp.daysInTrend = 0;
-         sp.trend = 0;
+         trend = 0;
       }
       sp.daysInTrend += 1;
       if( sp.daysInTrend < 0.5 * sp.smoothPeriod ) {
-         sp.trend = 0;
+         trend = 0;
       }
-      sp.tempReal = sp.DCPhase - sp.prevDCPhase;
-      if( sp.smoothPeriod != 0.0 && (sp.tempReal > 0.67 * 360.0 / sp.smoothPeriod && sp.tempReal < 1.5 * 360.0 / sp.smoothPeriod) ) {
-         sp.trend = 0;
+      tempReal = sp.DCPhase - prevDCPhase;
+      if( sp.smoothPeriod != 0.0 && (tempReal > 0.67 * 360.0 / sp.smoothPeriod && tempReal < 1.5 * 360.0 / sp.smoothPeriod) ) {
+         trend = 0;
       }
-      sp.tempReal = sp.cb_smoothPrice[sp.smoothPrice_Idx];
-      if( sp.trendline != 0.0 && Math.Abs((sp.tempReal - sp.trendline) / sp.trendline) >= 0.015 ) {
-         sp.trend = 1;
+      tempReal = sp.cb_smoothPrice[sp.smoothPrice_Idx];
+      if( trendline != 0.0 && Math.Abs((tempReal - trendline) / trendline) >= 0.015 ) {
+         trend = 1;
       }
-      sp.cur_outInteger = sp.trend;
+      sp.cur_outInteger = trend;
       /* Ooof... let's do the next price bar now! */
       sp.smoothPrice_Idx = sp.smoothPrice_Idx + 1;
       if( sp.smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
@@ -2295,52 +2251,40 @@ public partial class Core
       if( capCb_smoothPrice > historyLen + 1 ) {
          return RetCode.InternalError;
       }
-      sp.i = i;
-      sp.j = j;
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
       sp.period = period;
       sp.periodWMASum = periodWMASum;
       sp.periodWMASub = periodWMASub;
       sp.trailingWMAValue = trailingWMAValue;
-      sp.smoothedValue = smoothedValue;
       sp.iTrend1 = iTrend1;
       sp.iTrend2 = iTrend2;
       sp.iTrend3 = iTrend3;
       sp.a = a;
       sp.b = b;
-      sp.hilbertTempReal = hilbertTempReal;
       sp.hilbertIdx = hilbertIdx;
       sp.detrender_Odd = detrender_Odd;
       sp.detrender_Even = detrender_Even;
-      sp.detrender = detrender;
       sp.prev_detrender_Odd = prev_detrender_Odd;
       sp.prev_detrender_Even = prev_detrender_Even;
       sp.prev_detrender_input_Odd = prev_detrender_input_Odd;
       sp.prev_detrender_input_Even = prev_detrender_input_Even;
       sp.Q1_Odd = Q1_Odd;
       sp.Q1_Even = Q1_Even;
-      sp.Q1 = Q1;
       sp.prev_Q1_Odd = prev_Q1_Odd;
       sp.prev_Q1_Even = prev_Q1_Even;
       sp.prev_Q1_input_Odd = prev_Q1_input_Odd;
       sp.prev_Q1_input_Even = prev_Q1_input_Even;
       sp.jI_Odd = jI_Odd;
       sp.jI_Even = jI_Even;
-      sp.jI = jI;
       sp.prev_jI_Odd = prev_jI_Odd;
       sp.prev_jI_Even = prev_jI_Even;
       sp.prev_jI_input_Odd = prev_jI_input_Odd;
       sp.prev_jI_input_Even = prev_jI_input_Even;
       sp.jQ_Odd = jQ_Odd;
       sp.jQ_Even = jQ_Even;
-      sp.jQ = jQ;
       sp.prev_jQ_Odd = prev_jQ_Odd;
       sp.prev_jQ_Even = prev_jQ_Even;
       sp.prev_jQ_input_Odd = prev_jQ_input_Odd;
       sp.prev_jQ_input_Even = prev_jQ_input_Even;
-      sp.Q2 = Q2;
-      sp.I2 = I2;
       sp.prevQ2 = prevQ2;
       sp.prevI2 = prevI2;
       sp.Re = Re;
@@ -2353,18 +2297,8 @@ public partial class Core
       sp.deg2Rad = deg2Rad;
       sp.constDeg2RadBy360 = constDeg2RadBy360;
       sp.smoothPeriod = smoothPeriod;
-      sp.idx = idx;
-      sp.DCPeriodInt = DCPeriodInt;
       sp.DCPhase = DCPhase;
-      sp.DCPeriod = DCPeriod;
-      sp.imagPart = imagPart;
-      sp.realPart = realPart;
       sp.daysInTrend = daysInTrend;
-      sp.trend = trend;
-      sp.prevDCPhase = prevDCPhase;
-      sp.trendline = trendline;
-      sp.prevSine = prevSine;
-      sp.prevLeadSine = prevLeadSine;
       sp.sine = sine;
       sp.leadSine = leadSine;
       sp.smoothPrice_Idx = smoothPrice_Idx;

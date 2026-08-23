@@ -581,13 +581,6 @@ public partial class Core
       internal double posSumMF;
       internal double negSumMF;
       internal double prevValue;
-      internal double tempValue1;
-      internal double tempValue2;
-      internal double tempValue3;
-      internal double moneyFlow;
-      internal double posFlow;
-      internal double negFlow;
-      internal double posClamped;
       internal int nullRun;
       internal int mflow_Idx;
       internal int maxIdx_mflow;
@@ -618,13 +611,6 @@ public partial class Core
          this.posSumMF = other.posSumMF;
          this.negSumMF = other.negSumMF;
          this.prevValue = other.prevValue;
-         this.tempValue1 = other.tempValue1;
-         this.tempValue2 = other.tempValue2;
-         this.tempValue3 = other.tempValue3;
-         this.moneyFlow = other.moneyFlow;
-         this.posFlow = other.posFlow;
-         this.negFlow = other.negFlow;
-         this.posClamped = other.posClamped;
          this.nullRun = other.nullRun;
          this.mflow_Idx = other.mflow_Idx;
          this.maxIdx_mflow = other.maxIdx_mflow;
@@ -645,13 +631,6 @@ public partial class Core
          this.posSumMF = other.posSumMF;
          this.negSumMF = other.negSumMF;
          this.prevValue = other.prevValue;
-         this.tempValue1 = other.tempValue1;
-         this.tempValue2 = other.tempValue2;
-         this.tempValue3 = other.tempValue3;
-         this.moneyFlow = other.moneyFlow;
-         this.posFlow = other.posFlow;
-         this.negFlow = other.negFlow;
-         this.posClamped = other.posClamped;
          this.nullRun = other.nullRun;
          this.mflow_Idx = other.mflow_Idx;
          this.maxIdx_mflow = other.maxIdx_mflow;
@@ -771,35 +750,42 @@ public partial class Core
 
    internal void MFI_StepImpl( MFI_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
+      double tempValue1 = 0.0;
+      double tempValue2 = 0.0;
+      double tempValue3 = 0.0;
+      double moneyFlow = 0.0;
+      double posFlow = 0.0;
+      double negFlow = 0.0;
+      double posClamped = 0.0;
       sp.posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
       sp.negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];
-      sp.tempValue1 = (inHigh + inLow + inClose) / 3.0;
-      sp.tempValue2 = sp.tempValue1 - sp.prevValue;
+      tempValue1 = (inHigh + inLow + inClose) / 3.0;
+      tempValue2 = tempValue1 - sp.prevValue;
       /* Dead-zone scaled to the two typical prices being compared (issue #107).
        * Captured before prevValue/tempValue1 are repurposed below.
        */
-      sp.tempValue3 = Math.Abs(sp.tempValue1) + Math.Abs(sp.prevValue);
-      sp.prevValue = sp.tempValue1;
-      sp.tempValue1 *= inVolume;
-      sp.moneyFlow = (Math.Abs(sp.tempValue2) <= 0.00000000000001 * (sp.tempValue3)) ? 0.0 : sp.tempValue1;
-      sp.posFlow = (sp.tempValue2 < 0.0) ? 0.0 : sp.moneyFlow;
-      sp.negFlow = (sp.tempValue2 < 0.0) ? sp.moneyFlow : 0.0;
-      sp.cb_mflow_positive[sp.mflow_Idx] = sp.posFlow;
-      sp.cb_mflow_negative[sp.mflow_Idx] = sp.negFlow;
-      sp.posSumMF += sp.posFlow;
-      sp.negSumMF += sp.negFlow;
-      sp.nullRun = (sp.moneyFlow == 0.0) ? sp.nullRun + 1 : 0;
+      tempValue3 = Math.Abs(tempValue1) + Math.Abs(sp.prevValue);
+      sp.prevValue = tempValue1;
+      tempValue1 *= inVolume;
+      moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+      posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+      negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+      sp.cb_mflow_positive[sp.mflow_Idx] = posFlow;
+      sp.cb_mflow_negative[sp.mflow_Idx] = negFlow;
+      sp.posSumMF += posFlow;
+      sp.negSumMF += negFlow;
+      sp.nullRun = (moneyFlow == 0.0) ? sp.nullRun + 1 : 0;
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.posSumMF = 0.0;
          sp.negSumMF = 0.0;
       }
-      sp.tempValue1 = sp.posSumMF + sp.negSumMF;
-      sp.posClamped = (sp.posSumMF < 0.0) ? 0.0 : ((sp.posSumMF > sp.tempValue1) ? sp.tempValue1 : sp.posSumMF);
-      if( sp.tempValue1 <= 0.0 ) {
+      tempValue1 = sp.posSumMF + sp.negSumMF;
+      posClamped = (sp.posSumMF < 0.0) ? 0.0 : ((sp.posSumMF > tempValue1) ? tempValue1 : sp.posSumMF);
+      if( tempValue1 <= 0.0 ) {
          sp.cur_outReal = 0.0;
       } else {
-         sp.cur_outReal = 100.0 * (sp.posClamped / sp.tempValue1);
+         sp.cur_outReal = 100.0 * (posClamped / tempValue1);
       }
       sp.mflow_Idx = sp.mflow_Idx + 1;
       if( sp.mflow_Idx > sp.maxIdx_mflow ) {
@@ -999,13 +985,6 @@ public partial class Core
       sp.posSumMF = posSumMF;
       sp.negSumMF = negSumMF;
       sp.prevValue = prevValue;
-      sp.tempValue1 = tempValue1;
-      sp.tempValue2 = tempValue2;
-      sp.tempValue3 = tempValue3;
-      sp.moneyFlow = moneyFlow;
-      sp.posFlow = posFlow;
-      sp.negFlow = negFlow;
-      sp.posClamped = posClamped;
       sp.nullRun = nullRun;
       sp.mflow_Idx = mflow_Idx;
       sp.maxIdx_mflow = maxIdx_mflow;

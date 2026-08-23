@@ -537,8 +537,6 @@ struct TA_MIDPOINT_Stream {
    int optInTimePeriod;
    double lowest;
    double highest;
-   double tmpLow;
-   double tmpHigh;
    int trailingIdx;
    int lowestIdx;
    int highestIdx;
@@ -563,6 +561,9 @@ static void TA_MIDPOINT_ReleaseImpl( struct TA_MIDPOINT_Stream *sp )
 /* Private function, not in public API. */
 static void TA_MIDPOINT_StepImpl( struct TA_MIDPOINT_Stream *sp, double inReal, double *outReal )
 {
+   double tmpLow;
+   double tmpHigh;
+
    if( sp->today >= 1073741824 )
    {
       int rebaseShift = sp->trailingIdx & ~sp->xMask;
@@ -573,8 +574,8 @@ static void TA_MIDPOINT_StepImpl( struct TA_MIDPOINT_Stream *sp, double inReal, 
       sp->lowestIdx -= rebaseShift;
    }
    sp->x_inReal[sp->today & sp->xMask] = inReal;
-   sp->tmpHigh = sp->x_inReal[sp->today & sp->xMask];
-   sp->tmpLow = sp->tmpHigh;
+   tmpHigh = sp->x_inReal[sp->today & sp->xMask];
+   tmpLow = tmpHigh;
    if( sp->highestIdx < sp->trailingIdx )
    {
       sp->highestIdx = sp->trailingIdx;
@@ -583,17 +584,17 @@ static void TA_MIDPOINT_StepImpl( struct TA_MIDPOINT_Stream *sp, double inReal, 
       TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
-         sp->tmpHigh = sp->x_inReal[sp->i & sp->xMask];
-         if( sp->tmpHigh > sp->highest )
+         tmpHigh = sp->x_inReal[sp->i & sp->xMask];
+         if( tmpHigh > sp->highest )
          {
             sp->highestIdx = sp->i;
-            sp->highest = sp->tmpHigh;
+            sp->highest = tmpHigh;
          }
       }
-   } else if( sp->tmpHigh >= sp->highest )
+   } else if( tmpHigh >= sp->highest )
    {
       sp->highestIdx = sp->today;
-      sp->highest = sp->tmpHigh;
+      sp->highest = tmpHigh;
    }
    if( sp->lowestIdx < sp->trailingIdx )
    {
@@ -603,17 +604,17 @@ static void TA_MIDPOINT_StepImpl( struct TA_MIDPOINT_Stream *sp, double inReal, 
       TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
-         sp->tmpLow = sp->x_inReal[sp->i & sp->xMask];
-         if( sp->tmpLow < sp->lowest )
+         tmpLow = sp->x_inReal[sp->i & sp->xMask];
+         if( tmpLow < sp->lowest )
          {
             sp->lowestIdx = sp->i;
-            sp->lowest = sp->tmpLow;
+            sp->lowest = tmpLow;
          }
       }
-   } else if( sp->tmpLow <= sp->lowest )
+   } else if( tmpLow <= sp->lowest )
    {
       sp->lowestIdx = sp->today;
-      sp->lowest = sp->tmpLow;
+      sp->lowest = tmpLow;
    }
    *outReal= (sp->highest + sp->lowest) / 2.0;
    sp->trailingIdx += 1;
@@ -651,8 +652,8 @@ static TA_RetCode TA_MIDPOINT_OpenImpl( struct TA_MIDPOINT_Stream **stream, cons
    {
       double lowest = 0.0;
       double highest = 0.0;
-      double tmpLow = 0.0;
-      double tmpHigh = 0.0;
+      double tmpLow;
+      double tmpHigh;
       int outIdx;
       int nbInitialElementNeeded;
       int trailingIdx = 0;
@@ -775,8 +776,6 @@ static TA_RetCode TA_MIDPOINT_OpenImpl( struct TA_MIDPOINT_Stream **stream, cons
       sp->optInTimePeriod = optInTimePeriod;
       sp->lowest = lowest;
       sp->highest = highest;
-      sp->tmpLow = tmpLow;
-      sp->tmpHigh = tmpHigh;
       sp->trailingIdx = trailingIdx;
       sp->lowestIdx = lowestIdx;
       sp->highestIdx = highestIdx;

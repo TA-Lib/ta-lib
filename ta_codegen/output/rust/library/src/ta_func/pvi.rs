@@ -283,7 +283,6 @@ struct PVI_StreamState {
     prevPVI: f64,
     prevClose: f64,
     prevVolume: f64,
-    tempPVI: f64,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -294,7 +293,6 @@ impl PVI_StreamState {
         self.prevPVI = src.prevPVI;
         self.prevClose = src.prevClose;
         self.prevVolume = src.prevVolume;
-        self.tempPVI = src.tempPVI;
     }
 }
 
@@ -308,6 +306,7 @@ impl Core {
     fn PVI_step_impl(&self, sp: &mut PVI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
+        let mut tempPVI: f64 = 0.0_f64;
         tempClose = inClose;
         tempVolume = inVolume;
         // prevClose != 0 guards the percentage-change division: a zero previous
@@ -324,10 +323,10 @@ impl Core {
             // was before the guard: spelling it `a + r*a` would match the FMA
             // fusion detector and silently re-round every bar, not just the
             // overflowing one.
-            sp.tempPVI = sp.prevPVI;
-            sp.tempPVI += (tempClose - sp.prevClose) / sp.prevClose * sp.tempPVI;
-            if (sp.tempPVI).is_finite() {
-                sp.prevPVI = sp.tempPVI;
+            tempPVI = sp.prevPVI;
+            tempPVI += (tempClose - sp.prevClose) / sp.prevClose * tempPVI;
+            if (tempPVI).is_finite() {
+                sp.prevPVI = tempPVI;
             }
         }
         (*outReal) = sp.prevPVI;
@@ -406,7 +405,6 @@ impl Core {
             prevPVI,
             prevClose,
             prevVolume,
-            tempPVI,
         };
         Ok(PVI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }

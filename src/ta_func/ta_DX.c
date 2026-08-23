@@ -646,36 +646,37 @@ struct TA_DX_Stream {
    double prevMinusDM;
    double prevPlusDM;
    double prevTR;
-   double tempReal;
-   double diffP;
-   double diffM;
-   double minusDI;
-   double plusDI;
    double lastOut_outReal;
 };
 
 /* Private function, not in public API. */
 static void TA_DX_StepImpl( struct TA_DX_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
+   double tempReal;
+   double diffP;
+   double diffM;
+   double minusDI;
+   double plusDI;
+
    /* Calculate the prevMinusDM and prevPlusDM */
-   sp->tempReal = inHigh;
-   sp->diffP = sp->tempReal - sp->prevHigh;
+   tempReal = inHigh;
+   diffP = tempReal - sp->prevHigh;
    /* Plus Delta */
-   sp->prevHigh = sp->tempReal;
-   sp->tempReal = inLow;
-   sp->diffM = sp->prevLow - sp->tempReal;
+   sp->prevHigh = tempReal;
+   tempReal = inLow;
+   diffM = sp->prevLow - tempReal;
    /* Minus Delta */
-   sp->prevLow = sp->tempReal;
+   sp->prevLow = tempReal;
    sp->prevMinusDM -= sp->prevMinusDM / sp->optInTimePeriod;
    sp->prevPlusDM -= sp->prevPlusDM / sp->optInTimePeriod;
-   if( sp->diffM > 0 && sp->diffP < sp->diffM )
+   if( diffM > 0 && diffP < diffM )
    {
       /* Case 2 and 4: +DM=0,-DM=diffM */
-      sp->prevMinusDM += sp->diffM;
-   } else if( sp->diffP > 0 && sp->diffP > sp->diffM )
+      sp->prevMinusDM += diffM;
+   } else if( diffP > 0 && diffP > diffM )
    {
       /* Case 1 and 3: +DM=diffP,-DM=0 */
-      sp->prevPlusDM += sp->diffP;
+      sp->prevPlusDM += diffP;
    }
    /* Calculate the prevTR */
    double _true_range_0;
@@ -691,19 +692,19 @@ static void TA_DX_StepImpl( struct TA_DX_Stream *sp, double inHigh, double inLow
       range_0 = tmp_0;
    }
    _true_range_0 = range_0;
-   sp->tempReal = _true_range_0;
-   sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + sp->tempReal;
+   tempReal = _true_range_0;
+   sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + tempReal;
    sp->prevClose = inClose;
    /* Calculate the DX. The value is rounded (see Wilder book). */
    if( !TA_IS_ZERO(sp->prevTR) )
    {
-      sp->minusDI = (100.0 * (sp->prevMinusDM / sp->prevTR));
-      sp->plusDI = (100.0 * (sp->prevPlusDM / sp->prevTR));
+      minusDI = (100.0 * (sp->prevMinusDM / sp->prevTR));
+      plusDI = (100.0 * (sp->prevPlusDM / sp->prevTR));
       /* This loop is just to accumulate the initial DX */
-      sp->tempReal = sp->minusDI + sp->plusDI;
-      if( !TA_IS_ZERO(sp->tempReal) )
+      tempReal = minusDI + plusDI;
+      if( !TA_IS_ZERO(tempReal) )
       {
-         *outReal= (100.0 * (fabs(sp->minusDI - sp->plusDI) / sp->tempReal));
+         *outReal= (100.0 * (fabs(minusDI - plusDI) / tempReal));
       } else 
       {
          *outReal= sp->lastOut_outReal;
@@ -753,12 +754,12 @@ static TA_RetCode TA_DX_OpenImpl( struct TA_DX_Stream **stream, const double inH
       double prevMinusDM = 0.0;
       double prevPlusDM = 0.0;
       double prevTR = 0.0;
-      double tempReal = 0.0;
+      double tempReal;
       double tempReal2;
-      double diffP = 0.0;
-      double diffM = 0.0;
-      double minusDI = 0.0;
-      double plusDI = 0.0;
+      double diffP;
+      double diffM;
+      double minusDI;
+      double plusDI;
       int i;
       /*
        * The DM1 (one period) is base on the largest part of
@@ -1067,11 +1068,6 @@ static TA_RetCode TA_DX_OpenImpl( struct TA_DX_Stream **stream, const double inH
       sp->prevMinusDM = prevMinusDM;
       sp->prevPlusDM = prevPlusDM;
       sp->prevTR = prevTR;
-      sp->tempReal = tempReal;
-      sp->diffP = diffP;
-      sp->diffM = diffM;
-      sp->minusDI = minusDI;
-      sp->plusDI = plusDI;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       *stream = sp;

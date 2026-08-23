@@ -429,14 +429,12 @@ struct VAR_StreamState {
     shift: f64,
     periodTotal1: f64,
     periodTotal2: f64,
-    meanValue1: f64,
-    variance: f64,
     invPeriod: f64,
-    j: i32,
     trailingIdx: i32,
-    windowStart: i32,
     nbInitialElementNeeded: usize,
     barsSinceReseed: usize,
+    j: i32,
+    windowStart: i32,
     i: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
@@ -452,14 +450,12 @@ impl VAR_StreamState {
         self.shift = src.shift;
         self.periodTotal1 = src.periodTotal1;
         self.periodTotal2 = src.periodTotal2;
-        self.meanValue1 = src.meanValue1;
-        self.variance = src.variance;
         self.invPeriod = src.invPeriod;
-        self.j = src.j;
         self.trailingIdx = src.trailingIdx;
-        self.windowStart = src.windowStart;
         self.nbInitialElementNeeded = src.nbInitialElementNeeded;
         self.barsSinceReseed = src.barsSinceReseed;
+        self.j = src.j;
+        self.windowStart = src.windowStart;
         self.i = src.i;
         self.xMask = src.xMask;
         self.x_inReal.clone_from(&src.x_inReal);
@@ -475,6 +471,8 @@ impl VAR_StreamState {
 impl Core {
     fn VAR_step_impl(&self, sp: &mut VAR_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
+        let mut meanValue1: f64 = 0.0_f64;
+        let mut variance: f64 = 0.0_f64;
         if sp.i >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.i -= rebaseShift;
@@ -488,8 +486,8 @@ impl Core {
         sp.periodTotal1 += tempReal;
         tempReal *= tempReal;
         sp.periodTotal2 += tempReal;
-        sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
-        sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+        meanValue1 = sp.periodTotal1 * sp.invPeriod;
+        variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
         // Remove the trailing value (prepares the next window).
         tempReal = sp.x_inReal[(sp.trailingIdx & sp.xMask) as usize] - sp.shift;
         sp.periodTotal1 -= tempReal;
@@ -509,7 +507,7 @@ impl Core {
         // leaves an exactly-constant window (variance 0, scale 0) alone instead of
         // reseeding it every bar. Guarantees a non-negative output.
         sp.barsSinceReseed -= 1;
-        if sp.variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 {
+        if variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
             sp.windowStart = sp.i - ((sp.nbInitialElementNeeded) as i32);
             tempReal = 0.0;
@@ -531,8 +529,8 @@ impl Core {
                 sp.periodTotal2 += tempReal;
                 sp.j += 1;
             }
-            sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
-            sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+            meanValue1 = sp.periodTotal1 * sp.invPeriod;
+            variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
             // Floor the fresh figure at the same ratio the trigger above uses, now
             // measured against the RE-ANCHORED sums. With the shift AT the window
             // mean the deviations sum to ~0, so a real window has variance ~
@@ -581,8 +579,8 @@ impl Core {
             // the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
             // THIS - the alternative is an unconditional clamp at the output write,
             // which needs no such argument but does cost ~3%.
-            if sp.variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) {
-                sp.variance = 0.0;
+            if variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) {
+                variance = 0.0;
             }
             // Re-remove the trailing value under the new shift so the carried state
             // matches the non-reseed path.
@@ -591,7 +589,7 @@ impl Core {
             tempReal *= tempReal;
             sp.periodTotal2 -= tempReal;
         }
-        (*outReal) = sp.variance;
+        (*outReal) = variance;
         sp.i += 1;
     }
 
@@ -813,14 +811,12 @@ impl Core {
             shift,
             periodTotal1,
             periodTotal2,
-            meanValue1,
-            variance,
             invPeriod,
-            j: (j) as i32,
             trailingIdx: (trailingIdx) as i32,
-            windowStart: (windowStart) as i32,
             nbInitialElementNeeded,
             barsSinceReseed,
+            j: (j) as i32,
+            windowStart: (windowStart) as i32,
             i: (i) as i32,
             xMask: (physX - 1) as i32,
             x_inReal,

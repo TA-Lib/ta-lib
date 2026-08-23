@@ -444,8 +444,6 @@ struct TA_AC_Stream {
    double sumFast;
    double sumSlow;
    double sumSignal;
-   double osc;
-   double tempReal;
    int oscBuffer_Idx;
    int maxIdx_oscBuffer;
    int ringPos_trailingFastIdx;
@@ -478,6 +476,8 @@ static void TA_AC_ReleaseImpl( struct TA_AC_Stream *sp )
 static void TA_AC_StepImpl( struct TA_AC_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double medianPrice;
+   double osc;
+   double tempReal;
 
    if( sp->ringCap_trailingFastIdx == 0 )
    {
@@ -493,7 +493,7 @@ static void TA_AC_StepImpl( struct TA_AC_Stream *sp, double inHigh, double inLow
    /* Snapshot the oscillator before either total drops its trailing bar,
     * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
     */
-   sp->osc = sp->sumFast / (double)sp->optInFastPeriod - sp->sumSlow / (double)sp->optInSlowPeriod;
+   osc = sp->sumFast / (double)sp->optInFastPeriod - sp->sumSlow / (double)sp->optInSlowPeriod;
    sp->sumFast -= sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx];
    sp->sumSlow -= sp->ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx];
    /* Today's oscillator enters the signal window at its own slot, and the
@@ -501,9 +501,9 @@ static void TA_AC_StepImpl( struct TA_AC_Stream *sp, double inHigh, double inLow
     * it -- writing first is what makes the slot the loop is about to
     * overwrite the newest value rather than the oldest one.
     */
-   sp->cb_oscBuffer[sp->oscBuffer_Idx] = sp->osc;
-   sp->sumSignal += sp->osc;
-   sp->tempReal = sp->osc - sp->sumSignal / (double)sp->optInSignalPeriod;
+   sp->cb_oscBuffer[sp->oscBuffer_Idx] = osc;
+   sp->sumSignal += osc;
+   tempReal = osc - sp->sumSignal / (double)sp->optInSignalPeriod;
    sp->oscBuffer_Idx = sp->oscBuffer_Idx + 1;
    if( sp->oscBuffer_Idx > sp->maxIdx_oscBuffer )
    {
@@ -518,7 +518,7 @@ static void TA_AC_StepImpl( struct TA_AC_Stream *sp, double inHigh, double inLow
     * that admitting a signal period of 1 would not silently reintroduce
     * the collision ao.c has to guard against.
     */
-   *outReal= sp->tempReal;
+   *outReal= tempReal;
    sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
    sp->ringPos_trailingFastIdx = sp->ringPos_trailingFastIdx + 1;
    if( sp->ringPos_trailingFastIdx >= sp->ringCap_trailingFastIdx )
@@ -578,8 +578,8 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       double sumSlow = 0.0;
       double sumSignal = 0.0;
       double medianPrice;
-      double osc = 0.0;
-      double tempReal = 0.0;
+      double osc;
+      double tempReal;
       int i;
       int outIdx;
       int trailingFastIdx;
@@ -754,8 +754,6 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       sp->sumFast = sumFast;
       sp->sumSlow = sumSlow;
       sp->sumSignal = sumSignal;
-      sp->osc = osc;
-      sp->tempReal = tempReal;
       sp->oscBuffer_Idx = oscBuffer_Idx;
       sp->maxIdx_oscBuffer = maxIdx_oscBuffer;
       sp->ringCap_trailingFastIdx = (int)(i - trailingFastIdx);

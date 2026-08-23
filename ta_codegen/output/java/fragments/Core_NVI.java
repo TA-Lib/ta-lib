@@ -294,7 +294,6 @@
       double prevNVI;
       double prevClose;
       double prevVolume;
-      double tempNVI;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
@@ -318,7 +317,6 @@
          this.prevNVI = other.prevNVI;
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
-         this.tempNVI = other.tempNVI;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -329,7 +327,6 @@
          this.prevNVI = other.prevNVI;
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
-         this.tempNVI = other.tempNVI;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -416,6 +413,7 @@
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
+      double tempNVI = 0.0;
       tempClose = inClose;
       tempVolume = inVolume;
       /* prevClose != 0 guards the percentage-change division: a zero previous
@@ -434,10 +432,10 @@
           * fusion detector and silently re-round every bar, not just the
           * overflowing one.
           */
-         sp.tempNVI = sp.prevNVI;
-         sp.tempNVI += (tempClose - sp.prevClose) / sp.prevClose * sp.tempNVI;
-         if( (Double.isFinite(sp.tempNVI)) ) {
-            sp.prevNVI = sp.tempNVI;
+         tempNVI = sp.prevNVI;
+         tempNVI += (tempClose - sp.prevClose) / sp.prevClose * tempNVI;
+         if( (Double.isFinite(tempNVI)) ) {
+            sp.prevNVI = tempNVI;
          }
       }
       sp.cur_outReal = sp.prevNVI;
@@ -509,7 +507,6 @@
       sp.prevNVI = prevNVI;
       sp.prevClose = prevClose;
       sp.prevVolume = prevVolume;
-      sp.tempNVI = tempNVI;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }

@@ -358,9 +358,6 @@ struct TA_ACCBANDS_Stream {
    double periodTotalUpper;
    double periodTotalMiddle;
    double periodTotalLower;
-   double tempUpper;
-   double tempMiddle;
-   double tempLower;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inHigh;
@@ -387,6 +384,9 @@ static void TA_ACCBANDS_ReleaseImpl( struct TA_ACCBANDS_Stream *sp )
 /* Private function, not in public API. */
 static void TA_ACCBANDS_StepImpl( struct TA_ACCBANDS_Stream *sp, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
+   double tempUpper;
+   double tempMiddle;
+   double tempLower;
    double tempReal;
 
    if( sp->ringCap_trailingIdx == 0 )
@@ -409,9 +409,9 @@ static void TA_ACCBANDS_StepImpl( struct TA_ACCBANDS_Stream *sp, double inHigh, 
    }
    sp->periodTotalMiddle += inClose;
    /* Record the current window sums. */
-   sp->tempUpper = sp->periodTotalUpper;
-   sp->tempMiddle = sp->periodTotalMiddle;
-   sp->tempLower = sp->periodTotalLower;
+   tempUpper = sp->periodTotalUpper;
+   tempMiddle = sp->periodTotalMiddle;
+   tempLower = sp->periodTotalLower;
    /* Remove the trailing bar from each running sum. */
    tempReal = sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] + sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx];
    if( !TA_IS_ZERO(tempReal) )
@@ -426,9 +426,9 @@ static void TA_ACCBANDS_StepImpl( struct TA_ACCBANDS_Stream *sp, double inHigh, 
    }
    sp->periodTotalMiddle -= sp->ring_trailingIdx_inClose[sp->ringPos_trailingIdx];
    /* Write the three bands. */
-   *outRealUpperBand= sp->tempUpper / (double)sp->optInTimePeriod;
-   *outRealMiddleBand= sp->tempMiddle / (double)sp->optInTimePeriod;
-   *outRealLowerBand= sp->tempLower / (double)sp->optInTimePeriod;
+   *outRealUpperBand= tempUpper / (double)sp->optInTimePeriod;
+   *outRealMiddleBand= tempMiddle / (double)sp->optInTimePeriod;
+   *outRealLowerBand= tempLower / (double)sp->optInTimePeriod;
    sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] = inHigh;
    sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] = inLow;
    sp->ring_trailingIdx_inClose[sp->ringPos_trailingIdx] = inClose;
@@ -471,9 +471,9 @@ static TA_RetCode TA_ACCBANDS_OpenImpl( struct TA_ACCBANDS_Stream **stream, cons
       double periodTotalUpper = 0.0;
       double periodTotalMiddle = 0.0;
       double periodTotalLower = 0.0;
-      double tempUpper = 0.0;
-      double tempMiddle = 0.0;
-      double tempLower = 0.0;
+      double tempUpper;
+      double tempMiddle;
+      double tempLower;
       double tempReal;
       int i;
       int outIdx;
@@ -589,9 +589,6 @@ static TA_RetCode TA_ACCBANDS_OpenImpl( struct TA_ACCBANDS_Stream **stream, cons
       sp->periodTotalUpper = periodTotalUpper;
       sp->periodTotalMiddle = periodTotalMiddle;
       sp->periodTotalLower = periodTotalLower;
-      sp->tempUpper = tempUpper;
-      sp->tempMiddle = tempMiddle;
-      sp->tempLower = tempLower;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);

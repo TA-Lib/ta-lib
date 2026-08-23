@@ -245,7 +245,6 @@ struct TA_QSTICK_Stream {
    int outRangeCount;
    int optInTimePeriod;
    double periodTotal;
-   double tempReal;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_derived;
@@ -264,14 +263,16 @@ static void TA_QSTICK_ReleaseImpl( struct TA_QSTICK_Stream *sp )
 /* Private function, not in public API. */
 static void TA_QSTICK_StepImpl( struct TA_QSTICK_Stream *sp, double inOpen, double inClose, double *outReal )
 {
+   double tempReal;
+
    if( sp->ringCap_trailingIdx == 0 )
    {
       sp->ring_trailingIdx_derived[0] = (double)(inClose - inOpen);
    }
    sp->periodTotal += (double)(inClose - inOpen);
-   sp->tempReal = sp->periodTotal;
+   tempReal = sp->periodTotal;
    sp->periodTotal -= sp->ring_trailingIdx_derived[sp->ringPos_trailingIdx];
-   *outReal= sp->tempReal / (double)sp->optInTimePeriod;
+   *outReal= tempReal / (double)sp->optInTimePeriod;
    sp->ring_trailingIdx_derived[sp->ringPos_trailingIdx] = (double)(inClose - inOpen);
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
    if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
@@ -310,7 +311,7 @@ static TA_RetCode TA_QSTICK_OpenImpl( struct TA_QSTICK_Stream **stream, const do
 
    {
       double periodTotal = 0.0;
-      double tempReal = 0.0;
+      double tempReal;
       int i;
       int outIdx;
       int trailingIdx;
@@ -389,7 +390,6 @@ static TA_RetCode TA_QSTICK_OpenImpl( struct TA_QSTICK_Stream **stream, const do
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->periodTotal = periodTotal;
-      sp->tempReal = tempReal;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_QSTICK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);

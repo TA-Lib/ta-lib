@@ -446,9 +446,6 @@
       double periodTotalUpper;
       double periodTotalMiddle;
       double periodTotalLower;
-      double tempUpper;
-      double tempMiddle;
-      double tempLower;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inHigh;
@@ -481,9 +478,6 @@
          this.periodTotalUpper = other.periodTotalUpper;
          this.periodTotalMiddle = other.periodTotalMiddle;
          this.periodTotalLower = other.periodTotalLower;
-         this.tempUpper = other.tempUpper;
-         this.tempMiddle = other.tempMiddle;
-         this.tempLower = other.tempLower;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inHigh = other.ring_trailingIdx_inHigh.clone();
@@ -503,9 +497,6 @@
          this.periodTotalUpper = other.periodTotalUpper;
          this.periodTotalMiddle = other.periodTotalMiddle;
          this.periodTotalLower = other.periodTotalLower;
-         this.tempUpper = other.tempUpper;
-         this.tempMiddle = other.tempMiddle;
-         this.tempLower = other.tempLower;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          if( this.ring_trailingIdx_inHigh != null && this.ring_trailingIdx_inHigh.length == other.ring_trailingIdx_inHigh.length ) {
@@ -644,6 +635,9 @@
    }
    void ACCBANDS_StepImpl( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
    {
+      double tempUpper = 0.0;
+      double tempMiddle = 0.0;
+      double tempLower = 0.0;
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inHigh[0] = inHigh;
@@ -662,9 +656,9 @@
       }
       sp.periodTotalMiddle += inClose;
       /* Record the current window sums. */
-      sp.tempUpper = sp.periodTotalUpper;
-      sp.tempMiddle = sp.periodTotalMiddle;
-      sp.tempLower = sp.periodTotalLower;
+      tempUpper = sp.periodTotalUpper;
+      tempMiddle = sp.periodTotalMiddle;
+      tempLower = sp.periodTotalLower;
       /* Remove the trailing bar from each running sum. */
       tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
       if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
@@ -677,9 +671,9 @@
       }
       sp.periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx];
       /* Write the three bands. */
-      sp.cur_outRealUpperBand = sp.tempUpper / (double)sp.optInTimePeriod;
-      sp.cur_outRealMiddleBand = sp.tempMiddle / (double)sp.optInTimePeriod;
-      sp.cur_outRealLowerBand = sp.tempLower / (double)sp.optInTimePeriod;
+      sp.cur_outRealUpperBand = tempUpper / (double)sp.optInTimePeriod;
+      sp.cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
+      sp.cur_outRealLowerBand = tempLower / (double)sp.optInTimePeriod;
       sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
       sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
       sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
@@ -826,9 +820,6 @@
       sp.periodTotalUpper = periodTotalUpper;
       sp.periodTotalMiddle = periodTotalMiddle;
       sp.periodTotalLower = periodTotalLower;
-      sp.tempUpper = tempUpper;
-      sp.tempMiddle = tempMiddle;
-      sp.tempLower = tempLower;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;

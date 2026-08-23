@@ -399,7 +399,6 @@ struct TA_ATR_Stream {
    int outRangeCount;
    int optInTimePeriod;
    double prevATR;
-   double val3;
    double lag1_inClose;
 };
 
@@ -407,6 +406,7 @@ struct TA_ATR_Stream {
 static void TA_ATR_StepImpl( struct TA_ATR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double val2;
+   double val3;
    double greatest;
    double tempCY;
    double tempLT;
@@ -423,10 +423,10 @@ static void TA_ATR_StepImpl( struct TA_ATR_Stream *sp, double inHigh, double inL
    {
       greatest = val2;
    }
-   sp->val3 = fabs(tempCY - tempLT);
-   if( sp->val3 > greatest )
+   val3 = fabs(tempCY - tempLT);
+   if( val3 > greatest )
    {
-      greatest = sp->val3;
+      greatest = val3;
    }
    sp->prevATR *= sp->optInTimePeriod - 1;
    sp->prevATR += greatest;
@@ -472,7 +472,7 @@ static TA_RetCode TA_ATR_OpenImpl( struct TA_ATR_Stream **stream, const double i
       double prevATR = 0.0;
       double periodTotal;
       double val2;
-      double val3 = 0.0;
+      double val3;
       double greatest;
       double tempCY;
       double tempLT;
@@ -625,7 +625,6 @@ static TA_RetCode TA_ATR_OpenImpl( struct TA_ATR_Stream **stream, const double i
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevATR = prevATR;
-      sp->val3 = val3;
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;

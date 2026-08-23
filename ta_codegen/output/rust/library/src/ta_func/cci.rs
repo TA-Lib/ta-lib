@@ -361,10 +361,6 @@ impl CCI_Stream {
 #[allow(non_snake_case, dead_code)]
 struct CCI_StreamState {
     optInTimePeriod: i32,
-    tempReal: f64,
-    tempReal2: f64,
-    theAverage: f64,
-    j: usize,
     circBuffer_Idx: usize,
     maxIdx_circBuffer: usize,
     cbSize_circBuffer: usize,
@@ -377,10 +373,6 @@ impl CCI_StreamState {
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
         self.optInTimePeriod = src.optInTimePeriod;
-        self.tempReal = src.tempReal;
-        self.tempReal2 = src.tempReal2;
-        self.theAverage = src.theAverage;
-        self.j = src.j;
         self.circBuffer_Idx = src.circBuffer_Idx;
         self.maxIdx_circBuffer = src.maxIdx_circBuffer;
         self.cbSize_circBuffer = src.cbSize_circBuffer;
@@ -396,31 +388,35 @@ impl CCI_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn CCI_step_impl(&self, sp: &mut CCI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        let mut tempReal2: f64 = 0.0_f64;
+        let mut theAverage: f64 = 0.0_f64;
         let mut lastValue: f64 = 0.0_f64;
+        let mut j: usize = 0_usize;
         lastValue = (inHigh + inLow + inClose) / 3_f64;
         sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
         // Calculate the average for the whole period.
-        sp.theAverage = 0.0;
-        // for( sp.j = 0; sp.j < ((sp.optInTimePeriod) as usize); sp.j += 1 )
-        sp.j = 0;
-        while sp.j < ((sp.optInTimePeriod) as usize) {
-            sp.theAverage += sp.cb_circBuffer[sp.j];
-            sp.j += 1;
+        theAverage = 0.0;
+        // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+        j = 0;
+        while j < ((sp.optInTimePeriod) as usize) {
+            theAverage += sp.cb_circBuffer[j];
+            j += 1;
         }
-        sp.theAverage /= ((sp.optInTimePeriod) as f64);
+        theAverage /= ((sp.optInTimePeriod) as f64);
         // Do the summation of the ABS(TypePrice-average)
         // for the whole period.
-        sp.tempReal2 = 0.0;
-        // for( sp.j = 0; sp.j < ((sp.optInTimePeriod) as usize); sp.j += 1 )
-        sp.j = 0;
-        while sp.j < ((sp.optInTimePeriod) as usize) {
-            sp.tempReal2 += (sp.cb_circBuffer[sp.j] - sp.theAverage).abs();
-            sp.j += 1;
+        tempReal2 = 0.0;
+        // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+        j = 0;
+        while j < ((sp.optInTimePeriod) as usize) {
+            tempReal2 += (sp.cb_circBuffer[j] - theAverage).abs();
+            j += 1;
         }
         // And finally, the CCI...
-        sp.tempReal = lastValue - sp.theAverage;
-        if !((sp.tempReal).abs() < 1e-14) && !((sp.tempReal2).abs() < 1e-14) {
-            (*outReal) = sp.tempReal / (0.015 * (sp.tempReal2 / ((sp.optInTimePeriod) as f64)));
+        tempReal = lastValue - theAverage;
+        if !((tempReal).abs() < 1e-14) && !((tempReal2).abs() < 1e-14) {
+            (*outReal) = tempReal / (0.015 * (tempReal2 / ((sp.optInTimePeriod) as f64)));
         } else {
             (*outReal) = 0.0;
         }
@@ -552,10 +548,6 @@ impl Core {
         }
         let state = CCI_StreamState {
             optInTimePeriod,
-            tempReal,
-            tempReal2,
-            theAverage,
-            j,
             circBuffer_Idx,
             maxIdx_circBuffer,
             cbSize_circBuffer: cbSize_circBuffer,

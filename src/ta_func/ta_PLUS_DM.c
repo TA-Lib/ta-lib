@@ -461,9 +461,6 @@ struct TA_PLUS_DM_Stream {
    int optInTimePeriod;
    double prevHigh;
    double prevLow;
-   double tempReal;
-   double diffP;
-   double diffM;
    double prevPlusDM;
 };
 
@@ -472,18 +469,22 @@ static void TA_PLUS_DM_StepImpl( struct TA_PLUS_DM_Stream *sp, double inHigh, do
 {
    if( sp->optInTimePeriod <= 1 )
    {
-      sp->tempReal = inHigh;
-      sp->diffP = sp->tempReal - sp->prevHigh;
+      double tempReal;
+      double diffP;
+      double diffM;
+
+      tempReal = inHigh;
+      diffP = tempReal - sp->prevHigh;
       /* Plus Delta */
-      sp->prevHigh = sp->tempReal;
-      sp->tempReal = inLow;
-      sp->diffM = sp->prevLow - sp->tempReal;
+      sp->prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp->prevLow - tempReal;
       /* Minus Delta */
-      sp->prevLow = sp->tempReal;
-      if( sp->diffP > 0 && sp->diffP > sp->diffM )
+      sp->prevLow = tempReal;
+      if( diffP > 0 && diffP > diffM )
       {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
-         *outReal= sp->diffP;
+         *outReal= diffP;
       } else 
       {
          *outReal= 0;
@@ -491,18 +492,22 @@ static void TA_PLUS_DM_StepImpl( struct TA_PLUS_DM_Stream *sp, double inHigh, do
    }
    else
    {
-      sp->tempReal = inHigh;
-      sp->diffP = sp->tempReal - sp->prevHigh;
+      double tempReal;
+      double diffP;
+      double diffM;
+
+      tempReal = inHigh;
+      diffP = tempReal - sp->prevHigh;
       /* Plus Delta */
-      sp->prevHigh = sp->tempReal;
-      sp->tempReal = inLow;
-      sp->diffM = sp->prevLow - sp->tempReal;
+      sp->prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp->prevLow - tempReal;
       /* Minus Delta */
-      sp->prevLow = sp->tempReal;
-      if( sp->diffP > 0 && sp->diffP > sp->diffM )
+      sp->prevLow = tempReal;
+      if( diffP > 0 && diffP > diffM )
       {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
-         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod + sp->diffP;
+         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod + diffP;
       } else 
       {
          /* Case 2,4,5 and 7 */
@@ -549,9 +554,9 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
       int outIdx;
       double prevHigh = 0.0;
       double prevLow = 0.0;
-      double tempReal = 0.0;
-      double diffP = 0.0;
-      double diffM = 0.0;
+      double tempReal;
+      double diffP;
+      double diffM;
       /*
        * The DM1 (one period) is base on the largest part of
        * today's range that is outside of yesterdays range.
@@ -677,9 +682,6 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevHigh = prevHigh;
       sp->prevLow = prevLow;
-      sp->tempReal = tempReal;
-      sp->diffP = diffP;
-      sp->diffM = diffM;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       *stream = sp;
@@ -695,10 +697,10 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
       int outIdx;
       double prevHigh = 0.0;
       double prevLow = 0.0;
-      double tempReal = 0.0;
+      double tempReal;
       double prevPlusDM = 0.0;
-      double diffP = 0.0;
-      double diffM = 0.0;
+      double diffP;
+      double diffM;
       int i;
       /*
        * The DM1 (one period) is base on the largest part of
@@ -873,10 +875,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevHigh = prevHigh;
       sp->prevLow = prevLow;
-      sp->tempReal = tempReal;
       sp->prevPlusDM = prevPlusDM;
-      sp->diffP = diffP;
-      sp->diffM = diffM;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       *stream = sp;

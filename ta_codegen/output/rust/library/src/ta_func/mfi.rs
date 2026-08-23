@@ -459,13 +459,6 @@ struct MFI_StreamState {
     posSumMF: f64,
     negSumMF: f64,
     prevValue: f64,
-    tempValue1: f64,
-    tempValue2: f64,
-    tempValue3: f64,
-    moneyFlow: f64,
-    posFlow: f64,
-    negFlow: f64,
-    posClamped: f64,
     nullRun: usize,
     mflow_Idx: usize,
     maxIdx_mflow: usize,
@@ -483,13 +476,6 @@ impl MFI_StreamState {
         self.posSumMF = src.posSumMF;
         self.negSumMF = src.negSumMF;
         self.prevValue = src.prevValue;
-        self.tempValue1 = src.tempValue1;
-        self.tempValue2 = src.tempValue2;
-        self.tempValue3 = src.tempValue3;
-        self.moneyFlow = src.moneyFlow;
-        self.posFlow = src.posFlow;
-        self.negFlow = src.negFlow;
-        self.posClamped = src.posClamped;
         self.nullRun = src.nullRun;
         self.mflow_Idx = src.mflow_Idx;
         self.maxIdx_mflow = src.maxIdx_mflow;
@@ -507,34 +493,41 @@ impl MFI_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn MFI_step_impl(&self, sp: &mut MFI_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+        let mut tempValue1: f64 = 0.0_f64;
+        let mut tempValue2: f64 = 0.0_f64;
+        let mut tempValue3: f64 = 0.0_f64;
+        let mut moneyFlow: f64 = 0.0_f64;
+        let mut posFlow: f64 = 0.0_f64;
+        let mut negFlow: f64 = 0.0_f64;
+        let mut posClamped: f64 = 0.0_f64;
         sp.posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
         sp.negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];
-        sp.tempValue1 = (inHigh + inLow + inClose) / 3.0;
-        sp.tempValue2 = sp.tempValue1 - sp.prevValue;
+        tempValue1 = (inHigh + inLow + inClose) / 3.0;
+        tempValue2 = tempValue1 - sp.prevValue;
         // Dead-zone scaled to the two typical prices being compared (issue #107).
         // Captured before prevValue/tempValue1 are repurposed below.
-        sp.tempValue3 = (sp.tempValue1).abs() + (sp.prevValue).abs();
-        sp.prevValue = sp.tempValue1;
-        sp.tempValue1 *= inVolume;
-        sp.moneyFlow = (if ((sp.tempValue2).abs() <= 1e-14 * (sp.tempValue3)) { 0.0 } else { sp.tempValue1 });
-        sp.posFlow = (if sp.tempValue2 < 0.0 { 0.0 } else { sp.moneyFlow });
-        sp.negFlow = (if sp.tempValue2 < 0.0 { sp.moneyFlow } else { 0.0 });
-        sp.cb_mflow_positive[sp.mflow_Idx] = sp.posFlow;
-        sp.cb_mflow_negative[sp.mflow_Idx] = sp.negFlow;
-        sp.posSumMF += sp.posFlow;
-        sp.negSumMF += sp.negFlow;
-        sp.nullRun = (if sp.moneyFlow == 0.0 { sp.nullRun + 1 } else { 0 });
+        tempValue3 = (tempValue1).abs() + (sp.prevValue).abs();
+        sp.prevValue = tempValue1;
+        tempValue1 *= inVolume;
+        moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
+        posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+        negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+        sp.cb_mflow_positive[sp.mflow_Idx] = posFlow;
+        sp.cb_mflow_negative[sp.mflow_Idx] = negFlow;
+        sp.posSumMF += posFlow;
+        sp.negSumMF += negFlow;
+        sp.nullRun = (if moneyFlow == 0.0 { sp.nullRun + 1 } else { 0 });
         if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
             sp.nullRun = (sp.optInTimePeriod) as usize;
             sp.posSumMF = 0.0;
             sp.negSumMF = 0.0;
         }
-        sp.tempValue1 = sp.posSumMF + sp.negSumMF;
-        sp.posClamped = (if sp.posSumMF < 0.0 { 0.0 } else { (if sp.posSumMF > sp.tempValue1 { sp.tempValue1 } else { sp.posSumMF }) });
-        if sp.tempValue1 <= 0.0 {
+        tempValue1 = sp.posSumMF + sp.negSumMF;
+        posClamped = (if sp.posSumMF < 0.0 { 0.0 } else { (if sp.posSumMF > tempValue1 { tempValue1 } else { sp.posSumMF }) });
+        if tempValue1 <= 0.0 {
             (*outReal) = 0.0;
         } else {
-            (*outReal) = 100.0 * (sp.posClamped / sp.tempValue1);
+            (*outReal) = 100.0 * (posClamped / tempValue1);
         }
         sp.mflow_Idx = sp.mflow_Idx + 1;
         if sp.mflow_Idx > sp.maxIdx_mflow {
@@ -735,13 +728,6 @@ impl Core {
             posSumMF,
             negSumMF,
             prevValue,
-            tempValue1,
-            tempValue2,
-            tempValue3,
-            moneyFlow,
-            posFlow,
-            negFlow,
-            posClamped,
             nullRun,
             mflow_Idx,
             maxIdx_mflow,

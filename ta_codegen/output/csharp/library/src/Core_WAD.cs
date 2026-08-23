@@ -403,7 +403,6 @@ public partial class Core
       internal Core core;
       internal double sum;
       internal double prevClose;
-      internal double trueExtreme;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
@@ -426,7 +425,6 @@ public partial class Core
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
-         this.trueExtreme = other.trueExtreme;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -437,7 +435,6 @@ public partial class Core
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
-         this.trueExtreme = other.trueExtreme;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -534,19 +531,20 @@ public partial class Core
    internal void WAD_StepImpl( WAD_Stream sp, double inHigh, double inLow, double inClose )
    {
       double close = 0.0;
+      double trueExtreme = 0.0;
       close = inClose;
       if( close > sp.prevClose ) {
-         sp.trueExtreme = inLow;
-         if( sp.prevClose < sp.trueExtreme ) {
-            sp.trueExtreme = sp.prevClose;
+         trueExtreme = inLow;
+         if( sp.prevClose < trueExtreme ) {
+            trueExtreme = sp.prevClose;
          }
-         sp.sum += close - sp.trueExtreme;
+         sp.sum += close - trueExtreme;
       } else if( close < sp.prevClose ) {
-         sp.trueExtreme = inHigh;
-         if( sp.prevClose > sp.trueExtreme ) {
-            sp.trueExtreme = sp.prevClose;
+         trueExtreme = inHigh;
+         if( sp.prevClose > trueExtreme ) {
+            trueExtreme = sp.prevClose;
          }
-         sp.sum += close - sp.trueExtreme;
+         sp.sum += close - trueExtreme;
       }
       sp.cur_outReal = sp.sum;
       sp.prevClose = close;
@@ -640,7 +638,6 @@ public partial class Core
       /* Capture the live batch state into the handle. */
       sp.sum = sum;
       sp.prevClose = prevClose;
-      sp.trueExtreme = trueExtreme;
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }

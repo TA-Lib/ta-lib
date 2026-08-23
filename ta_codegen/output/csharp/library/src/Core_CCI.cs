@@ -447,10 +447,6 @@ public partial class Core
    {
       internal Core core;
       internal int optInTimePeriod;
-      internal double tempReal;
-      internal double tempReal2;
-      internal double theAverage;
-      internal int j;
       internal int circBuffer_Idx;
       internal int maxIdx_circBuffer;
       internal int cbSize_circBuffer;
@@ -476,10 +472,6 @@ public partial class Core
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
-         this.theAverage = other.theAverage;
-         this.j = other.j;
          this.circBuffer_Idx = other.circBuffer_Idx;
          this.maxIdx_circBuffer = other.maxIdx_circBuffer;
          this.cbSize_circBuffer = other.cbSize_circBuffer;
@@ -494,10 +486,6 @@ public partial class Core
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
-         this.tempReal = other.tempReal;
-         this.tempReal2 = other.tempReal2;
-         this.theAverage = other.theAverage;
-         this.j = other.j;
          this.circBuffer_Idx = other.circBuffer_Idx;
          this.maxIdx_circBuffer = other.maxIdx_circBuffer;
          this.cbSize_circBuffer = other.cbSize_circBuffer;
@@ -600,26 +588,30 @@ public partial class Core
 
    internal void CCI_StepImpl( CCI_Stream sp, double inHigh, double inLow, double inClose )
    {
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
+      double theAverage = 0.0;
       double lastValue = 0.0;
+      int j = 0;
       lastValue = (inHigh + inLow + inClose) / 3;
       sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
       /* Calculate the average for the whole period. */
-      sp.theAverage = 0;
-      for( sp.j = 0; sp.j < sp.optInTimePeriod; sp.j += 1 ) {
-         sp.theAverage += sp.cb_circBuffer[sp.j];
+      theAverage = 0;
+      for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+         theAverage += sp.cb_circBuffer[j];
       }
-      sp.theAverage /= sp.optInTimePeriod;
+      theAverage /= sp.optInTimePeriod;
       /* Do the summation of the ABS(TypePrice-average)
        * for the whole period.
        */
-      sp.tempReal2 = 0;
-      for( sp.j = 0; sp.j < sp.optInTimePeriod; sp.j += 1 ) {
-         sp.tempReal2 += Math.Abs(sp.cb_circBuffer[sp.j] - sp.theAverage);
+      tempReal2 = 0;
+      for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+         tempReal2 += Math.Abs(sp.cb_circBuffer[j] - theAverage);
       }
       /* And finally, the CCI... */
-      sp.tempReal = lastValue - sp.theAverage;
-      if( !((-0.00000000000001 < sp.tempReal) && (sp.tempReal < 0.00000000000001)) && !((-0.00000000000001 < sp.tempReal2) && (sp.tempReal2 < 0.00000000000001)) ) {
-         sp.cur_outReal = sp.tempReal / (0.015 * (sp.tempReal2 / sp.optInTimePeriod));
+      tempReal = lastValue - theAverage;
+      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) && !((-0.00000000000001 < tempReal2) && (tempReal2 < 0.00000000000001)) ) {
+         sp.cur_outReal = tempReal / (0.015 * (tempReal2 / sp.optInTimePeriod));
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -745,10 +737,6 @@ public partial class Core
          return RetCode.InternalError;
       }
       sp.optInTimePeriod = optInTimePeriod;
-      sp.tempReal = tempReal;
-      sp.tempReal2 = tempReal2;
-      sp.theAverage = theAverage;
-      sp.j = j;
       sp.circBuffer_Idx = circBuffer_Idx;
       sp.maxIdx_circBuffer = maxIdx_circBuffer;
       sp.cbSize_circBuffer = capCb_circBuffer;

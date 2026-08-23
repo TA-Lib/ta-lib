@@ -439,7 +439,6 @@
       int optInSlowPeriod;
       double sumFast;
       double sumSlow;
-      double tempReal;
       int ringPos_trailingFastIdx;
       int ringCap_trailingFastIdx;
       double[] ring_trailingFastIdx_derived;
@@ -470,7 +469,6 @@
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
          this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
          this.ring_trailingFastIdx_derived = other.ring_trailingFastIdx_derived.clone();
@@ -488,7 +486,6 @@
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
          this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
          if( this.ring_trailingFastIdx_derived != null && this.ring_trailingFastIdx_derived.length == other.ring_trailingFastIdx_derived.length ) {
@@ -599,6 +596,7 @@
    void AO_StepImpl( AO_Stream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
+      double tempReal = 0.0;
       if( sp.ringCap_trailingFastIdx == 0 ) {
          sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
       }
@@ -611,7 +609,7 @@
       /* Snapshot the oscillator before either total drops its trailing bar,
        * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
        */
-      sp.tempReal = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
+      tempReal = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
       /* Read both trailing bars before writing the output. When startIdx is
        * clamped to the lookback the longer window's trailing index equals
        * outIdx exactly, so a store hoisted above this would read back the
@@ -620,7 +618,7 @@
        */
       sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
       sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
-      sp.cur_outReal = sp.tempReal;
+      sp.cur_outReal = tempReal;
       sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
       if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
@@ -785,7 +783,6 @@
       sp.optInSlowPeriod = optInSlowPeriod;
       sp.sumFast = sumFast;
       sp.sumSlow = sumSlow;
-      sp.tempReal = tempReal;
       sp.ringPos_trailingFastIdx = 0;
       sp.ringCap_trailingFastIdx = cap_trailingFastIdx;
       sp.ring_trailingFastIdx_derived = capRing_trailingFastIdx_derived;

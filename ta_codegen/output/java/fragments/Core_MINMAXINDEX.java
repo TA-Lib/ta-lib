@@ -397,12 +397,10 @@
       int optInTimePeriod;
       double highest;
       double lowest;
-      double tmpHigh;
-      double tmpLow;
       int trailingIdx;
-      int i;
       int highestIdx;
       int lowestIdx;
+      int i;
       int today;
       int xMask;
       double[] x_inReal;
@@ -431,12 +429,10 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.lowest = other.lowest;
-         this.tmpHigh = other.tmpHigh;
-         this.tmpLow = other.tmpLow;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
          this.lowestIdx = other.lowestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          this.x_inReal = other.x_inReal.clone();
@@ -452,12 +448,10 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
          this.lowest = other.lowest;
-         this.tmpHigh = other.tmpHigh;
-         this.tmpLow = other.tmpLow;
          this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
          this.highestIdx = other.highestIdx;
          this.lowestIdx = other.lowestIdx;
+         this.i = other.i;
          this.today = other.today;
          this.xMask = other.xMask;
          if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
@@ -572,6 +566,8 @@
    }
    void MINMAXINDEX_StepImpl( MINMAXINDEX_Stream sp, double inReal )
    {
+      double tmpHigh = 0.0;
+      double tmpLow = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -581,37 +577,37 @@
          sp.lowestIdx -= rebaseShift;
       }
       sp.x_inReal[sp.today & sp.xMask] = inReal;
-      sp.tmpHigh = sp.x_inReal[sp.today & sp.xMask];
-      sp.tmpLow = sp.tmpHigh;
+      tmpHigh = sp.x_inReal[sp.today & sp.xMask];
+      tmpLow = tmpHigh;
       if( sp.highestIdx < sp.trailingIdx ) {
          sp.highestIdx = sp.trailingIdx;
          sp.highest = sp.x_inReal[sp.highestIdx & sp.xMask];
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpHigh = sp.x_inReal[sp.i & sp.xMask];
-            if( sp.tmpHigh > sp.highest ) {
+            tmpHigh = sp.x_inReal[sp.i & sp.xMask];
+            if( tmpHigh > sp.highest ) {
                sp.highestIdx = sp.i;
-               sp.highest = sp.tmpHigh;
+               sp.highest = tmpHigh;
             }
          }
-      } else if( sp.tmpHigh >= sp.highest ) {
+      } else if( tmpHigh >= sp.highest ) {
          sp.highestIdx = sp.today;
-         sp.highest = sp.tmpHigh;
+         sp.highest = tmpHigh;
       }
       if( sp.lowestIdx < sp.trailingIdx ) {
          sp.lowestIdx = sp.trailingIdx;
          sp.lowest = sp.x_inReal[sp.lowestIdx & sp.xMask];
          sp.i = sp.lowestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpLow = sp.x_inReal[sp.i & sp.xMask];
-            if( sp.tmpLow < sp.lowest ) {
+            tmpLow = sp.x_inReal[sp.i & sp.xMask];
+            if( tmpLow < sp.lowest ) {
                sp.lowestIdx = sp.i;
-               sp.lowest = sp.tmpLow;
+               sp.lowest = tmpLow;
             }
          }
-      } else if( sp.tmpLow <= sp.lowest ) {
+      } else if( tmpLow <= sp.lowest ) {
          sp.lowestIdx = sp.today;
-         sp.lowest = sp.tmpLow;
+         sp.lowest = tmpLow;
       }
       sp.cur_outMaxIdx = sp.highestIdx;
       sp.cur_outMinIdx = sp.lowestIdx;
@@ -737,12 +733,10 @@
       sp.optInTimePeriod = optInTimePeriod;
       sp.highest = highest;
       sp.lowest = lowest;
-      sp.tmpHigh = tmpHigh;
-      sp.tmpLow = tmpLow;
       sp.trailingIdx = trailingIdx;
-      sp.i = i;
       sp.highestIdx = highestIdx;
       sp.lowestIdx = lowestIdx;
+      sp.i = i;
       sp.today = today;
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;

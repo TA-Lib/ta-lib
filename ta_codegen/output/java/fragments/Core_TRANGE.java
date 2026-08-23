@@ -307,7 +307,6 @@
     */
    public static final class TRANGE_Stream {
       Core core;
-      double val3;
       double lag1_inClose;
       double cur_outReal;
       int outRangeBegIdx;
@@ -329,7 +328,6 @@
 
       TRANGE_Stream( TRANGE_Stream other ) {
          this.core = other.core;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -338,7 +336,6 @@
 
       void copyFrom( TRANGE_Stream other ) {
          this.core = other.core;
-         this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -425,6 +422,7 @@
    void TRANGE_StepImpl( TRANGE_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
+      double val3 = 0.0;
       double greatest = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
@@ -439,9 +437,9 @@
       if( val2 > greatest ) {
          greatest = val2;
       }
-      sp.val3 = Math.abs(tempCY - tempLT);
-      if( sp.val3 > greatest ) {
-         greatest = sp.val3;
+      val3 = Math.abs(tempCY - tempLT);
+      if( val3 > greatest ) {
+         greatest = val3;
       }
       sp.cur_outReal = greatest;
       sp.lag1_inClose = inClose;
@@ -517,7 +515,6 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
-      sp.val3 = val3;
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;

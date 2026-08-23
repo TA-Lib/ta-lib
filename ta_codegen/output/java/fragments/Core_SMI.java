@@ -835,10 +835,6 @@
       double emaSlowDen;
       double emaFastNum;
       double emaFastDen;
-      double num;
-      double den;
-      double halfDen;
-      double smiValue;
       double prevSignal;
       int trailingIdx;
       int highestIdx;
@@ -884,10 +880,6 @@
          this.emaSlowDen = other.emaSlowDen;
          this.emaFastNum = other.emaFastNum;
          this.emaFastDen = other.emaFastDen;
-         this.num = other.num;
-         this.den = other.den;
-         this.halfDen = other.halfDen;
-         this.smiValue = other.smiValue;
          this.prevSignal = other.prevSignal;
          this.trailingIdx = other.trailingIdx;
          this.highestIdx = other.highestIdx;
@@ -920,10 +912,6 @@
          this.emaSlowDen = other.emaSlowDen;
          this.emaFastNum = other.emaFastNum;
          this.emaFastDen = other.emaFastDen;
-         this.num = other.num;
-         this.den = other.den;
-         this.halfDen = other.halfDen;
-         this.smiValue = other.smiValue;
          this.prevSignal = other.prevSignal;
          this.trailingIdx = other.trailingIdx;
          this.highestIdx = other.highestIdx;
@@ -1065,6 +1053,10 @@
    void SMI_StepImpl( SMI_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
+      double num = 0.0;
+      double den = 0.0;
+      double halfDen = 0.0;
+      double smiValue = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -1110,10 +1102,10 @@
          sp.highestIdx = sp.today;
          sp.highest = tmp;
       }
-      sp.den = sp.highest - sp.lowest;
-      sp.num = sp.x_inClose[sp.today & sp.xMask] - (sp.highest + sp.lowest) * 0.5;
-      sp.emaSlowNum = Math.fma(sp.num - sp.emaSlowNum, sp.kSlow, sp.emaSlowNum);
-      sp.emaSlowDen = Math.fma(sp.den - sp.emaSlowDen, sp.kSlow, sp.emaSlowDen);
+      den = sp.highest - sp.lowest;
+      num = sp.x_inClose[sp.today & sp.xMask] - (sp.highest + sp.lowest) * 0.5;
+      sp.emaSlowNum = Math.fma(num - sp.emaSlowNum, sp.kSlow, sp.emaSlowNum);
+      sp.emaSlowDen = Math.fma(den - sp.emaSlowDen, sp.kSlow, sp.emaSlowDen);
       sp.emaFastNum = Math.fma(sp.emaSlowNum - sp.emaFastNum, sp.kFast, sp.emaFastNum);
       sp.emaFastDen = Math.fma(sp.emaSlowDen - sp.emaFastDen, sp.kFast, sp.emaFastDen);
       /* Guard with TA_IS_ZERO, not an exact `halfDen != 0.0`: a machine-flat
@@ -1122,14 +1114,14 @@
        * H == L makes num zero too, so this is 0/0, and the neutral 0.0 is the
        * CCI (#7) and IMI (#112) convention.
        */
-      sp.halfDen = 0.5 * sp.emaFastDen;
-      if( !((-0.00000000000001 < sp.halfDen) && (sp.halfDen < 0.00000000000001)) ) {
-         sp.smiValue = 100.0 * sp.emaFastNum / sp.halfDen;
+      halfDen = 0.5 * sp.emaFastDen;
+      if( !((-0.00000000000001 < halfDen) && (halfDen < 0.00000000000001)) ) {
+         smiValue = 100.0 * sp.emaFastNum / halfDen;
       } else {
-         sp.smiValue = 0.0;
+         smiValue = 0.0;
       }
-      sp.prevSignal = Math.fma(sp.smiValue - sp.prevSignal, sp.kSignal, sp.prevSignal);
-      sp.cur_outSMI = sp.smiValue;
+      sp.prevSignal = Math.fma(smiValue - sp.prevSignal, sp.kSignal, sp.prevSignal);
+      sp.cur_outSMI = smiValue;
       sp.cur_outSMISignal = sp.prevSignal;
       sp.trailingIdx = sp.trailingIdx + 1;
       sp.today = sp.today + 1;
@@ -1450,10 +1442,6 @@
       sp.emaSlowDen = emaSlowDen;
       sp.emaFastNum = emaFastNum;
       sp.emaFastDen = emaFastDen;
-      sp.num = num;
-      sp.den = den;
-      sp.halfDen = halfDen;
-      sp.smiValue = smiValue;
       sp.prevSignal = prevSignal;
       sp.trailingIdx = trailingIdx;
       sp.highestIdx = highestIdx;

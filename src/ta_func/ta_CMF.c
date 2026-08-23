@@ -403,11 +403,6 @@ struct TA_CMF_Stream {
    int optInTimePeriod;
    double sumMFV;
    double sumVol;
-   double high;
-   double low;
-   double close;
-   double tmp;
-   double mfv;
    int mfv_Idx;
    int maxIdx_mfv;
    int cbSize_mfv;
@@ -431,22 +426,28 @@ static void TA_CMF_ReleaseImpl( struct TA_CMF_Stream *sp )
 /* Private function, not in public API. */
 static void TA_CMF_StepImpl( struct TA_CMF_Stream *sp, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
+   double high;
+   double low;
+   double close;
+   double tmp;
+   double mfv;
+
    sp->sumMFV -= sp->cb_mfv_flow[sp->mfv_Idx];
    sp->sumVol -= sp->cb_mfv_volume[sp->mfv_Idx];
-   sp->high = inHigh;
-   sp->low = inLow;
-   sp->close = inClose;
-   sp->tmp = sp->high - sp->low;
-   if( sp->tmp > 0.0 )
+   high = inHigh;
+   low = inLow;
+   close = inClose;
+   tmp = high - low;
+   if( tmp > 0.0 )
    {
-      sp->mfv = (sp->close - sp->low - (sp->high - sp->close)) / sp->tmp * inVolume;
+      mfv = (close - low - (high - close)) / tmp * inVolume;
    } else 
    {
-      sp->mfv = 0.0;
+      mfv = 0.0;
    }
-   sp->cb_mfv_flow[sp->mfv_Idx] = sp->mfv;
+   sp->cb_mfv_flow[sp->mfv_Idx] = mfv;
    sp->cb_mfv_volume[sp->mfv_Idx] = inVolume;
-   sp->sumMFV += sp->mfv;
+   sp->sumMFV += mfv;
    sp->sumVol += inVolume;
    if( sp->sumVol > 0.0 )
    {
@@ -499,11 +500,11 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
    {
       double sumMFV = 0.0;
       double sumVol = 0.0;
-      double high = 0.0;
-      double low = 0.0;
-      double close = 0.0;
-      double tmp = 0.0;
-      double mfv = 0.0;
+      double high;
+      double low;
+      double close;
+      double tmp;
+      double mfv;
       int lookbackTotal;
       int outIdx;
       int i;
@@ -639,11 +640,6 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       sp->optInTimePeriod = optInTimePeriod;
       sp->sumMFV = sumMFV;
       sp->sumVol = sumVol;
-      sp->high = high;
-      sp->low = low;
-      sp->close = close;
-      sp->tmp = tmp;
-      sp->mfv = mfv;
       sp->mfv_Idx = mfv_Idx;
       sp->maxIdx_mfv = maxIdx_mfv;
       sp->cbSize_mfv = maxIdx_mfv + 1;

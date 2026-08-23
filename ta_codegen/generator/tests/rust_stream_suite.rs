@@ -82,7 +82,9 @@ fn test_rust_sma_ring_stream_section() {
     assert!(!s.contains("unsafe"), "stream sections are safe Rust");
     // Step: ring read-old-then-push order, `(*outReal)` write.
     assert!(s.contains("fn SMA_step_impl(&self, sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64)"));
-    assert!(s.contains("(*outReal) = sp.tempReal / (sp.optInTimePeriod as f64);"));
+    // `tempReal` is step-local scratch, not a handle field (#252).
+    assert!(s.contains("(*outReal) = tempReal / (sp.optInTimePeriod as f64);"));
+    assert!(!s.contains("tempReal: f64,"), "no scratch field on the state struct");
     assert!(s.contains("sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;"));
     // Open family: internal seam + thin wrapper + fill in batch param order.
     assert!(s.contains("pub(crate) fn SMA_OpenInternal("));

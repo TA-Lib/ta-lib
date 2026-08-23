@@ -353,7 +353,6 @@ public partial class Core
       internal double prevPVI;
       internal double prevClose;
       internal double prevVolume;
-      internal double tempPVI;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
@@ -377,7 +376,6 @@ public partial class Core
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
-         this.tempPVI = other.tempPVI;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -389,7 +387,6 @@ public partial class Core
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
-         this.tempPVI = other.tempPVI;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -484,6 +481,7 @@ public partial class Core
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
+      double tempPVI = 0.0;
       tempClose = inClose;
       tempVolume = inVolume;
       /* prevClose != 0 guards the percentage-change division: a zero previous
@@ -502,10 +500,10 @@ public partial class Core
           * fusion detector and silently re-round every bar, not just the
           * overflowing one.
           */
-         sp.tempPVI = sp.prevPVI;
-         sp.tempPVI += (tempClose - sp.prevClose) / sp.prevClose * sp.tempPVI;
-         if( (double.IsFinite(sp.tempPVI)) ) {
-            sp.prevPVI = sp.tempPVI;
+         tempPVI = sp.prevPVI;
+         tempPVI += (tempClose - sp.prevClose) / sp.prevClose * tempPVI;
+         if( (double.IsFinite(tempPVI)) ) {
+            sp.prevPVI = tempPVI;
          }
       }
       sp.cur_outReal = sp.prevPVI;
@@ -580,7 +578,6 @@ public partial class Core
       sp.prevPVI = prevPVI;
       sp.prevClose = prevClose;
       sp.prevVolume = prevVolume;
-      sp.tempPVI = tempPVI;
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }

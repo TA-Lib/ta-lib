@@ -376,8 +376,8 @@ struct MAX_StreamState {
     optInTimePeriod: i32,
     highest: f64,
     trailingIdx: i32,
-    i: i32,
     highestIdx: i32,
+    i: i32,
     today: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
@@ -391,8 +391,8 @@ impl MAX_StreamState {
         self.optInTimePeriod = src.optInTimePeriod;
         self.highest = src.highest;
         self.trailingIdx = src.trailingIdx;
-        self.i = src.i;
         self.highestIdx = src.highestIdx;
+        self.i = src.i;
         self.today = src.today;
         self.xMask = src.xMask;
         self.x_inReal.clone_from(&src.x_inReal);
@@ -551,8 +551,8 @@ impl Core {
             optInTimePeriod,
             highest,
             trailingIdx: (trailingIdx) as i32,
-            i: (i) as i32,
             highestIdx: (highestIdx) as i32,
+            i: (i) as i32,
             today: (today) as i32,
             xMask: (physX - 1) as i32,
             x_inReal,

@@ -287,7 +287,6 @@ impl SMA_Stream {
 struct SMA_StreamState {
     optInTimePeriod: i32,
     periodTotal: f64,
-    tempReal: f64,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
@@ -300,7 +299,6 @@ impl SMA_StreamState {
     fn restore_from(&mut self, src: &Self) {
         self.optInTimePeriod = src.optInTimePeriod;
         self.periodTotal = src.periodTotal;
-        self.tempReal = src.tempReal;
         self.ringPos_trailingIdx = src.ringPos_trailingIdx;
         self.ringCap_trailingIdx = src.ringCap_trailingIdx;
         self.ring_trailingIdx_inReal.clone_from(&src.ring_trailingIdx_inReal);
@@ -315,13 +313,14 @@ impl SMA_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn SMA_step_impl(&self, sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
         sp.periodTotal += inReal as f64;
-        sp.tempReal = sp.periodTotal;
+        tempReal = sp.periodTotal;
         sp.periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] as f64;
-        (*outReal) = sp.tempReal / (sp.optInTimePeriod as f64);
+        (*outReal) = tempReal / (sp.optInTimePeriod as f64);
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
         if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
@@ -415,7 +414,6 @@ impl Core {
         let state = SMA_StreamState {
             optInTimePeriod,
             periodTotal,
-            tempReal,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,

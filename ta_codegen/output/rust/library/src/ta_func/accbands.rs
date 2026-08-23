@@ -375,9 +375,6 @@ struct ACCBANDS_StreamState {
     periodTotalUpper: f64,
     periodTotalMiddle: f64,
     periodTotalLower: f64,
-    tempUpper: f64,
-    tempMiddle: f64,
-    tempLower: f64,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inHigh: Vec<f64>,
@@ -394,9 +391,6 @@ impl ACCBANDS_StreamState {
         self.periodTotalUpper = src.periodTotalUpper;
         self.periodTotalMiddle = src.periodTotalMiddle;
         self.periodTotalLower = src.periodTotalLower;
-        self.tempUpper = src.tempUpper;
-        self.tempMiddle = src.tempMiddle;
-        self.tempLower = src.tempLower;
         self.ringPos_trailingIdx = src.ringPos_trailingIdx;
         self.ringCap_trailingIdx = src.ringCap_trailingIdx;
         self.ring_trailingIdx_inHigh.clone_from(&src.ring_trailingIdx_inHigh);
@@ -413,6 +407,9 @@ impl ACCBANDS_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn ACCBANDS_step_impl(&self, sp: &mut ACCBANDS_StreamState, inHigh: f64, inLow: f64, inClose: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) {
+        let mut tempUpper: f64 = 0.0_f64;
+        let mut tempMiddle: f64 = 0.0_f64;
+        let mut tempLower: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inHigh[0] = inHigh;
@@ -431,9 +428,9 @@ impl Core {
         }
         sp.periodTotalMiddle += inClose;
         // Record the current window sums.
-        sp.tempUpper = sp.periodTotalUpper;
-        sp.tempMiddle = sp.periodTotalMiddle;
-        sp.tempLower = sp.periodTotalLower;
+        tempUpper = sp.periodTotalUpper;
+        tempMiddle = sp.periodTotalMiddle;
+        tempLower = sp.periodTotalLower;
         // Remove the trailing bar from each running sum.
         tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
         if !((tempReal).abs() < 1e-14) {
@@ -446,9 +443,9 @@ impl Core {
         }
         sp.periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx];
         // Write the three bands.
-        (*outRealUpperBand) = sp.tempUpper / (sp.optInTimePeriod as f64);
-        (*outRealMiddleBand) = sp.tempMiddle / (sp.optInTimePeriod as f64);
-        (*outRealLowerBand) = sp.tempLower / (sp.optInTimePeriod as f64);
+        (*outRealUpperBand) = tempUpper / (sp.optInTimePeriod as f64);
+        (*outRealMiddleBand) = tempMiddle / (sp.optInTimePeriod as f64);
+        (*outRealLowerBand) = tempLower / (sp.optInTimePeriod as f64);
         sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
         sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
         sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
@@ -602,9 +599,6 @@ impl Core {
             periodTotalUpper,
             periodTotalMiddle,
             periodTotalLower,
-            tempUpper,
-            tempMiddle,
-            tempLower,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inHigh,

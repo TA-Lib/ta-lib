@@ -344,7 +344,6 @@ struct TA_CMOU_Stream {
    int optInTimePeriod;
    double upSum;
    double downSum;
-   double sum;
    double prevValue;
    double trailingValue;
    int ringPos_trailingIdx;
@@ -365,6 +364,7 @@ static void TA_CMOU_ReleaseImpl( struct TA_CMOU_Stream *sp )
 /* Private function, not in public API. */
 static void TA_CMOU_StepImpl( struct TA_CMOU_Stream *sp, double inReal, double *outReal )
 {
+   double sum;
    double diff;
    double tempReal;
 
@@ -398,10 +398,10 @@ static void TA_CMOU_StepImpl( struct TA_CMOU_Stream *sp, double inReal, double *
    {
       sp->downSum -= diff;
    }
-   sp->sum = sp->upSum + sp->downSum;
-   if( !TA_IS_ZERO(sp->sum) )
+   sum = sp->upSum + sp->downSum;
+   if( !TA_IS_ZERO(sum) )
    {
-      *outReal= 100.0 * (sp->upSum - sp->downSum) / sp->sum;
+      *outReal= 100.0 * (sp->upSum - sp->downSum) / sum;
    } else 
    {
       *outReal= 0.0;
@@ -450,7 +450,7 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
       int i;
       double upSum = 0.0;
       double downSum = 0.0;
-      double sum = 0.0;
+      double sum;
       double diff;
       double tempReal;
       double prevValue = 0.0;
@@ -573,7 +573,6 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
       sp->optInTimePeriod = optInTimePeriod;
       sp->upSum = upSum;
       sp->downSum = downSum;
-      sp->sum = sum;
       sp->prevValue = prevValue;
       sp->trailingValue = trailingValue;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);

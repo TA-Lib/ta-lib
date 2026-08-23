@@ -509,7 +509,6 @@ impl CDLMATHOLD_Stream {
 struct CDLMATHOLD_StreamState {
     optInPenetration: f64,
     BodyPeriodTotal: [f64; 5 as usize],
-    totIdx: usize,
     lag1_inOpen: f64,
     lag2_inOpen: f64,
     lag3_inOpen: f64,
@@ -543,7 +542,6 @@ impl CDLMATHOLD_StreamState {
     fn restore_from(&mut self, src: &Self) {
         self.optInPenetration = src.optInPenetration;
         self.BodyPeriodTotal = src.BodyPeriodTotal;
-        self.totIdx = src.totIdx;
         self.lag1_inOpen = src.lag1_inOpen;
         self.lag2_inOpen = src.lag2_inOpen;
         self.lag3_inOpen = src.lag3_inOpen;
@@ -579,6 +577,7 @@ impl CDLMATHOLD_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn CDLMATHOLD_step_impl(&self, sp: &mut CDLMATHOLD_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut totIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -662,12 +661,12 @@ impl Core {
             }
         }
         sp.BodyPeriodTotal[4] = sp.BodyPeriodTotal[4] + (_candlerange_2 - sp.ring_BodyLongTrailingIdx_derived[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx) as usize]);
-        // for( sp.totIdx = 3; sp.totIdx >= 1; sp.totIdx -= 1 )
-        sp.totIdx = 3;
+        // for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
+        totIdx = 3;
         loop {
-            sp.BodyPeriodTotal[sp.totIdx] = sp.BodyPeriodTotal[sp.totIdx] + (sp.ring_BodyShortTrailingIdx_derived[((if sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.totIdx >= sp.ringCap_BodyShortTrailingIdx { sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.totIdx - sp.ringCap_BodyShortTrailingIdx } else { sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.totIdx })) as usize] - sp.ring_BodyShortTrailingIdx_derived[((sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - sp.totIdx) % sp.ringCap_BodyShortTrailingIdx) as usize]);
-            if sp.totIdx == 1 { break; }
-            sp.totIdx -= 1;
+            sp.BodyPeriodTotal[totIdx] = sp.BodyPeriodTotal[totIdx] + (sp.ring_BodyShortTrailingIdx_derived[((if sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx { sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx } else { sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx })) as usize] - sp.ring_BodyShortTrailingIdx_derived[((sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx) as usize]);
+            if totIdx == 1 { break; }
+            totIdx -= 1;
         }
         sp.lag4_inOpen = sp.lag3_inOpen;
         sp.lag3_inOpen = sp.lag2_inOpen;
@@ -984,7 +983,6 @@ impl Core {
         let state = CDLMATHOLD_StreamState {
             optInPenetration,
             BodyPeriodTotal,
-            totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag3_inOpen: inOpen[historyLen - 3],

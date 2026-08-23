@@ -687,7 +687,6 @@
       double b1Total;
       double b2Total;
       double b3Total;
-      double output;
       int trailingPos1;
       int trailingPos2;
       int term_Idx;
@@ -725,7 +724,6 @@
          this.b1Total = other.b1Total;
          this.b2Total = other.b2Total;
          this.b3Total = other.b3Total;
-         this.output = other.output;
          this.trailingPos1 = other.trailingPos1;
          this.trailingPos2 = other.trailingPos2;
          this.term_Idx = other.term_Idx;
@@ -750,7 +748,6 @@
          this.b1Total = other.b1Total;
          this.b2Total = other.b2Total;
          this.b3Total = other.b3Total;
-         this.output = other.output;
          this.trailingPos1 = other.trailingPos1;
          this.trailingPos2 = other.trailingPos2;
          this.term_Idx = other.term_Idx;
@@ -866,6 +863,7 @@
       double trueRange = 0.0;
       double closeMinusTrueLow = 0.0;
       double tempDouble = 0.0;
+      double output = 0.0;
       double tempHT = 0.0;
       double tempLT = 0.0;
       double tempCY = 0.0;
@@ -893,15 +891,15 @@
       sp.b2Total += trueRange;
       sp.b3Total += trueRange;
       /* Calculate the oscillator value for today */
-      sp.output = 0.0;
+      output = 0.0;
       if( !((-0.00000000000001 < sp.b1Total) && (sp.b1Total < 0.00000000000001)) ) {
-         sp.output += 4.0 * (sp.a1Total / sp.b1Total);
+         output += 4.0 * (sp.a1Total / sp.b1Total);
       }
       if( !((-0.00000000000001 < sp.b2Total) && (sp.b2Total < 0.00000000000001)) ) {
-         sp.output += 2.0 * (sp.a2Total / sp.b2Total);
+         output += 2.0 * (sp.a2Total / sp.b2Total);
       }
       if( !((-0.00000000000001 < sp.b3Total) && (sp.b3Total < 0.00000000000001)) ) {
-         sp.output += sp.a3Total / sp.b3Total;
+         output += sp.a3Total / sp.b3Total;
       }
       /* Remove the trailing terms to prepare for next day. Each was evaluated
        * once, when its bar entered the ring.
@@ -930,7 +928,7 @@
        * to have the input array to be also the output
        * array.
        */
-      sp.cur_outReal = 100.0 * (sp.output / 7.0);
+      sp.cur_outReal = 100.0 * (output / 7.0);
       /* Increment indexes */
       sp.lag1_inClose = inClose;
    }
@@ -1182,7 +1180,6 @@
       sp.b1Total = b1Total;
       sp.b2Total = b2Total;
       sp.b3Total = b3Total;
-      sp.output = output;
       sp.trailingPos1 = trailingPos1;
       sp.trailingPos2 = trailingPos2;
       sp.term_Idx = term_Idx;

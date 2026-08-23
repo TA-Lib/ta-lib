@@ -237,31 +237,31 @@ struct TA_WAD_Stream {
    int outRangeCount;
    double sum;
    double prevClose;
-   double trueExtreme;
 };
 
 /* Private function, not in public API. */
 static void TA_WAD_StepImpl( struct TA_WAD_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double close;
+   double trueExtreme;
 
    close = inClose;
    if( close > sp->prevClose )
    {
-      sp->trueExtreme = inLow;
-      if( sp->prevClose < sp->trueExtreme )
+      trueExtreme = inLow;
+      if( sp->prevClose < trueExtreme )
       {
-         sp->trueExtreme = sp->prevClose;
+         trueExtreme = sp->prevClose;
       }
-      sp->sum += close - sp->trueExtreme;
+      sp->sum += close - trueExtreme;
    } else if( close < sp->prevClose )
    {
-      sp->trueExtreme = inHigh;
-      if( sp->prevClose > sp->trueExtreme )
+      trueExtreme = inHigh;
+      if( sp->prevClose > trueExtreme )
       {
-         sp->trueExtreme = sp->prevClose;
+         trueExtreme = sp->prevClose;
       }
-      sp->sum += close - sp->trueExtreme;
+      sp->sum += close - trueExtreme;
    }
    *outReal= sp->sum;
    sp->prevClose = close;
@@ -295,7 +295,7 @@ static TA_RetCode TA_WAD_OpenImpl( struct TA_WAD_Stream **stream, const double i
       double sum = 0.0;
       double prevClose = 0.0;
       double close;
-      double trueExtreme = 0.0;
+      double trueExtreme;
       int i;
       int outIdx;
       /* Williams' Accumulation/Distribution, in the form Steven Achelis
@@ -372,7 +372,6 @@ static TA_RetCode TA_WAD_OpenImpl( struct TA_WAD_Stream **stream, const double i
       memset( sp, 0, sizeof(*sp) );
       sp->sum = sum;
       sp->prevClose = prevClose;
-      sp->trueExtreme = trueExtreme;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       *stream = sp;

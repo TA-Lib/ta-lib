@@ -283,7 +283,6 @@ struct NVI_StreamState {
     prevNVI: f64,
     prevClose: f64,
     prevVolume: f64,
-    tempNVI: f64,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -294,7 +293,6 @@ impl NVI_StreamState {
         self.prevNVI = src.prevNVI;
         self.prevClose = src.prevClose;
         self.prevVolume = src.prevVolume;
-        self.tempNVI = src.tempNVI;
     }
 }
 
@@ -308,6 +306,7 @@ impl Core {
     fn NVI_step_impl(&self, sp: &mut NVI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
+        let mut tempNVI: f64 = 0.0_f64;
         tempClose = inClose;
         tempVolume = inVolume;
         // prevClose != 0 guards the percentage-change division: a zero previous
@@ -324,10 +323,10 @@ impl Core {
             // was before the guard: spelling it `a + r*a` would match the FMA
             // fusion detector and silently re-round every bar, not just the
             // overflowing one.
-            sp.tempNVI = sp.prevNVI;
-            sp.tempNVI += (tempClose - sp.prevClose) / sp.prevClose * sp.tempNVI;
-            if (sp.tempNVI).is_finite() {
-                sp.prevNVI = sp.tempNVI;
+            tempNVI = sp.prevNVI;
+            tempNVI += (tempClose - sp.prevClose) / sp.prevClose * tempNVI;
+            if (tempNVI).is_finite() {
+                sp.prevNVI = tempNVI;
             }
         }
         (*outReal) = sp.prevNVI;
@@ -406,7 +405,6 @@ impl Core {
             prevNVI,
             prevClose,
             prevVolume,
-            tempNVI,
         };
         Ok(NVI_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }

@@ -739,36 +739,37 @@ struct TA_ADX_Stream {
    double prevMinusDM;
    double prevPlusDM;
    double prevTR;
-   double tempReal;
-   double diffP;
-   double diffM;
-   double minusDI;
-   double plusDI;
    double prevADX;
 };
 
 /* Private function, not in public API. */
 static void TA_ADX_StepImpl( struct TA_ADX_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
+   double tempReal;
+   double diffP;
+   double diffM;
+   double minusDI;
+   double plusDI;
+
    /* Calculate the prevMinusDM and prevPlusDM */
-   sp->tempReal = inHigh;
-   sp->diffP = sp->tempReal - sp->prevHigh;
+   tempReal = inHigh;
+   diffP = tempReal - sp->prevHigh;
    /* Plus Delta */
-   sp->prevHigh = sp->tempReal;
-   sp->tempReal = inLow;
-   sp->diffM = sp->prevLow - sp->tempReal;
+   sp->prevHigh = tempReal;
+   tempReal = inLow;
+   diffM = sp->prevLow - tempReal;
    /* Minus Delta */
-   sp->prevLow = sp->tempReal;
+   sp->prevLow = tempReal;
    sp->prevMinusDM -= sp->prevMinusDM / sp->optInTimePeriod;
    sp->prevPlusDM -= sp->prevPlusDM / sp->optInTimePeriod;
-   if( sp->diffM > 0 && sp->diffP < sp->diffM )
+   if( diffM > 0 && diffP < diffM )
    {
       /* Case 2 and 4: +DM=0,-DM=diffM */
-      sp->prevMinusDM += sp->diffM;
-   } else if( sp->diffP > 0 && sp->diffP > sp->diffM )
+      sp->prevMinusDM += diffM;
+   } else if( diffP > 0 && diffP > diffM )
    {
       /* Case 1 and 3: +DM=diffP,-DM=0 */
-      sp->prevPlusDM += sp->diffP;
+      sp->prevPlusDM += diffP;
    }
    /* Calculate the prevTR */
    double _true_range_0;
@@ -784,20 +785,20 @@ static void TA_ADX_StepImpl( struct TA_ADX_Stream *sp, double inHigh, double inL
       range_0 = tmp_0;
    }
    _true_range_0 = range_0;
-   sp->tempReal = _true_range_0;
-   sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + sp->tempReal;
+   tempReal = _true_range_0;
+   sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + tempReal;
    sp->prevClose = inClose;
    if( !TA_IS_ZERO(sp->prevTR) )
    {
       /* Calculate the DX. The value is rounded (see Wilder book). */
-      sp->minusDI = (100.0 * (sp->prevMinusDM / sp->prevTR));
-      sp->plusDI = (100.0 * (sp->prevPlusDM / sp->prevTR));
-      sp->tempReal = sp->minusDI + sp->plusDI;
-      if( !TA_IS_ZERO(sp->tempReal) )
+      minusDI = (100.0 * (sp->prevMinusDM / sp->prevTR));
+      plusDI = (100.0 * (sp->prevPlusDM / sp->prevTR));
+      tempReal = minusDI + plusDI;
+      if( !TA_IS_ZERO(tempReal) )
       {
-         sp->tempReal = (100.0 * (fabs(sp->minusDI - sp->plusDI) / sp->tempReal));
+         tempReal = (100.0 * (fabs(minusDI - plusDI) / tempReal));
          /* Calculate the ADX */
-         sp->prevADX = ((sp->prevADX * (sp->optInTimePeriod - 1) + sp->tempReal) / sp->optInTimePeriod);
+         sp->prevADX = ((sp->prevADX * (sp->optInTimePeriod - 1) + tempReal) / sp->optInTimePeriod);
       }
    }
    /* Output the ADX */
@@ -842,12 +843,12 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
       double prevMinusDM = 0.0;
       double prevPlusDM = 0.0;
       double prevTR = 0.0;
-      double tempReal = 0.0;
+      double tempReal;
       double tempReal2;
-      double diffP = 0.0;
-      double diffM = 0.0;
-      double minusDI = 0.0;
-      double plusDI = 0.0;
+      double diffP;
+      double diffM;
+      double minusDI;
+      double plusDI;
       double sumDX;
       double prevADX = 0.0;
       int i;
@@ -1217,11 +1218,6 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
       sp->prevMinusDM = prevMinusDM;
       sp->prevPlusDM = prevPlusDM;
       sp->prevTR = prevTR;
-      sp->tempReal = tempReal;
-      sp->diffP = diffP;
-      sp->diffM = diffM;
-      sp->minusDI = minusDI;
-      sp->plusDI = plusDI;
       sp->prevADX = prevADX;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;

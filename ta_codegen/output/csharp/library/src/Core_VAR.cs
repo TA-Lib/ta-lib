@@ -556,14 +556,12 @@ public partial class Core
       internal double shift;
       internal double periodTotal1;
       internal double periodTotal2;
-      internal double meanValue1;
-      internal double variance;
       internal double invPeriod;
-      internal int j;
       internal int trailingIdx;
-      internal int windowStart;
       internal int nbInitialElementNeeded;
       internal int barsSinceReseed;
+      internal int j;
+      internal int windowStart;
       internal int i;
       internal int xMask;
       internal double[] x_inReal = [];
@@ -592,14 +590,12 @@ public partial class Core
          this.shift = other.shift;
          this.periodTotal1 = other.periodTotal1;
          this.periodTotal2 = other.periodTotal2;
-         this.meanValue1 = other.meanValue1;
-         this.variance = other.variance;
          this.invPeriod = other.invPeriod;
-         this.j = other.j;
          this.trailingIdx = other.trailingIdx;
-         this.windowStart = other.windowStart;
          this.nbInitialElementNeeded = other.nbInitialElementNeeded;
          this.barsSinceReseed = other.barsSinceReseed;
+         this.j = other.j;
+         this.windowStart = other.windowStart;
          this.i = other.i;
          this.xMask = other.xMask;
          this.x_inReal = new double[other.x_inReal.Length];
@@ -617,14 +613,12 @@ public partial class Core
          this.shift = other.shift;
          this.periodTotal1 = other.periodTotal1;
          this.periodTotal2 = other.periodTotal2;
-         this.meanValue1 = other.meanValue1;
-         this.variance = other.variance;
          this.invPeriod = other.invPeriod;
-         this.j = other.j;
          this.trailingIdx = other.trailingIdx;
-         this.windowStart = other.windowStart;
          this.nbInitialElementNeeded = other.nbInitialElementNeeded;
          this.barsSinceReseed = other.barsSinceReseed;
+         this.j = other.j;
+         this.windowStart = other.windowStart;
          this.i = other.i;
          this.xMask = other.xMask;
          if( this.x_inReal.Length != other.x_inReal.Length ) {
@@ -721,6 +715,8 @@ public partial class Core
    internal void VAR_StepImpl( VAR_Stream sp, double inReal )
    {
       double tempReal = 0.0;
+      double meanValue1 = 0.0;
+      double variance = 0.0;
       if( sp.i >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.i -= rebaseShift;
@@ -734,8 +730,8 @@ public partial class Core
       sp.periodTotal1 += tempReal;
       tempReal *= tempReal;
       sp.periodTotal2 += tempReal;
-      sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
-      sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+      meanValue1 = sp.periodTotal1 * sp.invPeriod;
+      variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
       /* Remove the trailing value (prepares the next window). */
       tempReal = sp.x_inReal[sp.trailingIdx & sp.xMask] - sp.shift;
       sp.periodTotal1 -= tempReal;
@@ -756,7 +752,7 @@ public partial class Core
        * reseeding it every bar. Guarantees a non-negative output.
        */
       sp.barsSinceReseed -= 1;
-      if( sp.variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 ) {
+      if( variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 ) {
          sp.barsSinceReseed = 32 * sp.optInTimePeriod;
          sp.windowStart = sp.i - sp.nbInitialElementNeeded;
          tempReal = 0.0;
@@ -772,8 +768,8 @@ public partial class Core
             tempReal *= tempReal;
             sp.periodTotal2 += tempReal;
          }
-         sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
-         sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+         meanValue1 = sp.periodTotal1 * sp.invPeriod;
+         variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
          /* Floor the fresh figure at the same ratio the trigger above uses, now
           * measured against the RE-ANCHORED sums. With the shift AT the window
           * mean the deviations sum to ~0, so a real window has variance ~
@@ -823,8 +819,8 @@ public partial class Core
           * THIS - the alternative is an unconditional clamp at the output write,
           * which needs no such argument but does cost ~3%.
           */
-         if( sp.variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
-            sp.variance = 0.0;
+         if( variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
+            variance = 0.0;
          }
          /* Re-remove the trailing value under the new shift so the carried state
           * matches the non-reseed path.
@@ -834,7 +830,7 @@ public partial class Core
          tempReal *= tempReal;
          sp.periodTotal2 -= tempReal;
       }
-      sp.cur_outReal = sp.variance;
+      sp.cur_outReal = variance;
       sp.i += 1;
    }
 
@@ -1046,14 +1042,12 @@ public partial class Core
       sp.shift = shift;
       sp.periodTotal1 = periodTotal1;
       sp.periodTotal2 = periodTotal2;
-      sp.meanValue1 = meanValue1;
-      sp.variance = variance;
       sp.invPeriod = invPeriod;
-      sp.j = j;
       sp.trailingIdx = trailingIdx;
-      sp.windowStart = windowStart;
       sp.nbInitialElementNeeded = nbInitialElementNeeded;
       sp.barsSinceReseed = barsSinceReseed;
+      sp.j = j;
+      sp.windowStart = windowStart;
       sp.i = i;
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;

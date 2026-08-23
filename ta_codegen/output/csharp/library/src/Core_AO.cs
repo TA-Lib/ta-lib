@@ -488,7 +488,6 @@ public partial class Core
       internal int optInSlowPeriod;
       internal double sumFast;
       internal double sumSlow;
-      internal double tempReal;
       internal int ringPos_trailingFastIdx;
       internal int ringCap_trailingFastIdx;
       internal double[] ring_trailingFastIdx_derived = [];
@@ -519,7 +518,6 @@ public partial class Core
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
          this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
          this.ring_trailingFastIdx_derived = new double[other.ring_trailingFastIdx_derived.Length];
@@ -540,7 +538,6 @@ public partial class Core
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.sumFast = other.sumFast;
          this.sumSlow = other.sumSlow;
-         this.tempReal = other.tempReal;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
          this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
          if( this.ring_trailingFastIdx_derived.Length != other.ring_trailingFastIdx_derived.Length ) {
@@ -655,6 +652,7 @@ public partial class Core
    internal void AO_StepImpl( AO_Stream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
+      double tempReal = 0.0;
       if( sp.ringCap_trailingFastIdx == 0 ) {
          sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
       }
@@ -667,7 +665,7 @@ public partial class Core
       /* Snapshot the oscillator before either total drops its trailing bar,
        * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
        */
-      sp.tempReal = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
+      tempReal = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
       /* Read both trailing bars before writing the output. When startIdx is
        * clamped to the lookback the longer window's trailing index equals
        * outIdx exactly, so a store hoisted above this would read back the
@@ -676,7 +674,7 @@ public partial class Core
        */
       sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
       sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
-      sp.cur_outReal = sp.tempReal;
+      sp.cur_outReal = tempReal;
       sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
       if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
@@ -844,7 +842,6 @@ public partial class Core
       sp.optInSlowPeriod = optInSlowPeriod;
       sp.sumFast = sumFast;
       sp.sumSlow = sumSlow;
-      sp.tempReal = tempReal;
       sp.ringPos_trailingFastIdx = 0;
       sp.ringCap_trailingFastIdx = cap_trailingFastIdx;
       sp.ring_trailingFastIdx_derived = capRing_trailingFastIdx_derived;

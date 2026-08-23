@@ -400,8 +400,6 @@
       int optInTimePeriod;
       double sumPV;
       double sumV;
-      double tempPV;
-      double tempV;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
@@ -429,8 +427,6 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
-         this.tempPV = other.tempPV;
-         this.tempV = other.tempV;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -445,8 +441,6 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
-         this.tempPV = other.tempPV;
-         this.tempV = other.tempV;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
@@ -554,6 +548,8 @@
    }
    void VWMA_StepImpl( VWMA_Stream sp, double inReal, double inVolume )
    {
+      double tempPV = 0.0;
+      double tempV = 0.0;
       double tempReal = 0.0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -570,15 +566,15 @@
        * add-new / snapshot / subtract-old order of TA_SMA. That order is what
        * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
        */
-      sp.tempPV = sp.sumPV;
-      sp.tempV = sp.sumV;
+      tempPV = sp.sumPV;
+      tempV = sp.sumV;
       /* Read the trailing values before writing the output, since the caller
        * may pass the same buffer for an input and the output.
        */
       tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
       sp.sumPV -= tempReal;
       sp.sumV -= sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
-      sp.cur_outReal = sp.tempPV / (double)sp.optInTimePeriod / (sp.tempV / (double)sp.optInTimePeriod);
+      sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -624,8 +620,6 @@
          sp.optInTimePeriod = optInTimePeriod;
          sp.sumPV = 0.0;
          sp.sumV = 0.0;
-         sp.tempPV = 0.0;
-         sp.tempV = 0.0;
          sp.ringPos_trailingIdx = 0;
          sp.ringCap_trailingIdx = 0;
          sp.ring_trailingIdx_inReal = new double[1];
@@ -719,8 +713,6 @@
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumPV = sumPV;
       sp.sumV = sumV;
-      sp.tempPV = tempPV;
-      sp.tempV = tempV;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;

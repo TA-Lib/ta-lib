@@ -223,7 +223,6 @@ struct TA_SMA_Stream {
    int outRangeCount;
    int optInTimePeriod;
    double periodTotal;
-   double tempReal;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inReal;
@@ -242,14 +241,16 @@ static void TA_SMA_ReleaseImpl( struct TA_SMA_Stream *sp )
 /* Private function, not in public API. */
 static void TA_SMA_StepImpl( struct TA_SMA_Stream *sp, double inReal, double *outReal )
 {
+   double tempReal;
+
    if( sp->ringCap_trailingIdx == 0 )
    {
       sp->ring_trailingIdx_inReal[0] = inReal;
    }
    sp->periodTotal += (double)inReal;
-   sp->tempReal = sp->periodTotal;
+   tempReal = sp->periodTotal;
    sp->periodTotal -= (double)sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
-   *outReal= sp->tempReal / (double)sp->optInTimePeriod;
+   *outReal= tempReal / (double)sp->optInTimePeriod;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
    if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
@@ -288,7 +289,7 @@ static TA_RetCode TA_SMA_OpenImpl( struct TA_SMA_Stream **stream, const double i
 
    {
       double periodTotal = 0.0;
-      double tempReal = 0.0;
+      double tempReal;
       int i;
       int outIdx;
       int trailingIdx;
@@ -349,7 +350,6 @@ static TA_RetCode TA_SMA_OpenImpl( struct TA_SMA_Stream **stream, const double i
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->periodTotal = periodTotal;
-      sp->tempReal = tempReal;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_SMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);

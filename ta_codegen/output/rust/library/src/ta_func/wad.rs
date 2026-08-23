@@ -326,7 +326,6 @@ impl WAD_Stream {
 struct WAD_StreamState {
     sum: f64,
     prevClose: f64,
-    trueExtreme: f64,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -336,7 +335,6 @@ impl WAD_StreamState {
     fn restore_from(&mut self, src: &Self) {
         self.sum = src.sum;
         self.prevClose = src.prevClose;
-        self.trueExtreme = src.trueExtreme;
     }
 }
 
@@ -349,19 +347,20 @@ impl WAD_StreamState {
 impl Core {
     fn WAD_step_impl(&self, sp: &mut WAD_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut close: f64 = 0.0_f64;
+        let mut trueExtreme: f64 = 0.0_f64;
         close = inClose;
         if close > sp.prevClose {
-            sp.trueExtreme = inLow;
-            if sp.prevClose < sp.trueExtreme {
-                sp.trueExtreme = sp.prevClose;
+            trueExtreme = inLow;
+            if sp.prevClose < trueExtreme {
+                trueExtreme = sp.prevClose;
             }
-            sp.sum += close - sp.trueExtreme;
+            sp.sum += close - trueExtreme;
         } else if close < sp.prevClose {
-            sp.trueExtreme = inHigh;
-            if sp.prevClose > sp.trueExtreme {
-                sp.trueExtreme = sp.prevClose;
+            trueExtreme = inHigh;
+            if sp.prevClose > trueExtreme {
+                trueExtreme = sp.prevClose;
             }
-            sp.sum += close - sp.trueExtreme;
+            sp.sum += close - trueExtreme;
         }
         (*outReal) = sp.sum;
         sp.prevClose = close;
@@ -460,7 +459,6 @@ impl Core {
         let state = WAD_StreamState {
             sum,
             prevClose,
-            trueExtreme,
         };
         Ok(WAD_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }

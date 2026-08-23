@@ -286,7 +286,6 @@ impl TRANGE_Stream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct TRANGE_StreamState {
-    val3: f64,
     lag1_inClose: f64,
 }
 
@@ -295,7 +294,6 @@ impl TRANGE_StreamState {
     /// Overwrite every field from `src`, reusing this value's buffers
     /// instead of allocating new ones — `peek`'s scratch restore.
     fn restore_from(&mut self, src: &Self) {
-        self.val3 = src.val3;
         self.lag1_inClose = src.lag1_inClose;
     }
 }
@@ -309,6 +307,7 @@ impl TRANGE_StreamState {
 impl Core {
     fn TRANGE_step_impl(&self, sp: &mut TRANGE_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut val2: f64 = 0.0_f64;
+        let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
         let mut tempCY: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
@@ -323,9 +322,9 @@ impl Core {
         if val2 > greatest {
             greatest = val2;
         }
-        sp.val3 = (tempCY - tempLT).abs();
-        if sp.val3 > greatest {
-            greatest = sp.val3;
+        val3 = (tempCY - tempLT).abs();
+        if val3 > greatest {
+            greatest = val3;
         }
         (*outReal) = greatest;
         sp.lag1_inClose = inClose;
@@ -408,7 +407,6 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = TRANGE_StreamState {
-            val3,
             lag1_inClose: inClose[historyLen - 1],
         };
         Ok(TRANGE_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })

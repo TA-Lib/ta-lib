@@ -536,11 +536,6 @@ public partial class Core
       internal int optInTimePeriod;
       internal double sumMFV;
       internal double sumVol;
-      internal double high;
-      internal double low;
-      internal double close;
-      internal double tmp;
-      internal double mfv;
       internal int mfv_Idx;
       internal int maxIdx_mfv;
       internal int cbSize_mfv;
@@ -569,11 +564,6 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
          this.sumVol = other.sumVol;
-         this.high = other.high;
-         this.low = other.low;
-         this.close = other.close;
-         this.tmp = other.tmp;
-         this.mfv = other.mfv;
          this.mfv_Idx = other.mfv_Idx;
          this.maxIdx_mfv = other.maxIdx_mfv;
          this.cbSize_mfv = other.cbSize_mfv;
@@ -592,11 +582,6 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
          this.sumVol = other.sumVol;
-         this.high = other.high;
-         this.low = other.low;
-         this.close = other.close;
-         this.tmp = other.tmp;
-         this.mfv = other.mfv;
          this.mfv_Idx = other.mfv_Idx;
          this.maxIdx_mfv = other.maxIdx_mfv;
          this.cbSize_mfv = other.cbSize_mfv;
@@ -715,20 +700,25 @@ public partial class Core
 
    internal void CMF_StepImpl( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
+      double high = 0.0;
+      double low = 0.0;
+      double close = 0.0;
+      double tmp = 0.0;
+      double mfv = 0.0;
       sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
       sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
-      sp.high = inHigh;
-      sp.low = inLow;
-      sp.close = inClose;
-      sp.tmp = sp.high - sp.low;
-      if( sp.tmp > 0.0 ) {
-         sp.mfv = (sp.close - sp.low - (sp.high - sp.close)) / sp.tmp * inVolume;
+      high = inHigh;
+      low = inLow;
+      close = inClose;
+      tmp = high - low;
+      if( tmp > 0.0 ) {
+         mfv = (close - low - (high - close)) / tmp * inVolume;
       } else {
-         sp.mfv = 0.0;
+         mfv = 0.0;
       }
-      sp.cb_mfv_flow[sp.mfv_Idx] = sp.mfv;
+      sp.cb_mfv_flow[sp.mfv_Idx] = mfv;
       sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
-      sp.sumMFV += sp.mfv;
+      sp.sumMFV += mfv;
       sp.sumVol += inVolume;
       if( sp.sumVol > 0.0 ) {
          sp.cur_outReal = sp.sumMFV / sp.sumVol;
@@ -880,11 +870,6 @@ public partial class Core
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumMFV = sumMFV;
       sp.sumVol = sumVol;
-      sp.high = high;
-      sp.low = low;
-      sp.close = close;
-      sp.tmp = tmp;
-      sp.mfv = mfv;
       sp.mfv_Idx = mfv_Idx;
       sp.maxIdx_mfv = maxIdx_mfv;
       sp.cbSize_mfv = capCb_mfv;

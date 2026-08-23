@@ -460,8 +460,6 @@ struct AC_StreamState {
     sumFast: f64,
     sumSlow: f64,
     sumSignal: f64,
-    osc: f64,
-    tempReal: f64,
     oscBuffer_Idx: usize,
     maxIdx_oscBuffer: usize,
     ringPos_trailingFastIdx: usize,
@@ -485,8 +483,6 @@ impl AC_StreamState {
         self.sumFast = src.sumFast;
         self.sumSlow = src.sumSlow;
         self.sumSignal = src.sumSignal;
-        self.osc = src.osc;
-        self.tempReal = src.tempReal;
         self.oscBuffer_Idx = src.oscBuffer_Idx;
         self.maxIdx_oscBuffer = src.maxIdx_oscBuffer;
         self.ringPos_trailingFastIdx = src.ringPos_trailingFastIdx;
@@ -509,6 +505,8 @@ impl AC_StreamState {
 impl Core {
     fn AC_step_impl(&self, sp: &mut AC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut medianPrice: f64 = 0.0_f64;
+        let mut osc: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingFastIdx == 0 {
             sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
         }
@@ -520,16 +518,16 @@ impl Core {
         sp.sumSlow += medianPrice;
         // Snapshot the oscillator before either total drops its trailing bar,
         // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
-        sp.osc = sp.sumFast / (sp.optInFastPeriod as f64) - sp.sumSlow / (sp.optInSlowPeriod as f64);
+        osc = sp.sumFast / (sp.optInFastPeriod as f64) - sp.sumSlow / (sp.optInSlowPeriod as f64);
         sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
         sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
         // Today's oscillator enters the signal window at its own slot, and the
         // bar leaving that window is read only after the ring has advanced onto
         // it -- writing first is what makes the slot the loop is about to
         // overwrite the newest value rather than the oldest one.
-        sp.cb_oscBuffer[sp.oscBuffer_Idx] = sp.osc;
-        sp.sumSignal += sp.osc;
-        sp.tempReal = sp.osc - sp.sumSignal / (sp.optInSignalPeriod as f64);
+        sp.cb_oscBuffer[sp.oscBuffer_Idx] = osc;
+        sp.sumSignal += osc;
+        tempReal = osc - sp.sumSignal / (sp.optInSignalPeriod as f64);
         sp.oscBuffer_Idx = sp.oscBuffer_Idx + 1;
         if sp.oscBuffer_Idx > sp.maxIdx_oscBuffer {
             sp.oscBuffer_Idx = 0;
@@ -542,7 +540,7 @@ impl Core {
         // parameter makes them collide -- but the order is kept anyway, so
         // that admitting a signal period of 1 would not silently reintroduce
         // the collision ao.c has to guard against.
-        (*outReal) = sp.tempReal;
+        (*outReal) = tempReal;
         sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
         sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
         if sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
@@ -773,8 +771,6 @@ impl Core {
             sumFast,
             sumSlow,
             sumSignal,
-            osc,
-            tempReal,
             oscBuffer_Idx,
             maxIdx_oscBuffer,
             ringPos_trailingFastIdx: 0_usize,
