@@ -303,7 +303,7 @@ public partial class Core
                /* The floor from var.c, verbatim: it owns both the sign and the
                 * dead-zone, so the square root below can be unconditional.
                 */
-               if( variance < 0.000001 * (varTotal2 * _invPeriod) ) {
+               if( variance < 0.000000000001 * (varTotal2 * _invPeriod) ) {
                   variance = 0.0;
                }
                _tempReal = inReal[_windowStart] - shift;
@@ -566,7 +566,7 @@ public partial class Core
                }
                meanValue1 = varTotal1 * _invPeriod;
                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-               if( variance < 0.000001 * (varTotal2 * _invPeriod) ) {
+               if( variance < 0.000000000001 * (varTotal2 * _invPeriod) ) {
                   variance = 0.0;
                }
                _tempReal = (double)inReal[_windowStart] - shift;

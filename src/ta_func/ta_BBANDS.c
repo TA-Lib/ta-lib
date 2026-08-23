@@ -293,7 +293,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
             /* The floor from var.c, verbatim: it owns both the sign and the
              * dead-zone, so the square root below can be unconditional.
              */
-            if( variance < 0.000001 * (varTotal2 * _invPeriod) )
+            if( variance < 0.000000000001 * (varTotal2 * _invPeriod) )
             {
                variance = 0.0;
             }
@@ -611,7 +611,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
             }
             meanValue1 = varTotal1 * _invPeriod;
             variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-            if( variance < 0.000001 * (varTotal2 * _invPeriod) )
+            if( variance < 0.000000000001 * (varTotal2 * _invPeriod) )
             {
                variance = 0.0;
             }

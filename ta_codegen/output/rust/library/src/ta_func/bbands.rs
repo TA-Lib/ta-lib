@@ -339,7 +339,7 @@ impl Core {
                     variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
                     // The floor from var.c, verbatim: it owns both the sign and the
                     // dead-zone, so the square root below can be unconditional.
-                    if variance < 0.000001 * (varTotal2 * _invPeriod) {
+                    if variance < 0.000000000001 * (varTotal2 * _invPeriod) {
                         variance = 0.0;
                     }
                     _tempReal = inReal[_windowStart] - shift;

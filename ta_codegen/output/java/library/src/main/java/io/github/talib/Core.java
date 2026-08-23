@@ -12610,7 +12610,7 @@ public final class Core {
                /* The floor from var.c, verbatim: it owns both the sign and the
                 * dead-zone, so the square root below can be unconditional.
                 */
-               if( variance < 0.000001 * (varTotal2 * _invPeriod) ) {
+               if( variance < 0.000000000001 * (varTotal2 * _invPeriod) ) {
                   variance = 0.0;
                }
                _tempReal = inReal[_windowStart] - shift;
@@ -12883,7 +12883,7 @@ public final class Core {
                }
                meanValue1 = varTotal1 * _invPeriod;
                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-               if( variance < 0.000001 * (varTotal2 * _invPeriod) ) {
+               if( variance < 0.000000000001 * (varTotal2 * _invPeriod) ) {
                   variance = 0.0;
                }
                _tempReal = (double)inReal[_windowStart] - shift;
@@ -140832,11 +140832,25 @@ public final class Core {
             /* Floor the fresh figure at the same ratio the trigger above uses, now
              * measured against the RE-ANCHORED sums. With the shift AT the window
              * mean the deviations sum to ~0, so a real window has variance ~
-             * periodTotal2*invPeriod and a ratio of ~1; the ratio drops below 1e-6
+             * periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
              * only when every deviation is the same value, i.e. when the spread is
              * at or under the rounding error of the mean itself. There is then no
              * spread the anchor could resolve, the surviving digits are noise, and
              * the honest answer is 0.
+             *
+             * The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
+             * difference is load-bearing. periodTotal2*invPeriod is not the
+             * variance here: it is variance + e^2, where e is the rounding error of
+             * the reseed's own left-to-right sum for the mean -- exactly the term
+             * the two-pass subtraction then cancels out. So the ratio measures how
+             * badly that sum rounded, not how much signal survives, and matching
+             * the trigger's 1e-6 fired ten orders before cancellation eats any
+             * digits. It zeroed a variance the line above had just computed to nine
+             * correct significant figures: 100011 bars at 31498938283.624615 with
+             * two small outliers at period 99991 gives 1.0219900060103338e-09
+             * (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
+             * survives and every intended bit-zero still zeroes -- the live ratios
+             * on flat data are 0 or ~1e-16, six orders the other side.
              *
              * This is the ONE dead-zone in the var/stddev/bbands family, and it is
              * relative rather than the `variance < 0.0` it replaced because two
@@ -140864,7 +140878,7 @@ public final class Core {
              * THIS - the alternative is an unconditional clamp at the output write,
              * which needs no such argument but does cost ~3%.
              */
-            if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                variance = 0.0;
             }
             /* Re-remove the trailing value under the new shift so the carried state
@@ -140976,7 +140990,7 @@ public final class Core {
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                variance = 0.0;
             }
             tempReal = (double)inReal[windowStart] - shift;
@@ -141339,11 +141353,25 @@ public final class Core {
          /* Floor the fresh figure at the same ratio the trigger above uses, now
           * measured against the RE-ANCHORED sums. With the shift AT the window
           * mean the deviations sum to ~0, so a real window has variance ~
-          * periodTotal2*invPeriod and a ratio of ~1; the ratio drops below 1e-6
+          * periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
           * only when every deviation is the same value, i.e. when the spread is
           * at or under the rounding error of the mean itself. There is then no
           * spread the anchor could resolve, the surviving digits are noise, and
           * the honest answer is 0.
+          *
+          * The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
+          * difference is load-bearing. periodTotal2*invPeriod is not the
+          * variance here: it is variance + e^2, where e is the rounding error of
+          * the reseed's own left-to-right sum for the mean -- exactly the term
+          * the two-pass subtraction then cancels out. So the ratio measures how
+          * badly that sum rounded, not how much signal survives, and matching
+          * the trigger's 1e-6 fired ten orders before cancellation eats any
+          * digits. It zeroed a variance the line above had just computed to nine
+          * correct significant figures: 100011 bars at 31498938283.624615 with
+          * two small outliers at period 99991 gives 1.0219900060103338e-09
+          * (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
+          * survives and every intended bit-zero still zeroes -- the live ratios
+          * on flat data are 0 or ~1e-16, six orders the other side.
           *
           * This is the ONE dead-zone in the var/stddev/bbands family, and it is
           * relative rather than the `variance < 0.0` it replaced because two
@@ -141371,7 +141399,7 @@ public final class Core {
           * THIS - the alternative is an unconditional clamp at the output write,
           * which needs no such argument but does cost ~3%.
           */
-         if( sp.variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) ) {
+         if( sp.variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
             sp.variance = 0.0;
          }
          /* Re-remove the trailing value under the new shift so the carried state
@@ -141510,11 +141538,25 @@ public final class Core {
             /* Floor the fresh figure at the same ratio the trigger above uses, now
              * measured against the RE-ANCHORED sums. With the shift AT the window
              * mean the deviations sum to ~0, so a real window has variance ~
-             * periodTotal2*invPeriod and a ratio of ~1; the ratio drops below 1e-6
+             * periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
              * only when every deviation is the same value, i.e. when the spread is
              * at or under the rounding error of the mean itself. There is then no
              * spread the anchor could resolve, the surviving digits are noise, and
              * the honest answer is 0.
+             *
+             * The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
+             * difference is load-bearing. periodTotal2*invPeriod is not the
+             * variance here: it is variance + e^2, where e is the rounding error of
+             * the reseed's own left-to-right sum for the mean -- exactly the term
+             * the two-pass subtraction then cancels out. So the ratio measures how
+             * badly that sum rounded, not how much signal survives, and matching
+             * the trigger's 1e-6 fired ten orders before cancellation eats any
+             * digits. It zeroed a variance the line above had just computed to nine
+             * correct significant figures: 100011 bars at 31498938283.624615 with
+             * two small outliers at period 99991 gives 1.0219900060103338e-09
+             * (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
+             * survives and every intended bit-zero still zeroes -- the live ratios
+             * on flat data are 0 or ~1e-16, six orders the other side.
              *
              * This is the ONE dead-zone in the var/stddev/bbands family, and it is
              * relative rather than the `variance < 0.0` it replaced because two
@@ -141542,7 +141584,7 @@ public final class Core {
              * THIS - the alternative is an unconditional clamp at the output write,
              * which needs no such argument but does cost ~3%.
              */
-            if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                variance = 0.0;
             }
             /* Re-remove the trailing value under the new shift so the carried state
