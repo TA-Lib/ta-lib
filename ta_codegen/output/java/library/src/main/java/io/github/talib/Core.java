@@ -12618,13 +12618,24 @@ public final class Core {
                _tempReal *= _tempReal;
                varTotal2 -= _tempReal;
             }
-            /* Unconditional, same as stddev.c: the reseed floor above already
-             * guarantees a non-negative radicand and already zeroes a window with
-             * no resolvable spread. The TA_EPSILON test that used to stand here
-             * compared a SQUARED quantity to a fixed 1e-14 and flattened all three
-             * bands onto each other for any finely quoted series (#243).
+            /* The TA_EPSILON test that used to stand here compared a SQUARED
+             * quantity to a fixed 1e-14 and flattened all three bands onto each
+             * other for any finely quoted series (#243). What replaces it skips
+             * the root ONLY where the answer is already known, because the
+             * reseed floor above has made it exactly 0 -- worth doing because
+             * this root, unlike stddev.c's, sits in the fused loop with a
+             * carried dependency and cannot vectorize, so running it on flat
+             * input cost 1.59x.
+             *
+             * `!= 0.0` and not `> 0.0`: the two differ only on NaN, and `> 0.0`
+             * sends it to the false arm, which would emit a zero-width band
+             * where stddev.c, BBANDS' own non-SMA paths and BBANDS_Open all
+             * return NaN. Reaching it needs a squared deviation to overflow
+             * (|x| ~ 1.3e154, far outside TA_REAL_MAX), so nothing in the
+             * declared domain can tell the two apart -- but there is no reason
+             * to buy the disagreement, and `!= 0.0` is what this is for.
              */
-            tempBuffer2[_outIdx] = Math.sqrt(variance);
+            tempBuffer2[_outIdx] = (variance != 0.0) ? Math.sqrt(variance) : 0.0;
             _outIdx += 1;
             _i += 1;
          } while( _i <= endIdx );
@@ -12880,7 +12891,7 @@ public final class Core {
                _tempReal *= _tempReal;
                varTotal2 -= _tempReal;
             }
-            tempBuffer2[_outIdx] = Math.sqrt(variance);
+            tempBuffer2[_outIdx] = (variance != 0.0) ? Math.sqrt(variance) : 0.0;
             _outIdx += 1;
             _i += 1;
          } while( _i <= endIdx );
@@ -13785,8 +13796,13 @@ public final class Core {
           * trigger above cannot see it -- denom/denom_scale stays ~1 -- and only
           * the periodic re-anchor recovers, up to 32*period bars later. Measured
           * without it: a 1e8 tick left 286 of 386 bars wrong, the worst by 0.36
-          * ABSOLUTE. It costs at most ~3% (mostly unmeasurable against a +/-1.6%
-          * noise floor), against the 7-11% the shift itself spends.
+          * ABSOLUTE. Cost is ~3% and mostly unmeasurable on the bench corpus
+          * (randwalk/GBM/trend-chop), where it fires on 0.00% of bars -- but that
+          * is a corpus figure, not a bound. Isolated against the same body without
+          * the disjunct it is +16-20% on a stale-quote/illiquid series (1.5% fire
+          * rate) and +54-64% on constructed near-flat or gapped shapes (5.1%).
+          * The cost is the reseed it triggers, so it tracks the fire rate; on data
+          * that never triggers it, the compare is free.
           *
           * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
           * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
@@ -14499,8 +14515,13 @@ public final class Core {
        * trigger above cannot see it -- denom/denom_scale stays ~1 -- and only
        * the periodic re-anchor recovers, up to 32*period bars later. Measured
        * without it: a 1e8 tick left 286 of 386 bars wrong, the worst by 0.36
-       * ABSOLUTE. It costs at most ~3% (mostly unmeasurable against a +/-1.6%
-       * noise floor), against the 7-11% the shift itself spends.
+       * ABSOLUTE. Cost is ~3% and mostly unmeasurable on the bench corpus
+       * (randwalk/GBM/trend-chop), where it fires on 0.00% of bars -- but that
+       * is a corpus figure, not a bound. Isolated against the same body without
+       * the disjunct it is +16-20% on a stale-quote/illiquid series (1.5% fire
+       * rate) and +54-64% on constructed near-flat or gapped shapes (5.1%).
+       * The cost is the reseed it triggers, so it tracks the fire rate; on data
+       * that never triggers it, the compare is free.
        *
        * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
        * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
@@ -14811,8 +14832,13 @@ public final class Core {
           * trigger above cannot see it -- denom/denom_scale stays ~1 -- and only
           * the periodic re-anchor recovers, up to 32*period bars later. Measured
           * without it: a 1e8 tick left 286 of 386 bars wrong, the worst by 0.36
-          * ABSOLUTE. It costs at most ~3% (mostly unmeasurable against a +/-1.6%
-          * noise floor), against the 7-11% the shift itself spends.
+          * ABSOLUTE. Cost is ~3% and mostly unmeasurable on the bench corpus
+          * (randwalk/GBM/trend-chop), where it fires on 0.00% of bars -- but that
+          * is a corpus figure, not a bound. Isolated against the same body without
+          * the disjunct it is +16-20% on a stale-quote/illiquid series (1.5% fire
+          * rate) and +54-64% on constructed near-flat or gapped shapes (5.1%).
+          * The cost is the reseed it triggers, so it tracks the fire rate; on data
+          * that never triggers it, the compare is free.
           *
           * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
           * a tick multiplying the price by k puts k-1 into the return and (k-1)^2

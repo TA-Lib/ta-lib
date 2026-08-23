@@ -302,13 +302,24 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
             _tempReal *= _tempReal;
             varTotal2 -= _tempReal;
          }
-         /* Unconditional, same as stddev.c: the reseed floor above already
-          * guarantees a non-negative radicand and already zeroes a window with
-          * no resolvable spread. The TA_EPSILON test that used to stand here
-          * compared a SQUARED quantity to a fixed 1e-14 and flattened all three
-          * bands onto each other for any finely quoted series (#243).
+         /* The TA_EPSILON test that used to stand here compared a SQUARED
+          * quantity to a fixed 1e-14 and flattened all three bands onto each
+          * other for any finely quoted series (#243). What replaces it skips
+          * the root ONLY where the answer is already known, because the
+          * reseed floor above has made it exactly 0 -- worth doing because
+          * this root, unlike stddev.c's, sits in the fused loop with a
+          * carried dependency and cannot vectorize, so running it on flat
+          * input cost 1.59x.
+          *
+          * `!= 0.0` and not `> 0.0`: the two differ only on NaN, and `> 0.0`
+          * sends it to the false arm, which would emit a zero-width band
+          * where stddev.c, BBANDS' own non-SMA paths and BBANDS_Open all
+          * return NaN. Reaching it needs a squared deviation to overflow
+          * (|x| ~ 1.3e154, far outside TA_REAL_MAX), so nothing in the
+          * declared domain can tell the two apart -- but there is no reason
+          * to buy the disagreement, and `!= 0.0` is what this is for.
           */
-         tempBuffer2[_outIdx] = sqrt(variance);
+         tempBuffer2[_outIdx] = (variance != 0.0) ? sqrt(variance) : 0.0;
          _outIdx += 1;
          _i += 1;
       } while( _i <= endIdx );
@@ -609,7 +620,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
             _tempReal *= _tempReal;
             varTotal2 -= _tempReal;
          }
-         tempBuffer2[_outIdx] = sqrt(variance);
+         tempBuffer2[_outIdx] = (variance != 0.0) ? sqrt(variance) : 0.0;
          _outIdx += 1;
          _i += 1;
       } while( _i <= endIdx );
