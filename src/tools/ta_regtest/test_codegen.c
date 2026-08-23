@@ -5235,7 +5235,8 @@ static int fma_needs_input_scale(const char *name)
 }
 
 enum { TOL_ABS = 0, TOL_REL_IN = 1, TOL_NAN_TO = 2, TOL_REL_OUT = 3 };
-static const struct { const char *name; int mode; double tol; double cap; } FUZZ_064_TOL[] = {
+typedef struct { const char *name; int mode; double tol; double cap; } TA_Fuzz064Tol;
+static const TA_Fuzz064Tol FUZZ_064_TOL[] = {
     { "CCI",                 TOL_ABS,    1e-9, 0.0 },  /* #7   near-zero identical-price fix */
     /* #118 cancellation-free variance. Bounded relative to the OUTPUT, not the
      * input: VAR's output is a squared quantity, so an inScale-relative bound is
@@ -5252,6 +5253,24 @@ static const struct { const char *name; int mode; double tol; double cap; } FUZZ
     { "TSF",                 TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
     { "IMI",                 TOL_NAN_TO, 50.0, 0.0 },  /* #112 all-flat window 0/0 -> NaN, now 50.0 */
 };
+
+/* Largest divergence each manifest entry actually absorbed, in the units of its
+ * own bound. A gate that tolerates should say HOW MUCH it tolerated: without it
+ * an entry can be an order of magnitude looser than the divergence it authorizes
+ * and nothing says so -- and the next person to set one has no measurement to
+ * size it from. The FMA bucket already reports its own ("max observed 4.13e-11");
+ * this is the same for the named entries. Indexed by FUZZ_064_TOL slot. */
+static double g_fuzz064TolMax[sizeof(FUZZ_064_TOL)/sizeof(FUZZ_064_TOL[0])];
+
+/* Record `achieved` (in bound units) against the entry `e` returned by lookup. */
+static void fuzz_064_tol_record(const void *e, double achieved)
+{
+    long idx;
+    if( !e ) return;
+    idx = (const TA_Fuzz064Tol *)e - FUZZ_064_TOL;
+    if( idx < 0 || (unsigned long)idx >= sizeof(FUZZ_064_TOL)/sizeof(FUZZ_064_TOL[0]) ) return;
+    if( achieved > g_fuzz064TolMax[idx] ) g_fuzz064TolMax[idx] = achieved;
+}
 
 /* Look up a function's authorized tolerance; returns NULL if it must be exact. */
 static const void *fuzz_064_tol_lookup(const char *name, int *mode, double *tol, double *cap)
@@ -5409,7 +5428,20 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
                     outBound = tolVal * m;
                 }
                 if( a == b ) benignDiff = 1;        /* numerically equal => signed zero */
-                else if( tolEntry && d <= outBound ) tolDiff = 1; /* within manifest bound */
+                else if( tolEntry && d <= outBound )
+                {
+                    tolDiff = 1;                    /* within manifest bound */
+                    if( tolMode == TOL_REL_OUT )
+                    {
+                        double m = fabs(a) > fabs(b) ? fabs(a) : fabs(b);
+                        if( m > 0.0 ) fuzz_064_tol_record(tolEntry, d / m);
+                    }
+                    else if( tolMode == TOL_REL_IN )
+                    {
+                        if( inScale > 0.0 ) fuzz_064_tol_record(tolEntry, d / inScale);
+                    }
+                    else fuzz_064_tol_record(tolEntry, d);
+                }
 #if FMA_TRANSITION_TOLERANCE
                 /* One-time FMA re-baseline: within the 1e-9 relative contract,
                  * output-relative (`1e-9 × max(|current|, |v0.6.4|)`). The
@@ -5694,10 +5726,15 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                    "returns the guarded %g (authorized manifest)\n",
                    funcInfo->name, ctx->cciTol - cciTolBefore, tv);
         else
-            printf("  TOLERATED TA_%s: %lld case(s) within %g%s%s vs 0.6.4 (authorized manifest bound)\n",
+        {
+            int ti = 0; double tmax = 0.0;
+            const void *te = fuzz_064_tol_lookup(funcInfo->name, &ti, &tv, &tc);
+            if( te ) tmax = g_fuzz064TolMax[(const TA_Fuzz064Tol *)te - FUZZ_064_TOL];
+            printf("  TOLERATED TA_%s: %lld case(s) within %g%s%s vs 0.6.4 (authorized manifest bound, max observed %.3g)\n",
                    funcInfo->name, ctx->cciTol - cciTolBefore, tv,
                    tm == TOL_REL_IN ? " * max|input|" : "",
-                   (tm == TOL_REL_IN && tc > 0.0) ? " (capped)" : "");
+                   (tm == TOL_REL_IN && tc > 0.0) ? " (capped)" : "", tmax);
+        }
     }
     else if( ctx->fmaTol > fmaTolBefore )
         printf("  FMA-REBASELINE TA_%s: %lld case(s) within 1e-9 relative of v0.6.4 "
