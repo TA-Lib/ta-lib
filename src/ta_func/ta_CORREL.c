@@ -194,11 +194,18 @@ TA_LIB_API TA_RetCode TA_CORREL( int    startIdx,
       /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
        * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
        * below 1e-6 of the squared deviations it is extracted from; OR the value
-       * that just left sat so far from the shift that its squared term dwarfs
-       * what remains (a large outlier transiting the window buries the small
-       * terms below its ulp, and the residue it leaves is cancellation
+       * the PREVIOUS bar removed sat so far from the shift that its squared term
+       * dwarfs what remains (a large outlier transiting the window buries the
+       * small terms below its ulp, and the residue it leaves is cancellation
        * garbage); OR at least every 32 windows, so a slow drift stays bounded
        * however long the series runs.
+       *
+       * One bar late is correct, not a compromise. leavingX/leavingY are set by
+       * the removal at the BOTTOM of the loop, so the bar on which the outlier
+       * actually leaves still computes its own output from sums that legitimately
+       * contain it. The trigger then fires on the NEXT bar -- the first one whose
+       * sums carry the residue -- and the reseed below recomputes that bar's
+       * output before it is written. No bar is ever emitted from the residue.
        *
        * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
        * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -289,8 +296,18 @@ TA_LIB_API TA_RetCode TA_CORREL( int    startIdx,
        * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
        * established both are positive, so the product needs no protection from
        * a negative operand, and the second square root is worth ~25% of the
-       * runtime. In this library's input domain (|x| <= TA_REAL_MAX) the
-       * product cannot overflow.
+       * runtime.
+       *
+       * The product CAN overflow to +Inf, and the one-root form is chosen with
+       * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
+       * arrays are not range-checked, so ssX and ssY are bounded only by the
+       * double range and their product exceeds it once |x| passes ~1e154. The
+       * two-root form would not overflow there -- but the form this replaces
+       * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
+       * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
+       * correlation. Trading a quarter of the runtime for a case that already
+       * behaved this way, on inputs 117 orders past any price, is not a trade
+       * worth making. Revisit only if input range-checking is ever added.
        */
       if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 )
       {
@@ -574,11 +591,18 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
    /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
     * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
     * below 1e-6 of the squared deviations it is extracted from; OR the value
-    * that just left sat so far from the shift that its squared term dwarfs
-    * what remains (a large outlier transiting the window buries the small
-    * terms below its ulp, and the residue it leaves is cancellation
+    * the PREVIOUS bar removed sat so far from the shift that its squared term
+    * dwarfs what remains (a large outlier transiting the window buries the
+    * small terms below its ulp, and the residue it leaves is cancellation
     * garbage); OR at least every 32 windows, so a slow drift stays bounded
     * however long the series runs.
+    *
+    * One bar late is correct, not a compromise. leavingX/leavingY are set by
+    * the removal at the BOTTOM of the loop, so the bar on which the outlier
+    * actually leaves still computes its own output from sums that legitimately
+    * contain it. The trigger then fires on the NEXT bar -- the first one whose
+    * sums carry the residue -- and the reseed below recomputes that bar's
+    * output before it is written. No bar is ever emitted from the residue.
     *
     * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
     * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -669,8 +693,18 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
     * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
     * established both are positive, so the product needs no protection from
     * a negative operand, and the second square root is worth ~25% of the
-    * runtime. In this library's input domain (|x| <= TA_REAL_MAX) the
-    * product cannot overflow.
+    * runtime.
+    *
+    * The product CAN overflow to +Inf, and the one-root form is chosen with
+    * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
+    * arrays are not range-checked, so ssX and ssY are bounded only by the
+    * double range and their product exceeds it once |x| passes ~1e154. The
+    * two-root form would not overflow there -- but the form this replaces
+    * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
+    * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
+    * correlation. Trading a quarter of the runtime for a case that already
+    * behaved this way, on inputs 117 orders past any price, is not a trade
+    * worth making. Revisit only if input range-checking is ever added.
     */
    if( sp->ssX > 0.00000000000001 * sp->sumX2 && sp->ssY > 0.00000000000001 * sp->sumY2 )
    {
@@ -828,11 +862,18 @@ static TA_RetCode TA_CORREL_OpenImpl( struct TA_CORREL_Stream **stream, const do
          /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
           * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
           * below 1e-6 of the squared deviations it is extracted from; OR the value
-          * that just left sat so far from the shift that its squared term dwarfs
-          * what remains (a large outlier transiting the window buries the small
-          * terms below its ulp, and the residue it leaves is cancellation
+          * the PREVIOUS bar removed sat so far from the shift that its squared term
+          * dwarfs what remains (a large outlier transiting the window buries the
+          * small terms below its ulp, and the residue it leaves is cancellation
           * garbage); OR at least every 32 windows, so a slow drift stays bounded
           * however long the series runs.
+          *
+          * One bar late is correct, not a compromise. leavingX/leavingY are set by
+          * the removal at the BOTTOM of the loop, so the bar on which the outlier
+          * actually leaves still computes its own output from sums that legitimately
+          * contain it. The trigger then fires on the NEXT bar -- the first one whose
+          * sums carry the residue -- and the reseed below recomputes that bar's
+          * output before it is written. No bar is ever emitted from the residue.
           *
           * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
           * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -923,8 +964,18 @@ static TA_RetCode TA_CORREL_OpenImpl( struct TA_CORREL_Stream **stream, const do
           * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
           * established both are positive, so the product needs no protection from
           * a negative operand, and the second square root is worth ~25% of the
-          * runtime. In this library's input domain (|x| <= TA_REAL_MAX) the
-          * product cannot overflow.
+          * runtime.
+          *
+          * The product CAN overflow to +Inf, and the one-root form is chosen with
+          * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
+          * arrays are not range-checked, so ssX and ssY are bounded only by the
+          * double range and their product exceeds it once |x| passes ~1e154. The
+          * two-root form would not overflow there -- but the form this replaces
+          * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
+          * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
+          * correlation. Trading a quarter of the runtime for a case that already
+          * behaved this way, on inputs 117 orders past any price, is not a trade
+          * worth making. Revisit only if input range-checking is ever added.
           */
          if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 )
          {
