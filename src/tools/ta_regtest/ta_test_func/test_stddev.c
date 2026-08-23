@@ -468,6 +468,183 @@ static ErrorNumber test_stddev_pandas_oracle( void )
    return TA_TEST_PASS;
 }
 
+/* ============================================================================
+ * Issue #243: a small but plainly non-zero standard deviation must not collapse
+ * to exactly 0.
+ *
+ * STDDEV squares its answer away. It square-roots TA_VAR's output, and a variance
+ * is a SQUARED quantity: a series quoted in 1e-8 ticks has a variance around
+ * 1e-16, five orders under the fixed TA_EPSILON (1e-14) band that used to be
+ * applied to it. So a $100.00 instrument on a 1e-8 tick returned exactly 0 for
+ * every bar -- and BBANDS, which inherits the deviation, put all three bands on
+ * top of each other -- while TA_VAR, cancellation-free since #118, had the right
+ * answer all along. A dead-zone on a squared quantity has to be RELATIVE to the
+ * window's own scale; a fixed absolute one is a cliff at a price level.
+ *
+ * The gap this closes: every #118 oracle referees TA_VAR. STDDEV appears only in
+ * a non-negativity sweep (vacuous while the clamp exists -- it is what forces the
+ * sign) and in the NIST pins, whose variance is ~1e-2. No test ever put STDDEV on
+ * a window below the clamp, and the scale ladder in test_stddev_scale_invariance
+ * stops at 1e-3 -- four decades short of the cliff, and VAR-only besides.
+ * ==========================================================================*/
+
+/* The issue's series: 60 integer ticks, walked down five decades past the cliff
+ * at two price levels (the spread shrinking with the level, and the spread
+ * shrinking alone), refereed bar by bar against the long-double two-pass sigma.
+ *
+ * Tolerance. The deviations x-mean are computed exactly (Sterbenz), so the
+ * shifted-data form tracks the two-pass to ~1e-13 until the DATA quantizes: once
+ * kappa*eps = ulp(mean)/sigma approaches 1 the stored doubles no longer resolve
+ * the spread, and the measured error there follows ~2e-8*(kappa*eps)^2. The bound
+ * below keeps >=70x margin over that. It stays >=4 orders under the relative-1.0
+ * error a collapse produces at every rung (max kappa*eps on this ladder is ~5, so
+ * the bound never exceeds ~2.5e-5): no cell is vacuous.
+ */
+static const int    sd243_ticks[60] = {
+  197, 200, 199, 197, 198, 196, 194, 192, 195, 193, 195, 193,
+  192, 194, 197, 194, 192, 189, 186, 183, 185, 186, 185, 182,
+  180, 182, 180, 179, 180, 180, 182, 182, 185, 188, 188, 189,
+  191, 193, 190, 192, 195, 193, 191, 190, 188, 185, 182, 182,
+  182, 179, 179, 179, 176, 173, 172, 170, 167, 166, 169, 170 };
+static const double sd243_bases[2]  = { 0.0, 100.0 };
+static const int    sd243_periods[4] = { 2, 5, 20, 30 };
+
+static double sd243_tol( double kappa )
+{
+   const double ke = kappa * 2.2204460492503131e-16;
+   return 1.0e-11 + 1.0e-6 * ke * ke;
+}
+
+static ErrorNumber test_stddev_small_scale( void )
+{
+   enum { N = 60 };
+   static double x[N], sd[N];
+   TA_Integer b, nb;
+   TA_RetCode rc;
+   int bi, pi, i, k, decade;
+
+   for( bi = 0; bi < 2; bi++ )
+   for( pi = 0; pi < 4; pi++ )
+   {
+      const int period = sd243_periods[pi];
+      double tick = 1.0e-2;
+      for( decade = 0; decade < 12; decade++, tick /= 10.0 )
+      {
+         for( i = 0; i < N; i++ ) x[i] = sd243_bases[bi] + (double)sd243_ticks[i] * tick;
+
+         rc = TA_STDDEV( 0, N-1, x, period, 1.0, &b, &nb, sd );
+         if( rc != TA_SUCCESS )
+         {
+            printf( "STDDEV #243: rc=%d base=%g tick=%g period=%d\n",
+                    (int)rc, sd243_bases[bi], tick, period );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         for( k = 0; k < (int)nb; k++ )
+         {
+            double mean = 0.0;
+            double refVar = sd_twopass_var( x, (int)b + k - ( period - 1 ), period, &mean );
+            double refSig, kappa, tol, d;
+            if( refVar == 0.0 )
+            {
+               if( sd[k] != 0.0 )
+               {
+                  printf( "STDDEV #243: expected exact 0 base=%g tick=%g period=%d bar=%d val=%.17g\n",
+                          sd243_bases[bi], tick, period, (int)b + k, sd[k] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+               continue;
+            }
+            refSig = sqrt( refVar );
+            if( sd[k] == 0.0 )
+            {
+               printf( "STDDEV #243: COLLAPSED to 0 base=%g tick=%g period=%d bar=%d "
+                       "(two-pass sigma %.17g)\n",
+                       sd243_bases[bi], tick, period, (int)b + k, refSig );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+            kappa = fabs( mean ) / refSig;
+            tol   = sd243_tol( kappa );
+            d     = fabs( sd[k] - refSig ) / refSig;
+            if( d > tol )
+            {
+               printf( "STDDEV #243: base=%g tick=%g period=%d bar=%d val=%.17g "
+                       "ref=%.17g (rel %.3g > %.3g, kappa %.2g)\n",
+                       sd243_bases[bi], tick, period, (int)b + k, sd[k], refSig,
+                       d, tol, kappa );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+/* The other half of #243: removing the absolute dead-zone at the square root must
+ * not turn a genuinely flat stretch into band noise.
+ *
+ * A window sitting wholly inside a flat region ENTERED MID-SERIES is not the same
+ * case as an all-constant input. The reseed re-anchors on the window MEAN, which
+ * is itself only correct to an ulp, so every deviation is that same ulp and the
+ * corrected two-pass differences two equal quantities -- leaving a residue of
+ * about eps^3*price^2 (~2e-44 at $100). The absolute clamp swallowed it below the
+ * 1e-14 line and nowhere else; the scale-relative floor that replaces it swallows
+ * it at every price level, because it asks whether the fresh anchor resolved any
+ * spread at all rather than comparing a squared quantity to a constant.
+ *
+ * Un-fixed this is red on TA_VAR (~2e-44, not 0) and green on TA_STDDEV for the
+ * wrong reason -- the clamp is what zeroes it.
+ */
+static ErrorNumber test_stddev_flat_tail_exact_zero( void )
+{
+   enum { N = 600, NOISY = 100 };
+   static double x[N], out[N];
+   static const double levels[4] = { 100.0, 1234.56789, 1.0e8, 1.0e-6 };
+   static const int    periods[4] = { 2, 5, 20, 49 };
+   TA_Integer b, nb;
+   int li, pi, i, k, firstFlatWindow;
+
+   for( li = 0; li < 4; li++ )
+   {
+      const double lvl = levels[li];
+      sd_rng_state = 0xF1A77A11u + (unsigned)li;
+      for( i = 0; i < N; i++ )
+         x[i] = ( i < NOISY ) ? lvl * ( 1.0 + 0.05 * sd_rand() ) : lvl;
+
+      for( pi = 0; pi < 4; pi++ )
+      {
+         const int period = periods[pi];
+         int f;
+         /* First bar whose whole window is inside the flat tail. */
+         firstFlatWindow = NOISY + period - 1;
+
+         for( f = 0; f < 2; f++ )
+         {
+            const char *name = f ? "STDDEV" : "VAR";
+            TA_RetCode rc = f ? TA_STDDEV( 0, N-1, x, period, 1.0, &b, &nb, out )
+                              : TA_VAR   ( 0, N-1, x, period, 1.0, &b, &nb, out );
+            if( rc != TA_SUCCESS )
+            {
+               printf( "%s #243 flat tail: rc=%d level=%g period=%d\n",
+                       name, (int)rc, lvl, period );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+            for( k = 0; k < (int)nb; k++ )
+            {
+               if( (int)b + k < firstFlatWindow ) continue;
+               if( out[k] != 0.0 )
+               {
+                  printf( "%s #243 flat tail: level=%g period=%d bar=%d val=%.17g "
+                          "(window is exactly constant, expected bit-zero)\n",
+                          name, lvl, period, (int)b + k, out[k] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+         }
+      }
+   }
+   return TA_TEST_PASS;
+}
+
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_stddev( TA_History *history )
 {
@@ -503,6 +680,12 @@ ErrorNumber test_func_stddev( TA_History *history )
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed VAR/STDDEV scale-invariance (#118) (Code=%d)\n", __FILE__, retValue ); return retValue; }
    retValue = test_stddev_nonneg_constant();
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed VAR/STDDEV non-negativity/constant (#118) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+
+   /* Scale-relative dead-zone (#243). */
+   retValue = test_stddev_small_scale();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed STDDEV small-scale ladder (#243) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+   retValue = test_stddev_flat_tail_exact_zero();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed VAR/STDDEV flat-tail exact zero (#243) (Code=%d)\n", __FILE__, retValue ); return retValue; }
 
    /* All test succeed. */
    return TA_TEST_PASS;

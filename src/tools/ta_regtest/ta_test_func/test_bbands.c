@@ -112,6 +112,7 @@ static ErrorNumber do_test( const TA_History *history,
 static ErrorNumber test_bbands_mama_alignment( const TA_History *history );
 static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *history );
 static ErrorNumber test_bbands_sma_stable_variance( void );
+static ErrorNumber test_bbands_small_scale( void );
 
 /**** Local variables definitions.     ****/
 static TA_Test tableTest[] =
@@ -318,6 +319,15 @@ ErrorNumber test_func_bbands( TA_History *history )
    if( retValue != TA_TEST_PASS )
    {
       printf( "%s Failed BBANDS/SMA stable-variance test (#118) (Code=%d)\n",
+              __FILE__, retValue );
+      return retValue;
+   }
+
+   /* Scale-relative dead-zone: small non-zero deviation, both paths (#243). */
+   retValue = test_bbands_small_scale();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "%s Failed BBANDS small-scale ladder (#243) (Code=%d)\n",
               __FILE__, retValue );
       return retValue;
    }
@@ -1053,5 +1063,111 @@ static ErrorNumber test_bbands_sma_stable_variance( void )
       }
    }
 
+   return TA_TEST_PASS;
+}
+
+/* Issue #243: the bands must not all land on the middle band when the deviation
+ * is small but plainly non-zero.
+ *
+ * BBANDS inherits STDDEV's dead-zone, and it had one on each of its two paths:
+ * the general path through TA_STDDEV, and the fused SMA fast path, which carries
+ * its own copy of the square root. Both compared a SQUARED quantity to a fixed
+ * TA_EPSILON (1e-14), so a series quoted finely enough -- a $100.00 instrument on
+ * a 1e-8 tick -- returned three identical bands and TA_SUCCESS.
+ *
+ * The deviation is refereed against a long-double two-pass sigma at both ends of
+ * the ladder and on both paths. The tolerance model is the one documented in
+ * test_stddev.c (test_stddev_small_scale); nbDevUp != nbDevDn so the asymmetric
+ * combine loop is the one exercised.
+ */
+static ErrorNumber test_bbands_small_scale( void )
+{
+   enum { N = 60 };
+   static const int ticks[N] = {
+     197, 200, 199, 197, 198, 196, 194, 192, 195, 193, 195, 193,
+     192, 194, 197, 194, 192, 189, 186, 183, 185, 186, 185, 182,
+     180, 182, 180, 179, 180, 180, 182, 182, 185, 188, 188, 189,
+     191, 193, 190, 192, 195, 193, 191, 190, 188, 185, 182, 182,
+     182, 179, 179, 179, 176, 173, 172, 170, 167, 166, 169, 170 };
+   static const double bases[2] = { 0.0, 100.0 };
+   static const TA_MAType maTypes[3] = { TA_MAType_SMA, TA_MAType_EMA, TA_MAType_WMA };
+   static double x[N], up[N], mid[N], low[N];
+   const double devUp = 2.0, devDn = 3.0;
+   const int period = 5;
+   TA_Integer b, nb;
+   TA_RetCode rc;
+   int bi, mi, i, k, decade;
+
+   for( bi = 0; bi < 2; bi++ )
+   for( mi = 0; mi < 3; mi++ )
+   {
+      double tick = 1.0e-2;
+      for( decade = 0; decade < 12; decade++, tick /= 10.0 )
+      {
+         for( i = 0; i < N; i++ ) x[i] = bases[bi] + (double)ticks[i] * tick;
+
+         rc = TA_BBANDS( 0, N-1, x, period, devUp, devDn, maTypes[mi],
+                         &b, &nb, up, mid, low );
+         if( rc != TA_SUCCESS )
+         {
+            printf( "BBANDS #243: rc=%d base=%g tick=%g maType=%d\n",
+                    (int)rc, bases[bi], tick, (int)maTypes[mi] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         for( k = 0; k < (int)nb; k++ )
+         {
+            const int bar = (int)b + k;
+            long double sum = 0.0L, v = 0.0L, m;
+            double refSig, dev, kappa, tol, d;
+            int j;
+            for( j = bar - period + 1; j <= bar; j++ ) sum += (long double)x[j];
+            m = sum / (long double)period;
+            for( j = bar - period + 1; j <= bar; j++ )
+            { long double e = (long double)x[j] - m; v += e * e; }
+            refSig = (double)sqrtl( v / (long double)period );
+
+            /* The width carries both deviations: (up-low) = (devUp+devDn)*sigma. */
+            dev = ( up[k] - low[k] ) / ( devUp + devDn );
+            if( refSig == 0.0 )
+            {
+               if( dev != 0.0 )
+               {
+                  printf( "BBANDS #243: expected zero width base=%g tick=%g maType=%d "
+                          "bar=%d dev=%.17g\n", bases[bi], tick, (int)maTypes[mi], bar, dev );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+               continue;
+            }
+            if( dev == 0.0 )
+            {
+               printf( "BBANDS #243: bands COLLAPSED base=%g tick=%g maType=%d bar=%d "
+                       "(two-pass sigma %.17g)\n",
+                       bases[bi], tick, (int)maTypes[mi], bar, refSig );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+            /* Two conditioning terms, and only the first is about the variance.
+             * The second is the price of reading sigma back OUT of the bands:
+             * up-low cancels the middle band away, so recovering a deviation of
+             * refSig from two numbers of size |mid| costs |mid|*eps/(width). At
+             * the bottom of the ladder that term is percent-scale, and honestly
+             * so -- a 1e-13 sigma is simply not recoverable from bands centred at
+             * $100. It is the `dev == 0.0` branch above, not this bound, that
+             * makes the rung non-vacuous: the collapse is exact zero, always. */
+            kappa = fabsl( m ) / refSig;
+            tol   = 1.0e-11 + 1.0e-6 * ( kappa * 2.2204460492503131e-16 )
+                                     * ( kappa * 2.2204460492503131e-16 )
+                            + 8.0 * fabs( mid[k] ) * 2.2204460492503131e-16
+                                  / ( ( devUp + devDn ) * refSig );
+            d     = fabs( dev - refSig ) / refSig;
+            if( d > tol )
+            {
+               printf( "BBANDS #243: base=%g tick=%g maType=%d bar=%d dev=%.17g "
+                       "ref=%.17g (rel %.3g > %.3g, kappa %.2g)\n",
+                       bases[bi], tick, (int)maTypes[mi], bar, dev, refSig, d, tol, kappa );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+      }
+   }
    return TA_TEST_PASS;
 }
