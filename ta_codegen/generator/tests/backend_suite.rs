@@ -8518,9 +8518,25 @@ fn rust_bbands_elects_output_scratch_only_in_the_sma_fast_path() {
         rust_out.contains("outRealMiddleBand[_outIdx] = maTotal /"),
         "BBANDS Rust should write the SMA straight into outRealMiddleBand: {rust_out}"
     );
+    // Pinned on the DESTINATION, which is the property this test exists for --
+    // the deviation lands in outRealUpperBand by name, with no scratch Vec --
+    // and on the sqrt being what lands there. NOT on the exact right-hand side:
+    // #243 wrapped it in an exact-zero skip (`if variance != 0.0`), and pinning
+    // the whole expression as text made an unrelated numerical fix red this
+    // test for a property it never changed. Matching the line rather than a
+    // substring keeps it tight -- a redirect to a scratch, or something other
+    // than the root of the variance, still fails.
+    let dev_write = rust_out
+        .lines()
+        .map(str::trim)
+        .find(|l| l.starts_with("outRealUpperBand[_outIdx] ="))
+        .unwrap_or_else(|| {
+            panic!("BBANDS Rust should write the standard deviation into outRealUpperBand: {rust_out}")
+        });
     assert!(
-        rust_out.contains("outRealUpperBand[_outIdx] = (variance).sqrt();"),
-        "BBANDS Rust should write the standard deviation into outRealUpperBand: {rust_out}"
+        dev_write.contains("(variance).sqrt()"),
+        "the deviation written into outRealUpperBand should be the root of the variance, \
+         got `{dev_write}`: {rust_out}"
     );
     assert!(
         rust_out.contains("tempReal = outRealUpperBand[i] * optInNbDevUp;"),
