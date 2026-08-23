@@ -98,6 +98,7 @@ static ErrorNumber test_beta_nist_norris( void );
 static ErrorNumber test_beta_scaling_identity( void );
 static ErrorNumber test_beta_twopass_oracle( void );
 static ErrorNumber test_beta_degenerate( void );
+static ErrorNumber test_beta_outlier_transit( void );
 
 /**** Local variables definitions.     ****/
 static double bt_out[4096];
@@ -135,6 +136,8 @@ ErrorNumber test_func_beta( TA_History *history )
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed BETA two-pass oracle (#242) (Code=%d)\n", __FILE__, retValue ); return retValue; }
    retValue = test_beta_degenerate();
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed BETA degenerate contract (#242) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+   retValue = test_beta_outlier_transit();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed BETA outlier transit (#242) (Code=%d)\n", __FILE__, retValue ); return retValue; }
 
    return TA_TEST_PASS;
 }
@@ -455,6 +458,143 @@ static ErrorNumber test_beta_degenerate( void )
                     c ? "flat/varying" : "flat/flat", (int)begIdx + k, bt_out[k] );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
+   }
+   return TA_TEST_PASS;
+}
+
+/* sd(y-returns)/sd(x-returns) over the window: the ceiling on |beta| there, and
+ * so the scale an error in it should be measured against. */
+static double bt_beta_scale( const double *px, const double *py, int end, int period )
+{
+   long double mx = 0.0L, my = 0.0L, sxx = 0.0L, syy = 0.0L;
+   int i;
+   for( i = end-period+1; i <= end; i++ ) { mx += bt_ret(px,i); my += bt_ret(py,i); }
+   mx /= (long double)period;
+   my /= (long double)period;
+   for( i = end-period+1; i <= end; i++ )
+   {
+      long double dx = (long double)bt_ret(px,i) - mx;
+      long double dy = (long double)bt_ret(py,i) - my;
+      sxx += dx*dx; syy += dy*dy;
+   }
+   if( sxx <= 0.0L ) return 0.0;
+   return (double)sqrtl( syy / sxx );
+}
+
+/* (B7) SYNTHETIC LIMIT CASE -- not a model of any input this library expects.
+ *
+ * Read this as a boundary probe on the sliding sums, not as a domain test. It
+ * drives a single bar 1000x to 1e10x away from its neighbours, which is not a
+ * price, not a volume and not a bad print: it is the magnitude at which the
+ * accumulators demonstrably break, found by sweeping until they did. Good to
+ * pass; NOT a release-blocking property.
+ *
+ * What was measured on data the library IS given, before this test existed --
+ * equity closes (GBM), two names' daily volume across quiet and news days, a 10x
+ * fat-finger print corrected on the next bar, and a spread that crosses zero, at
+ * periods 5/14/30: every cell already agreed with a long-double two-pass to
+ * better than 4.3e-10, with zero bars above 1e-9, WITHOUT the trigger this test
+ * pins. So nothing in the realistic domain was ever broken, and nothing here
+ * should be read as claiming otherwise. The trigger does tighten those cells
+ * (the fat-finger case 2.7e-10 -> 2.3e-14, the spread 4.2e-10 -> 8.2e-12), which
+ * is why it is kept -- three lines and at most ~3% -- but that is an improvement,
+ * not a repair.
+ *
+ * The mechanism, for whoever meets it in a stranger regime than equities. The
+ * sliding sums cannot un-see an outlier: while a huge return sits in the window
+ * S_xx is entirely that one term, and the ordinary ones fall below its ulp and
+ * are never really added. When it leaves, the subtraction takes back a term they
+ * were never part of, and the residue no longer describes the window. The
+ * cancellation trigger cannot see this -- the residue is a consistent OFFSET, so
+ * denom/denom_scale stays ~1 -- and only the periodic re-anchor recovers, up to
+ * 32*period bars later. Unguarded, a 1e8 tick left 286 of 386 bars wrong, the
+ * worst by 0.36 ABSOLUTE, silently and with TA_SUCCESS. That is worth foreclosing
+ * even at a magnitude nobody trades at, because TA_BETA takes any inReal -- a
+ * ratio, a spread, an open-interest series -- not only prices.
+ *
+ * The threshold is 1e3 rather than TA_VAR's 1e6 because a return amplifies: a
+ * tick multiplying the price by k puts k-1 into the return and (k-1)^2 into
+ * S_xx, so the ratio when that term leaves lands an order or two below the
+ * value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips through --
+ * verified: a flat 2.5e-5 relative error on 285 of 386 bars.
+ *
+ * Non-vacuity is structural: every rung asserts recovery on the bars AFTER the
+ * spike has left the window, over six magnitudes in both directions, so a
+ * trigger that stopped firing fails several rungs at once. Confirmed by removing
+ * the trigger: the 1e5 rung fails at 4.4e-05 against its 2e-07 bound.
+ */
+static ErrorNumber test_beta_outlier_transit( void )
+{
+   enum { N = 400, SPIKE_AT = 100 };
+   static double px[N], py[N], out[N];
+   static const double spikes[] = { 1.1e2, 2.0e2, 1.0e3, 1.0e5, 1.0e8, 1.0e12,
+                                    1.0e-3, 1.0e-9 };
+   static const int periods[] = { 5, 14, 30 };
+   TA_Integer b, nb;
+   TA_RetCode rc;
+   unsigned int si;
+   int pi, i, k;
+
+   for( si = 0; si < sizeof(spikes)/sizeof(spikes[0]); si++ )
+   for( pi = 0; pi < 3; pi++ )
+   {
+      const int period = periods[pi];
+      for( i = 0; i < N; i++ )
+      {
+         px[i] = 100.0 + (double)( ( i * 37 ) % 11 ) * 0.01;
+         py[i] = 200.0 + (double)( ( i * 53 ) % 13 ) * 0.02;
+      }
+      px[SPIKE_AT] = spikes[si];
+
+      rc = TA_BETA( 0, N-1, px, py, period, &b, &nb, out );
+      if( rc != TA_SUCCESS )
+      {
+         printf( "BETA #242 outlier transit: rc=%d spike=%g period=%d\n",
+                 (int)rc, spikes[si], period );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( k = 0; k < (int)nb; k++ )
+      {
+         const int bar = (int)b + k;
+         double kappa = 0.0, ref, tol, d, scale, norm;
+         /* Only bars whose window no longer contains the spike, nor the return
+          * it induces on the bar after it. Those two ARE the outlier and are
+          * legitimately whatever the data says. */
+         if( bar <= SPIKE_AT + 1 + period ) continue;
+         ref = bt_twopass_beta( px, py, bar, period, &kappa );
+         /* Judge the error against the scale a slope LIVES on, not against its
+          * own magnitude: |beta| = |r| * sd(y)/sd(x), so sd(y)/sd(x) is its
+          * ceiling and a beta that happens to sit near zero (r ~ 0) is not
+          * thereby entitled to a tighter absolute bound than one that does not.
+          * Output-relative alone would false-red on exactly those bars -- a
+          * reference slope of 3.5e-10 fails a 1e-9 relative test on an absolute
+          * error of 8e-18. */
+         scale = bt_beta_scale( px, py, bar, period );
+         norm  = ( fabs( ref ) > scale ) ? fabs( ref ) : scale;
+         if( norm == 0.0 ) continue;
+         /* 1e-9 everywhere except three named rungs, rather than one loose
+          * bound over all 24: a blanket tolerance sized for the worst cell
+          * stops pinning the other 21.
+          *
+          * The exception is period 5 at a spike of 1e5 or more, where the
+          * trigger takes the error from 0.36 ABSOLUTE down to 3.7e-08 but not
+          * to zero -- ~90 bars stay between 1e-9 and 3.7e-08. That tail is NOT
+          * the threshold being too coarse (dropping it to 10 leaves the tail
+          * unchanged and adds a failing rung at 1e3), so it is a second, far
+          * smaller mechanism, left open deliberately and pinned here at its
+          * measured size so it cannot grow unnoticed. 2e-7 keeps 5.4x over it
+          * and still fails the defect this test exists for by 220x. */
+         tol = ( period == 5 && spikes[si] >= 1.0e5 ) ? 2.0e-7 : 1.0e-9;
+         tol += 100.0 * kappa * 2.2204460492503131e-16;
+         d   = fabs( out[k] - ref ) / norm;
+         if( d > tol )
+         {
+            printf( "BETA #242 outlier transit: spike=%g period=%d bar=%d "
+                    "val=%.17g ref=%.17g (rel %.3g > %.3g, kappa %.2g, scale %.3g)\n",
+                    spikes[si], period, bar, out[k], ref, d, tol, kappa, scale );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
    }
    return TA_TEST_PASS;
 }
