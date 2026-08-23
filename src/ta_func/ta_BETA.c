@@ -60,7 +60,8 @@
  *               the stock prices (SourceForge bug 98).
  *  082326 MF    Fix #242. Cancellation-free regression sums (shifted returns
  *               + reseed) and a scale-relative denominator test.
- *  082326 MF,CC #242 follow-up: restore TA_VAR's outlier trigger, at 1e3.
+ *  082326 MF,CC #242 follow-up: restore TA_VAR's outlier trigger, at 1e3,
+ *               on BOTH axes -- the output reads S_xy and S_y too.
  */
 
 TA_LIB_API int TA_BETA_Lookback( int optInTimePeriod )
@@ -96,6 +97,8 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
    double denom_scale;
    double prev_x;
    double leaving_xx;
+   double leaving_yy;
+   double S_yy;
    double prev_y;
    int j;
    int windowStart;
@@ -139,6 +142,8 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
    denom_scale = 0.0;
    prev_x = 0.0;
    leaving_xx = 0.0;
+   leaving_yy = 0.0;
+   S_yy = 0.0;
    prev_y = 0.0;
    n = 0.0;
    /* sum of x * x */
@@ -156,6 +161,8 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
    /* n*S_xx, the scale denom is extracted from */
    /* price walked forward when rebuilding the window */
    /* squared x deviation the previous bar removed */
+   /* squared y deviation the previous bar removed */
+   /* sum of y * y, carried ONLY for the outlier trigger */
    /* the 'x' value, which is the last change between values in inReal0 */
    /* the 'y' value, which is the last change between values in inReal1 */
    /* DESCRIPTION OF ALGORITHM:
@@ -239,6 +246,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
       }
       last_price_y = tmp_real;
       S_xx += x * x;
+      S_yy += y * y;
       S_xy += x * y;
       S_x += x;
       S_y += y;
@@ -268,6 +276,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
       }
       last_price_y = tmp_real;
       S_xx += x * x;
+      S_yy += y * y;
       S_xy += x * y;
       S_x += x;
       S_y += y;
@@ -295,6 +304,18 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
        * The cost is the reseed it triggers, so it tracks the fire rate; on data
        * that never triggers it, the compare is free.
        *
+       * BOTH axes are watched, and the y one is not redundant. The denominator
+       * is x-only, so it is tempting to conclude -- as an earlier draft of this
+       * did -- that a y trigger catches nothing. It catches plenty: the OUTPUT
+       * also reads S_xy and S_y, which a y-side outlier corrupts with nothing on
+       * the x side able to see it. Measured on test_beta_outlier_transit's own
+       * ladder with the spike moved from px to py: 12 of 24 rungs fail without
+       * the second disjunct, worst 156x relative; 0 of 24 with it. The earlier
+       * experiment that found it inert was run on an x-only corpus, where it is
+       * inert by construction. TA_CORREL, fixed by the same #242 work, watches
+       * both from the start; this brings BETA level. S_yy exists only to scale
+       * this test -- nothing else reads it.
+       *
        * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
        * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
        * into S_xx, so the ratio when that term leaves lands an order or two
@@ -307,7 +328,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
        * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
        */
       barsSinceReseed -= 1;
-      if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || barsSinceReseed <= 0 )
+      if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || leaving_yy > 1000.0 * S_yy || barsSinceReseed <= 0 )
       {
          barsSinceReseed = 32 * optInTimePeriod;
          windowStart = trailingIdx;
@@ -340,6 +361,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
          prev_x = trailing_last_price_x;
          prev_y = trailing_last_price_y;
          S_xx = 0.0;
+         S_yy = 0.0;
          S_xy = 0.0;
          S_x = 0.0;
          S_y = 0.0;
@@ -362,6 +384,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
             }
             prev_y = inReal1[j];
             S_xx += x * x;
+            S_yy += y * y;
             S_xy += x * y;
             S_x += x;
             S_y += y;
@@ -420,7 +443,9 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
       }
       /* Remove the calculation starting with the trailingIdx. */
       leaving_xx = x * x;
+      leaving_yy = y * y;
       S_xx -= x * x;
+      S_yy -= y * y;
       S_xy -= x * y;
       S_x -= x;
       S_y -= y;
@@ -455,6 +480,8 @@ TA_RetCode TA_S_BETA( int    startIdx,
    double denom_scale;
    double prev_x;
    double leaving_xx;
+   double leaving_yy;
+   double S_yy;
    double prev_y;
    int j;
    int windowStart;
@@ -498,6 +525,8 @@ TA_RetCode TA_S_BETA( int    startIdx,
    denom_scale = 0.0;
    prev_x = 0.0;
    leaving_xx = 0.0;
+   leaving_yy = 0.0;
+   S_yy = 0.0;
    prev_y = 0.0;
    n = 0.0;
    nbInitialElementNeeded = optInTimePeriod;
@@ -546,6 +575,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
       }
       last_price_y = tmp_real;
       S_xx += x * x;
+      S_yy += y * y;
       S_xy += x * y;
       S_x += x;
       S_y += y;
@@ -574,13 +604,14 @@ TA_RetCode TA_S_BETA( int    startIdx,
       }
       last_price_y = tmp_real;
       S_xx += x * x;
+      S_yy += y * y;
       S_xy += x * y;
       S_x += x;
       S_y += y;
       denom_scale = n * S_xx;
       denom = denom_scale - S_x * S_x;
       barsSinceReseed -= 1;
-      if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || barsSinceReseed <= 0 )
+      if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || leaving_yy > 1000.0 * S_yy || barsSinceReseed <= 0 )
       {
          barsSinceReseed = 32 * optInTimePeriod;
          windowStart = trailingIdx;
@@ -606,6 +637,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
          prev_x = trailing_last_price_x;
          prev_y = trailing_last_price_y;
          S_xx = 0.0;
+         S_yy = 0.0;
          S_xy = 0.0;
          S_x = 0.0;
          S_y = 0.0;
@@ -628,6 +660,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
             }
             prev_y = (double)inReal1[j];
             S_xx += x * x;
+            S_yy += y * y;
             S_xy += x * y;
             S_x += x;
             S_y += y;
@@ -666,7 +699,9 @@ TA_RetCode TA_S_BETA( int    startIdx,
          outReal[outIdx++] = 0.0;
       }
       leaving_xx = x * x;
+      leaving_yy = y * y;
       S_xx -= x * x;
+      S_yy -= y * y;
       S_xy -= x * y;
       S_x -= x;
       S_y -= y;
@@ -698,6 +733,8 @@ struct TA_BETA_Stream {
    double denom_scale;
    double prev_x;
    double leaving_xx;
+   double leaving_yy;
+   double S_yy;
    double prev_y;
    int j;
    int windowStart;
@@ -760,6 +797,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
    }
    sp->last_price_y = tmp_real;
    sp->S_xx += sp->x * sp->x;
+   sp->S_yy += sp->y * sp->y;
    sp->S_xy += sp->x * sp->y;
    sp->S_x += sp->x;
    sp->S_y += sp->y;
@@ -787,6 +825,18 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
     * The cost is the reseed it triggers, so it tracks the fire rate; on data
     * that never triggers it, the compare is free.
     *
+    * BOTH axes are watched, and the y one is not redundant. The denominator
+    * is x-only, so it is tempting to conclude -- as an earlier draft of this
+    * did -- that a y trigger catches nothing. It catches plenty: the OUTPUT
+    * also reads S_xy and S_y, which a y-side outlier corrupts with nothing on
+    * the x side able to see it. Measured on test_beta_outlier_transit's own
+    * ladder with the spike moved from px to py: 12 of 24 rungs fail without
+    * the second disjunct, worst 156x relative; 0 of 24 with it. The earlier
+    * experiment that found it inert was run on an x-only corpus, where it is
+    * inert by construction. TA_CORREL, fixed by the same #242 work, watches
+    * both from the start; this brings BETA level. S_yy exists only to scale
+    * this test -- nothing else reads it.
+    *
     * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
     * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
     * into S_xx, so the ratio when that term leaves lands an order or two
@@ -799,7 +849,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
     * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
     */
    sp->barsSinceReseed -= 1;
-   if( sp->denom < 0.000001 * sp->denom_scale || sp->leaving_xx > 1000.0 * sp->S_xx || sp->barsSinceReseed <= 0 )
+   if( sp->denom < 0.000001 * sp->denom_scale || sp->leaving_xx > 1000.0 * sp->S_xx || sp->leaving_yy > 1000.0 * sp->S_yy || sp->barsSinceReseed <= 0 )
    {
       sp->barsSinceReseed = 32 * sp->optInTimePeriod;
       sp->windowStart = sp->trailingIdx;
@@ -832,6 +882,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
       sp->prev_x = sp->trailing_last_price_x;
       sp->prev_y = sp->trailing_last_price_y;
       sp->S_xx = 0.0;
+      sp->S_yy = 0.0;
       sp->S_xy = 0.0;
       sp->S_x = 0.0;
       sp->S_y = 0.0;
@@ -854,6 +905,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
          }
          sp->prev_y = sp->x_inReal1[sp->j & sp->xMask];
          sp->S_xx += sp->x * sp->x;
+         sp->S_yy += sp->y * sp->y;
          sp->S_xy += sp->x * sp->y;
          sp->S_x += sp->x;
          sp->S_y += sp->y;
@@ -912,7 +964,9 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
    }
    /* Remove the calculation starting with the trailingIdx. */
    sp->leaving_xx = sp->x * sp->x;
+   sp->leaving_yy = sp->y * sp->y;
    sp->S_xx -= sp->x * sp->x;
+   sp->S_yy -= sp->y * sp->y;
    sp->S_xy -= sp->x * sp->y;
    sp->S_x -= sp->x;
    sp->S_y -= sp->y;
@@ -977,6 +1031,10 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
       /* price walked forward when rebuilding the window */
       double leaving_xx = 0.0;
       /* squared x deviation the previous bar removed */
+      double leaving_yy = 0.0;
+      /* squared y deviation the previous bar removed */
+      double S_yy = 0.0;
+      /* sum of y * y, carried ONLY for the outlier trigger */
       double prev_y = 0.0;
       int j = 0;
       int windowStart = 0;
@@ -1071,6 +1129,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
          }
          last_price_y = tmp_real;
          S_xx += x * x;
+         S_yy += y * y;
          S_xy += x * y;
          S_x += x;
          S_y += y;
@@ -1100,6 +1159,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
          }
          last_price_y = tmp_real;
          S_xx += x * x;
+         S_yy += y * y;
          S_xy += x * y;
          S_x += x;
          S_y += y;
@@ -1127,6 +1187,18 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
           * The cost is the reseed it triggers, so it tracks the fire rate; on data
           * that never triggers it, the compare is free.
           *
+          * BOTH axes are watched, and the y one is not redundant. The denominator
+          * is x-only, so it is tempting to conclude -- as an earlier draft of this
+          * did -- that a y trigger catches nothing. It catches plenty: the OUTPUT
+          * also reads S_xy and S_y, which a y-side outlier corrupts with nothing on
+          * the x side able to see it. Measured on test_beta_outlier_transit's own
+          * ladder with the spike moved from px to py: 12 of 24 rungs fail without
+          * the second disjunct, worst 156x relative; 0 of 24 with it. The earlier
+          * experiment that found it inert was run on an x-only corpus, where it is
+          * inert by construction. TA_CORREL, fixed by the same #242 work, watches
+          * both from the start; this brings BETA level. S_yy exists only to scale
+          * this test -- nothing else reads it.
+          *
           * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
           * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
           * into S_xx, so the ratio when that term leaves lands an order or two
@@ -1139,7 +1211,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
           * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
           */
          barsSinceReseed -= 1;
-         if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || barsSinceReseed <= 0 )
+         if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || leaving_yy > 1000.0 * S_yy || barsSinceReseed <= 0 )
          {
             barsSinceReseed = 32 * optInTimePeriod;
             windowStart = trailingIdx;
@@ -1172,6 +1244,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
             prev_x = trailing_last_price_x;
             prev_y = trailing_last_price_y;
             S_xx = 0.0;
+            S_yy = 0.0;
             S_xy = 0.0;
             S_x = 0.0;
             S_y = 0.0;
@@ -1194,6 +1267,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
                }
                prev_y = inReal1[j];
                S_xx += x * x;
+               S_yy += y * y;
                S_xy += x * y;
                S_x += x;
                S_y += y;
@@ -1252,7 +1326,9 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
          }
          /* Remove the calculation starting with the trailingIdx. */
          leaving_xx = x * x;
+         leaving_yy = y * y;
          S_xx -= x * x;
+         S_yy -= y * y;
          S_xy -= x * y;
          S_x -= x;
          S_y -= y;
@@ -1280,6 +1356,8 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
       sp->denom_scale = denom_scale;
       sp->prev_x = prev_x;
       sp->leaving_xx = leaving_xx;
+      sp->leaving_yy = leaving_yy;
+      sp->S_yy = S_yy;
       sp->prev_y = prev_y;
       sp->j = j;
       sp->windowStart = windowStart;

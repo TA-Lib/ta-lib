@@ -533,8 +533,14 @@ static ErrorNumber test_beta_outlier_transit( void )
    TA_Integer b, nb;
    TA_RetCode rc;
    unsigned int si;
-   int pi, i, k;
+   int pi, i, k, axis;
 
+   /* BOTH axes. The denominator is x-only, so it is easy to assume the y side
+    * needs no cover -- an earlier version of this test swept only px and was
+    * green while a py spike failed 12 of these 24 rungs, worst 156x relative.
+    * The output reads S_xy and S_y too. Sweeping both is what makes the second
+    * trigger disjunct in beta.c a pinned property rather than a measured one. */
+   for( axis = 0; axis < 2; axis++ )
    for( si = 0; si < sizeof(spikes)/sizeof(spikes[0]); si++ )
    for( pi = 0; pi < 3; pi++ )
    {
@@ -544,13 +550,14 @@ static ErrorNumber test_beta_outlier_transit( void )
          px[i] = 100.0 + (double)( ( i * 37 ) % 11 ) * 0.01;
          py[i] = 200.0 + (double)( ( i * 53 ) % 13 ) * 0.02;
       }
-      px[SPIKE_AT] = spikes[si];
+      if( axis == 0 ) px[SPIKE_AT] = spikes[si];
+      else            py[SPIKE_AT] = spikes[si];
 
       rc = TA_BETA( 0, N-1, px, py, period, &b, &nb, out );
       if( rc != TA_SUCCESS )
       {
-         printf( "BETA #242 outlier transit: rc=%d spike=%g period=%d\n",
-                 (int)rc, spikes[si], period );
+         printf( "BETA #242 outlier transit: rc=%d axis=%s spike=%g period=%d\n",
+                 (int)rc, axis ? "y" : "x", spikes[si], period );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
       for( k = 0; k < (int)nb; k++ )
@@ -589,9 +596,9 @@ static ErrorNumber test_beta_outlier_transit( void )
          d   = fabs( out[k] - ref ) / norm;
          if( d > tol )
          {
-            printf( "BETA #242 outlier transit: spike=%g period=%d bar=%d "
+            printf( "BETA #242 outlier transit: axis=%s spike=%g period=%d bar=%d "
                     "val=%.17g ref=%.17g (rel %.3g > %.3g, kappa %.2g, scale %.3g)\n",
-                    spikes[si], period, bar, out[k], ref, d, tol, kappa, scale );
+                    axis ? "y" : "x", spikes[si], period, bar, out[k], ref, d, tol, kappa, scale );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
       }

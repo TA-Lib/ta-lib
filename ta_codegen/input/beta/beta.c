@@ -16,7 +16,8 @@
  *               the stock prices (SourceForge bug 98).
  *  082326 MF    Fix #242. Cancellation-free regression sums (shifted returns
  *               + reseed) and a scale-relative denominator test.
- *  082326 MF,CC #242 follow-up: restore TA_VAR's outlier trigger, at 1e3.
+ *  082326 MF,CC #242 follow-up: restore TA_VAR's outlier trigger, at 1e3,
+ *               on BOTH axes -- the output reads S_xy and S_y too.
  */
 
 int beta_lookback(int optInTimePeriod)
@@ -46,6 +47,8 @@ TA_RetCode beta(int startIdx, int endIdx,
    double denom_scale = 0.0f; /* n*S_xx, the scale denom is extracted from */
    double prev_x = 0.0f; /* price walked forward when rebuilding the window */
    double leaving_xx = 0.0f; /* squared x deviation the previous bar removed */
+   double leaving_yy = 0.0f; /* squared y deviation the previous bar removed */
+   double S_yy = 0.0f; /* sum of y * y, carried ONLY for the outlier trigger */
    double prev_y = 0.0f;
    int j, windowStart, barsSinceReseed;
    double x; /* the 'x' value, which is the last change between values in inReal0 */
@@ -130,6 +133,7 @@ TA_RetCode beta(int startIdx, int endIdx,
       last_price_y = tmp_real;
 
       S_xx += x*x;
+      S_yy += y*y;
       S_xy += x*y;
       S_x += x;
       S_y += y;
@@ -155,6 +159,7 @@ TA_RetCode beta(int startIdx, int endIdx,
       last_price_y = tmp_real;
 
       S_xx += x*x;
+      S_yy += y*y;
       S_xy += x*y;
       S_x += x;
       S_y += y;
@@ -184,6 +189,18 @@ TA_RetCode beta(int startIdx, int endIdx,
        * The cost is the reseed it triggers, so it tracks the fire rate; on data
        * that never triggers it, the compare is free.
        *
+       * BOTH axes are watched, and the y one is not redundant. The denominator
+       * is x-only, so it is tempting to conclude -- as an earlier draft of this
+       * did -- that a y trigger catches nothing. It catches plenty: the OUTPUT
+       * also reads S_xy and S_y, which a y-side outlier corrupts with nothing on
+       * the x side able to see it. Measured on test_beta_outlier_transit's own
+       * ladder with the spike moved from px to py: 12 of 24 rungs fail without
+       * the second disjunct, worst 156x relative; 0 of 24 with it. The earlier
+       * experiment that found it inert was run on an x-only corpus, where it is
+       * inert by construction. TA_CORREL, fixed by the same #242 work, watches
+       * both from the start; this brings BETA level. S_yy exists only to scale
+       * this test -- nothing else reads it.
+       *
        * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
        * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
        * into S_xx, so the ratio when that term leaves lands an order or two
@@ -198,6 +215,7 @@ TA_RetCode beta(int startIdx, int endIdx,
       barsSinceReseed--;
       if( denom < 0.000001 * denom_scale
          || leaving_xx > 1000.0 * S_xx
+         || leaving_yy > 1000.0 * S_yy
          || barsSinceReseed <= 0 )
       {
          barsSinceReseed = 32 * optInTimePeriod;
@@ -229,6 +247,7 @@ TA_RetCode beta(int startIdx, int endIdx,
          prev_x = trailing_last_price_x;
          prev_y = trailing_last_price_y;
          S_xx = 0.0;
+         S_yy = 0.0;
          S_xy = 0.0;
          S_x = 0.0;
          S_y = 0.0;
@@ -245,6 +264,7 @@ TA_RetCode beta(int startIdx, int endIdx,
                y = -shift_y;
             prev_y = inReal1[j];
             S_xx += x*x;
+            S_yy += y*y;
             S_xy += x*y;
             S_x += x;
             S_y += y;
@@ -298,7 +318,9 @@ TA_RetCode beta(int startIdx, int endIdx,
 
       /* Remove the calculation starting with the trailingIdx. */
       leaving_xx = x*x;
+      leaving_yy = y*y;
       S_xx -= x*x;
+      S_yy -= y*y;
       S_xy -= x*y;
       S_x -= x;
       S_y -= y;
