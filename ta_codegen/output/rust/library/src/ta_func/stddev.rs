@@ -55,6 +55,7 @@
  *  100502 JV   Speed optimization of the algorithm
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  090404 MF   Fix #978056. Trap sqrt with negative zero values.
+ *  082326 MF,CC #243 the sqrt trap moves to var's scale-relative floor.
  */
 
 // Import types from parent module
@@ -129,7 +130,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
-        let mut tempReal: f64 = 0.0_f64;
         // Nothing to produce: the range is shorter than the lookback. Return before
         // touching anything.
         //
@@ -152,28 +152,28 @@ impl Core {
         // is the standard deviation.
         //
         // Multiply also by the ratio specified.
+        //
+        // Unconditional. var owns the dead-zone and owns the sign: it returns a
+        // non-negative variance, already floored to exactly 0 on any window whose
+        // re-anchored spread sat under its own rounding noise (var.c). What used to
+        // stand here instead - zero the output wherever the variance fell under
+        // TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
+        // at a price level rather than a noise floor: a $100.00 instrument quoted in
+        // 1e-8 ticks has a variance around 1e-16 and came back as exactly 0 on every
+        // bar, with TA_SUCCESS and nothing to say it had been suppressed (#243).
+        // Dropping it also leaves a pure map, which the branch had kept sqrt out of.
         if optInNbDev != 1.0 {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
             while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = outReal[i];
-                if !((tempReal) < 1e-14) {
-                    outReal[i] = (tempReal).sqrt() * optInNbDev;
-                } else {
-                    outReal[i] = 0.0 as f64;
-                }
+                outReal[i] = (((outReal[i]).sqrt() * optInNbDev) as f64);
                 i += 1;
             }
         } else {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
             while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = outReal[i];
-                if !((tempReal) < 1e-14) {
-                    outReal[i] = (tempReal).sqrt();
-                } else {
-                    outReal[i] = 0.0 as f64;
-                }
+                outReal[i] = (((outReal[i]).sqrt()) as f64);
                 i += 1;
             }
         }
@@ -332,26 +332,15 @@ impl STDDEV_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn STDDEV_step_impl(&self, sp: &mut STDDEV_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
-        let mut tempReal: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
         cur_outReal = sp.sub0.update(inReal)?;
         // Combine map (batch tail, per bar).
         if sp.optInNbDev != 1.0 {
-            tempReal = cur_outReal;
-            if !((tempReal) < 1e-14) {
-                cur_outReal = (tempReal).sqrt() * sp.optInNbDev;
-            } else {
-                cur_outReal = 0.0 as f64;
-            }
+            cur_outReal = (cur_outReal).sqrt() * sp.optInNbDev;
         } else {
-            tempReal = cur_outReal;
-            if !((tempReal) < 1e-14) {
-                cur_outReal = (tempReal).sqrt();
-            } else {
-                cur_outReal = 0.0 as f64;
-            }
+            cur_outReal = (cur_outReal).sqrt();
         }
         (*outReal) = cur_outReal;
         Ok(())
@@ -394,7 +383,6 @@ impl Core {
             if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };
         let mut i: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
-        let mut tempReal: f64 = 0.0_f64;
         // Nothing to produce: the range is shorter than the lookback. Return before
         // touching anything.
         //
@@ -420,28 +408,28 @@ impl Core {
         // is the standard deviation.
         //
         // Multiply also by the ratio specified.
+        //
+        // Unconditional. var owns the dead-zone and owns the sign: it returns a
+        // non-negative variance, already floored to exactly 0 on any window whose
+        // re-anchored spread sat under its own rounding noise (var.c). What used to
+        // stand here instead - zero the output wherever the variance fell under
+        // TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
+        // at a price level rather than a noise floor: a $100.00 instrument quoted in
+        // 1e-8 ticks has a variance around 1e-16 and came back as exactly 0 on every
+        // bar, with TA_SUCCESS and nothing to say it had been suppressed (#243).
+        // Dropping it also leaves a pure map, which the branch had kept sqrt out of.
         if optInNbDev != 1.0 {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
             while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = sc_outReal[i];
-                if !((tempReal) < 1e-14) {
-                    sc_outReal[i] = (tempReal).sqrt() * optInNbDev;
-                } else {
-                    sc_outReal[i] = 0.0 as f64;
-                }
+                sc_outReal[i] = (sc_outReal[i]).sqrt() * optInNbDev;
                 i += 1;
             }
         } else {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
             while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = sc_outReal[i];
-                if !((tempReal) < 1e-14) {
-                    sc_outReal[i] = (tempReal).sqrt();
-                } else {
-                    sc_outReal[i] = 0.0 as f64;
-                }
+                sc_outReal[i] = (sc_outReal[i]).sqrt();
                 i += 1;
             }
         }

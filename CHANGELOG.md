@@ -44,6 +44,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~30%: MAVP (#143). Thanks @dexhunter !
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
 - ~20%: VAR, STDDEV, BBANDS
+- ~37%: STDDEV when `optInNbDev` is not 1.0 — dropping the zero test from the loop lets it vectorize (#243)
 - ~10%: ATR and NATR
 
 ### Changed
@@ -81,6 +82,14 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#102) Fixed ULTOSC and CDL3INSIDE performance regression (only in 0.7.1)
 - (#112) IMI returned NaN on an all-flat window (every bar `close == open`); now returns 50.0.
 - (#202) VAR no longer returns a tiny negative variance on a flat stretch, where the calculation cancels to either side of zero; it now returns 0.0 instead.
+- (#243) STDDEV and BBANDS returned exactly 0 for a standard deviation that was small but
+  plainly non-zero — all three Bollinger bands landing on the middle band, with no
+  indication anything had been suppressed. The zero test was a fixed 1e-14 applied to the
+  variance, a *squared* quantity, so it triggered on any finely quoted series (a $100.00
+  instrument on a 1e-8 tick reaches it). It is now relative to the window's own scale and
+  lives in VAR, which was already returning the right answer there. VAR additionally
+  returns a bit-exact 0 — rather than a ~1e-44 rounding residue — for a window that sits
+  entirely inside a flat stretch entered mid-series.
 
 ## [0.7.1] 2026-07-03
 ### Added

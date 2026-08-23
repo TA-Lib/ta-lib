@@ -13,6 +13,7 @@
  *  100502 JV   Speed optimization of the algorithm
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  090404 MF   Fix #978056. Trap sqrt with negative zero values.
+ *  082326 MF,CC #243 the sqrt trap moves to var's scale-relative floor.
  */
 
    /**
@@ -55,7 +56,6 @@
    {
       int i = 0;
       RetCode retCode;
-      double tempReal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -98,24 +98,24 @@
        * is the standard deviation.
        *
        * Multiply also by the ratio specified.
+       *
+       * Unconditional. var owns the dead-zone and owns the sign: it returns a
+       * non-negative variance, already floored to exactly 0 on any window whose
+       * re-anchored spread sat under its own rounding noise (var.c). What used to
+       * stand here instead - zero the output wherever the variance fell under
+       * TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
+       * at a price level rather than a noise floor: a $100.00 instrument quoted in
+       * 1e-8 ticks has a variance around 1e-16 and came back as exactly 0 on every
+       * bar, with TA_SUCCESS and nothing to say it had been suppressed (#243).
+       * Dropping it also leaves a pure map, which the branch had kept sqrt out of.
        */
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal) * optInNbDev;
-            } else {
-               outReal[i] = (double)0.0;
-            }
+            outReal[i] = Math.sqrt(outReal[i]) * optInNbDev;
          }
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal);
-            } else {
-               outReal[i] = (double)0.0;
-            }
+            outReal[i] = Math.sqrt(outReal[i]);
          }
       }
       return RetCode.Success ;
@@ -131,7 +131,6 @@
    {
       int i = 0;
       RetCode retCode;
-      double tempReal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -162,21 +161,11 @@
       }
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal) * optInNbDev;
-            } else {
-               outReal[i] = (double)0.0;
-            }
+            outReal[i] = Math.sqrt(outReal[i]) * optInNbDev;
          }
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal);
-            } else {
-               outReal[i] = (double)0.0;
-            }
+            outReal[i] = Math.sqrt(outReal[i]);
          }
       }
       return RetCode.Success ;
@@ -433,25 +422,14 @@
    }
    void STDDEV_StepImpl( STDDEV_Stream sp, double inReal )
    {
-      double tempReal = 0.0;
       double cur_outReal = 0.0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_outReal = sp.sub0.update(inReal);
       /* Combine map (batch tail, per bar). */
       if( sp.optInNbDev != 1.0 ) {
-         tempReal = cur_outReal;
-         if( !(tempReal < 0.00000000000001) ) {
-            cur_outReal = Math.sqrt(tempReal) * sp.optInNbDev;
-         } else {
-            cur_outReal = (double)0.0;
-         }
+         cur_outReal = Math.sqrt(cur_outReal) * sp.optInNbDev;
       } else {
-         tempReal = cur_outReal;
-         if( !(tempReal < 0.00000000000001) ) {
-            cur_outReal = Math.sqrt(tempReal);
-         } else {
-            cur_outReal = (double)0.0;
-         }
+         cur_outReal = Math.sqrt(cur_outReal);
       }
       sp.cur_outReal = cur_outReal;
    }
@@ -459,7 +437,6 @@
    {
       int i = 0;
       RetCode retCode;
-      double tempReal = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -513,24 +490,24 @@
        * is the standard deviation.
        *
        * Multiply also by the ratio specified.
+       *
+       * Unconditional. var owns the dead-zone and owns the sign: it returns a
+       * non-negative variance, already floored to exactly 0 on any window whose
+       * re-anchored spread sat under its own rounding noise (var.c). What used to
+       * stand here instead - zero the output wherever the variance fell under
+       * TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
+       * at a price level rather than a noise floor: a $100.00 instrument quoted in
+       * 1e-8 ticks has a variance around 1e-16 and came back as exactly 0 on every
+       * bar, with TA_SUCCESS and nothing to say it had been suppressed (#243).
+       * Dropping it also leaves a pure map, which the branch had kept sqrt out of.
        */
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = sc_outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               sc_outReal[i] = Math.sqrt(tempReal) * optInNbDev;
-            } else {
-               sc_outReal[i] = (double)0.0;
-            }
+            sc_outReal[i] = Math.sqrt(sc_outReal[i]) * optInNbDev;
          }
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = sc_outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               sc_outReal[i] = Math.sqrt(tempReal);
-            } else {
-               sc_outReal[i] = (double)0.0;
-            }
+            sc_outReal[i] = Math.sqrt(sc_outReal[i]);
          }
       }
       /* Capture the live producer state + sub handles. */

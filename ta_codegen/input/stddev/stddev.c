@@ -13,6 +13,7 @@
  *  100502 JV   Speed optimization of the algorithm
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  090404 MF   Fix #978056. Trap sqrt with negative zero values.
+ *  082326 MF,CC #243 the sqrt trap moves to var's scale-relative floor.
  */
 
 int stddev_lookback(int optInTimePeriod, double optInNbDev)
@@ -30,7 +31,6 @@ TA_RetCode stddev(int startIdx, int endIdx,
 {
    int i;
    TA_RetCode retCode;
-   double tempReal;
 
    /* Nothing to produce: the range is shorter than the lookback. Return before
     * touching anything.
@@ -60,33 +60,30 @@ TA_RetCode stddev(int startIdx, int endIdx,
     * is the standard deviation.
     *
     * Multiply also by the ratio specified.
+    *
+    * Unconditional. var owns the dead-zone and owns the sign: it returns a
+    * non-negative variance, already floored to exactly 0 on any window whose
+    * re-anchored spread sat under its own rounding noise (var.c). What used to
+    * stand here instead - zero the output wherever the variance fell under
+    * TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
+    * at a price level rather than a noise floor: a $100.00 instrument quoted in
+    * 1e-8 ticks has a variance around 1e-16 and came back as exactly 0 on every
+    * bar, with TA_SUCCESS and nothing to say it had been suppressed (#243).
+    * Dropping it also leaves a pure map, which the branch had kept sqrt out of.
     */
    if( optInNbDev != 1.0 )
    {
       for( i=0; i < (int)*outNBElement; i++ )
-      {
-         tempReal = outReal[i];
-         if( !TA_IS_ZERO_OR_NEG(tempReal) )
-            outReal[i] = sqrt(tempReal) * optInNbDev;
-         else
-            outReal[i] = (double)0.0;
-      }
+         outReal[i] = sqrt(outReal[i]) * optInNbDev;
    }
    else
    {
       for( i=0; i < (int)*outNBElement; i++ )
-      {
-         tempReal = outReal[i];
-         if( !TA_IS_ZERO_OR_NEG(tempReal) )
-            outReal[i] = sqrt(tempReal);
-         else
-            outReal[i] = (double)0.0;
-      }
+         outReal[i] = sqrt(outReal[i]);
    }
 
    return TA_SUCCESS;
 }
-
 void stddev_using_precalc_ma( const double inReal[],
    const double inMovAvg[],
    int inMovAvgBegIdx,

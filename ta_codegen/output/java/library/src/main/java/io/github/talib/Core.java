@@ -12388,6 +12388,9 @@ public final class Core {
  *  072426 MF,CC  Lookback is now max(MA, STDDEV) so it is honest for MA types
  *                whose lookback is below the deviation's (MAMA >= 34, and
  *                TA_MAType_DISABLED); required for streaming (issue #93).
+ *  082326 MF,CC  #243 the SMA path's TA_EPSILON test on the variance is replaced
+ *                by var.c's scale-relative reseed floor; the square root is
+ *                unconditional. Bands no longer collapse on a fine tick.
  */
 
    /**
@@ -12604,16 +12607,24 @@ public final class Core {
                }
                meanValue1 = varTotal1 * _invPeriod;
                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+               /* The floor from var.c, verbatim: it owns both the sign and the
+                * dead-zone, so the square root below can be unconditional.
+                */
+               if( variance < 0.000001 * (varTotal2 * _invPeriod) ) {
+                  variance = 0.0;
+               }
                _tempReal = inReal[_windowStart] - shift;
                varTotal1 -= _tempReal;
                _tempReal *= _tempReal;
                varTotal2 -= _tempReal;
             }
-            if( !(variance < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(variance);
-            } else {
-               tempBuffer2[_outIdx] = 0.0;
-            }
+            /* Unconditional, same as stddev.c: the reseed floor above already
+             * guarantees a non-negative radicand and already zeroes a window with
+             * no resolvable spread. The TA_EPSILON test that used to stand here
+             * compared a SQUARED quantity to a fixed 1e-14 and flattened all three
+             * bands onto each other for any finely quoted series (#243).
+             */
+            tempBuffer2[_outIdx] = Math.sqrt(variance);
             _outIdx += 1;
             _i += 1;
          } while( _i <= endIdx );
@@ -12861,16 +12872,15 @@ public final class Core {
                }
                meanValue1 = varTotal1 * _invPeriod;
                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+               if( variance < 0.000001 * (varTotal2 * _invPeriod) ) {
+                  variance = 0.0;
+               }
                _tempReal = (double)inReal[_windowStart] - shift;
                varTotal1 -= _tempReal;
                _tempReal *= _tempReal;
                varTotal2 -= _tempReal;
             }
-            if( !(variance < 0.00000000000001) ) {
-               tempBuffer2[_outIdx] = Math.sqrt(variance);
-            } else {
-               tempBuffer2[_outIdx] = 0.0;
-            }
+            tempBuffer2[_outIdx] = Math.sqrt(variance);
             _outIdx += 1;
             _i += 1;
          } while( _i <= endIdx );
@@ -128195,6 +128205,7 @@ public final class Core {
  *  100502 JV   Speed optimization of the algorithm
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  090404 MF   Fix #978056. Trap sqrt with negative zero values.
+ *  082326 MF,CC #243 the sqrt trap moves to var's scale-relative floor.
  */
 
    /**
@@ -128237,7 +128248,6 @@ public final class Core {
    {
       int i = 0;
       RetCode retCode;
-      double tempReal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -128280,24 +128290,24 @@ public final class Core {
        * is the standard deviation.
        *
        * Multiply also by the ratio specified.
+       *
+       * Unconditional. var owns the dead-zone and owns the sign: it returns a
+       * non-negative variance, already floored to exactly 0 on any window whose
+       * re-anchored spread sat under its own rounding noise (var.c). What used to
+       * stand here instead - zero the output wherever the variance fell under
+       * TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
+       * at a price level rather than a noise floor: a $100.00 instrument quoted in
+       * 1e-8 ticks has a variance around 1e-16 and came back as exactly 0 on every
+       * bar, with TA_SUCCESS and nothing to say it had been suppressed (#243).
+       * Dropping it also leaves a pure map, which the branch had kept sqrt out of.
        */
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal) * optInNbDev;
-            } else {
-               outReal[i] = (double)0.0;
-            }
+            outReal[i] = Math.sqrt(outReal[i]) * optInNbDev;
          }
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal);
-            } else {
-               outReal[i] = (double)0.0;
-            }
+            outReal[i] = Math.sqrt(outReal[i]);
          }
       }
       return RetCode.Success ;
@@ -128313,7 +128323,6 @@ public final class Core {
    {
       int i = 0;
       RetCode retCode;
-      double tempReal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -128344,21 +128353,11 @@ public final class Core {
       }
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal) * optInNbDev;
-            } else {
-               outReal[i] = (double)0.0;
-            }
+            outReal[i] = Math.sqrt(outReal[i]) * optInNbDev;
          }
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               outReal[i] = Math.sqrt(tempReal);
-            } else {
-               outReal[i] = (double)0.0;
-            }
+            outReal[i] = Math.sqrt(outReal[i]);
          }
       }
       return RetCode.Success ;
@@ -128615,25 +128614,14 @@ public final class Core {
    }
    void STDDEV_StepImpl( STDDEV_Stream sp, double inReal )
    {
-      double tempReal = 0.0;
       double cur_outReal = 0.0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_outReal = sp.sub0.update(inReal);
       /* Combine map (batch tail, per bar). */
       if( sp.optInNbDev != 1.0 ) {
-         tempReal = cur_outReal;
-         if( !(tempReal < 0.00000000000001) ) {
-            cur_outReal = Math.sqrt(tempReal) * sp.optInNbDev;
-         } else {
-            cur_outReal = (double)0.0;
-         }
+         cur_outReal = Math.sqrt(cur_outReal) * sp.optInNbDev;
       } else {
-         tempReal = cur_outReal;
-         if( !(tempReal < 0.00000000000001) ) {
-            cur_outReal = Math.sqrt(tempReal);
-         } else {
-            cur_outReal = (double)0.0;
-         }
+         cur_outReal = Math.sqrt(cur_outReal);
       }
       sp.cur_outReal = cur_outReal;
    }
@@ -128641,7 +128629,6 @@ public final class Core {
    {
       int i = 0;
       RetCode retCode;
-      double tempReal = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -128695,24 +128682,24 @@ public final class Core {
        * is the standard deviation.
        *
        * Multiply also by the ratio specified.
+       *
+       * Unconditional. var owns the dead-zone and owns the sign: it returns a
+       * non-negative variance, already floored to exactly 0 on any window whose
+       * re-anchored spread sat under its own rounding noise (var.c). What used to
+       * stand here instead - zero the output wherever the variance fell under
+       * TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
+       * at a price level rather than a noise floor: a $100.00 instrument quoted in
+       * 1e-8 ticks has a variance around 1e-16 and came back as exactly 0 on every
+       * bar, with TA_SUCCESS and nothing to say it had been suppressed (#243).
+       * Dropping it also leaves a pure map, which the branch had kept sqrt out of.
        */
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = sc_outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               sc_outReal[i] = Math.sqrt(tempReal) * optInNbDev;
-            } else {
-               sc_outReal[i] = (double)0.0;
-            }
+            sc_outReal[i] = Math.sqrt(sc_outReal[i]) * optInNbDev;
          }
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = sc_outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               sc_outReal[i] = Math.sqrt(tempReal);
-            } else {
-               sc_outReal[i] = (double)0.0;
-            }
+            sc_outReal[i] = Math.sqrt(sc_outReal[i]);
          }
       }
       /* Capture the live producer state + sub handles. */
@@ -140663,6 +140650,7 @@ public final class Core {
  *  100502 JV     Speed optimization of the algorithm
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  071726 MF,CC  #118 cancellation-free variance (shifted sums + reseed); fixes bug 90.
+ *  082326 MF,CC  #243 reseed floor is scale-relative, not `variance < 0`.
  */
 
    /**
@@ -140815,11 +140803,30 @@ public final class Core {
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            /* A variance is non-negative by definition, but this one is extracted
-             * as a difference of two nearly equal quantities, so its SIGN is not
-             * guaranteed: on a window sitting entirely inside a flat stretch every
-             * deviation is the same rounding residual and the subtraction is pure
-             * cancellation, landing either side of zero. Enforce the invariant.
+            /* Floor the fresh figure at the same ratio the trigger above uses, now
+             * measured against the RE-ANCHORED sums. With the shift AT the window
+             * mean the deviations sum to ~0, so a real window has variance ~
+             * periodTotal2*invPeriod and a ratio of ~1; the ratio drops below 1e-6
+             * only when every deviation is the same value, i.e. when the spread is
+             * at or under the rounding error of the mean itself. There is then no
+             * spread the anchor could resolve, the surviving digits are noise, and
+             * the honest answer is 0.
+             *
+             * This is the ONE dead-zone in the var/stddev/bbands family, and it is
+             * relative rather than the `variance < 0.0` it replaced because two
+             * things ride on it:
+             *
+             *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
+             *    side is >= 0 and any negative variance is clamped unconditionally -
+             *    where `< 0.0` needed the three-case argument below to know that a
+             *    negative one ever reaches this line.
+             *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
+             *    anything under a fixed TA_EPSILON first. That compares a SQUARED
+             *    quantity to 1e-14, which is a cliff at a price level and not a
+             *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
+             *    variance around 1e-16 and came back exactly 0 on every bar (#243).
+             *    Expressed here in the window's own units, the floor lets both of
+             *    them square-root what they are handed unconditionally.
              *
              * Clamping HERE and not at the output write is what keeps this off the
              * per-bar path, and it is sufficient because a negative variance always
@@ -140831,7 +140838,7 @@ public final class Core {
              * THIS - the alternative is an unconditional clamp at the output write,
              * which needs no such argument but does cost ~3%.
              */
-            if( variance < 0.0 ) {
+            if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
                variance = 0.0;
             }
             /* Re-remove the trailing value under the new shift so the carried state
@@ -140943,7 +140950,7 @@ public final class Core {
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            if( variance < 0.0 ) {
+            if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
                variance = 0.0;
             }
             tempReal = (double)inReal[windowStart] - shift;
@@ -141303,11 +141310,30 @@ public final class Core {
          }
          sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
          sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
-         /* A variance is non-negative by definition, but this one is extracted
-          * as a difference of two nearly equal quantities, so its SIGN is not
-          * guaranteed: on a window sitting entirely inside a flat stretch every
-          * deviation is the same rounding residual and the subtraction is pure
-          * cancellation, landing either side of zero. Enforce the invariant.
+         /* Floor the fresh figure at the same ratio the trigger above uses, now
+          * measured against the RE-ANCHORED sums. With the shift AT the window
+          * mean the deviations sum to ~0, so a real window has variance ~
+          * periodTotal2*invPeriod and a ratio of ~1; the ratio drops below 1e-6
+          * only when every deviation is the same value, i.e. when the spread is
+          * at or under the rounding error of the mean itself. There is then no
+          * spread the anchor could resolve, the surviving digits are noise, and
+          * the honest answer is 0.
+          *
+          * This is the ONE dead-zone in the var/stddev/bbands family, and it is
+          * relative rather than the `variance < 0.0` it replaced because two
+          * things ride on it:
+          *
+          *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
+          *    side is >= 0 and any negative variance is clamped unconditionally -
+          *    where `< 0.0` needed the three-case argument below to know that a
+          *    negative one ever reaches this line.
+          *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
+          *    anything under a fixed TA_EPSILON first. That compares a SQUARED
+          *    quantity to 1e-14, which is a cliff at a price level and not a
+          *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
+          *    variance around 1e-16 and came back exactly 0 on every bar (#243).
+          *    Expressed here in the window's own units, the floor lets both of
+          *    them square-root what they are handed unconditionally.
           *
           * Clamping HERE and not at the output write is what keeps this off the
           * per-bar path, and it is sufficient because a negative variance always
@@ -141319,7 +141345,7 @@ public final class Core {
           * THIS - the alternative is an unconditional clamp at the output write,
           * which needs no such argument but does cost ~3%.
           */
-         if( sp.variance < 0.0 ) {
+         if( sp.variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) ) {
             sp.variance = 0.0;
          }
          /* Re-remove the trailing value under the new shift so the carried state
@@ -141455,11 +141481,30 @@ public final class Core {
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            /* A variance is non-negative by definition, but this one is extracted
-             * as a difference of two nearly equal quantities, so its SIGN is not
-             * guaranteed: on a window sitting entirely inside a flat stretch every
-             * deviation is the same rounding residual and the subtraction is pure
-             * cancellation, landing either side of zero. Enforce the invariant.
+            /* Floor the fresh figure at the same ratio the trigger above uses, now
+             * measured against the RE-ANCHORED sums. With the shift AT the window
+             * mean the deviations sum to ~0, so a real window has variance ~
+             * periodTotal2*invPeriod and a ratio of ~1; the ratio drops below 1e-6
+             * only when every deviation is the same value, i.e. when the spread is
+             * at or under the rounding error of the mean itself. There is then no
+             * spread the anchor could resolve, the surviving digits are noise, and
+             * the honest answer is 0.
+             *
+             * This is the ONE dead-zone in the var/stddev/bbands family, and it is
+             * relative rather than the `variance < 0.0` it replaced because two
+             * things ride on it:
+             *
+             *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
+             *    side is >= 0 and any negative variance is clamped unconditionally -
+             *    where `< 0.0` needed the three-case argument below to know that a
+             *    negative one ever reaches this line.
+             *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
+             *    anything under a fixed TA_EPSILON first. That compares a SQUARED
+             *    quantity to 1e-14, which is a cliff at a price level and not a
+             *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
+             *    variance around 1e-16 and came back exactly 0 on every bar (#243).
+             *    Expressed here in the window's own units, the floor lets both of
+             *    them square-root what they are handed unconditionally.
              *
              * Clamping HERE and not at the output write is what keeps this off the
              * per-bar path, and it is sufficient because a negative variance always
@@ -141471,7 +141516,7 @@ public final class Core {
              * THIS - the alternative is an unconditional clamp at the output write,
              * which needs no such argument but does cost ~3%.
              */
-            if( variance < 0.0 ) {
+            if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
                variance = 0.0;
             }
             /* Re-remove the trailing value under the new shift so the carried state

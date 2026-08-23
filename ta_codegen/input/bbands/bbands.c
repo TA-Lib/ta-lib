@@ -28,6 +28,9 @@
  *  072426 MF,CC  Lookback is now max(MA, STDDEV) so it is honest for MA types
  *                whose lookback is below the deviation's (MAMA >= 34, and
  *                TA_MAType_DISABLED); required for streaming (issue #93).
+ *  082326 MF,CC  #243 the SMA path's TA_EPSILON test on the variance is replaced
+ *                by var.c's scale-relative reseed floor; the square root is
+ *                unconditional. Bands no longer collapse on a fine tick.
  *
  */
 
@@ -191,16 +194,22 @@ TA_RetCode bbands(int startIdx, int endIdx,
                }
                meanValue1 = varTotal1 * _invPeriod;
                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+               /* The floor from var.c, verbatim: it owns both the sign and the
+                * dead-zone, so the square root below can be unconditional. */
+               if( variance < 0.000001 * ( varTotal2 * _invPeriod ) )
+                  variance = 0.0;
                _tempReal = inReal[_windowStart] - shift;
                varTotal1 -= _tempReal;
                _tempReal *= _tempReal;
                varTotal2 -= _tempReal;
             }
 
-            if( !TA_IS_ZERO_OR_NEG(variance) )
-               tempBuffer2[_outIdx] = sqrt(variance);
-            else
-               tempBuffer2[_outIdx] = 0.0;
+            /* Unconditional, same as stddev.c: the reseed floor above already
+             * guarantees a non-negative radicand and already zeroes a window with
+             * no resolvable spread. The TA_EPSILON test that used to stand here
+             * compared a SQUARED quantity to a fixed 1e-14 and flattened all three
+             * bands onto each other for any finely quoted series (#243). */
+            tempBuffer2[_outIdx] = sqrt(variance);
             _outIdx++;
             _i++;
          } while( _i <= endIdx );

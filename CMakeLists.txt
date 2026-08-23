@@ -63,25 +63,27 @@ endif()
 # purely a speed knob, so a cross-toolchain that rejects it should just lose the
 # speed (scripts/package.py builds the .deb through CMAKE_TOOLCHAIN_FILE).
 #
-# It does change one thing that is NOT a value, and that no output-comparing gate
-# can see: FP exception state. Vectorizing STDDEV's map if-converts it — sqrtpd
-# runs on EVERY lane and the TA_IS_ZERO_OR_NEG guard is applied afterwards as a
-# mask — so a lane whose variance is slightly negative now executes a sqrt the
-# scalar form skipped, raising FE_INVALID. The value is masked away, so no output
-# changes; a caller that had enabled trapping on FE_INVALID would see it.
+# It can change one thing that is NOT a value, and that no output-comparing gate
+# can see: FP exception state. Wherever a sqrt sits under a guard, vectorizing
+# if-converts it — sqrtpd runs on EVERY lane and the guard is reapplied afterwards
+# as a mask — so a lane the scalar form skipped executes anyway, and a negative
+# one there raises FE_INVALID. The value is masked away, so no output changes; a
+# caller trapping on FE_INVALID would see it. Nor can it be fixed at the guard:
+# this flag is precisely what makes sqrt speculatable, so GCC hoists it back above
+# a clamp using sqrt(select(c,0,t)) == select(c,0,sqrt(t)).
 #
-# This is reachable, not theoretical: once a window sits entirely inside a flat
-# stretch (a halted, padded or illiquid series) every deviation is the same
-# rounding residual and TA_VAR's subtraction is pure cancellation. A noisy prefix
-# then a flat tail at period 49 puts 1503 of 2020 TA_VAR outputs below zero, and
-# TA_STDDEV over that series raises FE_INVALID with this flag and not without.
+# TA_STDDEV was that case and is the reason this note exists — its map was
+# `if( !TA_IS_ZERO_OR_NEG(v) ) sqrt(v)`. #243 removed that guard: TA_VAR floors
+# its own output, so the map is now an unguarded sqrt of a radicand that cannot be
+# negative and there is no masked lane left to raise anything. Measured over 79M
+# VAR outputs (flat tails, 1e12 spikes, ulp-scale noise, 1e9/1e-7 alternation, all
+# periods 2..61): no negative, and no FE_INVALID from either function, with the
+# flag or without.
 #
-# It cannot be fixed in the source. Clamping the radicand before the sqrt does
-# not help: the flag is precisely what makes sqrt speculatable, so GCC hoists it
-# back above the clamp using sqrt(select(c,0,t)) == select(c,0,sqrt(t)).
-# Accepted because the library has no FE_INVALID-clean contract to begin with —
-# TA_SQRT is a bare sqrt() of caller data and raises on negative input in either
-# build — and because no computed value moves.
+# The flag is still accepted for whatever guarded sqrt appears next, because the
+# library has no FE_INVALID-clean contract to begin with — TA_SQRT is a bare
+# sqrt() of caller data and raises on negative input in either build — and because
+# no computed value moves.
 if(NOT MSVC)
     include(CheckCCompilerFlag)
     check_c_compiler_flag(-fno-math-errno TA_HAS_NO_MATH_ERRNO)

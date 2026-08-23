@@ -14,6 +14,7 @@
  *  100502 JV     Speed optimization of the algorithm
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  071726 MF,CC  #118 cancellation-free variance (shifted sums + reseed); fixes bug 90.
+ *  082326 MF,CC  #243 reseed floor is scale-relative, not `variance < 0`.
  */
 
    /**
@@ -166,11 +167,30 @@
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            /* A variance is non-negative by definition, but this one is extracted
-             * as a difference of two nearly equal quantities, so its SIGN is not
-             * guaranteed: on a window sitting entirely inside a flat stretch every
-             * deviation is the same rounding residual and the subtraction is pure
-             * cancellation, landing either side of zero. Enforce the invariant.
+            /* Floor the fresh figure at the same ratio the trigger above uses, now
+             * measured against the RE-ANCHORED sums. With the shift AT the window
+             * mean the deviations sum to ~0, so a real window has variance ~
+             * periodTotal2*invPeriod and a ratio of ~1; the ratio drops below 1e-6
+             * only when every deviation is the same value, i.e. when the spread is
+             * at or under the rounding error of the mean itself. There is then no
+             * spread the anchor could resolve, the surviving digits are noise, and
+             * the honest answer is 0.
+             *
+             * This is the ONE dead-zone in the var/stddev/bbands family, and it is
+             * relative rather than the `variance < 0.0` it replaced because two
+             * things ride on it:
+             *
+             *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
+             *    side is >= 0 and any negative variance is clamped unconditionally -
+             *    where `< 0.0` needed the three-case argument below to know that a
+             *    negative one ever reaches this line.
+             *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
+             *    anything under a fixed TA_EPSILON first. That compares a SQUARED
+             *    quantity to 1e-14, which is a cliff at a price level and not a
+             *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
+             *    variance around 1e-16 and came back exactly 0 on every bar (#243).
+             *    Expressed here in the window's own units, the floor lets both of
+             *    them square-root what they are handed unconditionally.
              *
              * Clamping HERE and not at the output write is what keeps this off the
              * per-bar path, and it is sufficient because a negative variance always
@@ -182,7 +202,7 @@
              * THIS - the alternative is an unconditional clamp at the output write,
              * which needs no such argument but does cost ~3%.
              */
-            if( variance < 0.0 ) {
+            if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
                variance = 0.0;
             }
             /* Re-remove the trailing value under the new shift so the carried state
@@ -294,7 +314,7 @@
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            if( variance < 0.0 ) {
+            if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
                variance = 0.0;
             }
             tempReal = (double)inReal[windowStart] - shift;
@@ -654,11 +674,30 @@
          }
          sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
          sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
-         /* A variance is non-negative by definition, but this one is extracted
-          * as a difference of two nearly equal quantities, so its SIGN is not
-          * guaranteed: on a window sitting entirely inside a flat stretch every
-          * deviation is the same rounding residual and the subtraction is pure
-          * cancellation, landing either side of zero. Enforce the invariant.
+         /* Floor the fresh figure at the same ratio the trigger above uses, now
+          * measured against the RE-ANCHORED sums. With the shift AT the window
+          * mean the deviations sum to ~0, so a real window has variance ~
+          * periodTotal2*invPeriod and a ratio of ~1; the ratio drops below 1e-6
+          * only when every deviation is the same value, i.e. when the spread is
+          * at or under the rounding error of the mean itself. There is then no
+          * spread the anchor could resolve, the surviving digits are noise, and
+          * the honest answer is 0.
+          *
+          * This is the ONE dead-zone in the var/stddev/bbands family, and it is
+          * relative rather than the `variance < 0.0` it replaced because two
+          * things ride on it:
+          *
+          *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
+          *    side is >= 0 and any negative variance is clamped unconditionally -
+          *    where `< 0.0` needed the three-case argument below to know that a
+          *    negative one ever reaches this line.
+          *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
+          *    anything under a fixed TA_EPSILON first. That compares a SQUARED
+          *    quantity to 1e-14, which is a cliff at a price level and not a
+          *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
+          *    variance around 1e-16 and came back exactly 0 on every bar (#243).
+          *    Expressed here in the window's own units, the floor lets both of
+          *    them square-root what they are handed unconditionally.
           *
           * Clamping HERE and not at the output write is what keeps this off the
           * per-bar path, and it is sufficient because a negative variance always
@@ -670,7 +709,7 @@
           * THIS - the alternative is an unconditional clamp at the output write,
           * which needs no such argument but does cost ~3%.
           */
-         if( sp.variance < 0.0 ) {
+         if( sp.variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) ) {
             sp.variance = 0.0;
          }
          /* Re-remove the trailing value under the new shift so the carried state
@@ -806,11 +845,30 @@
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            /* A variance is non-negative by definition, but this one is extracted
-             * as a difference of two nearly equal quantities, so its SIGN is not
-             * guaranteed: on a window sitting entirely inside a flat stretch every
-             * deviation is the same rounding residual and the subtraction is pure
-             * cancellation, landing either side of zero. Enforce the invariant.
+            /* Floor the fresh figure at the same ratio the trigger above uses, now
+             * measured against the RE-ANCHORED sums. With the shift AT the window
+             * mean the deviations sum to ~0, so a real window has variance ~
+             * periodTotal2*invPeriod and a ratio of ~1; the ratio drops below 1e-6
+             * only when every deviation is the same value, i.e. when the spread is
+             * at or under the rounding error of the mean itself. There is then no
+             * spread the anchor could resolve, the surviving digits are noise, and
+             * the honest answer is 0.
+             *
+             * This is the ONE dead-zone in the var/stddev/bbands family, and it is
+             * relative rather than the `variance < 0.0` it replaced because two
+             * things ride on it:
+             *
+             *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
+             *    side is >= 0 and any negative variance is clamped unconditionally -
+             *    where `< 0.0` needed the three-case argument below to know that a
+             *    negative one ever reaches this line.
+             *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
+             *    anything under a fixed TA_EPSILON first. That compares a SQUARED
+             *    quantity to 1e-14, which is a cliff at a price level and not a
+             *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
+             *    variance around 1e-16 and came back exactly 0 on every bar (#243).
+             *    Expressed here in the window's own units, the floor lets both of
+             *    them square-root what they are handed unconditionally.
              *
              * Clamping HERE and not at the output write is what keeps this off the
              * per-bar path, and it is sufficient because a negative variance always
@@ -822,7 +880,7 @@
              * THIS - the alternative is an unconditional clamp at the output write,
              * which needs no such argument but does cost ~3%.
              */
-            if( variance < 0.0 ) {
+            if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
                variance = 0.0;
             }
             /* Re-remove the trailing value under the new shift so the carried state

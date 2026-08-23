@@ -1073,8 +1073,13 @@ fn stddev_derives_loopless_composed_plan() {
     assert_eq!(cp.steps.len(), 2);
     assert!(matches!(cp.steps[0], streaming::UpdateStep::Sub { sub_idx: 0 }));
     assert!(matches!(cp.steps[1], streaming::UpdateStep::Map { .. }));
-    // The map references tempReal as a step-local temp.
-    assert!(cp.map_temps.iter().any(|(n, _)| n == "tempReal"));
+    // The map is temp-free. Since #243 the combine is `sqrt(outReal[i])` (scaled
+    // by optInNbDev when it is not 1.0) with nothing to hold the radicand in: the
+    // TA_EPSILON test that needed a step-local is gone, because var now owns the
+    // dead-zone. The map_temps machinery is pinned elsewhere, by
+    // ppo_derives_composed_plan_with_division_map, whose guarded division still
+    // carries one -- so this is a shape assertion, not lost coverage.
+    assert!(cp.map_temps.is_empty(), "STDDEV's combine map declares no step-local");
     // No heap series -> no replayable free needed.
     assert!(cp.series_frees.is_empty());
 }
