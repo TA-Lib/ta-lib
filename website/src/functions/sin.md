@@ -1,11 +1,11 @@
 ---
 title: "Vector Trigonometric Sin (SIN)"
-description: "Vector trigonometric sine: applies sin() element-wise to each input value. Part of the Math Transform group."
+description: "Element-wise sine of the input series."
 ---
 
 ## Summary
 
-Vector trigonometric sine: applies sin() element-wise to each input value. Part of the Math Transform group.
+Element-wise sine of the input series.
 
 ## Formula
 
@@ -54,3 +54,7 @@ sine
 ## See Also
 
 [COS](/functions/cos.md) · [TAN](/functions/tan.md) · [ASIN](/functions/asin.md)
+
+## References
+
+- Wikipedia, *Trigonometric functions*: [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)

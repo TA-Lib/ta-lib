@@ -1,11 +1,11 @@
 ---
 title: "Vector Ceil (CEIL)"
-description: "Vector ceiling: element-wise ceiling of each input value (smallest integer >= input)."
+description: "Element-wise ceiling (round up to the nearest integer) of the input series."
 ---
 
 ## Summary
 
-Vector ceiling: element-wise ceiling of each input value (smallest integer >= input).
+Element-wise ceiling (round up to the nearest integer) of the input series.
 
 ## Formula
 
@@ -54,3 +54,7 @@ Vector Ceil, Ceiling
 ## See Also
 
 [FLOOR](/functions/floor.md)
+
+## References
+
+- Wikipedia, *Floor and ceiling functions*: [en.wikipedia.org/wiki/Floor_and_ceiling_functions](https://en.wikipedia.org/wiki/Floor_and_ceiling_functions)

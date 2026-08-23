@@ -1,11 +1,11 @@
 ---
 title: "Vector Trigonometric Tan (TAN)"
-description: "Vector trigonometric tangent: applies tan() element-wise to each input value."
+description: "Element-wise tangent of the input series."
 ---
 
 ## Summary
 
-Vector trigonometric tangent: applies tan() element-wise to each input value.
+Element-wise tangent of the input series.
 
 ## Formula
 
@@ -54,3 +54,7 @@ tangent
 ## See Also
 
 [ATAN](/functions/atan.md) · [SIN](/functions/sin.md) · [COS](/functions/cos.md) · [TANH](/functions/tanh.md)
+
+## References
+
+- Wikipedia, *Trigonometric functions*: [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)

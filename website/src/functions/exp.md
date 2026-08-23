@@ -1,11 +1,11 @@
 ---
 title: "Vector Arithmetic Exp (EXP)"
-description: "Vector arithmetic exponential: applies the base-e exponential to each input value. Element-wise math transform."
+description: "Element-wise base-e exponential of the input series."
 ---
 
 ## Summary
 
-Vector arithmetic exponential: applies the base-e exponential to each input value. Element-wise math transform.
+Element-wise base-e exponential of the input series.
 
 ## Formula
 
@@ -54,3 +54,7 @@ exponential, e^x
 ## See Also
 
 [LN](/functions/ln.md) · [SQRT](/functions/sqrt.md)
+
+## References
+
+- Wikipedia, *Exponential function*: [en.wikipedia.org/wiki/Exponential_function](https://en.wikipedia.org/wiki/Exponential_function)

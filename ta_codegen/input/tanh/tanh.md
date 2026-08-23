@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector hyperbolic tangent: applies tanh element-wise to the input series.
+Element-wise hyperbolic tangent of the input series.
 
 ## Formula
 
@@ -35,3 +35,7 @@ Hyperbolic Tangent
 ## See Also
 
 SINH · COSH · TAN
+
+## References
+
+- Wikipedia, *Hyperbolic functions*: [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)

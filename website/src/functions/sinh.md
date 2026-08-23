@@ -1,11 +1,11 @@
 ---
 title: "Vector Trigonometric Sinh (SINH)"
-description: "Element-wise hyperbolic sine of the input series. A vector math transform applying sinh() to each value."
+description: "Element-wise hyperbolic sine of the input series."
 ---
 
 ## Summary
 
-Element-wise hyperbolic sine of the input series. A vector math transform applying sinh() to each value.
+Element-wise hyperbolic sine of the input series.
 
 ## Formula
 
@@ -54,3 +54,7 @@ Hyperbolic Sine
 ## See Also
 
 [COSH](/functions/cosh.md) · [TANH](/functions/tanh.md)
+
+## References
+
+- Wikipedia, *Hyperbolic functions*: [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)

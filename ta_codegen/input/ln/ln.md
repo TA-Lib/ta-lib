@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector natural logarithm: applies the natural log (base e) elementwise to the input series.
+Element-wise natural logarithm of the input series.
 
 ## Formula
 
@@ -39,3 +39,7 @@ Natural Log, Vector Log Natural, Log
 ## See Also
 
 LOG10 · EXP · SQRT
+
+## References
+
+- Wikipedia, *Natural logarithm*: [en.wikipedia.org/wiki/Natural_logarithm](https://en.wikipedia.org/wiki/Natural_logarithm)

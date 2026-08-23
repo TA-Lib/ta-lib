@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector trigonometric sine: applies sin() element-wise to each input value. Part of the Math Transform group.
+Element-wise sine of the input series.
 
 ## Formula
 
@@ -35,3 +35,7 @@ sine
 ## See Also
 
 COS · TAN · ASIN
+
+## References
+
+- Wikipedia, *Trigonometric functions*: [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)

@@ -1,11 +1,11 @@
 ---
 title: "Vector Trigonometric Cos (COS)"
-description: "Element-wise trigonometric cosine of the input series. Applies the C library cos() to each sample."
+description: "Element-wise cosine of the input series."
 ---
 
 ## Summary
 
-Element-wise trigonometric cosine of the input series. Applies the C library cos() to each sample.
+Element-wise cosine of the input series.
 
 ## Formula
 
@@ -54,3 +54,7 @@ Cosine, Vector Trigonometric Cos
 ## See Also
 
 [ACOS](/functions/acos.md) · [SIN](/functions/sin.md) · [TAN](/functions/tan.md) · [COSH](/functions/cosh.md)
+
+## References
+
+- Wikipedia, *Trigonometric functions*: [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)

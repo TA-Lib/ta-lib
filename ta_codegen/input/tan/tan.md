@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector trigonometric tangent: applies tan() element-wise to each input value.
+Element-wise tangent of the input series.
 
 ## Formula
 
@@ -35,3 +35,7 @@ tangent
 ## See Also
 
 ATAN · SIN · COS · TANH
+
+## References
+
+- Wikipedia, *Trigonometric functions*: [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)

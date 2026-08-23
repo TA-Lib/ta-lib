@@ -1,11 +1,11 @@
 ---
 title: "Vector Floor (FLOOR)"
-description: "Vector floor: rounds each input value down to the nearest integer. Element-wise math transform."
+description: "Element-wise floor (round down to the nearest integer) of the input series."
 ---
 
 ## Summary
 
-Vector floor: rounds each input value down to the nearest integer. Element-wise math transform.
+Element-wise floor (round down to the nearest integer) of the input series.
 
 ## Formula
 
@@ -50,3 +50,7 @@ TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrap
 ## See Also
 
 [CEIL](/functions/ceil.md)
+
+## References
+
+- Wikipedia, *Floor and ceiling functions*: [en.wikipedia.org/wiki/Floor_and_ceiling_functions](https://en.wikipedia.org/wiki/Floor_and_ceiling_functions)

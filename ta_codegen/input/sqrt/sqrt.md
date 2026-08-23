@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector square root: applies the square-root function element-wise to each input value.
+Element-wise square root of the input series.
 
 ## Formula
 
@@ -35,3 +35,7 @@ TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrap
 ## Aliases
 
 Square Root
+
+## References
+
+- Wikipedia, *Square root*: [en.wikipedia.org/wiki/Square_root](https://en.wikipedia.org/wiki/Square_root)

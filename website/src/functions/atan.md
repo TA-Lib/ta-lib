@@ -1,11 +1,11 @@
 ---
 title: "Vector Trigonometric ATan (ATAN)"
-description: "Vector trigonometric arc tangent: applies atan element-wise to each input. Pure math transform with no lookback."
+description: "Element-wise arctangent of the input series."
 ---
 
 ## Summary
 
-Vector trigonometric arc tangent: applies atan element-wise to each input. Pure math transform with no lookback.
+Element-wise arctangent of the input series.
 
 ## Formula
 
@@ -54,3 +54,7 @@ arctangent, arctan, inverse tangent
 ## See Also
 
 [TAN](/functions/tan.md) · [ACOS](/functions/acos.md) · [ASIN](/functions/asin.md)
+
+## References
+
+- Wikipedia, *Inverse trigonometric functions*: [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)

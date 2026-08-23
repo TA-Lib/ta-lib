@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector trigonometric arc cosine: applies acos() to each input value. A Math Transform passthrough with zero lookback.
+Element-wise arc cosine of the input series.
 
 ## Formula
 
@@ -39,3 +39,7 @@ Arc Cosine, Inverse Cosine, arccos
 ## See Also
 
 COS · ASIN · ATAN
+
+## References
+
+- Wikipedia, *Inverse trigonometric functions*: [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)

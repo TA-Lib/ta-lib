@@ -2,7 +2,7 @@
 
 ## Summary
 
-Element-wise hyperbolic sine of the input series. A vector math transform applying sinh() to each value.
+Element-wise hyperbolic sine of the input series.
 
 ## Formula
 
@@ -35,3 +35,7 @@ Hyperbolic Sine
 ## See Also
 
 COSH · TANH
+
+## References
+
+- Wikipedia, *Hyperbolic functions*: [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)

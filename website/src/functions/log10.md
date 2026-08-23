@@ -1,11 +1,11 @@
 ---
 title: "Vector Log10 (LOG10)"
-description: "Vector base-10 logarithm. Applies log10 element-wise over each input value."
+description: "Element-wise base-10 logarithm of the input series."
 ---
 
 ## Summary
 
-Vector base-10 logarithm. Applies log10 element-wise over each input value.
+Element-wise base-10 logarithm of the input series.
 
 ## Formula
 
@@ -58,3 +58,7 @@ Log Base 10, Common Logarithm
 ## See Also
 
 [LN](/functions/ln.md) · [EXP](/functions/exp.md)
+
+## References
+
+- Wikipedia, *Common logarithm*: [en.wikipedia.org/wiki/Common_logarithm](https://en.wikipedia.org/wiki/Common_logarithm)

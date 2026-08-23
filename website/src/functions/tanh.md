@@ -1,11 +1,11 @@
 ---
 title: "Vector Trigonometric Tanh (TANH)"
-description: "Vector hyperbolic tangent: applies tanh element-wise to the input series."
+description: "Element-wise hyperbolic tangent of the input series."
 ---
 
 ## Summary
 
-Vector hyperbolic tangent: applies tanh element-wise to the input series.
+Element-wise hyperbolic tangent of the input series.
 
 ## Formula
 
@@ -54,3 +54,7 @@ Hyperbolic Tangent
 ## See Also
 
 [SINH](/functions/sinh.md) · [COSH](/functions/cosh.md) · [TAN](/functions/tan.md)
+
+## References
+
+- Wikipedia, *Hyperbolic functions*: [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)

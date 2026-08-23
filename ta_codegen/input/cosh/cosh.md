@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector hyperbolic cosine: applies cosh element-wise to each input value. A Math Transform primitive with no lookback.
+Element-wise hyperbolic cosine of the input series.
 
 ## Formula
 
@@ -35,3 +35,7 @@ Hyperbolic Cosine
 ## See Also
 
 SINH · TANH · COS
+
+## References
+
+- Wikipedia, *Hyperbolic functions*: [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)

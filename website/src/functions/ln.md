@@ -1,11 +1,11 @@
 ---
 title: "Vector Log Natural (LN)"
-description: "Vector natural logarithm: applies the natural log (base e) elementwise to the input series."
+description: "Element-wise natural logarithm of the input series."
 ---
 
 ## Summary
 
-Vector natural logarithm: applies the natural log (base e) elementwise to the input series.
+Element-wise natural logarithm of the input series.
 
 ## Formula
 
@@ -58,3 +58,7 @@ Natural Log, Vector Log Natural, Log
 ## See Also
 
 [LOG10](/functions/log10.md) · [EXP](/functions/exp.md) · [SQRT](/functions/sqrt.md)
+
+## References
+
+- Wikipedia, *Natural logarithm*: [en.wikipedia.org/wiki/Natural_logarithm](https://en.wikipedia.org/wiki/Natural_logarithm)

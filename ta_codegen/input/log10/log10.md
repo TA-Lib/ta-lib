@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector base-10 logarithm. Applies log10 element-wise over each input value.
+Element-wise base-10 logarithm of the input series.
 
 ## Formula
 
@@ -39,3 +39,7 @@ Log Base 10, Common Logarithm
 ## See Also
 
 LN · EXP
+
+## References
+
+- Wikipedia, *Common logarithm*: [en.wikipedia.org/wiki/Common_logarithm](https://en.wikipedia.org/wiki/Common_logarithm)

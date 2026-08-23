@@ -1,11 +1,11 @@
 ---
 title: "Vector Trigonometric ACos (ACOS)"
-description: "Vector trigonometric arc cosine: applies acos() to each input value. A Math Transform passthrough with zero lookback."
+description: "Element-wise arc cosine of the input series."
 ---
 
 ## Summary
 
-Vector trigonometric arc cosine: applies acos() to each input value. A Math Transform passthrough with zero lookback.
+Element-wise arc cosine of the input series.
 
 ## Formula
 
@@ -58,3 +58,7 @@ Arc Cosine, Inverse Cosine, arccos
 ## See Also
 
 [COS](/functions/cos.md) · [ASIN](/functions/asin.md) · [ATAN](/functions/atan.md)
+
+## References
+
+- Wikipedia, *Inverse trigonometric functions*: [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)

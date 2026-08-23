@@ -2,7 +2,7 @@
 
 ## Summary
 
-Element-wise trigonometric cosine of the input series. Applies the C library cos() to each sample.
+Element-wise cosine of the input series.
 
 ## Formula
 
@@ -35,3 +35,7 @@ Cosine, Vector Trigonometric Cos
 ## See Also
 
 ACOS · SIN · TAN · COSH
+
+## References
+
+- Wikipedia, *Trigonometric functions*: [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)

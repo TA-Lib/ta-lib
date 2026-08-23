@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector trigonometric arc tangent: applies atan element-wise to each input. Pure math transform with no lookback.
+Element-wise arctangent of the input series.
 
 ## Formula
 
@@ -35,3 +35,7 @@ arctangent, arctan, inverse tangent
 ## See Also
 
 TAN · ACOS · ASIN
+
+## References
+
+- Wikipedia, *Inverse trigonometric functions*: [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)

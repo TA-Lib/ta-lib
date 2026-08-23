@@ -2,7 +2,7 @@
 
 ## Summary
 
-Element-wise arcsine (inverse sine) of each input value. A vector math transform, not a market indicator.
+Element-wise arcsine of the input series.
 
 ## Formula
 
@@ -39,3 +39,7 @@ arcsine, inverse sine
 ## See Also
 
 ACOS · ATAN · SIN · COS
+
+## References
+
+- Wikipedia, *Inverse trigonometric functions*: [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)
