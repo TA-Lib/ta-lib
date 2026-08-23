@@ -1181,6 +1181,40 @@ impl ADX_Stream {
         Ok(outReal)
     }
 
+    /// Commit `n` closed bars and write their `n` values, in one call —
+    /// exactly `n` back-to-back [`Self::update`] calls, with one set of
+    /// argument checks instead of `n`. `n` is `inHigh.len()`; the outputs must
+    /// hold at least that many. Never allocates.
+    ///
+    /// [`Self::out_range`] counts what was committed, which is what makes the
+    /// rejection below readable: there is no second out-parameter for it.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if the input slices differ in length, if an output
+    /// is shorter than the bar count — neither commits anything — or if a bar
+    /// is not finite. A non-finite bar `k` is rejected exactly as `update`
+    /// rejects it: bars `0..k` stay committed and their values written, bar `k`
+    /// and everything after it is not, and `out_range().count` has advanced by
+    /// `k`.
+    #[doc(alias = "TA_ADX_UpdateAndFill")]
+    pub fn update_and_fill(&mut self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], outReal: &mut [f64]) -> Result<(), RetCode> {
+        let barCount = inHigh.len();
+        if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || outReal.len() < barCount {
+            return Err(RetCode::BadParam);
+        }
+        for i in 0..barCount {
+            if !inHigh[i].is_finite() || !inLow[i].is_finite() || !inClose[i].is_finite() {
+                return Err(RetCode::BadParam);
+            }
+            self.core.ADX_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i]);
+            if self.out.count < Core::MAX_INDEX {
+                self.out.count += 1;
+            }
+        }
+        Ok(())
+    }
+
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may

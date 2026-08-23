@@ -572,6 +572,24 @@ TA_LIB_API TA_RetCode TA_PPO_Peek( const TA_PPO_Stream *stream, double inReal, d
    return TA_PPO_StepImpl( &scratch, inReal, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_PPO_UpdateAndFill( TA_PPO_Stream *stream, const double inReal[], int barCount, double outReal[] )
+{
+   int i;
+   TA_RetCode retCode;
+
+   if( !stream || !inReal || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      retCode = TA_PPO_StepImpl( stream, inReal[i], &outReal[i] );
+      if( retCode != TA_SUCCESS ) return retCode;
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_PPO_Close( TA_PPO_Stream *stream )
 {
    if( !stream ) return TA_SUCCESS;

@@ -797,6 +797,69 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
    }
 }
 
+TA_LIB_API TA_RetCode TA_MA_UpdateAndFill( TA_MA_Stream *stream, const double inReal[], int barCount, double outReal[] )
+{
+   TA_RetCode retCode;
+   int i;
+
+   if( !stream || !inReal || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   if( stream->optInTimePeriod == 1 || stream->optInMAType == TA_MAType_DISABLED )
+   {
+      for( i = 0; i < barCount; i++ )
+      {
+         if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+         outReal[i] = inReal[i];
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      }
+      return TA_SUCCESS;
+   }
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      switch( stream->optInMAType )
+      {
+      case TA_MAType_SMA:
+         retCode = TA_SMA_Update( (TA_SMA_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
+      case TA_MAType_EMA:
+         retCode = TA_EMA_Update( (TA_EMA_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
+      case TA_MAType_WMA:
+         retCode = TA_WMA_Update( (TA_WMA_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
+      case TA_MAType_DEMA:
+         retCode = TA_DEMA_Update( (TA_DEMA_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
+      case TA_MAType_TEMA:
+         retCode = TA_TEMA_Update( (TA_TEMA_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
+      case TA_MAType_TRIMA:
+         retCode = TA_TRIMA_Update( (TA_TRIMA_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
+      case TA_MAType_KAMA:
+         retCode = TA_KAMA_Update( (TA_KAMA_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
+      case TA_MAType_MAMA:
+         retCode = TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal[i], &outReal[i], NULL );
+         break;
+      case TA_MAType_T3:
+         retCode = TA_T3_Update( (TA_T3_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
+      case TA_MAType_HMA:
+         retCode = TA_HMA_Update( (TA_HMA_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
+      default:
+         /* Unreachable: Open rejects arms without a sub-stream. */
+         return TA_INTERNAL_ERROR;
+      }
+      if( retCode != TA_SUCCESS ) return retCode;
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
 {
    if( !stream ) return TA_SUCCESS;

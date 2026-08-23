@@ -419,9 +419,9 @@ cd ../bin && ./ta_regtest
 ./ta_regtest --codegen --language=c,rust --function=SMA,RSI
 ```
 
-## `stream_verify` — what each leg family can and cannot see (issues #240, #241)
+## `stream_verify` — what each leg family can and cannot see (issues #240, #241, #246)
 
-One request drives six families against one seeded series. They are not
+One request drives seven families against one seeded series. They are not
 interchangeable, and the coverage they add is very uneven:
 
 | family | what it compares | blind to |
@@ -431,11 +431,15 @@ interchangeable, and the coverage they add is very uneven:
 | `OpenInternal` anchored leg | `OpenInternal(S)` vs `batch(S)` at the last bar | same — one more open, no update |
 | `Peek` | Peek vs the Update that immediately follows it | a defect in the step: both run it |
 | **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers (the batch transcription is one arm of the compare) |
-| **range** (#241) | the handle's `OutRange` against the batch range over the same bars, at three sites: the `OpenAndFill` handle, `Open(P)` + updates, and the anchored `OpenInternal` | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is unreachable from here (it is pinned in the generator instead) |
+| `UpdateAndFill` (#246) | `Open(P)` then ONE call over the tail, every value vs batch, plus the canary slack above the run and the rejections each backend can express (an aliased or overlapping output, an output shorter than the run, a negative count, a zero-bar no-op) | the same thing every value family is blind to — that the handle knows how many bars it has produced, which is why the range leg has a site here too |
+| **range** (#241) | the handle's `OutRange` against the batch range over the same bars, at four sites: the `OpenAndFill` handle, `Open(P)` + updates, `Open(P)` + one `UpdateAndFill`, and the anchored `OpenInternal` (Rust reaches three — its server is a separate crate and cannot see `_OpenInternal`) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is unreachable from here (it is pinned in the generator instead) |
 
-So of the four value families, three delegate to the batch transcription and the
-fourth is same-tier: the prefix sweep's Update loop was the only thing looking at
-the streaming step, and it can only report a difference the **output** shows.
+So of the five value families, three delegate to the batch transcription and one
+is same-tier: the prefix sweep's Update loop and the n-bar filler are the only
+things looking at the streaming step, and both can only report a difference the
+**output** shows. (`UpdateAndFill` adds no independent numerics — it is the same
+step in a loop — so what it earns is the entry point's own argument handling and
+its partial commit, not a second opinion on the arithmetic.)
 
 For a candlestick the output is a 3-valued integer, so an arithmetic error in a
 `<Setting>PeriodTotal` is invisible until it crosses a decision threshold. Both

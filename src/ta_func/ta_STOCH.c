@@ -1169,6 +1169,24 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
    return TA_STOCH_StepImpl( &scratch, inHigh, inLow, inClose, outSlowK, outSlowD );
 }
 
+TA_LIB_API TA_RetCode TA_STOCH_UpdateAndFill( TA_STOCH_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outSlowK[], double outSlowD[] )
+{
+   int i;
+   TA_RetCode retCode;
+
+   if( !stream || !inHigh || !inLow || !inClose || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outSlowK == (const void *)inHigh || (const void *)outSlowK == (const void *)inLow || (const void *)outSlowK == (const void *)inClose || (const void *)outSlowD == (const void *)inHigh || (const void *)outSlowD == (const void *)inLow || (const void *)outSlowD == (const void *)inClose || (const void *)outSlowK == (const void *)outSlowD ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      retCode = TA_STOCH_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outSlowK[i], &outSlowD[i] );
+      if( retCode != TA_SUCCESS ) return retCode;
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_STOCH_Close( TA_STOCH_Stream *stream )
 {
    if( !stream ) return TA_SUCCESS;

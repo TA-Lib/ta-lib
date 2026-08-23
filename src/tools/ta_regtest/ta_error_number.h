@@ -432,6 +432,14 @@ typedef enum
   TA_STREAM_SHORT_HISTORY_CONTROL    = 1598,
   TA_STREAM_SHORT_HISTORY_VACUOUS    = 1599,
 
+  /* Streaming UpdateAndFill: n bars in one call, and its partial commit. */
+  TA_STREAM_UFILL_ACCEPTED_BAD_BAR   = 1601,
+  TA_STREAM_UFILL_WRONG_COMMIT       = 1602,
+  TA_STREAM_UFILL_VALUE_MISMATCH     = 1603,
+  TA_STREAM_UFILL_WROTE_PAST_COMMIT  = 1604,
+  TA_STREAM_UFILL_SETUP_FAILED       = 1605,
+  TA_STREAM_UFILL_VACUOUS            = 1606,
+
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,

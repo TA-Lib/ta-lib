@@ -663,6 +663,22 @@ TA_LIB_API TA_RetCode TA_AROON_Peek( const TA_AROON_Stream *stream, double inHig
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_AROON_UpdateAndFill( TA_AROON_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outAroonDown[], double outAroonUp[] )
+{
+   int i;
+
+   if( !stream || !inHigh || !inLow || !outAroonDown || !outAroonUp ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outAroonDown == (const void *)inHigh || (const void *)outAroonDown == (const void *)inLow || (const void *)outAroonUp == (const void *)inHigh || (const void *)outAroonUp == (const void *)inLow || (const void *)outAroonDown == (const void *)outAroonUp ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) ) return TA_BAD_PARAM;
+      TA_AROON_StepImpl( stream, inHigh[i], inLow[i], &outAroonDown[i], &outAroonUp[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_AROON_Close( TA_AROON_Stream *stream )
 {
    TA_AROON_ReleaseImpl( stream );

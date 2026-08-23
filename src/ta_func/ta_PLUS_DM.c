@@ -950,6 +950,22 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_PLUS_DM_UpdateAndFill( TA_PLUS_DM_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] )
+{
+   int i;
+
+   if( !stream || !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) ) return TA_BAD_PARAM;
+      TA_PLUS_DM_StepImpl( stream, inHigh[i], inLow[i], &outReal[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_PLUS_DM_Close( TA_PLUS_DM_Stream *stream )
 {
    if( stream ) TA_Free( stream );

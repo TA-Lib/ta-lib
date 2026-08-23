@@ -697,6 +697,22 @@ TA_LIB_API TA_RetCode TA_ATR_Peek( const TA_ATR_Stream *stream, double inHigh, d
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_ATR_UpdateAndFill( TA_ATR_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] )
+{
+   int i;
+
+   if( !stream || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      TA_ATR_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outReal[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ATR_Close( TA_ATR_Stream *stream )
 {
    if( stream ) TA_Free( stream );

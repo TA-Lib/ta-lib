@@ -1310,6 +1310,22 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_SMI_UpdateAndFill( TA_SMI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outSMI[], double outSMISignal[] )
+{
+   int i;
+
+   if( !stream || !inHigh || !inLow || !inClose || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outSMI == (const void *)inHigh || (const void *)outSMI == (const void *)inLow || (const void *)outSMI == (const void *)inClose || (const void *)outSMISignal == (const void *)inHigh || (const void *)outSMISignal == (const void *)inLow || (const void *)outSMISignal == (const void *)inClose || (const void *)outSMI == (const void *)outSMISignal ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      TA_SMI_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outSMI[i], &outSMISignal[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SMI_Close( TA_SMI_Stream *stream )
 {
    TA_SMI_ReleaseImpl( stream );

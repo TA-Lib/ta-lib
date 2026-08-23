@@ -817,6 +817,282 @@ public static class StreamApiTest
               + $"({_nfOpen}/{_nfBar}/{_nfState})");
     }
 
+    private static int _ufCommits;
+    private static int _ufValues;
+    private static int _ufSlots;
+
+    private const int UfN = 6;
+    private const int UfBad = 3;
+    private const double UfCanary = -1.2345678901234e300;
+    private const int UfCanaryI = -987654321;
+
+    private static void UfRangeEq(string what, OutRange a, OutRange b)
+    {
+        Check(a.BegIdx == b.BegIdx && a.Count == b.Count,
+              $"{what}: UpdateAndFill committed ({a.BegIdx},{a.Count}), "
+              + $"{UfBad} Updates committed ({b.BegIdx},{b.Count})");
+        _ufCommits++;
+    }
+
+    private static void UfValueEq(string what, double a, double b)
+    {
+        Check(Bits(a) == Bits(b), $"{what}: UpdateAndFill wrote {a} where Update returned {b}");
+        _ufValues++;
+    }
+
+    private static void UfUntouched(string what, double x)
+    {
+        Check(Bits(x) == Bits(UfCanary), $"{what}: UpdateAndFill wrote past the bar it rejected");
+        _ufSlots++;
+    }
+
+    /// <summary><c>UpdateAndFill</c> commits the bars before the one it rejects.</summary>
+    /// <remarks>
+    /// <para><c>UpdateAndFill</c> is <c>n</c> back-to-back <see cref="object"/>
+    /// <c>Update</c> calls and nothing else, so a non-finite bar <c>k</c> throws
+    /// exactly as <c>Update</c> would — and the bars before it stay committed with
+    /// their values written. That is the one place in the API where a call fails
+    /// AND leaves output behind, so what it leaves is pinned against a CONTROL
+    /// handle driven over the same first <c>k</c> bars one at a time: same
+    /// <c>OutRange</c>, same values, same answer on the next good bar, and nothing
+    /// written at or above <c>k</c>. A whole-array pre-scan would satisfy "it
+    /// throws" and fail every one of those.</para>
+    /// <para>Coverage is by the emitter each tier's <c>UpdateAndFill</c> comes
+    /// from: SMA stands for the whole step-loop family, BBANDS adds three outputs,
+    /// MA both dispatch arms, MAVP the period bank and CDLDOJI an integer output
+    /// over four inputs.</para>
+    /// </remarks>
+    private static void UpdateAndFillCommitsThePrefix()
+    {
+        var core = new Core();
+        const int warm = 60;
+        double[] closes = Closes(warm + UfN + 1);
+        double[] highs = new double[closes.Length];
+        double[] lows = new double[closes.Length];
+        double[] opens = new double[closes.Length];
+        double[] periods = new double[closes.Length];
+        for (int i = 0; i < closes.Length; i++)
+        {
+            highs[i] = closes[i] + 1.5;
+            lows[i] = closes[i] - 1.5;
+            opens[i] = closes[i] - 0.4;
+            periods[i] = 5.0 + (i % 11);
+        }
+        var c = closes[..warm].ToArray();
+        var h = highs[..warm].ToArray();
+        var l = lows[..warm].ToArray();
+        var o = opens[..warm].ToArray();
+        var pp = periods[..warm].ToArray();
+
+        double[] bad = { double.NaN, double.PositiveInfinity, double.NegativeInfinity };
+
+        foreach (double v in bad)
+        {
+            double[] bars = new double[UfN];
+            double[] goodBars = new double[UfN];
+            for (int i = 0; i < UfN; i++)
+            {
+                bars[i] = closes[warm + i];
+                goodBars[i] = closes[warm + i];
+            }
+            bars[UfBad] = v;
+
+            /* --- the shared step loop --------------------------------------- */
+            var sa = core.SMA_Open(c, 14);
+            var sb = core.SMA_Open(c, 14);
+            double[] want = new double[UfBad];
+            for (int i = 0; i < UfBad; i++)
+            {
+                want[i] = sb.Update(bars[i]);
+            }
+            double[] outp = new double[UfN];
+            Array.Fill(outp, UfCanary);
+            BarMustReject("SMA.UpdateAndFill", () => sa.UpdateAndFill(bars, outp));
+            UfRangeEq("SMA", sa.OutRange, sb.OutRange);
+            for (int i = 0; i < UfBad; i++)
+            {
+                UfValueEq("SMA", outp[i], want[i]);
+            }
+            for (int i = UfBad; i < UfN; i++)
+            {
+                UfUntouched("SMA", outp[i]);
+            }
+            StateMustHold("SMA(UpdateAndFill)",
+                sa.Update(closes[warm + UfN]), sb.Update(closes[warm + UfN]));
+
+            /* --- composed, three outputs ------------------------------------ */
+            var ba = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA);
+            var bb = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA);
+            var wantB = new (double U, double M, double L)[UfBad];
+            for (int i = 0; i < UfBad; i++)
+            {
+                var w = bb.Update(bars[i]);
+                wantB[i] = (w.RealUpperBand, w.RealMiddleBand, w.RealLowerBand);
+            }
+            double[] bu = new double[UfN];
+            double[] bm = new double[UfN];
+            double[] bl = new double[UfN];
+            Array.Fill(bu, UfCanary);
+            Array.Fill(bm, UfCanary);
+            Array.Fill(bl, UfCanary);
+            BarMustReject("BBANDS.UpdateAndFill", () => ba.UpdateAndFill(bars, bu, bm, bl));
+            UfRangeEq("BBANDS", ba.OutRange, bb.OutRange);
+            for (int i = 0; i < UfBad; i++)
+            {
+                UfValueEq("BBANDS.upper", bu[i], wantB[i].U);
+                UfValueEq("BBANDS.middle", bm[i], wantB[i].M);
+                UfValueEq("BBANDS.lower", bl[i], wantB[i].L);
+            }
+            for (int i = UfBad; i < UfN; i++)
+            {
+                UfUntouched("BBANDS.upper", bu[i]);
+                UfUntouched("BBANDS.middle", bm[i]);
+                UfUntouched("BBANDS.lower", bl[i]);
+            }
+            /* Value is built fresh from the handle's fields here (a record
+               struct, no cache), so it names the last committed bar for free —
+               asserted anyway, because Java's does need a refresh and the two
+               surfaces are meant to agree. */
+            Check(Bits(ba.Value.RealUpperBand) == Bits(wantB[UfBad - 1].U),
+                  "BBANDS: Value must name the last committed bar after a partial fill");
+            _ufValues++;
+
+            /* --- dispatch, both arms (period 1 is the identity loop) --------- */
+            foreach (int period in new[] { 1, 14 })
+            {
+                var ma = core.MA_Open(c, period, MAType.SMA);
+                var mb = core.MA_Open(c, period, MAType.SMA);
+                double[] wantM = new double[UfBad];
+                for (int i = 0; i < UfBad; i++)
+                {
+                    wantM[i] = mb.Update(bars[i]);
+                }
+                double[] mo = new double[UfN];
+                Array.Fill(mo, UfCanary);
+                BarMustReject($"MA({period}).UpdateAndFill", () => ma.UpdateAndFill(bars, mo));
+                UfRangeEq($"MA({period})", ma.OutRange, mb.OutRange);
+                for (int i = 0; i < UfBad; i++)
+                {
+                    UfValueEq("MA", mo[i], wantM[i]);
+                }
+                for (int i = UfBad; i < UfN; i++)
+                {
+                    UfUntouched("MA", mo[i]);
+                }
+            }
+
+            /* --- period bank: poison the PERIOD series, the input that reaches
+               an (int) cast ------------------------------------------------- */
+            double[] pers = new double[UfN];
+            for (int i = 0; i < UfN; i++)
+            {
+                pers[i] = 2.0 + (i % 8);
+            }
+            pers[UfBad] = v;
+            var va = core.MAVP_Open(c, pp, 2, 30, MAType.SMA);
+            var vb = core.MAVP_Open(c, pp, 2, 30, MAType.SMA);
+            double[] wantV = new double[UfBad];
+            for (int i = 0; i < UfBad; i++)
+            {
+                wantV[i] = vb.Update(goodBars[i], pers[i]);
+            }
+            double[] vo = new double[UfN];
+            Array.Fill(vo, UfCanary);
+            BarMustReject("MAVP.UpdateAndFill", () => va.UpdateAndFill(goodBars, pers, vo));
+            UfRangeEq("MAVP", va.OutRange, vb.OutRange);
+            for (int i = 0; i < UfBad; i++)
+            {
+                UfValueEq("MAVP", vo[i], wantV[i]);
+            }
+            for (int i = UfBad; i < UfN; i++)
+            {
+                UfUntouched("MAVP", vo[i]);
+            }
+
+            /* --- integer output, four inputs; poison the LOW ----------------- */
+            double[] os = new double[UfN];
+            double[] hs = new double[UfN];
+            double[] ls = new double[UfN];
+            for (int i = 0; i < UfN; i++)
+            {
+                os[i] = opens[warm + i];
+                hs[i] = highs[warm + i];
+                ls[i] = lows[warm + i];
+            }
+            ls[UfBad] = v;
+            var ja = core.CDLDOJI_Open(o, h, l, c);
+            var jb = core.CDLDOJI_Open(o, h, l, c);
+            int[] wantJ = new int[UfBad];
+            for (int i = 0; i < UfBad; i++)
+            {
+                wantJ[i] = jb.Update(os[i], hs[i], ls[i], goodBars[i]);
+            }
+            int[] jo = new int[UfN];
+            Array.Fill(jo, UfCanaryI);
+            BarMustReject("CDLDOJI.UpdateAndFill",
+                () => ja.UpdateAndFill(os, hs, ls, goodBars, jo));
+            UfRangeEq("CDLDOJI", ja.OutRange, jb.OutRange);
+            for (int i = 0; i < UfBad; i++)
+            {
+                Check(jo[i] == wantJ[i],
+                      $"CDLDOJI: UpdateAndFill wrote {jo[i]} where Update returned {wantJ[i]}");
+                _ufValues++;
+            }
+            for (int i = UfBad; i < UfN; i++)
+            {
+                Check(jo[i] == UfCanaryI, "CDLDOJI: UpdateAndFill wrote past the rejected bar");
+                _ufSlots++;
+            }
+        }
+
+        /* The rejections spans make visible: a short output, and an output that
+           OVERLAPS an input — `Span.Overlaps` sees the partially-shifted case
+           Java's reference equality cannot. Plus the zero-bar call, a success
+           that changes nothing. */
+        var s2 = core.SMA_Open(c, 14);
+        OutRange before = s2.OutRange;
+        double[] tail = new double[UfN];
+        for (int i = 0; i < UfN; i++)
+        {
+            tail[i] = closes[warm + i];
+        }
+        double[] o2 = new double[UfN];
+        Array.Fill(o2, UfCanary);
+        s2.UpdateAndFill(ReadOnlySpan<double>.Empty, o2);
+        Check(before.BegIdx == s2.OutRange.BegIdx && before.Count == s2.OutRange.Count,
+              "a zero-bar UpdateAndFill must not move the handle");
+        _ufCommits++;
+        UfUntouched("SMA(zero bars)", o2[0]);
+        BarMustReject("SMA.UpdateAndFill(short output)",
+            () => s2.UpdateAndFill(tail, new double[UfN - 1]));
+        /* Overlap, NOT a length mistake: both spans are exactly barCount long
+           and sit one element apart in the same array, so the only condition
+           that can reject is `Span.Overlaps` — the partially-shifted case
+           Java's reference equality cannot see. */
+        double[] wide = new double[UfN + 1];
+        for (int i = 0; i < UfN + 1; i++)
+        {
+            wide[i] = closes[warm + i];
+        }
+        BarMustReject("SMA.UpdateAndFill(output overlaps input)",
+            () => s2.UpdateAndFill(wide.AsSpan(0, UfN), wide.AsSpan(1, UfN)));
+        Check(before.BegIdx == s2.OutRange.BegIdx && before.Count == s2.OutRange.Count,
+              "a rejected UpdateAndFill must not move the handle");
+        _ufCommits++;
+        /* Control: the same call, correctly sized and disjoint, succeeds and
+           advances by exactly the bars it was handed. */
+        s2.UpdateAndFill(tail, o2);
+        Check(s2.OutRange.Count == before.Count + UfN,
+              "UpdateAndFill must advance by every bar it commits");
+        _ufCommits++;
+
+        /* Non-vacuity. Literal floors, every counter incremented at its
+           assertion. */
+        Check(_ufCommits >= 21 && _ufValues >= 75 && _ufSlots >= 73,
+              $"the UpdateAndFill gate ran fewer checks than it was written with "
+              + $"({_ufCommits}/{_ufValues}/{_ufSlots})");
+    }
+
     public static int Run()
     {
         StreamMatchesBatch();
@@ -833,6 +1109,7 @@ public static class StreamApiTest
         MultiOutputValueIsAStruct();
         CatalogueAgreesWithTheEmittedSurface();
         NonFiniteInputsAreRejected();
+        UpdateAndFillCommitsThePrefix();
 
         if (_failures == 0)
         {

@@ -17,6 +17,7 @@ Each streamable function adds two factory methods on `Core` and a handful of mem
 | `core.<NAME>_Open(history, params)` | once | validate params, consume warm-up history, return a **handle** |
 | `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar — see [below](#full-history-output-openandfill) |
 | `handle.Update(bar)` | once per **closed** bar | commit one bar, return the new value |
+| `handle.UpdateAndFill(bars, outs)` | instead of a loop of `Update` | commit `n` closed bars and write the `n` values — see [below](#catch-up-n-bars-at-once-updateandfill) |
 | `handle.Peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 | `handle.Value` | any time | the most recently committed value |
 | `handle.Clone()` | any time | an independent deep copy of the handle |
@@ -71,6 +72,28 @@ OutRange r = s.OutRange;    // the bars it has a value for
 
 The output arguments are the batch call's, in the same order. An output may not overlap an input, or another output — that throws `ArgumentException` and mints no handle. With spans that means genuine memory overlap, not just the same buffer: two slices of one array that share even one element are rejected.
 
+## Catch up n bars at once (`UpdateAndFill`)
+
+Feeding a gap one `Update` at a time works; `UpdateAndFill` does the same thing
+in one call, writing one value per bar into your span:
+
+```csharp
+double[] outReal = new double[gap.Length];
+
+s.UpdateAndFill(gap, outReal);      // outReal[i] is the SMA at gap[i]
+```
+
+It is exactly `gap.Length` back-to-back `Update` calls — same values, same state
+— with one set of argument checks instead of `n`. `s.OutRange` reports the bars
+the handle has a value for, before and after.
+
+That includes a call that fails partway. A non-finite bar throws
+`ArgumentException` exactly as `Update` does, which means the bars **before** it
+are already committed and their values already written; the range tells you how
+many. It throws before committing anything if the input spans differ in length,
+an output is shorter than the bar count, or an output overlaps an input or
+another output. An empty call does nothing.
+
 ## Multi-input / multi-output
 
 `Update` and `Peek` take one argument per input series, in the batch call's order, and return one value per output. Multi-output indicators return a generated `readonly record struct` named after the function, whose members are the output names with the leading `out` stripped:
@@ -91,7 +114,7 @@ These are record structs, so `==` is .NET's `double` equality: `NaN` equals `NaN
 
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is a non-finite bar; `Value` and `Clone()` never throw.
+`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is a non-finite bar; `UpdateAndFill` adds ragged inputs, an output shorter than the bar count and an overlapping output, all three before it commits anything. `Value` and `Clone()` never throw.
 
 | Condition | Exception |
 |---|---|

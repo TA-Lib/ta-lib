@@ -42,6 +42,7 @@
  *
  *  081626 MF,CC  First version. The streaming tier's non-finite input
  *                rejection.
+ *  082326 MF,CC  UpdateAndFill's partial commit (issue #246).
  */
 
 /* Description:
@@ -75,6 +76,16 @@
  *       offered the bad bar first, must agree BIT FOR BIT on the next good
  *       bar. A rejection that half-advanced the state would pass (a) and fail
  *       here.
+ *   (d) UpdateAndFill applies (a) and (b) PER BAR. It is n back-to-back
+ *       Updates, so a non-finite bar k is rejected exactly as Update rejects
+ *       it -- which means the bars before it stay committed and their values
+ *       stay written. That is the one place in the API where a call returns a
+ *       failure code AND leaves output behind, so what it left has to be
+ *       pinned: k values written, nothing above k touched, the handle's
+ *       OutRange advanced by exactly k, and the handle still in step with a
+ *       control that took the same k bars one at a time. A whole-array
+ *       pre-scan would pass "it rejects" and fail every one of those.
+ *
  *   (c) A real optional parameter that is NaN is rejected too. This one is not
  *       redundant with the batch range check: `NaN < min` and `NaN > max` are
  *       BOTH false, so a plain range test admits NaN -- which is why the
@@ -119,6 +130,11 @@
 static int sfBarRejects;    /* (a) */
 static int sfStateHolds;    /* (b) */
 static int sfParamRejects;  /* (c) */
+static int sfUfRejects;     /* (d) the rejected n-bar call */
+static int sfUfCommits;     /* (d) OutRange advanced by exactly k */
+static int sfUfValues;      /* (d) a value the rejected call still wrote */
+static int sfUfCanaries;    /* (d) a slot at or above k it left alone */
+static int sfUfGuards;      /* (d) an argument the call refuses outright */
 
 static double sfOpen[SF_BARS], sfHigh[SF_BARS], sfLow[SF_BARS], sfClose[SF_BARS];
 
@@ -173,6 +189,90 @@ static void sf_build_series( void )
          return TA_STREAM_FINITE_PARAM_ACCEPTED;                              \
       }                                                                       \
       sfParamRejects++;                                                       \
+   } while( 0 )
+
+/* ---- (d) UpdateAndFill: the partial commit ------------------------------ */
+/*
+ * SF_UF_N bars are offered in ONE call with bar SF_UF_BAD poisoned. What the
+ * call must leave behind is checked against a CONTROL handle driven over the
+ * same first SF_UF_BAD bars with plain Update: same range, same values, and
+ * still in step on the next good bar. The control is what makes this a
+ * statement about equivalence rather than about a number this test made up.
+ */
+#define SF_UF_N     6
+#define SF_UF_BAD   3
+#define SF_UF_CANARY   (-1.2345678901234e300)
+#define SF_UF_CANARY_I (-987654321)
+
+#define SF_UF_MUST_REJECT( fname, rc )                                        \
+   do {                                                                       \
+      if( (rc) != TA_BAD_PARAM )                                              \
+      {                                                                       \
+         printf( "  %s: UpdateAndFill accepted a non-finite bar "             \
+                 "(retCode %d)\n", fname, (int)(rc) );                        \
+         return TA_STREAM_UFILL_ACCEPTED_BAD_BAR;                             \
+      }                                                                       \
+      sfUfRejects++;                                                          \
+   } while( 0 )
+
+/* The rejected call must have advanced the handle by exactly the bars it
+ * committed -- which is what the control handle advanced by. */
+#define SF_UF_RANGE_EQ( fname, ha, hb )                                       \
+   do {                                                                       \
+      int aB = -1, aN = -1, bB = -2, bN = -2;                                 \
+      if( TA_StreamOutRange( (ha), &aB, &aN ) != TA_SUCCESS ||                \
+          TA_StreamOutRange( (hb), &bB, &bN ) != TA_SUCCESS ||                \
+          aB != bB || aN != bN )                                              \
+      {                                                                       \
+         printf( "  %s: UpdateAndFill committed (%d,%d), %d Updates "         \
+                 "committed (%d,%d)\n", fname, aB, aN, SF_UF_BAD, bB, bN );   \
+         return TA_STREAM_UFILL_WRONG_COMMIT;                                 \
+      }                                                                       \
+      sfUfCommits++;                                                          \
+   } while( 0 )
+
+#define SF_UF_VALUE_EQ( fname, a, b )                                         \
+   do {                                                                       \
+      if( memcmp( &(a), &(b), sizeof(a) ) != 0 )                              \
+      {                                                                       \
+         printf( "  %s: UpdateAndFill wrote %.17g where Update returned "     \
+                 "%.17g\n", fname, (double)(a), (double)(b) );                \
+         return TA_STREAM_UFILL_VALUE_MISMATCH;                               \
+      }                                                                       \
+      sfUfValues++;                                                           \
+   } while( 0 )
+
+#define SF_UF_VALUE_EQ_I( fname, a, b )                                       \
+   do {                                                                       \
+      if( (a) != (b) )                                                        \
+      {                                                                       \
+         printf( "  %s: UpdateAndFill wrote %d where Update returned %d\n",   \
+                 fname, (int)(a), (int)(b) );                                 \
+         return TA_STREAM_UFILL_VALUE_MISMATCH;                               \
+      }                                                                       \
+      sfUfValues++;                                                           \
+   } while( 0 )
+
+#define SF_UF_MUST_ANSWER( fname, what, rc, want )                            \
+   do {                                                                       \
+      if( (rc) != (want) )                                                    \
+      {                                                                       \
+         printf( "  %s: UpdateAndFill %s answered %d, expected %d\n",         \
+                 fname, what, (int)(rc), (int)(want) );                       \
+         return TA_STREAM_UFILL_WRONG_COMMIT;                                 \
+      }                                                                       \
+      sfUfGuards++;                                                           \
+   } while( 0 )
+
+#define SF_UF_UNTOUCHED( fname, x, canary )                                   \
+   do {                                                                       \
+      if( (x) != (canary) )                                                   \
+      {                                                                       \
+         printf( "  %s: UpdateAndFill wrote past the bar it rejected\n",      \
+                 fname );                                                     \
+         return TA_STREAM_UFILL_WROTE_PAST_COMMIT;                            \
+      }                                                                       \
+      sfUfCanaries++;                                                         \
    } while( 0 )
 
 /* ---- SMA: loop tier, one real input, one output ------------------------- */
@@ -413,6 +513,281 @@ static ErrorNumber sf_cdldoji( void )
    return TA_TEST_PASS;
 }
 
+/* ---- (d) one section per UpdateAndFill emitter -------------------------- */
+/* SMA: the shared `<N>_StepImpl` loop (loop / dual-mode / composed all reach
+ * it) -- the emitter 174 of the 176 functions use. */
+static ErrorNumber sf_uf_sma( void )
+{
+   int b, i, warm = 40;
+
+   for( b = 0; b < SF_NBAD; b++ )
+   {
+      TA_SMA_Stream *sa = NULL, *sb = NULL;
+      double va = 0.0, vb = 0.0;
+      double bars[SF_UF_N], out[SF_UF_N], ref[SF_UF_N];
+
+      if( TA_SMA_Open( &sa, sfClose, warm, 10, &va ) != TA_SUCCESS ||
+          TA_SMA_Open( &sb, sfClose, warm, 10, &vb ) != TA_SUCCESS )
+         return TA_STREAM_UFILL_SETUP_FAILED;
+      for( i = 0; i < SF_UF_N; i++ ) { bars[i] = sfClose[warm + i]; out[i] = SF_UF_CANARY; ref[i] = 0.0; }
+      bars[SF_UF_BAD] = sfBad[b];
+      for( i = 0; i < SF_UF_BAD; i++ ) TA_SMA_Update( sb, bars[i], &ref[i] );
+
+      SF_UF_MUST_REJECT( "SMA", TA_SMA_UpdateAndFill( sa, bars, SF_UF_N, out ) );
+      SF_UF_RANGE_EQ( "SMA", sa, sb );
+      for( i = 0; i < SF_UF_BAD; i++ ) SF_UF_VALUE_EQ( "SMA", out[i], ref[i] );
+      for( i = SF_UF_BAD; i < SF_UF_N; i++ ) SF_UF_UNTOUCHED( "SMA", out[i], SF_UF_CANARY );
+      TA_SMA_Update( sa, sfClose[warm + SF_UF_N], &va );
+      TA_SMA_Update( sb, sfClose[warm + SF_UF_N], &vb );
+      SF_STATE_MUST_HOLD( "SMA", va, vb );
+      TA_SMA_Close( sa );
+      TA_SMA_Close( sb );
+   }
+   return TA_TEST_PASS;
+}
+
+/* BBANDS: the same emitter with a FALLIBLE step (composed) and three outputs
+ * -- so a partial commit has to leave three arrays consistent, not one. */
+static ErrorNumber sf_uf_bbands( void )
+{
+   int b, i, warm = 40;
+
+   for( b = 0; b < SF_NBAD; b++ )
+   {
+      TA_BBANDS_Stream *sa = NULL, *sb = NULL;
+      double ua = 0.0, ma = 0.0, la = 0.0, ub = 0.0, mb = 0.0, lb_ = 0.0;
+      double bars[SF_UF_N];
+      double oU[SF_UF_N], oM[SF_UF_N], oL[SF_UF_N];
+      double rU[SF_UF_N], rM[SF_UF_N], rL[SF_UF_N];
+
+      if( TA_BBANDS_Open( &sa, sfClose, warm, 12, 2.0, 2.0, TA_MAType_SMA, &ua, &ma, &la ) != TA_SUCCESS ||
+          TA_BBANDS_Open( &sb, sfClose, warm, 12, 2.0, 2.0, TA_MAType_SMA, &ub, &mb, &lb_ ) != TA_SUCCESS )
+         return TA_STREAM_UFILL_SETUP_FAILED;
+      for( i = 0; i < SF_UF_N; i++ )
+      {
+         bars[i] = sfClose[warm + i];
+         oU[i] = oM[i] = oL[i] = SF_UF_CANARY;
+         rU[i] = rM[i] = rL[i] = 0.0;
+      }
+      bars[SF_UF_BAD] = sfBad[b];
+      for( i = 0; i < SF_UF_BAD; i++ ) TA_BBANDS_Update( sb, bars[i], &rU[i], &rM[i], &rL[i] );
+
+      SF_UF_MUST_REJECT( "BBANDS", TA_BBANDS_UpdateAndFill( sa, bars, SF_UF_N, oU, oM, oL ) );
+      SF_UF_RANGE_EQ( "BBANDS", sa, sb );
+      for( i = 0; i < SF_UF_BAD; i++ )
+      {
+         SF_UF_VALUE_EQ( "BBANDS", oU[i], rU[i] );
+         SF_UF_VALUE_EQ( "BBANDS", oM[i], rM[i] );
+         SF_UF_VALUE_EQ( "BBANDS", oL[i], rL[i] );
+      }
+      for( i = SF_UF_BAD; i < SF_UF_N; i++ )
+      {
+         SF_UF_UNTOUCHED( "BBANDS", oU[i], SF_UF_CANARY );
+         SF_UF_UNTOUCHED( "BBANDS", oM[i], SF_UF_CANARY );
+         SF_UF_UNTOUCHED( "BBANDS", oL[i], SF_UF_CANARY );
+      }
+      TA_BBANDS_Update( sa, sfClose[warm + SF_UF_N], &ua, &ma, &la );
+      TA_BBANDS_Update( sb, sfClose[warm + SF_UF_N], &ub, &mb, &lb_ );
+      SF_STATE_MUST_HOLD( "BBANDS", ua, ub );
+      SF_STATE_MUST_HOLD( "BBANDS", la, lb_ );
+      TA_BBANDS_Close( sa );
+      TA_BBANDS_Close( sb );
+   }
+   return TA_TEST_PASS;
+}
+
+/* CDLDOJI: integer output, four price inputs -- one poisoned slot at a time
+ * would be the finite gate's job; here it is the partial commit with the
+ * canary and the values compared as ints. */
+static ErrorNumber sf_uf_cdldoji( void )
+{
+   int b, i, warm = 40;
+
+   for( b = 0; b < SF_NBAD; b++ )
+   {
+      TA_CDLDOJI_Stream *sa = NULL, *sb = NULL;
+      int ia = 0, ib = 0;
+      double o[SF_UF_N], h[SF_UF_N], l[SF_UF_N], c[SF_UF_N];
+      int out[SF_UF_N], ref[SF_UF_N];
+
+      if( TA_CDLDOJI_Open( &sa, sfOpen, sfHigh, sfLow, sfClose, warm, &ia ) != TA_SUCCESS ||
+          TA_CDLDOJI_Open( &sb, sfOpen, sfHigh, sfLow, sfClose, warm, &ib ) != TA_SUCCESS )
+         return TA_STREAM_UFILL_SETUP_FAILED;
+      for( i = 0; i < SF_UF_N; i++ )
+      {
+         o[i] = sfOpen[warm + i]; h[i] = sfHigh[warm + i];
+         l[i] = sfLow[warm + i];  c[i] = sfClose[warm + i];
+         out[i] = SF_UF_CANARY_I; ref[i] = 0;
+      }
+      /* The poisoned slot is the LOW, not the open: a check that only looked
+       * at the first input array would still reject on every other case. */
+      l[SF_UF_BAD] = sfBad[b];
+      for( i = 0; i < SF_UF_BAD; i++ ) TA_CDLDOJI_Update( sb, o[i], h[i], l[i], c[i], &ref[i] );
+
+      SF_UF_MUST_REJECT( "CDLDOJI", TA_CDLDOJI_UpdateAndFill( sa, o, h, l, c, SF_UF_N, out ) );
+      SF_UF_RANGE_EQ( "CDLDOJI", sa, sb );
+      for( i = 0; i < SF_UF_BAD; i++ ) SF_UF_VALUE_EQ_I( "CDLDOJI", out[i], ref[i] );
+      for( i = SF_UF_BAD; i < SF_UF_N; i++ ) SF_UF_UNTOUCHED( "CDLDOJI", out[i], SF_UF_CANARY_I );
+      TA_CDLDOJI_Update( sa, sfOpen[warm + SF_UF_N], sfHigh[warm + SF_UF_N], sfLow[warm + SF_UF_N], sfClose[warm + SF_UF_N], &ia );
+      TA_CDLDOJI_Update( sb, sfOpen[warm + SF_UF_N], sfHigh[warm + SF_UF_N], sfLow[warm + SF_UF_N], sfClose[warm + SF_UF_N], &ib );
+      if( ia != ib )
+      {
+         printf( "  CDLDOJI: a rejected UpdateAndFill left the handle out of step (%d vs %d)\n", ia, ib );
+         return TA_STREAM_UFILL_WRONG_COMMIT;
+      }
+      sfUfCommits++;
+      TA_CDLDOJI_Close( sa );
+      TA_CDLDOJI_Close( sb );
+   }
+   return TA_TEST_PASS;
+}
+
+/* MA: the dispatch emitter, both arms. Period 1 takes the identity loop, which
+ * never reaches a sub-stream and carries its own copy of the per-bar check;
+ * period 10 takes the switch. */
+static ErrorNumber sf_uf_ma( void )
+{
+   int b, i, warm = 40, k;
+   const int periods[2] = { 1, 10 };
+
+   for( k = 0; k < 2; k++ )
+   for( b = 0; b < SF_NBAD; b++ )
+   {
+      TA_MA_Stream *sa = NULL, *sb = NULL;
+      double va = 0.0, vb = 0.0;
+      double bars[SF_UF_N], out[SF_UF_N], ref[SF_UF_N];
+
+      if( TA_MA_Open( &sa, sfClose, warm, periods[k], TA_MAType_SMA, &va ) != TA_SUCCESS ||
+          TA_MA_Open( &sb, sfClose, warm, periods[k], TA_MAType_SMA, &vb ) != TA_SUCCESS )
+         return TA_STREAM_UFILL_SETUP_FAILED;
+      for( i = 0; i < SF_UF_N; i++ ) { bars[i] = sfClose[warm + i]; out[i] = SF_UF_CANARY; ref[i] = 0.0; }
+      bars[SF_UF_BAD] = sfBad[b];
+      for( i = 0; i < SF_UF_BAD; i++ ) TA_MA_Update( sb, bars[i], &ref[i] );
+
+      SF_UF_MUST_REJECT( "MA", TA_MA_UpdateAndFill( sa, bars, SF_UF_N, out ) );
+      SF_UF_RANGE_EQ( "MA", sa, sb );
+      for( i = 0; i < SF_UF_BAD; i++ ) SF_UF_VALUE_EQ( "MA", out[i], ref[i] );
+      for( i = SF_UF_BAD; i < SF_UF_N; i++ ) SF_UF_UNTOUCHED( "MA", out[i], SF_UF_CANARY );
+      TA_MA_Update( sa, sfClose[warm + SF_UF_N], &va );
+      TA_MA_Update( sb, sfClose[warm + SF_UF_N], &vb );
+      SF_STATE_MUST_HOLD( "MA", va, vb );
+      TA_MA_Close( sa );
+      TA_MA_Close( sb );
+   }
+   return TA_TEST_PASS;
+}
+
+/* MAVP: the period-bank emitter. The whole bank advances per bar, so a
+ * partial commit here is a partial commit on every slot at once. */
+static ErrorNumber sf_uf_mavp( void )
+{
+   int b, i, warm = 40;
+
+   for( b = 0; b < SF_NBAD; b++ )
+   {
+      TA_MAVP_Stream *sa = NULL, *sb = NULL;
+      double va = 0.0, vb = 0.0;
+      double bars[SF_UF_N], pers[SF_UF_N], out[SF_UF_N], ref[SF_UF_N];
+
+      if( TA_MAVP_Open( &sa, sfClose, sfHigh, warm, 2, 20, TA_MAType_SMA, &va ) != TA_SUCCESS ||
+          TA_MAVP_Open( &sb, sfClose, sfHigh, warm, 2, 20, TA_MAType_SMA, &vb ) != TA_SUCCESS )
+         return TA_STREAM_UFILL_SETUP_FAILED;
+      for( i = 0; i < SF_UF_N; i++ )
+      {
+         bars[i] = sfClose[warm + i];
+         pers[i] = 2.0 + (double)(i % 8);
+         out[i] = SF_UF_CANARY; ref[i] = 0.0;
+      }
+      /* Poison the PERIOD series, not the price: it is the slot that reaches
+       * an `(int)` cast, where a non-finite value is undefined behaviour
+       * rather than merely a wrong number. */
+      pers[SF_UF_BAD] = sfBad[b];
+      for( i = 0; i < SF_UF_BAD; i++ ) TA_MAVP_Update( sb, bars[i], pers[i], &ref[i] );
+
+      SF_UF_MUST_REJECT( "MAVP", TA_MAVP_UpdateAndFill( sa, bars, pers, SF_UF_N, out ) );
+      SF_UF_RANGE_EQ( "MAVP", sa, sb );
+      for( i = 0; i < SF_UF_BAD; i++ ) SF_UF_VALUE_EQ( "MAVP", out[i], ref[i] );
+      for( i = SF_UF_BAD; i < SF_UF_N; i++ ) SF_UF_UNTOUCHED( "MAVP", out[i], SF_UF_CANARY );
+      TA_MAVP_Update( sa, sfClose[warm + SF_UF_N], 7.0, &va );
+      TA_MAVP_Update( sb, sfClose[warm + SF_UF_N], 7.0, &vb );
+      SF_STATE_MUST_HOLD( "MAVP", va, vb );
+      TA_MAVP_Close( sa );
+      TA_MAVP_Close( sb );
+   }
+   return TA_TEST_PASS;
+}
+
+/* The arguments UpdateAndFill refuses, and the one it accepts as a no-op.
+ *
+ * None of these is reachable through Update, which takes scalars: they are the
+ * n-bar entry point's own surface. Each must answer before committing anything,
+ * which is checked by reading the handle's range across the whole sweep — a
+ * guard that rejected AFTER stepping would pass every retCode assertion here
+ * and fail only that.
+ *
+ * C sees less than the other three: it is handed bare pointers, so an output
+ * shorter than barCount and input series of different lengths are invisible
+ * (docs/error-handling-spec.md, U5/U6). Those are gated in the Rust, Java and
+ * C# suites instead.
+ */
+static ErrorNumber sf_uf_guards( void )
+{
+   int warm = 40, i;
+   int b0 = -1, n0 = -1, b1 = -2, n1 = -2;
+   TA_SMA_Stream *sa = NULL;
+   double v = 0.0;
+   double bars[SF_UF_N], out[SF_UF_N];
+
+   if( TA_SMA_Open( &sa, sfClose, warm, 10, &v ) != TA_SUCCESS )
+      return TA_STREAM_UFILL_SETUP_FAILED;
+   for( i = 0; i < SF_UF_N; i++ ) { bars[i] = sfClose[warm + i]; out[i] = SF_UF_CANARY; }
+   if( TA_StreamOutRange( sa, &b0, &n0 ) != TA_SUCCESS )
+      return TA_STREAM_UFILL_SETUP_FAILED;
+
+   SF_UF_MUST_ANSWER( "SMA", "with no handle",
+      TA_SMA_UpdateAndFill( NULL, bars, SF_UF_N, out ), TA_BAD_PARAM );
+   SF_UF_MUST_ANSWER( "SMA", "with no input",
+      TA_SMA_UpdateAndFill( sa, NULL, SF_UF_N, out ), TA_BAD_PARAM );
+   SF_UF_MUST_ANSWER( "SMA", "with no output",
+      TA_SMA_UpdateAndFill( sa, bars, SF_UF_N, NULL ), TA_BAD_PARAM );
+   SF_UF_MUST_ANSWER( "SMA", "with a negative count",
+      TA_SMA_UpdateAndFill( sa, bars, -1, out ), TA_BAD_PARAM );
+   /* The output IS the input. Safe by construction here — the step consumes bar
+    * i before output i is written — and rejected anyway, because it is the only
+    * overlap C can detect and admitting it would advertise a guarantee whose
+    * neighbour (a shifted overlap) is silent corruption. */
+   SF_UF_MUST_ANSWER( "SMA", "with the output aliasing the input",
+      TA_SMA_UpdateAndFill( sa, bars, SF_UF_N, bars ), TA_BAD_PARAM );
+   /* Zero bars is a success that does nothing: a caller closing a gap should
+    * not have to special-case an empty one. */
+   SF_UF_MUST_ANSWER( "SMA", "with a zero count",
+      TA_SMA_UpdateAndFill( sa, bars, 0, out ), TA_SUCCESS );
+
+   if( TA_StreamOutRange( sa, &b1, &n1 ) != TA_SUCCESS || b1 != b0 || n1 != n0 )
+   {
+      printf( "  SMA: a refused UpdateAndFill moved the handle (%d,%d -> %d,%d)\n",
+              b0, n0, b1, n1 );
+      TA_SMA_Close( sa );
+      return TA_STREAM_UFILL_WRONG_COMMIT;
+   }
+   sfUfCommits++;
+   for( i = 0; i < SF_UF_N; i++ ) SF_UF_UNTOUCHED( "SMA", out[i], SF_UF_CANARY );
+   /* Control: the same call with valid arguments succeeds and advances by every
+    * bar it was handed -- so the refusals above cannot be passing because
+    * UpdateAndFill refuses everything. */
+   SF_UF_MUST_ANSWER( "SMA", "with valid arguments",
+      TA_SMA_UpdateAndFill( sa, bars, SF_UF_N, out ), TA_SUCCESS );
+   if( TA_StreamOutRange( sa, &b1, &n1 ) != TA_SUCCESS || n1 != n0 + SF_UF_N )
+   {
+      printf( "  SMA: UpdateAndFill committed %d bars, expected %d\n", n1 - n0, SF_UF_N );
+      TA_SMA_Close( sa );
+      return TA_STREAM_UFILL_WRONG_COMMIT;
+   }
+   sfUfCommits++;
+   TA_SMA_Close( sa );
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_func_stream_finite( TA_History *history )
 {
    ErrorNumber errNb;
@@ -425,6 +800,7 @@ ErrorNumber test_func_stream_finite( TA_History *history )
 
    sf_build_series();
    sfBarRejects = sfStateHolds = sfParamRejects = 0;
+   sfUfRejects = sfUfCommits = sfUfValues = sfUfCanaries = sfUfGuards = 0;
 
    if( ( errNb = sf_sma()       ) != TA_TEST_PASS ) return errNb;
    if( ( errNb = sf_minus_di()  ) != TA_TEST_PASS ) return errNb;
@@ -434,9 +810,20 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    if( ( errNb = sf_stoch()     ) != TA_TEST_PASS ) return errNb;
    if( ( errNb = sf_cdldoji()   ) != TA_TEST_PASS ) return errNb;
 
+   if( ( errNb = sf_uf_sma()     ) != TA_TEST_PASS ) return errNb;
+   if( ( errNb = sf_uf_bbands()  ) != TA_TEST_PASS ) return errNb;
+   if( ( errNb = sf_uf_cdldoji() ) != TA_TEST_PASS ) return errNb;
+   if( ( errNb = sf_uf_ma()      ) != TA_TEST_PASS ) return errNb;
+   if( ( errNb = sf_uf_mavp()    ) != TA_TEST_PASS ) return errNb;
+   if( ( errNb = sf_uf_guards()  ) != TA_TEST_PASS ) return errNb;
+
    printf( "  Streaming finite-input gate: %d bar rejection(s), "
            "%d state-unchanged compare(s), %d NaN-parameter rejection(s)\n",
            sfBarRejects, sfStateHolds, sfParamRejects );
+   printf( "  UpdateAndFill partial-commit gate: %d rejection(s), %d range "
+           "compare(s), %d value compare(s), %d untouched slot(s), "
+           "%d argument answer(s)\n",
+           sfUfRejects, sfUfCommits, sfUfValues, sfUfCanaries, sfUfGuards );
 
    /* Non-vacuity. The floors are literal, not derived from the loops above: a
     * count computed from the trip count moves with it, and would let half the
@@ -445,6 +832,13 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    {
       printf( "  Failed: the gate ran fewer checks than it was written with\n" );
       return TA_STREAM_FINITE_VACUOUS;
+   }
+   if( sfUfRejects < 18 || sfUfCommits < 23 || sfUfValues < 72 ||
+       sfUfCanaries < 78 || sfUfGuards < 7 )
+   {
+      printf( "  Failed: the UpdateAndFill gate ran fewer checks than it was "
+              "written with\n" );
+      return TA_STREAM_UFILL_VACUOUS;
    }
 
    return TA_TEST_PASS;

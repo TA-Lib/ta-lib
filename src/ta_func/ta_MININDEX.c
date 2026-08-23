@@ -501,6 +501,22 @@ TA_LIB_API TA_RetCode TA_MININDEX_Peek( const TA_MININDEX_Stream *stream, double
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_MININDEX_UpdateAndFill( TA_MININDEX_Stream *stream, const double inReal[], int barCount, int outInteger[] )
+{
+   int i;
+
+   if( !stream || !inReal || !outInteger ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inReal ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      TA_MININDEX_StepImpl( stream, inReal[i], &outInteger[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MININDEX_Close( TA_MININDEX_Stream *stream )
 {
    TA_MININDEX_ReleaseImpl( stream );

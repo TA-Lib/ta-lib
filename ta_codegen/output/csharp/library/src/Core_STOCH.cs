@@ -931,6 +931,36 @@ public partial class Core
          return new STOCH_Value(scratch.cur_outSlowK, scratch.cur_outSlowD);
       }
 
+      /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
+      /// <remarks>
+      /// <para>Exactly <c>n</c> back-to-back <see cref="Update"/> calls, with one set of
+      /// argument checks instead of <c>n</c>. The outputs must hold at least
+      /// <c>n</c> values and must not overlap an input or each other.</para>
+      /// <para><see cref="OutRange"/> counts what was committed, which is what makes a
+      /// rejection readable: a non-finite bar <c>k</c> throws
+      /// <see cref="System.ArgumentException"/> exactly as <see cref="Update"/>
+      /// would, with bars <c>0..k</c> committed and written, bar <c>k</c> and
+      /// everything after it not, and the count advanced by <c>k</c>.</para>
+      /// </remarks>
+      /// <param name="inHigh">Closed bars for <c>inHigh</c>, oldest first.</param>
+      /// <param name="inLow">Closed bars for <c>inLow</c>, oldest first.</param>
+      /// <param name="inClose">Closed bars for <c>inClose</c>, oldest first.</param>
+      /// <param name="outSlowK">Receives one <c>outSlowK</c> value per bar committed.</param>
+      /// <param name="outSlowD">Receives one <c>outSlowD</c> value per bar committed.</param>
+      public void UpdateAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outSlowK, Span<double> outSlowD )
+      {
+         int barCount = inHigh.Length;
+         if( inLow.Length != barCount || inClose.Length != barCount || outSlowK.Length < barCount || outSlowD.Length < barCount || outSlowK.Overlaps(inHigh) || outSlowK.Overlaps(inLow) || outSlowK.Overlaps(inClose) || outSlowD.Overlaps(inHigh) || outSlowD.Overlaps(inLow) || outSlowD.Overlaps(inClose) || outSlowK.Overlaps(outSlowD) ) throw Core.StreamFailure("STOCH", "updateAndFill", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ )
+         {
+            if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("STOCH", "updateAndFill", RetCode.BadParam);
+            core.STOCH_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outSlowK[i] = cur_outSlowK;
+            outSlowD[i] = cur_outSlowD;
+            if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
+         }
+      }
+
       /// <summary>The value at the most recently committed bar — the last history bar right
       /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
       /// <remarks>

@@ -155,6 +155,66 @@ throughput.
 **Availability.** C first (every streamable function has `OpenAndFill` wherever it has
 `Open` — same `TA_FUNC_FLG_STREAM` gate); Rust/Java/.NET follow their `open` emitters.
 
+### Catching up n bars at once (`UpdateAndFill`)
+
+`update` commits one bar. `UpdateAndFill` commits `n` and writes the `n` values
+into the caller's arrays — the streaming counterpart of what `OpenAndFill` does
+for the warm-up. It is the answer for a caller catching a live stream up over a
+gap, or replaying a batch of closed bars, without `n` round trips.
+
+- **`update_and_fill(bars[], outputs[]) → n values` — as often as you like.**
+  Exactly `n` back-to-back `update` calls, in order. Same values, same state,
+  same per-bar rejection; what disappears is the per-call cost around the step —
+  one call frame, one NULL/length/aliasing check set for the whole run instead
+  of one per bar.
+
+**What it saves.** Measured in C over 4096 bars against the same handle driven
+one `Update` at a time, medians of 51 interleaved reps with a noise floor under
+1%: **−2%** for `SMA`, **−19%** for `CDLDOJI`, **−9% to −15%** for `BBANDS`. The
+spread is the shape of what is removed rather than of the indicators: `SMA`
+passes one scalar and one pointer, `CDLDOJI` four and one, `BBANDS` one and
+three. Real, and worth having where a caller is replaying thousands of bars —
+but the ergonomics and the single range read are the larger part of the case,
+not a new performance tier.
+
+There is no `outBegIdx`/`outNBElement` pair: the range rides on the handle, so
+`TA_StreamOutRange` / `out_range()` / `outRange()` / `OutRange` answers
+afterwards — and answers it for a partial run too, which is the whole reason the
+next paragraph is expressible at all.
+
+**A rejected bar commits the bars before it.** `n` bars in one call is `n`
+`update`s and nothing else, so bar `k` being non-finite is rejected the way
+`update` rejects it: bars `0..k` stay committed with their values written, bar
+`k` and everything after it does not, and the handle's range has advanced by
+exactly `k`. This is the one call in the library that returns a failure *and*
+leaves output behind, so what it leaves is specified rather than merely allowed,
+and the gate compares it against a control handle driven over the same `k` bars
+one at a time.
+
+The alternative was to read the `n` bars as an input *array* — never scanned,
+`count += n` unconditionally, marginally faster. It was rejected because the two
+reasons the warm-up scan was deleted (`docs/error-handling-spec.md` footnote
+[17]) both stop applying here. That scan was an extra pass over caller memory;
+this check is a comparison on a value the loop has already loaded to step on.
+And a partial fill was unacceptable in `OpenAndFill` because it leaves no handle
+and a half-written array with nothing to describe it, where here it leaves `k`
+successful updates and a handle that says so. Meanwhile the reason the streaming
+tier rejects a bar at all is untouched: a handle retains accumulators, so one
+non-finite bar poisons every value it will ever produce. Under the array reading
+`UpdateAndFill` would have been the one way to poison a handle silently, in the
+entry point whose whole pitch is "the convenience form of a loop of `update`s".
+
+**Aliasing.** Outputs may not alias the inputs or each other, the same rule
+`OpenAndFill` carries. Exact equality happens to be safe here — the step takes
+bar `i` by value, so output `i` is written after every input `i` has been read —
+and is rejected anyway, because it is the only case C can see and admitting it
+would advertise a guarantee whose immediate neighbourhood (an output overlapping
+an input at a non-zero offset, which feeds the next bar a value the previous bar
+just wrote) is silent corruption.
+
+**Scope.** Streaming only. There is no batch-tier `UpdateAndFill` and none is
+proposed.
+
 ### Semantic definition (the contract tests enforce)
 
 For every function F, parameters p, and series `x[0..t]`: after
@@ -173,9 +233,10 @@ unstable period in effect at `open`.
 Notes that make this precise:
 
 - **The range matches batch too, not just the values.** After a handle has been
-  fed `N` bars, by any mixture of `open` / `openAndFill` and `update`, its
-  `OutRange` is what the batch call over those same bars reports. `stream_verify`
-  carries a range leg for this in all four servers.
+  fed `N` bars, by any mixture of `open` / `openAndFill`, `update` and
+  `updateAndFill`, its `OutRange` is what the batch call over those same bars
+  reports. `stream_verify` carries a range leg for this in all four servers, with
+  one compare site per opener and one for the n-bar filler.
 - **The history given to `open` defines bar 0.** The stream matches batch
   over exactly the series it has seen; for some seedings (e.g. EMA under
   Metastock compatibility) values depend on the whole history — by design.
@@ -200,7 +261,9 @@ Notes that make this precise:
   A **single value** is always checked, in both tiers, because it is one
   comparison and costs nothing measurable:
 
-  - every bar handed to `Update` / `Peek`, in every input slot;
+  - every bar handed to `Update` / `Peek` / `UpdateAndFill`, in every input
+    slot — the n-bar filler checks bar `i` before committing it, which is a
+    per-bar test inside its loop, not a pre-scan of the array;
   - every real optional parameter, which the range test would otherwise admit —
     `x < min` and `x > max` are both false for NaN, so the check is spelled
     inverted, `!(x >= min && x <= max)`, in **both** tiers.
@@ -292,6 +355,15 @@ TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream,
                                      double         inReal,
                                      double        *outReal );
 
+/* update_and_fill: barCount closed bars in, barCount values out — exactly
+ * barCount back-to-back Update calls. No out-meta pair: read the range off
+ * the handle, which also reports how many bars a rejected call committed.
+ * Outputs must not alias the inputs or each other. */
+TA_LIB_API TA_RetCode TA_SMA_UpdateAndFill( TA_SMA_Stream *stream,
+                                            const double   inReal[],
+                                            int            barCount,
+                                            double         outReal[] );
+
 /* peek: the same generated transition as update, run on a scratch copy
  * of the state — never commits (the handle is logically const). */
 TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream,
@@ -313,8 +385,11 @@ min_history`, so no value exists yet), `TA_BAD_PARAM` (param out of range) or
 `TA_ALLOC_ERR`; `*stream` is NULL on any failure. The history itself is an input array and is not
 scanned — see the non-finite bullet above.
 `Update`/`Peek` return `TA_BAD_PARAM` on NULL arguments and on a non-finite bar
-value, leaving the handle untouched in the latter case. `Close(NULL)` is a
-no-op returning `TA_SUCCESS`.
+value, leaving the handle untouched in the latter case. `UpdateAndFill` adds a
+negative `barCount` and an output aliasing an input or another output to that
+list, all three checked before any bar is committed; a non-finite bar `k` is
+rejected mid-run and commits `[0, k)`. `barCount == 0` is a success that does
+nothing. `Close(NULL)` is a no-op returning `TA_SUCCESS`.
 
 **Shapes.** Multi-input functions take the price scalars in batch order
 (`TA_CDLDOJI_Update(s, open, high, low, close, &outInteger)`).
@@ -331,6 +406,7 @@ let (mut s, _last) = core.SMA_Open(&history, 14)?; // &self method on Core; the
                                                   // (a cheap by-value clone)
 for &x in new_bars { let v = s.update(x)?; }       // &mut self; Err(BadParam)
                                                   // only on a non-finite bar
+s.update_and_fill(&gap_bars, &mut out)?;            // n bars, n values, one call
 let provisional = s.peek(forming_bar_close)?;      // &self: runs the same
                                                   // transition on a reused
                                                   // scratch, never commits
@@ -349,6 +425,7 @@ Core core = new Core();
 Core.SMA_Stream s = core.SMA_Open(history, 14);  // throws on reject; value() = last-bar value
 double v = s.update(bar);                        // one value per closed bar
 double p = s.peek(formingBarClose);              // forming bar, non-committing (scratch copy)
+s.updateAndFill(gapBars, out);                   // n bars, n values, one call
 Core.SMA_Stream t = s.copy();                    // independent stream fork
 Core.MACD_Stream m = core.MACD_Open(history, 12, 26, 9);
 Core.MACD_Stream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist

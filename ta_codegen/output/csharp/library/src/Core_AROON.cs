@@ -602,6 +602,35 @@ public partial class Core
          return new AROON_Value(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
       }
 
+      /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
+      /// <remarks>
+      /// <para>Exactly <c>n</c> back-to-back <see cref="Update"/> calls, with one set of
+      /// argument checks instead of <c>n</c>. The outputs must hold at least
+      /// <c>n</c> values and must not overlap an input or each other.</para>
+      /// <para><see cref="OutRange"/> counts what was committed, which is what makes a
+      /// rejection readable: a non-finite bar <c>k</c> throws
+      /// <see cref="System.ArgumentException"/> exactly as <see cref="Update"/>
+      /// would, with bars <c>0..k</c> committed and written, bar <c>k</c> and
+      /// everything after it not, and the count advanced by <c>k</c>.</para>
+      /// </remarks>
+      /// <param name="inHigh">Closed bars for <c>inHigh</c>, oldest first.</param>
+      /// <param name="inLow">Closed bars for <c>inLow</c>, oldest first.</param>
+      /// <param name="outAroonDown">Receives one <c>outAroonDown</c> value per bar committed.</param>
+      /// <param name="outAroonUp">Receives one <c>outAroonUp</c> value per bar committed.</param>
+      public void UpdateAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, Span<double> outAroonDown, Span<double> outAroonUp )
+      {
+         int barCount = inHigh.Length;
+         if( inLow.Length != barCount || outAroonDown.Length < barCount || outAroonUp.Length < barCount || outAroonDown.Overlaps(inHigh) || outAroonDown.Overlaps(inLow) || outAroonUp.Overlaps(inHigh) || outAroonUp.Overlaps(inLow) || outAroonDown.Overlaps(outAroonUp) ) throw Core.StreamFailure("AROON", "updateAndFill", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ )
+         {
+            if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) ) throw Core.StreamFailure("AROON", "updateAndFill", RetCode.BadParam);
+            core.AROON_StepImpl(this, inHigh[i], inLow[i]);
+            outAroonDown[i] = cur_outAroonDown;
+            outAroonUp[i] = cur_outAroonUp;
+            if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
+         }
+      }
+
       /// <summary>The value at the most recently committed bar — the last history bar right
       /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
       /// <remarks>

@@ -593,6 +593,22 @@ TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_Peek( const TA_CDLUNIQUE3RIVER_Stream *
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_UpdateAndFill( TA_CDLUNIQUE3RIVER_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] )
+{
+   int i;
+
+   if( !stream || !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      TA_CDLUNIQUE3RIVER_StepImpl( stream, inOpen[i], inHigh[i], inLow[i], inClose[i], &outInteger[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_Close( TA_CDLUNIQUE3RIVER_Stream *stream )
 {
    TA_CDLUNIQUE3RIVER_ReleaseImpl( stream );

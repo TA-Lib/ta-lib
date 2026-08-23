@@ -361,17 +361,43 @@ tier which does (B5). An undersized or absent output faults inside the fill loop
 with the buffer already partly written — a raw index exception in Java and C#, a
 panic in Rust.
 
-### 2.4 Streaming tier — advancing (`Update`, `Peek`)
+[20] Only C has a bar count: the other three take slices or arrays, which carry
+their own lengths, so "negative" is unrepresentable.
+
+[21] C is handed bare pointers and has no sizes — the same blind spot as B5 and
+S8. The other three answer both before committing anything, which makes
+`UpdateAndFill` the one filling entry point whose output capacity IS validated
+outside C; `OpenAndFill`'s (S8) still is not, and closing that is Appendix D
+item 9.
+
+[22] Rust cannot express it: `&[f64]` and `&mut [f64]` cannot alias, so the
+borrow checker rejects the call at compile time.
+
+### 2.4 Streaming tier — advancing (`Update`, `Peek`, `UpdateAndFill`)
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
 | U1 | The handle was not supplied | `TA_BAD_PARAM` | ✅ | — | — | — |
-| U2 | The output was not supplied | `TA_BAD_PARAM` | ✅ | — | — | — |
+| U2 | The output — or, for `UpdateAndFill`, an input series — was not supplied | `TA_BAD_PARAM` | ✅ | — | — | — |
 | U3 | Any bar is non-finite | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
+| U4 | (`UpdateAndFill`) the bar count is negative | `TA_BAD_PARAM` | ✅ | n/a [20] | n/a [20] | n/a [20] |
+| U5 | (`UpdateAndFill`) the input series have different lengths | `TA_BAD_PARAM` | ❌ [21] | ✅ | ✅ | ✅ |
+| U6 | (`UpdateAndFill`) an output is shorter than the bar count | `TA_BAD_PARAM` | ❌ [21] | ✅ | ✅ | ✅ |
+| U7 | (`UpdateAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅ | n/a [22] | ✅ | ✅ |
 
 A rejected `Update` leaves the handle usable and unadvanced, its `OutRange`
 included — that is the whole point of rejecting rather than computing. `Peek`
 never writes the handle under any outcome.
+
+`UpdateAndFill` is `n` back-to-back `Update`s, so U3 applies **per bar** and is
+the one rule in this document whose rejection leaves output behind: bar `k`
+being non-finite commits bars `[0, k)` with their values written, leaves bar `k`
+and everything after it uncommitted, and advances the handle's `OutRange` by
+exactly `k`. U4–U7 are checked before any bar is committed, so those four leave
+the handle where it was, and a zero bar count is a success that does nothing.
+Reading the `n` bars as an input array instead — never scanned, `count += n`
+unconditionally — was considered and rejected; `docs/streaming-api-design.md`,
+"Catching up n bars at once", says why.
 
 **There is no value accessor in C or Rust**, so "read the current value" is a
 rule only two backends could carry, and it has no error surface in either: Java's
@@ -381,7 +407,11 @@ Rust through their return values — a caller who wants it later keeps it.
 
 U3 is checked with an explicit finite test, so it rejects NaN and both
 infinities alike. Verified: 174 of 174 `Update` and `Peek` entry points check
-their bar.
+their bar, and every `UpdateAndFill` re-emits the same test inside its loop —
+re-emitted rather than reached by calling `Update` per bar, because the check
+lives in the public entry point and routing through it would buy the check at
+the price of a call per bar, which is the cost this entry point exists to
+remove.
 
 **Reading the range** has an error surface in C alone, where it is a function
 rather than a field: `TA_StreamOutRange` answers `TA_BAD_PARAM` for a NULL
@@ -414,14 +444,14 @@ Global settings in C; a builder producing an immutable core in Rust, Java and C#
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| G1 | A setter that names a **single** target rejects the set-all wildcard, and any out-of-domain target | `TA_BAD_PARAM` | ✅ | ✅ [20] | ✅ [20] | ✅ |
+| G1 | A setter that names a **single** target rejects the set-all wildcard, and any out-of-domain target | `TA_BAD_PARAM` | ✅ | ✅ [23] | ✅ [23] | ✅ |
 | G2 | The unstable period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
-| G3 | **Reading** a per-function setting for a target that names no single function | `TA_BAD_PARAM` | ⚠️ [21] | ✅ | ✅ | ✅ |
+| G3 | **Reading** a per-function setting for a target that names no single function | `TA_BAD_PARAM` | ⚠️ [24] | ✅ | ✅ | ✅ |
 | G4 | The candlestick range type is in domain | `TA_BAD_PARAM` | ✅ | — | — | ✅ |
 | G5 | The candlestick average period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
-| G6 | The candlestick factor is not NaN [24] | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
-| G7 | The compatibility mode is in domain | `TA_BAD_PARAM` | ✅ [22] | — [22] | — [22] | — [22] |
-| G8 | A rejected setting leaves the configuration unchanged | — | ✅ | ✅ [23] | ✅ | ✅ |
+| G6 | The candlestick factor is not NaN [27] | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
+| G7 | The compatibility mode is in domain | `TA_BAD_PARAM` | ✅ [25] | — [25] | — [25] | — [25] |
+| G8 | A rejected setting leaves the configuration unchanged | — | ✅ | ✅ [26] | ✅ | ✅ |
 
 The bounds in G2 and G5 are not arbitrary. Both values are added to a lookback
 which is then used as an index: unbounded, the lookback overflows negative and
@@ -430,26 +460,26 @@ success. `MAX_INDEX` is the ceiling the index domain already enforces, and a
 warm-up longer than the largest addressable series could never produce output, so
 nothing legitimate is refused.
 
-[20] The wildcard is a declared member, so it is rejected by value; a target outside
+[23] The wildcard is a declared member, so it is rejected by value; a target outside
 the declared set is unrepresentable.
 
-[21] C's getter returns the period itself, so it carries no error channel: a target
+[24] C's getter returns the period itself, so it carries no error channel: a target
 that names no single function reads as `0`. Accepted, and pinned by
 `test_internals.c`; the other three backends reject it because a getter that can
 throw costs them nothing.
 
-[22] C rejects an out-of-domain value with `TA_BAD_PARAM` and leaves the mode
+[25] C rejects an out-of-domain value with `TA_BAD_PARAM` and leaves the mode
 unchanged. It previously accepted anything and echoed it back from the getter, so a
 caller could not tell a typo from a setting; the two-line domain check was taken even
 though `TA_SetCompatibility` is deprecated, because it was that cheap. Rust, Java and
 C# expose no public setter at all, so the mode is pinned and the domain cannot be
 violated there.
 
-[23] Rust's setters chain and cannot fail individually; each latches the **first**
+[26] Rust's setters chain and cannot fail individually; each latches the **first**
 rejection, which surfaces when the core is built. Verified that a later valid
 setter does not clear an earlier rejection.
 
-[24] NaN only: an infinite factor is accepted, in all four backends. A factor
+[27] NaN only: an infinite factor is accepted, in all four backends. A factor
 scales a threshold and never indexes anything, so an infinity cannot take a
 function off the end of its input; NaN is refused because it silences every
 comparison it feeds, which is indistinguishable from "this shape never occurs".
@@ -472,7 +502,7 @@ not on which function was called.
 | Where a non-finite value arrives | What the library does | Rule |
 |---|---|:---:|
 | Inside an **input array**: a batch input series, or the warm-up history handed to `Open` / `OpenAndFill` | Nothing. **Undefined behaviour** — not detected, not rejected, nothing promised about the output or about a handle opened from it. Do not do it. | — |
-| As a **bar** handed to `Update` / `Peek` | **An error**: the bar is non-finite. | U3 |
+| As a **bar** handed to `Update` / `Peek`, or as one of the `n` bars handed to `UpdateAndFill` | **An error**: the bar is non-finite. In `UpdateAndFill` the bars before it stay committed. | U3 |
 | As a **real optional parameter** | **An error**: the value is outside the parameter's domain, since every declared bound is finite. | B4, S5 |
 | As a candlestick **`factor`** — a global setting rather than a call parameter | **An error for NaN.** An infinity is accepted, and G6 says why. | G6 |
 

@@ -650,6 +650,38 @@ public partial class Core
          return new ACCBANDS_Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
       }
 
+      /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
+      /// <remarks>
+      /// <para>Exactly <c>n</c> back-to-back <see cref="Update"/> calls, with one set of
+      /// argument checks instead of <c>n</c>. The outputs must hold at least
+      /// <c>n</c> values and must not overlap an input or each other.</para>
+      /// <para><see cref="OutRange"/> counts what was committed, which is what makes a
+      /// rejection readable: a non-finite bar <c>k</c> throws
+      /// <see cref="System.ArgumentException"/> exactly as <see cref="Update"/>
+      /// would, with bars <c>0..k</c> committed and written, bar <c>k</c> and
+      /// everything after it not, and the count advanced by <c>k</c>.</para>
+      /// </remarks>
+      /// <param name="inHigh">Closed bars for <c>inHigh</c>, oldest first.</param>
+      /// <param name="inLow">Closed bars for <c>inLow</c>, oldest first.</param>
+      /// <param name="inClose">Closed bars for <c>inClose</c>, oldest first.</param>
+      /// <param name="outRealUpperBand">Receives one <c>outRealUpperBand</c> value per bar committed.</param>
+      /// <param name="outRealMiddleBand">Receives one <c>outRealMiddleBand</c> value per bar committed.</param>
+      /// <param name="outRealLowerBand">Receives one <c>outRealLowerBand</c> value per bar committed.</param>
+      public void UpdateAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
+      {
+         int barCount = inHigh.Length;
+         if( inLow.Length != barCount || inClose.Length != barCount || outRealUpperBand.Length < barCount || outRealMiddleBand.Length < barCount || outRealLowerBand.Length < barCount || outRealUpperBand.Overlaps(inHigh) || outRealUpperBand.Overlaps(inLow) || outRealUpperBand.Overlaps(inClose) || outRealMiddleBand.Overlaps(inHigh) || outRealMiddleBand.Overlaps(inLow) || outRealMiddleBand.Overlaps(inClose) || outRealLowerBand.Overlaps(inHigh) || outRealLowerBand.Overlaps(inLow) || outRealLowerBand.Overlaps(inClose) || outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) throw Core.StreamFailure("ACCBANDS", "updateAndFill", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ )
+         {
+            if( !double.IsFinite(inHigh[i]) || !double.IsFinite(inLow[i]) || !double.IsFinite(inClose[i]) ) throw Core.StreamFailure("ACCBANDS", "updateAndFill", RetCode.BadParam);
+            core.ACCBANDS_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outRealUpperBand[i] = cur_outRealUpperBand;
+            outRealMiddleBand[i] = cur_outRealMiddleBand;
+            outRealLowerBand[i] = cur_outRealLowerBand;
+            if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
+         }
+      }
+
       /// <summary>The value at the most recently committed bar — the last history bar right
       /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
       /// <remarks>

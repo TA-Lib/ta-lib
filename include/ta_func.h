@@ -122,6 +122,15 @@ TA_LIB_API TA_RetCode TA_AC_Close( TA_AC_Stream *stream );
 TA_LIB_API TA_RetCode TA_AC_OpenAndFill( TA_AC_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_AC_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_AC_UpdateAndFill( TA_AC_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] );
+
+/*
  * TA_ACCBANDS - Acceleration Bands
  * 
  * Input  = High, Low, Close
@@ -184,6 +193,15 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Close( TA_ACCBANDS_Stream *stream );
 TA_LIB_API TA_RetCode TA_ACCBANDS_OpenAndFill( TA_ACCBANDS_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ACCBANDS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ACCBANDS_UpdateAndFill( TA_ACCBANDS_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );
+
+/*
  * TA_ACOS - Vector Trigonometric ACos
  * 
  * Input  = double
@@ -228,6 +246,15 @@ TA_LIB_API TA_RetCode TA_ACOS_Close( TA_ACOS_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_ACOS_OpenAndFill( TA_ACOS_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ACOS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ACOS_UpdateAndFill( TA_ACOS_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_AD - Chaikin A/D Line
@@ -282,6 +309,15 @@ TA_LIB_API TA_RetCode TA_AD_Close( TA_AD_Stream *stream );
 TA_LIB_API TA_RetCode TA_AD_OpenAndFill( TA_AD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_AD_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_AD_UpdateAndFill( TA_AD_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int barCount, double outReal[] );
+
+/*
  * TA_ADD - Vector Arithmetic Add
  * 
  * Input  = double, double
@@ -328,6 +364,15 @@ TA_LIB_API TA_RetCode TA_ADD_Close( TA_ADD_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_ADD_OpenAndFill( TA_ADD_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ADD_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ADD_UpdateAndFill( TA_ADD_Stream *stream, const double inReal0[], const double inReal1[], int barCount, double outReal[] );
 
 /*
  * TA_ADOSC - Chaikin A/D Oscillator
@@ -396,6 +441,15 @@ TA_LIB_API TA_RetCode TA_ADOSC_Close( TA_ADOSC_Stream *stream );
 TA_LIB_API TA_RetCode TA_ADOSC_OpenAndFill( TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ADOSC_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ADOSC_UpdateAndFill( TA_ADOSC_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int barCount, double outReal[] );
+
+/*
  * TA_ADX - Average Directional Movement Index
  * 
  * Input  = High, Low, Close
@@ -454,6 +508,15 @@ TA_LIB_API TA_RetCode TA_ADX_Close( TA_ADX_Stream *stream );
 TA_LIB_API TA_RetCode TA_ADX_OpenAndFill( TA_ADX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ADX_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ADX_UpdateAndFill( TA_ADX_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_ADXR - Average Directional Movement Index Rating
  * 
  * Input  = High, Low, Close
@@ -510,6 +573,15 @@ TA_LIB_API TA_RetCode TA_ADXR_Close( TA_ADXR_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_ADXR_OpenAndFill( TA_ADXR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ADXR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ADXR_UpdateAndFill( TA_ADXR_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
 
 /*
  * TA_AO - Awesome Oscillator
@@ -572,6 +644,15 @@ TA_LIB_API TA_RetCode TA_AO_Close( TA_AO_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_AO_OpenAndFill( TA_AO_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_AO_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_AO_UpdateAndFill( TA_AO_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] );
 
 /*
  * TA_APO - Absolute Price Oscillator
@@ -639,6 +720,15 @@ TA_LIB_API TA_RetCode TA_APO_Close( TA_APO_Stream *stream );
 TA_LIB_API TA_RetCode TA_APO_OpenAndFill( TA_APO_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_APO_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_APO_UpdateAndFill( TA_APO_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_AROON - Aroon
  * 
  * Input  = High, Low
@@ -697,6 +787,15 @@ TA_LIB_API TA_RetCode TA_AROON_Close( TA_AROON_Stream *stream );
 TA_LIB_API TA_RetCode TA_AROON_OpenAndFill( TA_AROON_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outAroonDown[], double outAroonUp[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_AROON_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_AROON_UpdateAndFill( TA_AROON_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outAroonDown[], double outAroonUp[] );
+
+/*
  * TA_AROONOSC - Aroon Oscillator
  * 
  * Input  = High, Low
@@ -753,6 +852,15 @@ TA_LIB_API TA_RetCode TA_AROONOSC_Close( TA_AROONOSC_Stream *stream );
 TA_LIB_API TA_RetCode TA_AROONOSC_OpenAndFill( TA_AROONOSC_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_AROONOSC_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_AROONOSC_UpdateAndFill( TA_AROONOSC_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] );
+
+/*
  * TA_ASIN - Vector Trigonometric ASin
  * 
  * Input  = double
@@ -799,6 +907,15 @@ TA_LIB_API TA_RetCode TA_ASIN_Close( TA_ASIN_Stream *stream );
 TA_LIB_API TA_RetCode TA_ASIN_OpenAndFill( TA_ASIN_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ASIN_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ASIN_UpdateAndFill( TA_ASIN_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_ATAN - Vector Trigonometric ATan
  * 
  * Input  = double
@@ -843,6 +960,15 @@ TA_LIB_API TA_RetCode TA_ATAN_Close( TA_ATAN_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_ATAN_OpenAndFill( TA_ATAN_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ATAN_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ATAN_UpdateAndFill( TA_ATAN_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_ATR - Average True Range
@@ -903,6 +1029,15 @@ TA_LIB_API TA_RetCode TA_ATR_Close( TA_ATR_Stream *stream );
 TA_LIB_API TA_RetCode TA_ATR_OpenAndFill( TA_ATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ATR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ATR_UpdateAndFill( TA_ATR_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_AVGDEV - Average Deviation
  * 
  * Input  = double
@@ -957,6 +1092,15 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Close( TA_AVGDEV_Stream *stream );
 TA_LIB_API TA_RetCode TA_AVGDEV_OpenAndFill( TA_AVGDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_AVGDEV_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_AVGDEV_UpdateAndFill( TA_AVGDEV_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_AVGPRICE - Average Price
  * 
  * Input  = Open, High, Low, Close
@@ -1007,6 +1151,15 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Close( TA_AVGPRICE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_AVGPRICE_OpenAndFill( TA_AVGPRICE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_AVGPRICE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_AVGPRICE_UpdateAndFill( TA_AVGPRICE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
 
 /*
  * TA_BBANDS - Bollinger Bands
@@ -1084,6 +1237,15 @@ TA_LIB_API TA_RetCode TA_BBANDS_Close( TA_BBANDS_Stream *stream );
 TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_BBANDS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_BBANDS_UpdateAndFill( TA_BBANDS_Stream *stream, const double inReal[], int barCount, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );
+
+/*
  * TA_BETA - Beta
  * 
  * Input  = double, double
@@ -1140,6 +1302,15 @@ TA_LIB_API TA_RetCode TA_BETA_Close( TA_BETA_Stream *stream );
 TA_LIB_API TA_RetCode TA_BETA_OpenAndFill( TA_BETA_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_BETA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_BETA_UpdateAndFill( TA_BETA_Stream *stream, const double inReal0[], const double inReal1[], int barCount, double outReal[] );
+
+/*
  * TA_BOP - Balance Of Power
  * 
  * Input  = Open, High, Low, Close
@@ -1190,6 +1361,15 @@ TA_LIB_API TA_RetCode TA_BOP_Close( TA_BOP_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_BOP_OpenAndFill( TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_BOP_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_BOP_UpdateAndFill( TA_BOP_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
 
 /*
  * TA_CCI - Commodity Channel Index
@@ -1250,6 +1430,15 @@ TA_LIB_API TA_RetCode TA_CCI_Close( TA_CCI_Stream *stream );
 TA_LIB_API TA_RetCode TA_CCI_OpenAndFill( TA_CCI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CCI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CCI_UpdateAndFill( TA_CCI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_CDL2CROWS - Two Crows
  * 
  * Input  = Open, High, Low, Close
@@ -1300,6 +1489,15 @@ TA_LIB_API TA_RetCode TA_CDL2CROWS_Close( TA_CDL2CROWS_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDL2CROWS_OpenAndFill( TA_CDL2CROWS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDL2CROWS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDL2CROWS_UpdateAndFill( TA_CDL2CROWS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDL3BLACKCROWS - Three Black Crows
@@ -1354,6 +1552,15 @@ TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Close( TA_CDL3BLACKCROWS_Stream *stream 
 TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_OpenAndFill( TA_CDL3BLACKCROWS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDL3BLACKCROWS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_UpdateAndFill( TA_CDL3BLACKCROWS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDL3INSIDE - Three Inside Up/Down
  * 
  * Input  = Open, High, Low, Close
@@ -1404,6 +1611,15 @@ TA_LIB_API TA_RetCode TA_CDL3INSIDE_Close( TA_CDL3INSIDE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDL3INSIDE_OpenAndFill( TA_CDL3INSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDL3INSIDE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDL3INSIDE_UpdateAndFill( TA_CDL3INSIDE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDL3LINESTRIKE - Three-Line Strike
@@ -1458,6 +1674,15 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Close( TA_CDL3LINESTRIKE_Stream *stream 
 TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_OpenAndFill( TA_CDL3LINESTRIKE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDL3LINESTRIKE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_UpdateAndFill( TA_CDL3LINESTRIKE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDL3OUTSIDE - Three Outside Up/Down
  * 
  * Input  = Open, High, Low, Close
@@ -1508,6 +1733,15 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Close( TA_CDL3OUTSIDE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_OpenAndFill( TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDL3OUTSIDE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_UpdateAndFill( TA_CDL3OUTSIDE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDL3STARSINSOUTH - Three Stars In The South
@@ -1562,6 +1796,15 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Close( TA_CDL3STARSINSOUTH_Stream *str
 TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_OpenAndFill( TA_CDL3STARSINSOUTH_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDL3STARSINSOUTH_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_UpdateAndFill( TA_CDL3STARSINSOUTH_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDL3WHITESOLDIERS - Three Advancing White Soldiers
  * 
  * Input  = Open, High, Low, Close
@@ -1612,6 +1855,15 @@ TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Close( TA_CDL3WHITESOLDIERS_Stream *s
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_OpenAndFill( TA_CDL3WHITESOLDIERS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDL3WHITESOLDIERS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_UpdateAndFill( TA_CDL3WHITESOLDIERS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLABANDONEDBABY - Abandoned Baby
@@ -1674,6 +1926,15 @@ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Close( TA_CDLABANDONEDBABY_Stream *str
 TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_OpenAndFill( TA_CDLABANDONEDBABY_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLABANDONEDBABY_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_UpdateAndFill( TA_CDLABANDONEDBABY_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLADVANCEBLOCK - Advance Block
  * 
  * Input  = Open, High, Low, Close
@@ -1724,6 +1985,15 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Close( TA_CDLADVANCEBLOCK_Stream *strea
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_OpenAndFill( TA_CDLADVANCEBLOCK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLADVANCEBLOCK_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_UpdateAndFill( TA_CDLADVANCEBLOCK_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLBELTHOLD - Belt-hold
@@ -1778,6 +2048,15 @@ TA_LIB_API TA_RetCode TA_CDLBELTHOLD_Close( TA_CDLBELTHOLD_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLBELTHOLD_OpenAndFill( TA_CDLBELTHOLD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLBELTHOLD_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLBELTHOLD_UpdateAndFill( TA_CDLBELTHOLD_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLBREAKAWAY - Breakaway
  * 
  * Input  = Open, High, Low, Close
@@ -1828,6 +2107,15 @@ TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Close( TA_CDLBREAKAWAY_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_OpenAndFill( TA_CDLBREAKAWAY_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLBREAKAWAY_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_UpdateAndFill( TA_CDLBREAKAWAY_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLCLOSINGMARUBOZU - Closing Marubozu
@@ -1882,6 +2170,15 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_Close( TA_CDLCLOSINGMARUBOZU_Stream 
 TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_OpenAndFill( TA_CDLCLOSINGMARUBOZU_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLCLOSINGMARUBOZU_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_UpdateAndFill( TA_CDLCLOSINGMARUBOZU_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLCONCEALBABYSWALL - Concealing Baby Swallow
  * 
  * Input  = Open, High, Low, Close
@@ -1934,6 +2231,15 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Close( TA_CDLCONCEALBABYSWALL_Strea
 TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_OpenAndFill( TA_CDLCONCEALBABYSWALL_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLCONCEALBABYSWALL_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_UpdateAndFill( TA_CDLCONCEALBABYSWALL_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLCOUNTERATTACK - Counterattack
  * 
  * Input  = Open, High, Low, Close
@@ -1984,6 +2290,15 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Close( TA_CDLCOUNTERATTACK_Stream *str
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_OpenAndFill( TA_CDLCOUNTERATTACK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLCOUNTERATTACK_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_UpdateAndFill( TA_CDLCOUNTERATTACK_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLDARKCLOUDCOVER - Dark Cloud Cover
@@ -2046,6 +2361,15 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Close( TA_CDLDARKCLOUDCOVER_Stream *s
 TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_OpenAndFill( TA_CDLDARKCLOUDCOVER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLDARKCLOUDCOVER_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_UpdateAndFill( TA_CDLDARKCLOUDCOVER_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLDOJI - Doji
  * 
  * Input  = Open, High, Low, Close
@@ -2096,6 +2420,15 @@ TA_LIB_API TA_RetCode TA_CDLDOJI_Close( TA_CDLDOJI_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLDOJI_OpenAndFill( TA_CDLDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLDOJI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLDOJI_UpdateAndFill( TA_CDLDOJI_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLDOJISTAR - Doji Star
@@ -2150,6 +2483,15 @@ TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Close( TA_CDLDOJISTAR_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLDOJISTAR_OpenAndFill( TA_CDLDOJISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLDOJISTAR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLDOJISTAR_UpdateAndFill( TA_CDLDOJISTAR_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLDRAGONFLYDOJI - Dragonfly Doji
  * 
  * Input  = Open, High, Low, Close
@@ -2202,6 +2544,15 @@ TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_Close( TA_CDLDRAGONFLYDOJI_Stream *str
 TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_OpenAndFill( TA_CDLDRAGONFLYDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLDRAGONFLYDOJI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_UpdateAndFill( TA_CDLDRAGONFLYDOJI_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLENGULFING - Engulfing Pattern
  * 
  * Input  = Open, High, Low, Close
@@ -2252,6 +2603,15 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Close( TA_CDLENGULFING_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLENGULFING_OpenAndFill( TA_CDLENGULFING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLENGULFING_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLENGULFING_UpdateAndFill( TA_CDLENGULFING_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLEVENINGDOJISTAR - Evening Doji Star
@@ -2314,6 +2674,15 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Close( TA_CDLEVENINGDOJISTAR_Stream 
 TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_OpenAndFill( TA_CDLEVENINGDOJISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLEVENINGDOJISTAR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_UpdateAndFill( TA_CDLEVENINGDOJISTAR_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLEVENINGSTAR - Evening Star
  * 
  * Input  = Open, High, Low, Close
@@ -2374,6 +2743,15 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_Close( TA_CDLEVENINGSTAR_Stream *stream 
 TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_OpenAndFill( TA_CDLEVENINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLEVENINGSTAR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_UpdateAndFill( TA_CDLEVENINGSTAR_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLGAPSIDESIDEWHITE - Up/Down-gap side-by-side white lines
  * 
  * Input  = Open, High, Low, Close
@@ -2424,6 +2802,15 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Close( TA_CDLGAPSIDESIDEWHITE_Strea
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenAndFill( TA_CDLGAPSIDESIDEWHITE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLGAPSIDESIDEWHITE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_UpdateAndFill( TA_CDLGAPSIDESIDEWHITE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLGRAVESTONEDOJI - Gravestone Doji
@@ -2478,6 +2865,15 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Close( TA_CDLGRAVESTONEDOJI_Stream *s
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_OpenAndFill( TA_CDLGRAVESTONEDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLGRAVESTONEDOJI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_UpdateAndFill( TA_CDLGRAVESTONEDOJI_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLHAMMER - Hammer
  * 
  * Input  = Open, High, Low, Close
@@ -2528,6 +2924,15 @@ TA_LIB_API TA_RetCode TA_CDLHAMMER_Close( TA_CDLHAMMER_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLHAMMER_OpenAndFill( TA_CDLHAMMER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLHAMMER_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLHAMMER_UpdateAndFill( TA_CDLHAMMER_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLHANGINGMAN - Hanging Man
@@ -2582,6 +2987,15 @@ TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_Close( TA_CDLHANGINGMAN_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_OpenAndFill( TA_CDLHANGINGMAN_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLHANGINGMAN_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_UpdateAndFill( TA_CDLHANGINGMAN_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLHARAMI - Harami Pattern
  * 
  * Input  = Open, High, Low, Close
@@ -2632,6 +3046,15 @@ TA_LIB_API TA_RetCode TA_CDLHARAMI_Close( TA_CDLHARAMI_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLHARAMI_OpenAndFill( TA_CDLHARAMI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLHARAMI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLHARAMI_UpdateAndFill( TA_CDLHARAMI_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLHARAMICROSS - Harami Cross Pattern
@@ -2686,6 +3109,15 @@ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Close( TA_CDLHARAMICROSS_Stream *stream 
 TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_OpenAndFill( TA_CDLHARAMICROSS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLHARAMICROSS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_UpdateAndFill( TA_CDLHARAMICROSS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLHIGHWAVE - High-Wave Candle
  * 
  * Input  = Open, High, Low, Close
@@ -2736,6 +3168,15 @@ TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_Close( TA_CDLHIGHWAVE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_OpenAndFill( TA_CDLHIGHWAVE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLHIGHWAVE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_UpdateAndFill( TA_CDLHIGHWAVE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLHIKKAKE - Hikkake Pattern
@@ -2790,6 +3231,15 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Close( TA_CDLHIKKAKE_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLHIKKAKE_OpenAndFill( TA_CDLHIKKAKE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLHIKKAKE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_UpdateAndFill( TA_CDLHIKKAKE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLHIKKAKEMOD - Modified Hikkake Pattern
  * 
  * Input  = Open, High, Low, Close
@@ -2840,6 +3290,15 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Close( TA_CDLHIKKAKEMOD_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_OpenAndFill( TA_CDLHIKKAKEMOD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLHIKKAKEMOD_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_UpdateAndFill( TA_CDLHIKKAKEMOD_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLHOMINGPIGEON - Homing Pigeon
@@ -2894,6 +3353,15 @@ TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_Close( TA_CDLHOMINGPIGEON_Stream *strea
 TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_OpenAndFill( TA_CDLHOMINGPIGEON_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLHOMINGPIGEON_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_UpdateAndFill( TA_CDLHOMINGPIGEON_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLIDENTICAL3CROWS - Identical Three Crows
  * 
  * Input  = Open, High, Low, Close
@@ -2944,6 +3412,15 @@ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Close( TA_CDLIDENTICAL3CROWS_Stream 
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_OpenAndFill( TA_CDLIDENTICAL3CROWS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLIDENTICAL3CROWS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_UpdateAndFill( TA_CDLIDENTICAL3CROWS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLINNECK - In-Neck Pattern
@@ -2998,6 +3475,15 @@ TA_LIB_API TA_RetCode TA_CDLINNECK_Close( TA_CDLINNECK_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLINNECK_OpenAndFill( TA_CDLINNECK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLINNECK_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLINNECK_UpdateAndFill( TA_CDLINNECK_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLINVERTEDHAMMER - Inverted Hammer
  * 
  * Input  = Open, High, Low, Close
@@ -3048,6 +3534,15 @@ TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_Close( TA_CDLINVERTEDHAMMER_Stream *s
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_OpenAndFill( TA_CDLINVERTEDHAMMER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLINVERTEDHAMMER_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_UpdateAndFill( TA_CDLINVERTEDHAMMER_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLKICKING - Kicking
@@ -3102,6 +3597,15 @@ TA_LIB_API TA_RetCode TA_CDLKICKING_Close( TA_CDLKICKING_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLKICKING_OpenAndFill( TA_CDLKICKING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLKICKING_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLKICKING_UpdateAndFill( TA_CDLKICKING_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLKICKINGBYLENGTH - Kicking - bull/bear determined by the longer marubozu
  * 
  * Input  = Open, High, Low, Close
@@ -3152,6 +3656,15 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Close( TA_CDLKICKINGBYLENGTH_Stream 
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_OpenAndFill( TA_CDLKICKINGBYLENGTH_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLKICKINGBYLENGTH_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_UpdateAndFill( TA_CDLKICKINGBYLENGTH_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLLADDERBOTTOM - Ladder Bottom
@@ -3206,6 +3719,15 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Close( TA_CDLLADDERBOTTOM_Stream *strea
 TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_OpenAndFill( TA_CDLLADDERBOTTOM_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLLADDERBOTTOM_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_UpdateAndFill( TA_CDLLADDERBOTTOM_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLLONGLEGGEDDOJI - Long Legged Doji
  * 
  * Input  = Open, High, Low, Close
@@ -3256,6 +3778,15 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Close( TA_CDLLONGLEGGEDDOJI_Stream *s
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_OpenAndFill( TA_CDLLONGLEGGEDDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLLONGLEGGEDDOJI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_UpdateAndFill( TA_CDLLONGLEGGEDDOJI_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLLONGLINE - Long Line Candle
@@ -3310,6 +3841,15 @@ TA_LIB_API TA_RetCode TA_CDLLONGLINE_Close( TA_CDLLONGLINE_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLLONGLINE_OpenAndFill( TA_CDLLONGLINE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLLONGLINE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLLONGLINE_UpdateAndFill( TA_CDLLONGLINE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLMARUBOZU - Marubozu
  * 
  * Input  = Open, High, Low, Close
@@ -3362,6 +3902,15 @@ TA_LIB_API TA_RetCode TA_CDLMARUBOZU_Close( TA_CDLMARUBOZU_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLMARUBOZU_OpenAndFill( TA_CDLMARUBOZU_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLMARUBOZU_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLMARUBOZU_UpdateAndFill( TA_CDLMARUBOZU_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLMATCHINGLOW - Matching Low
  * 
  * Input  = Open, High, Low, Close
@@ -3412,6 +3961,15 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Close( TA_CDLMATCHINGLOW_Stream *stream 
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_OpenAndFill( TA_CDLMATCHINGLOW_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLMATCHINGLOW_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_UpdateAndFill( TA_CDLMATCHINGLOW_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLMATHOLD - Mat Hold
@@ -3474,6 +4032,15 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_Close( TA_CDLMATHOLD_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_OpenAndFill( TA_CDLMATHOLD_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLMATHOLD_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLMATHOLD_UpdateAndFill( TA_CDLMATHOLD_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLMORNINGDOJISTAR - Morning Doji Star
  * 
  * Input  = Open, High, Low, Close
@@ -3532,6 +4099,15 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Close( TA_CDLMORNINGDOJISTAR_Stream 
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_OpenAndFill( TA_CDLMORNINGDOJISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLMORNINGDOJISTAR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_UpdateAndFill( TA_CDLMORNINGDOJISTAR_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLMORNINGSTAR - Morning Star
@@ -3594,6 +4170,15 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Close( TA_CDLMORNINGSTAR_Stream *stream 
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_OpenAndFill( TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLMORNINGSTAR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_UpdateAndFill( TA_CDLMORNINGSTAR_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLONNECK - On-Neck Pattern
  * 
  * Input  = Open, High, Low, Close
@@ -3644,6 +4229,15 @@ TA_LIB_API TA_RetCode TA_CDLONNECK_Close( TA_CDLONNECK_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLONNECK_OpenAndFill( TA_CDLONNECK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLONNECK_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLONNECK_UpdateAndFill( TA_CDLONNECK_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLPIERCING - Piercing Pattern
@@ -3698,6 +4292,15 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING_Close( TA_CDLPIERCING_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLPIERCING_OpenAndFill( TA_CDLPIERCING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLPIERCING_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLPIERCING_UpdateAndFill( TA_CDLPIERCING_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLRICKSHAWMAN - Rickshaw Man
  * 
  * Input  = Open, High, Low, Close
@@ -3748,6 +4351,15 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Close( TA_CDLRICKSHAWMAN_Stream *stream 
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_OpenAndFill( TA_CDLRICKSHAWMAN_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLRICKSHAWMAN_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_UpdateAndFill( TA_CDLRICKSHAWMAN_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLRISEFALL3METHODS - Rising/Falling Three Methods
@@ -3802,6 +4414,15 @@ TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Close( TA_CDLRISEFALL3METHODS_Strea
 TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_OpenAndFill( TA_CDLRISEFALL3METHODS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLRISEFALL3METHODS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_UpdateAndFill( TA_CDLRISEFALL3METHODS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLSEPARATINGLINES - Separating Lines
  * 
  * Input  = Open, High, Low, Close
@@ -3852,6 +4473,15 @@ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Close( TA_CDLSEPARATINGLINES_Stream 
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_OpenAndFill( TA_CDLSEPARATINGLINES_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLSEPARATINGLINES_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_UpdateAndFill( TA_CDLSEPARATINGLINES_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLSHOOTINGSTAR - Shooting Star
@@ -3906,6 +4536,15 @@ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Close( TA_CDLSHOOTINGSTAR_Stream *strea
 TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_OpenAndFill( TA_CDLSHOOTINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLSHOOTINGSTAR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_UpdateAndFill( TA_CDLSHOOTINGSTAR_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLSHORTLINE - Short Line Candle
  * 
  * Input  = Open, High, Low, Close
@@ -3956,6 +4595,15 @@ TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Close( TA_CDLSHORTLINE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLSHORTLINE_OpenAndFill( TA_CDLSHORTLINE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLSHORTLINE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLSHORTLINE_UpdateAndFill( TA_CDLSHORTLINE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLSPINNINGTOP - Spinning Top
@@ -4010,6 +4658,15 @@ TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Close( TA_CDLSPINNINGTOP_Stream *stream 
 TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_OpenAndFill( TA_CDLSPINNINGTOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLSPINNINGTOP_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_UpdateAndFill( TA_CDLSPINNINGTOP_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLSTALLEDPATTERN - Stalled Pattern
  * 
  * Input  = Open, High, Low, Close
@@ -4060,6 +4717,15 @@ TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_Close( TA_CDLSTALLEDPATTERN_Stream *s
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_OpenAndFill( TA_CDLSTALLEDPATTERN_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLSTALLEDPATTERN_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_UpdateAndFill( TA_CDLSTALLEDPATTERN_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLSTICKSANDWICH - Stick Sandwich
@@ -4114,6 +4780,15 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Close( TA_CDLSTICKSANDWICH_Stream *str
 TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_OpenAndFill( TA_CDLSTICKSANDWICH_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLSTICKSANDWICH_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_UpdateAndFill( TA_CDLSTICKSANDWICH_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLTAKURI - Takuri (Dragonfly Doji with very long lower shadow)
  * 
  * Input  = Open, High, Low, Close
@@ -4164,6 +4839,15 @@ TA_LIB_API TA_RetCode TA_CDLTAKURI_Close( TA_CDLTAKURI_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLTAKURI_OpenAndFill( TA_CDLTAKURI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLTAKURI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLTAKURI_UpdateAndFill( TA_CDLTAKURI_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLTASUKIGAP - Tasuki Gap
@@ -4218,6 +4902,15 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Close( TA_CDLTASUKIGAP_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_OpenAndFill( TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLTASUKIGAP_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_UpdateAndFill( TA_CDLTASUKIGAP_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLTHRUSTING - Thrusting Pattern
  * 
  * Input  = Open, High, Low, Close
@@ -4268,6 +4961,15 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Close( TA_CDLTHRUSTING_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLTHRUSTING_OpenAndFill( TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLTHRUSTING_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLTHRUSTING_UpdateAndFill( TA_CDLTHRUSTING_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLTRISTAR - Tristar Pattern
@@ -4322,6 +5024,15 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR_Close( TA_CDLTRISTAR_Stream *stream );
 TA_LIB_API TA_RetCode TA_CDLTRISTAR_OpenAndFill( TA_CDLTRISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLTRISTAR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLTRISTAR_UpdateAndFill( TA_CDLTRISTAR_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLUNIQUE3RIVER - Unique 3 River
  * 
  * Input  = Open, High, Low, Close
@@ -4372,6 +5083,15 @@ TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_Close( TA_CDLUNIQUE3RIVER_Stream *strea
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_OpenAndFill( TA_CDLUNIQUE3RIVER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLUNIQUE3RIVER_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_UpdateAndFill( TA_CDLUNIQUE3RIVER_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
 
 /*
  * TA_CDLUPSIDEGAP2CROWS - Upside Gap Two Crows
@@ -4426,6 +5146,15 @@ TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_Close( TA_CDLUPSIDEGAP2CROWS_Stream 
 TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_OpenAndFill( TA_CDLUPSIDEGAP2CROWS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLUPSIDEGAP2CROWS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_UpdateAndFill( TA_CDLUPSIDEGAP2CROWS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CDLXSIDEGAP3METHODS - Upside/Downside Gap Three Methods
  * 
  * Input  = Open, High, Low, Close
@@ -4478,6 +5207,15 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Close( TA_CDLXSIDEGAP3METHODS_Strea
 TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenAndFill( TA_CDLXSIDEGAP3METHODS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CDLXSIDEGAP3METHODS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_UpdateAndFill( TA_CDLXSIDEGAP3METHODS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int barCount, int outInteger[] );
+
+/*
  * TA_CEIL - Vector Ceil
  * 
  * Input  = double
@@ -4522,6 +5260,15 @@ TA_LIB_API TA_RetCode TA_CEIL_Close( TA_CEIL_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CEIL_OpenAndFill( TA_CEIL_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CEIL_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CEIL_UpdateAndFill( TA_CEIL_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_CMF - Chaikin Money Flow
@@ -4584,6 +5331,15 @@ TA_LIB_API TA_RetCode TA_CMF_Close( TA_CMF_Stream *stream );
 TA_LIB_API TA_RetCode TA_CMF_OpenAndFill( TA_CMF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CMF_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CMF_UpdateAndFill( TA_CMF_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int barCount, double outReal[] );
+
+/*
  * TA_CMO - Chande Momentum Oscillator
  * 
  * Input  = double
@@ -4638,6 +5394,15 @@ TA_LIB_API TA_RetCode TA_CMO_Close( TA_CMO_Stream *stream );
 TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CMO_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CMO_UpdateAndFill( TA_CMO_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_CMOU - Chande Momentum Oscillator (Unsmoothed)
  * 
  * Input  = double
@@ -4690,6 +5455,15 @@ TA_LIB_API TA_RetCode TA_CMOU_Close( TA_CMOU_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_CMOU_OpenAndFill( TA_CMOU_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CMOU_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CMOU_UpdateAndFill( TA_CMOU_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_CORREL - Pearson's Correlation Coefficient (r)
@@ -4748,6 +5522,15 @@ TA_LIB_API TA_RetCode TA_CORREL_Close( TA_CORREL_Stream *stream );
 TA_LIB_API TA_RetCode TA_CORREL_OpenAndFill( TA_CORREL_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CORREL_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_CORREL_UpdateAndFill( TA_CORREL_Stream *stream, const double inReal0[], const double inReal1[], int barCount, double outReal[] );
+
+/*
  * TA_COS - Vector Trigonometric Cos
  * 
  * Input  = double
@@ -4794,6 +5577,15 @@ TA_LIB_API TA_RetCode TA_COS_Close( TA_COS_Stream *stream );
 TA_LIB_API TA_RetCode TA_COS_OpenAndFill( TA_COS_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_COS_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_COS_UpdateAndFill( TA_COS_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_COSH - Vector Trigonometric Cosh
  * 
  * Input  = double
@@ -4838,6 +5630,15 @@ TA_LIB_API TA_RetCode TA_COSH_Close( TA_COSH_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_COSH_OpenAndFill( TA_COSH_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_COSH_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_COSH_UpdateAndFill( TA_COSH_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_DEMA - Double Exponential Moving Average
@@ -4894,6 +5695,15 @@ TA_LIB_API TA_RetCode TA_DEMA_Close( TA_DEMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_DEMA_OpenAndFill( TA_DEMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_DEMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_DEMA_UpdateAndFill( TA_DEMA_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_DIV - Vector Arithmetic Div
  * 
  * Input  = double, double
@@ -4940,6 +5750,15 @@ TA_LIB_API TA_RetCode TA_DIV_Close( TA_DIV_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_DIV_OpenAndFill( TA_DIV_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_DIV_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_DIV_UpdateAndFill( TA_DIV_Stream *stream, const double inReal0[], const double inReal1[], int barCount, double outReal[] );
 
 /*
  * TA_DX - Directional Movement Index
@@ -5000,6 +5819,15 @@ TA_LIB_API TA_RetCode TA_DX_Close( TA_DX_Stream *stream );
 TA_LIB_API TA_RetCode TA_DX_OpenAndFill( TA_DX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_DX_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_DX_UpdateAndFill( TA_DX_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_EFI - Elder's Force Index
  * 
  * Input  = Close, Volume
@@ -5056,6 +5884,15 @@ TA_LIB_API TA_RetCode TA_EFI_Close( TA_EFI_Stream *stream );
 TA_LIB_API TA_RetCode TA_EFI_OpenAndFill( TA_EFI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_EFI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_EFI_UpdateAndFill( TA_EFI_Stream *stream, const double inClose[], const double inVolume[], int barCount, double outReal[] );
+
+/*
  * TA_EMA - Exponential Moving Average
  * 
  * Input  = double
@@ -5110,6 +5947,15 @@ TA_LIB_API TA_RetCode TA_EMA_Close( TA_EMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_EMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_EMA_UpdateAndFill( TA_EMA_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_EXP - Vector Arithmetic Exp
  * 
  * Input  = double
@@ -5156,6 +6002,15 @@ TA_LIB_API TA_RetCode TA_EXP_Close( TA_EXP_Stream *stream );
 TA_LIB_API TA_RetCode TA_EXP_OpenAndFill( TA_EXP_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_EXP_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_EXP_UpdateAndFill( TA_EXP_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_FLOOR - Vector Floor
  * 
  * Input  = double
@@ -5200,6 +6055,15 @@ TA_LIB_API TA_RetCode TA_FLOOR_Close( TA_FLOOR_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_FLOOR_OpenAndFill( TA_FLOOR_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_FLOOR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_FLOOR_UpdateAndFill( TA_FLOOR_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_HMA - Hull Moving Average
@@ -5256,6 +6120,15 @@ TA_LIB_API TA_RetCode TA_HMA_Close( TA_HMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_HMA_OpenAndFill( TA_HMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_HMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_HMA_UpdateAndFill( TA_HMA_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_HT_DCPERIOD - Hilbert Transform - Dominant Cycle Period
  * 
  * Input  = double
@@ -5302,6 +6175,15 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Close( TA_HT_DCPERIOD_Stream *stream );
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_OpenAndFill( TA_HT_DCPERIOD_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_HT_DCPERIOD_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD_UpdateAndFill( TA_HT_DCPERIOD_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_HT_DCPHASE - Hilbert Transform - Dominant Cycle Phase
  * 
  * Input  = double
@@ -5346,6 +6228,15 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Close( TA_HT_DCPHASE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_OpenAndFill( TA_HT_DCPHASE_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_HT_DCPHASE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_HT_DCPHASE_UpdateAndFill( TA_HT_DCPHASE_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_HT_PHASOR - Hilbert Transform - Phasor Components
@@ -5396,6 +6287,15 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Close( TA_HT_PHASOR_Stream *stream );
 TA_LIB_API TA_RetCode TA_HT_PHASOR_OpenAndFill( TA_HT_PHASOR_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_HT_PHASOR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_HT_PHASOR_UpdateAndFill( TA_HT_PHASOR_Stream *stream, const double inReal[], int barCount, double outInPhase[], double outQuadrature[] );
+
+/*
  * TA_HT_SINE - Hilbert Transform - SineWave
  * 
  * Input  = double
@@ -5444,6 +6344,15 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Close( TA_HT_SINE_Stream *stream );
 TA_LIB_API TA_RetCode TA_HT_SINE_OpenAndFill( TA_HT_SINE_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_HT_SINE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_HT_SINE_UpdateAndFill( TA_HT_SINE_Stream *stream, const double inReal[], int barCount, double outSine[], double outLeadSine[] );
+
+/*
  * TA_HT_TRENDLINE - Hilbert Transform - Instantaneous Trendline
  * 
  * Input  = double
@@ -5490,6 +6399,15 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Close( TA_HT_TRENDLINE_Stream *stream );
 TA_LIB_API TA_RetCode TA_HT_TRENDLINE_OpenAndFill( TA_HT_TRENDLINE_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_HT_TRENDLINE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_HT_TRENDLINE_UpdateAndFill( TA_HT_TRENDLINE_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_HT_TRENDMODE - Hilbert Transform - Trend vs Cycle Mode
  * 
  * Input  = double
@@ -5534,6 +6452,15 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Close( TA_HT_TRENDMODE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_OpenAndFill( TA_HT_TRENDMODE_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_HT_TRENDMODE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE_UpdateAndFill( TA_HT_TRENDMODE_Stream *stream, const double inReal[], int barCount, int outInteger[] );
 
 /*
  * TA_IMI - Intraday Momentum Index
@@ -5592,6 +6519,15 @@ TA_LIB_API TA_RetCode TA_IMI_Close( TA_IMI_Stream *stream );
 TA_LIB_API TA_RetCode TA_IMI_OpenAndFill( TA_IMI_Stream **stream, const double inOpen[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_IMI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_IMI_UpdateAndFill( TA_IMI_Stream *stream, const double inOpen[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_KAMA - Kaufman Adaptive Moving Average
  * 
  * Input  = double
@@ -5644,6 +6580,15 @@ TA_LIB_API TA_RetCode TA_KAMA_Close( TA_KAMA_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_KAMA_OpenAndFill( TA_KAMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_KAMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_KAMA_UpdateAndFill( TA_KAMA_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_LINEARREG - Linear Regression
@@ -5700,6 +6645,15 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Close( TA_LINEARREG_Stream *stream );
 TA_LIB_API TA_RetCode TA_LINEARREG_OpenAndFill( TA_LINEARREG_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_LINEARREG_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_LINEARREG_UpdateAndFill( TA_LINEARREG_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_LINEARREG_ANGLE - Linear Regression Angle
  * 
  * Input  = double
@@ -5752,6 +6706,15 @@ TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Close( TA_LINEARREG_ANGLE_Stream *strea
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_OpenAndFill( TA_LINEARREG_ANGLE_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_LINEARREG_ANGLE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_UpdateAndFill( TA_LINEARREG_ANGLE_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_LINEARREG_INTERCEPT - Linear Regression Intercept
@@ -5808,6 +6771,15 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Close( TA_LINEARREG_INTERCEPT_Strea
 TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_OpenAndFill( TA_LINEARREG_INTERCEPT_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_LINEARREG_INTERCEPT_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_UpdateAndFill( TA_LINEARREG_INTERCEPT_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_LINEARREG_SLOPE - Linear Regression Slope
  * 
  * Input  = double
@@ -5862,6 +6834,15 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Close( TA_LINEARREG_SLOPE_Stream *strea
 TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_OpenAndFill( TA_LINEARREG_SLOPE_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_LINEARREG_SLOPE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_UpdateAndFill( TA_LINEARREG_SLOPE_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_LN - Vector Log Natural
  * 
  * Input  = double
@@ -5908,6 +6889,15 @@ TA_LIB_API TA_RetCode TA_LN_Close( TA_LN_Stream *stream );
 TA_LIB_API TA_RetCode TA_LN_OpenAndFill( TA_LN_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_LN_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_LN_UpdateAndFill( TA_LN_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_LOG10 - Vector Log10
  * 
  * Input  = double
@@ -5952,6 +6942,15 @@ TA_LIB_API TA_RetCode TA_LOG10_Close( TA_LOG10_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_LOG10_OpenAndFill( TA_LOG10_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_LOG10_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_LOG10_UpdateAndFill( TA_LOG10_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_MA - Moving average
@@ -6011,6 +7010,15 @@ TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MA_UpdateAndFill( TA_MA_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_MACD - Moving Average Convergence/Divergence
@@ -6081,6 +7089,15 @@ TA_LIB_API TA_RetCode TA_MACD_Close( TA_MACD_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MACD_OpenAndFill( TA_MACD_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MACD_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MACD_UpdateAndFill( TA_MACD_Stream *stream, const double inReal[], int barCount, double outMACD[], double outMACDSignal[], double outMACDHist[] );
 
 /*
  * TA_MACDEXT - MACD with controllable MA type
@@ -6170,6 +7187,15 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Close( TA_MACDEXT_Stream *stream );
 TA_LIB_API TA_RetCode TA_MACDEXT_OpenAndFill( TA_MACDEXT_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MACDEXT_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MACDEXT_UpdateAndFill( TA_MACDEXT_Stream *stream, const double inReal[], int barCount, double outMACD[], double outMACDSignal[], double outMACDHist[] );
+
+/*
  * TA_MACDFIX - Moving Average Convergence/Divergence Fix 12/26
  * 
  * Input  = double
@@ -6226,6 +7252,15 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Close( TA_MACDFIX_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MACDFIX_OpenAndFill( TA_MACDFIX_Stream **stream, const double inReal[], int historyLen, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MACDFIX_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MACDFIX_UpdateAndFill( TA_MACDFIX_Stream *stream, const double inReal[], int barCount, double outMACD[], double outMACDSignal[], double outMACDHist[] );
 
 /*
  * TA_MAMA - MESA Adaptive Moving Average
@@ -6290,6 +7325,15 @@ TA_LIB_API TA_RetCode TA_MAMA_Close( TA_MAMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double inReal[], int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MAMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MAMA_UpdateAndFill( TA_MAMA_Stream *stream, const double inReal[], int barCount, double outMAMA[], double outFAMA[] );
+
+/*
  * TA_MARKETFI - Market Facilitation Index
  * 
  * Input  = High, Low, Volume
@@ -6338,6 +7382,15 @@ TA_LIB_API TA_RetCode TA_MARKETFI_Close( TA_MARKETFI_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MARKETFI_OpenAndFill( TA_MARKETFI_Stream **stream, const double inHigh[], const double inLow[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MARKETFI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MARKETFI_UpdateAndFill( TA_MARKETFI_Stream *stream, const double inHigh[], const double inLow[], const double inVolume[], int barCount, double outReal[] );
 
 /*
  * TA_MAVP - Moving average with variable period
@@ -6407,6 +7460,15 @@ TA_LIB_API TA_RetCode TA_MAVP_Close( TA_MAVP_Stream *stream );
 TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double inReal[], const double inPeriods[], int historyLen, int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MAVP_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MAVP_UpdateAndFill( TA_MAVP_Stream *stream, const double inReal[], const double inPeriods[], int barCount, double outReal[] );
+
+/*
  * TA_MAX - Highest value over a specified period
  * 
  * Input  = double
@@ -6459,6 +7521,15 @@ TA_LIB_API TA_RetCode TA_MAX_Close( TA_MAX_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MAX_OpenAndFill( TA_MAX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MAX_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MAX_UpdateAndFill( TA_MAX_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_MAXINDEX - Index of highest value over a specified period
@@ -6515,6 +7586,15 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Close( TA_MAXINDEX_Stream *stream );
 TA_LIB_API TA_RetCode TA_MAXINDEX_OpenAndFill( TA_MAXINDEX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, int outInteger[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MAXINDEX_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MAXINDEX_UpdateAndFill( TA_MAXINDEX_Stream *stream, const double inReal[], int barCount, int outInteger[] );
+
+/*
  * TA_MEDPRICE - Median Price
  * 
  * Input  = High, Low
@@ -6561,6 +7641,15 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Close( TA_MEDPRICE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MEDPRICE_OpenAndFill( TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MEDPRICE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MEDPRICE_UpdateAndFill( TA_MEDPRICE_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] );
 
 /*
  * TA_MFI - Money Flow Index
@@ -6623,6 +7712,15 @@ TA_LIB_API TA_RetCode TA_MFI_Close( TA_MFI_Stream *stream );
 TA_LIB_API TA_RetCode TA_MFI_OpenAndFill( TA_MFI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MFI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MFI_UpdateAndFill( TA_MFI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int barCount, double outReal[] );
+
+/*
  * TA_MIDPOINT - MidPoint over period
  * 
  * Input  = double
@@ -6675,6 +7773,15 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_Close( TA_MIDPOINT_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MIDPOINT_OpenAndFill( TA_MIDPOINT_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MIDPOINT_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MIDPOINT_UpdateAndFill( TA_MIDPOINT_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_MIDPRICE - Midpoint Price over period
@@ -6733,6 +7840,15 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Close( TA_MIDPRICE_Stream *stream );
 TA_LIB_API TA_RetCode TA_MIDPRICE_OpenAndFill( TA_MIDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MIDPRICE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MIDPRICE_UpdateAndFill( TA_MIDPRICE_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] );
+
+/*
  * TA_MIN - Lowest value over a specified period
  * 
  * Input  = double
@@ -6787,6 +7903,15 @@ TA_LIB_API TA_RetCode TA_MIN_Close( TA_MIN_Stream *stream );
 TA_LIB_API TA_RetCode TA_MIN_OpenAndFill( TA_MIN_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MIN_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MIN_UpdateAndFill( TA_MIN_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_MININDEX - Index of lowest value over a specified period
  * 
  * Input  = double
@@ -6839,6 +7964,15 @@ TA_LIB_API TA_RetCode TA_MININDEX_Close( TA_MININDEX_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MININDEX_OpenAndFill( TA_MININDEX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, int outInteger[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MININDEX_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MININDEX_UpdateAndFill( TA_MININDEX_Stream *stream, const double inReal[], int barCount, int outInteger[] );
 
 /*
  * TA_MINMAX - Lowest and highest values over a specified period
@@ -6897,6 +8031,15 @@ TA_LIB_API TA_RetCode TA_MINMAX_Close( TA_MINMAX_Stream *stream );
 TA_LIB_API TA_RetCode TA_MINMAX_OpenAndFill( TA_MINMAX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MINMAX_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MINMAX_UpdateAndFill( TA_MINMAX_Stream *stream, const double inReal[], int barCount, double outMin[], double outMax[] );
+
+/*
  * TA_MINMAXINDEX - Indexes of lowest and highest values over a specified period
  * 
  * Input  = double
@@ -6951,6 +8094,15 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_Close( TA_MINMAXINDEX_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MINMAXINDEX_OpenAndFill( TA_MINMAXINDEX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, int outMinIdx[], int outMaxIdx[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MINMAXINDEX_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MINMAXINDEX_UpdateAndFill( TA_MINMAXINDEX_Stream *stream, const double inReal[], int barCount, int outMinIdx[], int outMaxIdx[] );
 
 /*
  * TA_MINUS_DI - Minus Directional Indicator
@@ -7011,6 +8163,15 @@ TA_LIB_API TA_RetCode TA_MINUS_DI_Close( TA_MINUS_DI_Stream *stream );
 TA_LIB_API TA_RetCode TA_MINUS_DI_OpenAndFill( TA_MINUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MINUS_DI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MINUS_DI_UpdateAndFill( TA_MINUS_DI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_MINUS_DM - Minus Directional Movement
  * 
  * Input  = High, Low
@@ -7067,6 +8228,15 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_Close( TA_MINUS_DM_Stream *stream );
 TA_LIB_API TA_RetCode TA_MINUS_DM_OpenAndFill( TA_MINUS_DM_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MINUS_DM_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MINUS_DM_UpdateAndFill( TA_MINUS_DM_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] );
+
+/*
  * TA_MOM - Momentum
  * 
  * Input  = double
@@ -7121,6 +8291,15 @@ TA_LIB_API TA_RetCode TA_MOM_Close( TA_MOM_Stream *stream );
 TA_LIB_API TA_RetCode TA_MOM_OpenAndFill( TA_MOM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MOM_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MOM_UpdateAndFill( TA_MOM_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_MULT - Vector Arithmetic Mult
  * 
  * Input  = double, double
@@ -7167,6 +8346,15 @@ TA_LIB_API TA_RetCode TA_MULT_Close( TA_MULT_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_MULT_OpenAndFill( TA_MULT_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_MULT_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_MULT_UpdateAndFill( TA_MULT_Stream *stream, const double inReal0[], const double inReal1[], int barCount, double outReal[] );
 
 /*
  * TA_NATR - Normalized Average True Range
@@ -7227,6 +8415,15 @@ TA_LIB_API TA_RetCode TA_NATR_Close( TA_NATR_Stream *stream );
 TA_LIB_API TA_RetCode TA_NATR_OpenAndFill( TA_NATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_NATR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_NATR_UpdateAndFill( TA_NATR_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_NVI - Negative Volume Index
  * 
  * Input  = Close, Volume
@@ -7275,6 +8472,15 @@ TA_LIB_API TA_RetCode TA_NVI_Close( TA_NVI_Stream *stream );
 TA_LIB_API TA_RetCode TA_NVI_OpenAndFill( TA_NVI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_NVI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_NVI_UpdateAndFill( TA_NVI_Stream *stream, const double inClose[], const double inVolume[], int barCount, double outReal[] );
+
+/*
  * TA_OBV - On Balance Volume
  * 
  * Input  = double, Volume
@@ -7321,6 +8527,15 @@ TA_LIB_API TA_RetCode TA_OBV_Close( TA_OBV_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_OBV_OpenAndFill( TA_OBV_Stream **stream, const double inReal[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_OBV_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_OBV_UpdateAndFill( TA_OBV_Stream *stream, const double inReal[], const double inVolume[], int barCount, double outReal[] );
 
 /*
  * TA_PLUS_DI - Plus Directional Indicator
@@ -7381,6 +8596,15 @@ TA_LIB_API TA_RetCode TA_PLUS_DI_Close( TA_PLUS_DI_Stream *stream );
 TA_LIB_API TA_RetCode TA_PLUS_DI_OpenAndFill( TA_PLUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_PLUS_DI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_PLUS_DI_UpdateAndFill( TA_PLUS_DI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_PLUS_DM - Plus Directional Movement
  * 
  * Input  = High, Low
@@ -7435,6 +8659,15 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Close( TA_PLUS_DM_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_PLUS_DM_OpenAndFill( TA_PLUS_DM_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_PLUS_DM_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_PLUS_DM_UpdateAndFill( TA_PLUS_DM_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] );
 
 /*
  * TA_PPO - Percentage Price Oscillator
@@ -7502,6 +8735,15 @@ TA_LIB_API TA_RetCode TA_PPO_Close( TA_PPO_Stream *stream );
 TA_LIB_API TA_RetCode TA_PPO_OpenAndFill( TA_PPO_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_PPO_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_PPO_UpdateAndFill( TA_PPO_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_PVI - Positive Volume Index
  * 
  * Input  = Close, Volume
@@ -7548,6 +8790,15 @@ TA_LIB_API TA_RetCode TA_PVI_Close( TA_PVI_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_PVI_OpenAndFill( TA_PVI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_PVI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_PVI_UpdateAndFill( TA_PVI_Stream *stream, const double inClose[], const double inVolume[], int barCount, double outReal[] );
 
 /*
  * TA_PVO - Percentage Volume Oscillator
@@ -7615,6 +8866,15 @@ TA_LIB_API TA_RetCode TA_PVO_Close( TA_PVO_Stream *stream );
 TA_LIB_API TA_RetCode TA_PVO_OpenAndFill( TA_PVO_Stream **stream, const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_PVO_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_PVO_UpdateAndFill( TA_PVO_Stream *stream, const double inVolume[], int barCount, double outReal[] );
+
+/*
  * TA_QSTICK - Qstick
  * 
  * Input  = Open, Close
@@ -7671,6 +8931,15 @@ TA_LIB_API TA_RetCode TA_QSTICK_Close( TA_QSTICK_Stream *stream );
 TA_LIB_API TA_RetCode TA_QSTICK_OpenAndFill( TA_QSTICK_Stream **stream, const double inOpen[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_QSTICK_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_QSTICK_UpdateAndFill( TA_QSTICK_Stream *stream, const double inOpen[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_ROC - Rate of change : ((price/prevPrice)-1)*100
  * 
  * Input  = double
@@ -7723,6 +8992,15 @@ TA_LIB_API TA_RetCode TA_ROC_Close( TA_ROC_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_ROC_OpenAndFill( TA_ROC_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ROC_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ROC_UpdateAndFill( TA_ROC_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_ROCP - Rate of change Percentage: (price-prevPrice)/prevPrice
@@ -7779,6 +9057,15 @@ TA_LIB_API TA_RetCode TA_ROCP_Close( TA_ROCP_Stream *stream );
 TA_LIB_API TA_RetCode TA_ROCP_OpenAndFill( TA_ROCP_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ROCP_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ROCP_UpdateAndFill( TA_ROCP_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_ROCR - Rate of change ratio: (price/prevPrice)
  * 
  * Input  = double
@@ -7831,6 +9118,15 @@ TA_LIB_API TA_RetCode TA_ROCR_Close( TA_ROCR_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_ROCR_OpenAndFill( TA_ROCR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ROCR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ROCR_UpdateAndFill( TA_ROCR_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_ROCR100 - Rate of change ratio 100 scale: (price/prevPrice)*100
@@ -7887,6 +9183,15 @@ TA_LIB_API TA_RetCode TA_ROCR100_Close( TA_ROCR100_Stream *stream );
 TA_LIB_API TA_RetCode TA_ROCR100_OpenAndFill( TA_ROCR100_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ROCR100_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ROCR100_UpdateAndFill( TA_ROCR100_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_RSI - Relative Strength Index
  * 
  * Input  = double
@@ -7939,6 +9244,15 @@ TA_LIB_API TA_RetCode TA_RSI_Close( TA_RSI_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_RSI_OpenAndFill( TA_RSI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_RSI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_RSI_UpdateAndFill( TA_RSI_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_SAR - Parabolic SAR
@@ -8001,6 +9315,15 @@ TA_LIB_API TA_RetCode TA_SAR_Close( TA_SAR_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_SAR_OpenAndFill( TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double optInAcceleration, double optInMaximum, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_SAR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_SAR_UpdateAndFill( TA_SAR_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] );
 
 /*
  * TA_SAREXT - Parabolic SAR - Extended
@@ -8101,6 +9424,15 @@ TA_LIB_API TA_RetCode TA_SAREXT_Close( TA_SAREXT_Stream *stream );
 TA_LIB_API TA_RetCode TA_SAREXT_OpenAndFill( TA_SAREXT_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_SAREXT_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_SAREXT_UpdateAndFill( TA_SAREXT_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] );
+
+/*
  * TA_SIN - Vector Trigonometric Sin
  * 
  * Input  = double
@@ -8147,6 +9479,15 @@ TA_LIB_API TA_RetCode TA_SIN_Close( TA_SIN_Stream *stream );
 TA_LIB_API TA_RetCode TA_SIN_OpenAndFill( TA_SIN_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_SIN_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_SIN_UpdateAndFill( TA_SIN_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_SINH - Vector Trigonometric Sinh
  * 
  * Input  = double
@@ -8191,6 +9532,15 @@ TA_LIB_API TA_RetCode TA_SINH_Close( TA_SINH_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_SINH_OpenAndFill( TA_SINH_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_SINH_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_SINH_UpdateAndFill( TA_SINH_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_SMA - Simple Moving Average
@@ -8245,6 +9595,15 @@ TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_SMA_OpenAndFill( TA_SMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_SMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_SMA_UpdateAndFill( TA_SMA_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_SMI - Stochastic Momentum Index
@@ -8325,6 +9684,15 @@ TA_LIB_API TA_RetCode TA_SMI_Close( TA_SMI_Stream *stream );
 TA_LIB_API TA_RetCode TA_SMI_OpenAndFill( TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_SMI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_SMI_UpdateAndFill( TA_SMI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outSMI[], double outSMISignal[] );
+
+/*
  * TA_SQRT - Vector Square Root
  * 
  * Input  = double
@@ -8369,6 +9737,15 @@ TA_LIB_API TA_RetCode TA_SQRT_Close( TA_SQRT_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_SQRT_OpenAndFill( TA_SQRT_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_SQRT_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_SQRT_UpdateAndFill( TA_SQRT_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_STDDEV - Standard Deviation
@@ -8429,6 +9806,15 @@ TA_LIB_API TA_RetCode TA_STDDEV_Close( TA_STDDEV_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_STDDEV_OpenAndFill( TA_STDDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_STDDEV_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_STDDEV_UpdateAndFill( TA_STDDEV_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_STOCH - Stochastic
@@ -8514,6 +9900,15 @@ TA_LIB_API TA_RetCode TA_STOCH_Close( TA_STOCH_Stream *stream );
 TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outSlowK[], double outSlowD[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_STOCH_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_STOCH_UpdateAndFill( TA_STOCH_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outSlowK[], double outSlowD[] );
+
+/*
  * TA_STOCHF - Stochastic Fast
  * 
  * Input  = High, Low, Close
@@ -8583,6 +9978,15 @@ TA_LIB_API TA_RetCode TA_STOCHF_Close( TA_STOCHF_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_STOCHF_OpenAndFill( TA_STOCHF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_STOCHF_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_STOCHF_UpdateAndFill( TA_STOCHF_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outFastK[], double outFastD[] );
 
 /*
  * TA_STOCHRSI - Stochastic Relative Strength Index
@@ -8658,6 +10062,15 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Close( TA_STOCHRSI_Stream *stream );
 TA_LIB_API TA_RetCode TA_STOCHRSI_OpenAndFill( TA_STOCHRSI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_STOCHRSI_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_STOCHRSI_UpdateAndFill( TA_STOCHRSI_Stream *stream, const double inReal[], int barCount, double outFastK[], double outFastD[] );
+
+/*
  * TA_SUB - Vector Arithmetic Subtraction
  * 
  * Input  = double, double
@@ -8704,6 +10117,15 @@ TA_LIB_API TA_RetCode TA_SUB_Close( TA_SUB_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_SUB_OpenAndFill( TA_SUB_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_SUB_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_SUB_UpdateAndFill( TA_SUB_Stream *stream, const double inReal0[], const double inReal1[], int barCount, double outReal[] );
 
 /*
  * TA_SUM - Summation
@@ -8758,6 +10180,15 @@ TA_LIB_API TA_RetCode TA_SUM_Close( TA_SUM_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_SUM_OpenAndFill( TA_SUM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_SUM_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_SUM_UpdateAndFill( TA_SUM_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_T3 - Triple Exponential Moving Average (T3)
@@ -8820,6 +10251,15 @@ TA_LIB_API TA_RetCode TA_T3_Close( TA_T3_Stream *stream );
 TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_T3_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_T3_UpdateAndFill( TA_T3_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_TAN - Vector Trigonometric Tan
  * 
  * Input  = double
@@ -8866,6 +10306,15 @@ TA_LIB_API TA_RetCode TA_TAN_Close( TA_TAN_Stream *stream );
 TA_LIB_API TA_RetCode TA_TAN_OpenAndFill( TA_TAN_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_TAN_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_TAN_UpdateAndFill( TA_TAN_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_TANH - Vector Trigonometric Tanh
  * 
  * Input  = double
@@ -8910,6 +10359,15 @@ TA_LIB_API TA_RetCode TA_TANH_Close( TA_TANH_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_TANH_OpenAndFill( TA_TANH_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_TANH_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_TANH_UpdateAndFill( TA_TANH_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_TEMA - Triple Exponential Moving Average
@@ -8966,6 +10424,15 @@ TA_LIB_API TA_RetCode TA_TEMA_Close( TA_TEMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_TEMA_OpenAndFill( TA_TEMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_TEMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_TEMA_UpdateAndFill( TA_TEMA_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_TRANGE - True Range
  * 
  * Input  = High, Low, Close
@@ -9014,6 +10481,15 @@ TA_LIB_API TA_RetCode TA_TRANGE_Close( TA_TRANGE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_TRANGE_OpenAndFill( TA_TRANGE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_TRANGE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_TRANGE_UpdateAndFill( TA_TRANGE_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
 
 /*
  * TA_TRIMA - Triangular Moving Average
@@ -9070,6 +10546,15 @@ TA_LIB_API TA_RetCode TA_TRIMA_Close( TA_TRIMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_TRIMA_OpenAndFill( TA_TRIMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_TRIMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_TRIMA_UpdateAndFill( TA_TRIMA_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_TRIX - 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
  * 
  * Input  = double
@@ -9122,6 +10607,15 @@ TA_LIB_API TA_RetCode TA_TRIX_Close( TA_TRIX_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_TRIX_OpenAndFill( TA_TRIX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_TRIX_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_TRIX_UpdateAndFill( TA_TRIX_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /*
  * TA_TSF - Time Series Forecast
@@ -9178,6 +10672,15 @@ TA_LIB_API TA_RetCode TA_TSF_Close( TA_TSF_Stream *stream );
 TA_LIB_API TA_RetCode TA_TSF_OpenAndFill( TA_TSF_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_TSF_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_TSF_UpdateAndFill( TA_TSF_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_TYPPRICE - Typical Price
  * 
  * Input  = High, Low, Close
@@ -9226,6 +10729,15 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_Close( TA_TYPPRICE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_TYPPRICE_OpenAndFill( TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_TYPPRICE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_TYPPRICE_UpdateAndFill( TA_TYPPRICE_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
 
 /*
  * TA_ULTOSC - Ultimate Oscillator
@@ -9298,6 +10810,15 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Close( TA_ULTOSC_Stream *stream );
 TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ULTOSC_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_ULTOSC_UpdateAndFill( TA_ULTOSC_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_VAR - Variance
  * 
  * Input  = double
@@ -9358,6 +10879,15 @@ TA_LIB_API TA_RetCode TA_VAR_Close( TA_VAR_Stream *stream );
 TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_VAR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_VAR_UpdateAndFill( TA_VAR_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
  * TA_VWAP - Volume Weighted Average Price
  * 
  * Input  = High, Low, Close, Volume
@@ -9408,6 +10938,15 @@ TA_LIB_API TA_RetCode TA_VWAP_Close( TA_VWAP_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_VWAP_OpenAndFill( TA_VWAP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_VWAP_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_VWAP_UpdateAndFill( TA_VWAP_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int barCount, double outReal[] );
 
 /*
  * TA_VWMA - Volume Weighted Moving Average
@@ -9466,6 +11005,15 @@ TA_LIB_API TA_RetCode TA_VWMA_Close( TA_VWMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_VWMA_OpenAndFill( TA_VWMA_Stream **stream, const double inReal[], const double inVolume[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_VWMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_VWMA_UpdateAndFill( TA_VWMA_Stream *stream, const double inReal[], const double inVolume[], int barCount, double outReal[] );
+
+/*
  * TA_WAD - Williams' Accumulation/Distribution
  * 
  * Input  = High, Low, Close
@@ -9516,6 +11064,15 @@ TA_LIB_API TA_RetCode TA_WAD_Close( TA_WAD_Stream *stream );
 TA_LIB_API TA_RetCode TA_WAD_OpenAndFill( TA_WAD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_WAD_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_WAD_UpdateAndFill( TA_WAD_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_WCLPRICE - Weighted Close Price
  * 
  * Input  = High, Low, Close
@@ -9564,6 +11121,15 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Close( TA_WCLPRICE_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_WCLPRICE_OpenAndFill( TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_WCLPRICE_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_WCLPRICE_UpdateAndFill( TA_WCLPRICE_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
 
 /*
  * TA_WILLR - Williams' %R
@@ -9624,6 +11190,15 @@ TA_LIB_API TA_RetCode TA_WILLR_Close( TA_WILLR_Stream *stream );
 TA_LIB_API TA_RetCode TA_WILLR_OpenAndFill( TA_WILLR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_WILLR_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_WILLR_UpdateAndFill( TA_WILLR_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outReal[] );
+
+/*
  * TA_WMA - Weighted Moving Average
  * 
  * Input  = double
@@ -9676,6 +11251,15 @@ TA_LIB_API TA_RetCode TA_WMA_Close( TA_WMA_Stream *stream );
  * ... ).
  */
 TA_LIB_API TA_RetCode TA_WMA_OpenAndFill( TA_WMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_WMA_Update calls, including the
+ * per-bar rejection. A rejected bar leaves the bars before it committed;
+ * TA_StreamOutRange then reports how many. Outputs must not alias the inputs
+ * or each other.
+ */
+TA_LIB_API TA_RetCode TA_WMA_UpdateAndFill( TA_WMA_Stream *stream, const double inReal[], int barCount, double outReal[] );
 
 /* The range of bars a live stream has produced a value for, in the
  * input series' coordinates: [*outBegIdx, *outBegIdx + *outNBElement).

@@ -597,6 +597,24 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Peek( const TA_STOCHRSI_Stream *stream, double
    return TA_STOCHRSI_StepImpl( &scratch, inReal, outFastK, outFastD );
 }
 
+TA_LIB_API TA_RetCode TA_STOCHRSI_UpdateAndFill( TA_STOCHRSI_Stream *stream, const double inReal[], int barCount, double outFastK[], double outFastD[] )
+{
+   int i;
+   TA_RetCode retCode;
+
+   if( !stream || !inReal || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outFastK == (const void *)inReal || (const void *)outFastD == (const void *)inReal || (const void *)outFastK == (const void *)outFastD ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      retCode = TA_STOCHRSI_StepImpl( stream, inReal[i], &outFastK[i], &outFastD[i] );
+      if( retCode != TA_SUCCESS ) return retCode;
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_STOCHRSI_Close( TA_STOCHRSI_Stream *stream )
 {
    if( !stream ) return TA_SUCCESS;

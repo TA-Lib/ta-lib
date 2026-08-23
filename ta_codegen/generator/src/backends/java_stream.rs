@@ -902,6 +902,110 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
     }
     let _ = writeln!(o, "      }}");
 
+    // --- updateAndFill ---------------------------------------------------------
+    // One emitter for every tier: each owns a `<base>_StepImpl` with the same
+    // surface, so the n-bar filler is that step in a loop (issue #246).
+    let inputs = streaming::input_array_names(func);
+    let mut sig = String::new();
+    for a in &inputs {
+        let _ = write!(sig, "double {a}[], ");
+    }
+    for out in &func.outputs {
+        let _ = write!(sig, "{} {}[], ", out_java_type(func, &out.name), out.name);
+    }
+    let sig = sig.trim_end_matches(", ");
+    let count_src = inputs
+        .first()
+        .map_or_else(|| "0".to_string(), |a| format!("{a}.length"));
+    let reject = format!(
+        "throw new TaLibArgumentException(\"{base} updateAndFill: BadParam\", RetCode.BadParam);"
+    );
+    let _ = writeln!(
+        o,
+        "\n      /**\n\
+         \x20      * Commit {{@code n}} closed bars and write their {{@code n}} values, in one\n\
+         \x20      * call — exactly {{@code n}} back-to-back {{@code update}} calls, with one\n\
+         \x20      * set of argument checks instead of {{@code n}}. {{@code n}} is\n\
+         \x20      * {{@code {count_src}}}; the outputs must hold at least that many, and must\n\
+         \x20      * not be the same array as an input or as each other.\n\
+         \x20      * <p>{{@link #outRange()}} counts what was committed, which is what makes a\n\
+         \x20      * rejection readable: a non-finite bar {{@code k}} throws\n\
+         \x20      * {{@link IllegalArgumentException}} exactly as {{@code update}} would, with\n\
+         \x20      * bars {{@code 0..k}} committed and written, bar {{@code k}} and everything\n\
+         \x20      * after it not, and the count advanced by {{@code k}}.\n\
+         \x20      */"
+    );
+    let _ = writeln!(o, "      public void updateAndFill( {sig} ) {{");
+    let _ = writeln!(o, "         final int barCount = {count_src};");
+    let mut checks: Vec<String> = inputs
+        .iter()
+        .skip(1)
+        .map(|a| format!("{a}.length != barCount"))
+        .collect();
+    for out in &func.outputs {
+        checks.push(format!("{}.length < barCount", out.name));
+    }
+    if let Some(alias) = alias_condition(func) {
+        checks.push(alias);
+    }
+    if !checks.is_empty() {
+        let _ = writeln!(o, "         if( {} )", checks.join(" || "));
+        let _ = writeln!(o, "            {reject}");
+    }
+    // `value()` must name the last COMMITTED bar on EVERY exit, the throwing
+    // ones included, so the multi-output cache is refreshed in a `finally`.
+    //
+    // That is sound because of an invariant of the step, not by luck: a
+    // composed `<base>_StepImpl` writes its `sp.cur_<out>` fields as its LAST
+    // statements, after every sub-stream call — so the one thing that can throw
+    // out of the middle of a bar (a sub rejecting a non-finite intermediate,
+    // the documented composed hole) leaves `cur_*` still holding bar `i-1`,
+    // which is exactly the bar `done` counts. `no_throwing_call_follows_the_cur_capture`
+    // pins it, because without that ordering the `finally` would publish a
+    // half-written bar.
+    //
+    // C# needs none of this: its `Value` is a record struct built fresh from
+    // the same fields, so it is correct at every exit by construction. Leaving
+    // Java's cache stale would make the two backends disagree on an observable
+    // the streaming design says they agree on. Single-output handles read
+    // `cur_<out>` directly and have no cache at all.
+    let cached = has_value_class(func);
+    if cached {
+        let _ = writeln!(o, "         int done = 0;");
+        let _ = writeln!(o, "         try {{");
+    }
+    let pad = if cached { "            " } else { "         " };
+    let _ = writeln!(o, "{pad}for( int i = 0; i < barCount; i++ ) {{");
+    let idx_bars: Vec<String> = inputs.iter().map(|a| format!("{a}[i]")).collect();
+    if !inputs.is_empty() {
+        let conds: Vec<String> = inputs
+            .iter()
+            .map(|b| format!("!Double.isFinite({b}[i])"))
+            .collect();
+        let _ = writeln!(o, "{pad}   if( {} )", conds.join(" || "));
+        let _ = writeln!(o, "{pad}      {reject}");
+    }
+    let _ = writeln!(o, "{pad}   core.{base}_StepImpl(this, {});", idx_bars.join(", "));
+    for out in &func.outputs {
+        let name = &out.name;
+        let _ = writeln!(o, "{pad}   {name}[i] = this.cur_{name};");
+    }
+    let _ = writeln!(o, "{pad}   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;");
+    if cached {
+        let _ = writeln!(o, "{pad}   done = i + 1;");
+    }
+    let _ = writeln!(o, "{pad}}}");
+    if cached {
+        let _ = writeln!(o, "         }} finally {{");
+        let _ = writeln!(
+            o,
+            "            if( done > 0 ) this.cachedValue = {};",
+            fresh_value_expr(func, "this")
+        );
+        let _ = writeln!(o, "         }}");
+    }
+    let _ = writeln!(o, "      }}");
+
     let alloc_note = if reuse {
         "It runs on a scratch handle held per thread and\n\
          \x20      * reused, so the copy allocates nothing after the first peek of this\n\

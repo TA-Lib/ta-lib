@@ -768,6 +768,38 @@
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outFastK[], double outFastD[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD )
+            throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+                  throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
+               core.STOCHF_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+               outFastK[i] = this.cur_outFastK;
+               outFastD[i] = this.cur_outFastD;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may

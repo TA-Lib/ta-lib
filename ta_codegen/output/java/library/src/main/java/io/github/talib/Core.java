@@ -1091,6 +1091,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
+            throw new TaLibArgumentException("AC updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+               throw new TaLibArgumentException("AC updateAndFill: BadParam", RetCode.BadParam);
+            core.AC_StepImpl(this, inHigh[i], inLow[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -2052,6 +2077,39 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
+            throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+                  throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
+               core.ACCBANDS_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+               outRealUpperBand[i] = this.cur_outRealUpperBand;
+               outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+               outRealLowerBand[i] = this.cur_outRealLowerBand;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -2625,6 +2683,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("ACOS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("ACOS updateAndFill: BadParam", RetCode.BadParam);
+            core.ACOS_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -3100,6 +3183,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("AD updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("AD updateAndFill: BadParam", RetCode.BadParam);
+            core.AD_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -3538,6 +3646,31 @@ public final class Core {
          core.ADD_StepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal0.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+         final int barCount = inReal0.length;
+         if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
+            throw new TaLibArgumentException("ADD updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
+               throw new TaLibArgumentException("ADD updateAndFill: BadParam", RetCode.BadParam);
+            core.ADD_StepImpl(this, inReal0[i], inReal1[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -4219,6 +4352,31 @@ public final class Core {
          core.ADOSC_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("ADOSC updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("ADOSC updateAndFill: BadParam", RetCode.BadParam);
+            core.ADOSC_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -5385,6 +5543,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("ADX updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("ADX updateAndFill: BadParam", RetCode.BadParam);
+            core.ADX_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -6333,6 +6516,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("ADXR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("ADXR updateAndFill: BadParam", RetCode.BadParam);
+            core.ADXR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -7071,6 +7279,31 @@ public final class Core {
          core.AO_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
+            throw new TaLibArgumentException("AO updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+               throw new TaLibArgumentException("AO updateAndFill: BadParam", RetCode.BadParam);
+            core.AO_StepImpl(this, inHigh[i], inLow[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -7852,6 +8085,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("APO updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("APO updateAndFill: BadParam", RetCode.BadParam);
+            core.APO_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -8604,6 +8862,38 @@ public final class Core {
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
          return this.cachedValue;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outAroonDown[], double outAroonUp[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outAroonDown.length < barCount || outAroonUp.length < barCount || (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp )
+            throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+                  throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
+               core.AROON_StepImpl(this, inHigh[i], inLow[i]);
+               outAroonDown[i] = this.cur_outAroonDown;
+               outAroonUp[i] = this.cur_outAroonUp;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
+         }
       }
 
       /**
@@ -9429,6 +9719,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
+            throw new TaLibArgumentException("AROONOSC updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+               throw new TaLibArgumentException("AROONOSC updateAndFill: BadParam", RetCode.BadParam);
+            core.AROONOSC_StepImpl(this, inHigh[i], inLow[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -10022,6 +10337,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("ASIN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("ASIN updateAndFill: BadParam", RetCode.BadParam);
+            core.ASIN_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -10407,6 +10747,31 @@ public final class Core {
          core.ATAN_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("ATAN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("ATAN updateAndFill: BadParam", RetCode.BadParam);
+            core.ATAN_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -11090,6 +11455,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("ATR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("ATR updateAndFill: BadParam", RetCode.BadParam);
+            core.ATR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -11744,6 +12134,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("AVGDEV updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("AVGDEV updateAndFill: BadParam", RetCode.BadParam);
+            core.AVGDEV_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -12221,6 +12636,31 @@ public final class Core {
          core.AVGPRICE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("AVGPRICE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("AVGPRICE updateAndFill: BadParam", RetCode.BadParam);
+            core.AVGPRICE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -13277,6 +13717,39 @@ public final class Core {
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
          return this.cachedValue;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
+         final int barCount = inReal.length;
+         if( outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
+            throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
+               core.BBANDS_StepImpl(this, inReal[i]);
+               outRealUpperBand[i] = this.cur_outRealUpperBand;
+               outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+               outRealLowerBand[i] = this.cur_outRealLowerBand;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+         }
       }
 
       /**
@@ -14431,6 +14904,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal0.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+         final int barCount = inReal0.length;
+         if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
+            throw new TaLibArgumentException("BETA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
+               throw new TaLibArgumentException("BETA updateAndFill: BadParam", RetCode.BadParam);
+            core.BETA_StepImpl(this, inReal0[i], inReal1[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -15366,6 +15864,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("BOP updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("BOP updateAndFill: BadParam", RetCode.BadParam);
+            core.BOP_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -15991,6 +16514,31 @@ public final class Core {
          core.CCI_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("CCI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CCI updateAndFill: BadParam", RetCode.BadParam);
+            core.CCI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -16685,6 +17233,31 @@ public final class Core {
          core.CDL2CROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDL2CROWS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDL2CROWS updateAndFill: BadParam", RetCode.BadParam);
+            core.CDL2CROWS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -17415,6 +17988,31 @@ public final class Core {
          core.CDL3BLACKCROWS_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDL3BLACKCROWS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDL3BLACKCROWS updateAndFill: BadParam", RetCode.BadParam);
+            core.CDL3BLACKCROWS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -18202,6 +18800,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDL3INSIDE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDL3INSIDE updateAndFill: BadParam", RetCode.BadParam);
+            core.CDL3INSIDE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -18974,6 +19597,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDL3LINESTRIKE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDL3LINESTRIKE updateAndFill: BadParam", RetCode.BadParam);
+            core.CDL3LINESTRIKE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -19605,6 +20253,31 @@ public final class Core {
          core.CDL3OUTSIDE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDL3OUTSIDE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDL3OUTSIDE updateAndFill: BadParam", RetCode.BadParam);
+            core.CDL3OUTSIDE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -20438,6 +21111,31 @@ public final class Core {
          core.CDL3STARSINSOUTH_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDL3STARSINSOUTH updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDL3STARSINSOUTH updateAndFill: BadParam", RetCode.BadParam);
+            core.CDL3STARSINSOUTH_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -21520,6 +22218,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDL3WHITESOLDIERS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDL3WHITESOLDIERS updateAndFill: BadParam", RetCode.BadParam);
+            core.CDL3WHITESOLDIERS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -22522,6 +23245,31 @@ public final class Core {
          core.CDLABANDONEDBABY_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLABANDONEDBABY updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLABANDONEDBABY updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLABANDONEDBABY_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -23613,6 +24361,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLADVANCEBLOCK updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLADVANCEBLOCK updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLADVANCEBLOCK_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -24542,6 +25315,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLBELTHOLD updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLBELTHOLD updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLBELTHOLD_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -25276,6 +26074,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLBREAKAWAY updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLBREAKAWAY updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLBREAKAWAY_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -26002,6 +26825,31 @@ public final class Core {
          core.CDLCLOSINGMARUBOZU_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLCLOSINGMARUBOZU updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLCLOSINGMARUBOZU updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLCLOSINGMARUBOZU_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -26749,6 +27597,31 @@ public final class Core {
          core.CDLCONCEALBABYSWALL_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLCONCEALBABYSWALL updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLCONCEALBABYSWALL updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLCONCEALBABYSWALL_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -27541,6 +28414,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLCOUNTERATTACK updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLCOUNTERATTACK updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLCOUNTERATTACK_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -28288,6 +29186,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLDARKCLOUDCOVER updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLDARKCLOUDCOVER updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLDARKCLOUDCOVER_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -28927,6 +29850,31 @@ public final class Core {
          core.CDLDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLDOJI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLDOJI updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLDOJI_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -29639,6 +30587,31 @@ public final class Core {
          core.CDLDOJISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLDOJISTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -30401,6 +31374,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLDRAGONFLYDOJI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLDRAGONFLYDOJI updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLDRAGONFLYDOJI_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -31031,6 +32029,31 @@ public final class Core {
          core.CDLENGULFING_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLENGULFING updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLENGULFING updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLENGULFING_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -31804,6 +32827,31 @@ public final class Core {
          core.CDLEVENINGDOJISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLEVENINGDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLEVENINGDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLEVENINGDOJISTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -32698,6 +33746,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLEVENINGSTAR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLEVENINGSTAR updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLEVENINGSTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -33510,6 +34583,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLGAPSIDESIDEWHITE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -34278,6 +35376,31 @@ public final class Core {
          core.CDLGRAVESTONEDOJI_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLGRAVESTONEDOJI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLGRAVESTONEDOJI updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLGRAVESTONEDOJI_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -35136,6 +36259,31 @@ public final class Core {
          core.CDLHAMMER_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLHAMMER updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLHAMMER updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLHAMMER_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -36100,6 +37248,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLHANGINGMAN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLHANGINGMAN updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLHANGINGMAN_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -36974,6 +38147,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLHARAMI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLHARAMI updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLHARAMI_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -37791,6 +38989,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLHARAMICROSS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLHARAMICROSS updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLHARAMICROSS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -38573,6 +39796,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLHIGHWAVE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLHIGHWAVE updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLHIGHWAVE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -39285,6 +40533,31 @@ public final class Core {
          core.CDLHIKKAKE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLHIKKAKE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLHIKKAKE updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLHIKKAKE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -40073,6 +41346,31 @@ public final class Core {
          core.CDLHIKKAKEMOD_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLHIKKAKEMOD updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLHIKKAKEMOD updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLHIKKAKEMOD_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -40874,6 +42172,31 @@ public final class Core {
          core.CDLHOMINGPIGEON_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLHOMINGPIGEON updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLHOMINGPIGEON updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLHOMINGPIGEON_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -41704,6 +43027,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLIDENTICAL3CROWS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLIDENTICAL3CROWS updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLIDENTICAL3CROWS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -42524,6 +43872,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLINNECK updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLINNECK updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLINNECK_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -43334,6 +44707,31 @@ public final class Core {
          core.CDLINVERTEDHAMMER_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLINVERTEDHAMMER updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLINVERTEDHAMMER updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLINVERTEDHAMMER_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -44170,6 +45568,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLKICKING updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLKICKING updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLKICKING_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -44973,6 +46396,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLKICKINGBYLENGTH updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLKICKINGBYLENGTH updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLKICKINGBYLENGTH_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -45726,6 +47174,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLLADDERBOTTOM updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLLADDERBOTTOM updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLLADDERBOTTOM_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -46456,6 +47929,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLLONGLEGGEDDOJI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLLONGLEGGEDDOJI updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLLONGLEGGEDDOJI_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -47170,6 +48668,31 @@ public final class Core {
          core.CDLLONGLINE_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLLONGLINE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLLONGLINE updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLLONGLINE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -47901,6 +49424,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLMARUBOZU updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLMARUBOZU updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLMARUBOZU_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -48588,6 +50136,31 @@ public final class Core {
          core.CDLMATCHINGLOW_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLMATCHINGLOW updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLMATCHINGLOW updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLMATCHINGLOW_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -49407,6 +50980,31 @@ public final class Core {
          core.CDLMATHOLD_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLMATHOLD updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLMATHOLD updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLMATHOLD_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -50353,6 +51951,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLMORNINGDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLMORNINGDOJISTAR updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLMORNINGDOJISTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -51252,6 +52875,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLMORNINGSTAR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLMORNINGSTAR updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLMORNINGSTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -52058,6 +53706,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLONNECK updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLONNECK updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLONNECK_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -52786,6 +54459,31 @@ public final class Core {
          core.CDLPIERCING_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLPIERCING updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLPIERCING updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLPIERCING_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -53561,6 +55259,31 @@ public final class Core {
          core.CDLRICKSHAWMAN_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLRICKSHAWMAN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLRICKSHAWMAN updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLRICKSHAWMAN_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -54444,6 +56167,31 @@ public final class Core {
          core.CDLRISEFALL3METHODS_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLRISEFALL3METHODS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLRISEFALL3METHODS updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLRISEFALL3METHODS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -55338,6 +57086,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLSEPARATINGLINES updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLSEPARATINGLINES updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLSEPARATINGLINES_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -56196,6 +57969,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLSHOOTINGSTAR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLSHOOTINGSTAR updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLSHOOTINGSTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -56986,6 +58784,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLSHORTLINE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLSHORTLINE updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLSHORTLINE_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -57646,6 +59469,31 @@ public final class Core {
          core.CDLSPINNINGTOP_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLSPINNINGTOP updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLSPINNINGTOP updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLSPINNINGTOP_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -58518,6 +60366,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLSTALLEDPATTERN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLSTALLEDPATTERN updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLSTALLEDPATTERN_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -59359,6 +61232,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLSTICKSANDWICH updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLSTICKSANDWICH updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLSTICKSANDWICH_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -60125,6 +62023,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLTAKURI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLTAKURI updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLTAKURI_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -60874,6 +62797,31 @@ public final class Core {
          core.CDLTASUKIGAP_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLTASUKIGAP updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLTASUKIGAP updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLTASUKIGAP_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -61630,6 +63578,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLTHRUSTING updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLTHRUSTING updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLTHRUSTING_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -62364,6 +64337,31 @@ public final class Core {
          core.CDLTRISTAR_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLTRISTAR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLTRISTAR updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLTRISTAR_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -63122,6 +65120,31 @@ public final class Core {
          core.CDLUNIQUE3RIVER_StepImpl(this, inOpen, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLUNIQUE3RIVER updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLUNIQUE3RIVER updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLUNIQUE3RIVER_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -63927,6 +65950,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLUPSIDEGAP2CROWS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -64598,6 +66646,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
+         final int barCount = inOpen.length;
+         if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outInteger.length < barCount || (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose )
+            throw new TaLibArgumentException("CDLXSIDEGAP3METHODS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("CDLXSIDEGAP3METHODS updateAndFill: BadParam", RetCode.BadParam);
+            core.CDLXSIDEGAP3METHODS_StepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -65049,6 +67122,31 @@ public final class Core {
          core.CEIL_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("CEIL updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("CEIL updateAndFill: BadParam", RetCode.BadParam);
+            core.CEIL_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -65770,6 +67868,31 @@ public final class Core {
          core.CMF_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("CMF updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("CMF updateAndFill: BadParam", RetCode.BadParam);
+            core.CMF_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -66604,6 +68727,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("CMO updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("CMO updateAndFill: BadParam", RetCode.BadParam);
+            core.CMO_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -67413,6 +69561,31 @@ public final class Core {
          core.CMOU_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("CMOU updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("CMOU updateAndFill: BadParam", RetCode.BadParam);
+            core.CMOU_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -68451,6 +70624,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal0.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+         final int barCount = inReal0.length;
+         if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
+            throw new TaLibArgumentException("CORREL updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
+               throw new TaLibArgumentException("CORREL updateAndFill: BadParam", RetCode.BadParam);
+            core.CORREL_StepImpl(this, inReal0[i], inReal1[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -69271,6 +71469,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("COS updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("COS updateAndFill: BadParam", RetCode.BadParam);
+            core.COS_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -69655,6 +71878,31 @@ public final class Core {
          core.COSH_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("COSH updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("COSH updateAndFill: BadParam", RetCode.BadParam);
+            core.COSH_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -70281,6 +72529,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("DEMA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("DEMA updateAndFill: BadParam", RetCode.BadParam);
+            core.DEMA_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -70825,6 +73098,31 @@ public final class Core {
          core.DIV_StepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal0.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+         final int barCount = inReal0.length;
+         if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
+            throw new TaLibArgumentException("DIV updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
+               throw new TaLibArgumentException("DIV updateAndFill: BadParam", RetCode.BadParam);
+            core.DIV_StepImpl(this, inReal0[i], inReal1[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -71753,6 +74051,31 @@ public final class Core {
          core.DX_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("DX updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("DX updateAndFill: BadParam", RetCode.BadParam);
+            core.DX_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -72728,6 +75051,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inClose.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
+         final int barCount = inClose.length;
+         if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("EFI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("EFI updateAndFill: BadParam", RetCode.BadParam);
+            core.EFI_StepImpl(this, inClose[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -73480,6 +75828,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("EMA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("EMA updateAndFill: BadParam", RetCode.BadParam);
+            core.EMA_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -73955,6 +76328,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("EXP updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("EXP updateAndFill: BadParam", RetCode.BadParam);
+            core.EXP_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -74337,6 +76735,31 @@ public final class Core {
          core.FLOOR_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("FLOOR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("FLOOR updateAndFill: BadParam", RetCode.BadParam);
+            core.FLOOR_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -75250,6 +77673,31 @@ public final class Core {
          core.HMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("HMA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("HMA updateAndFill: BadParam", RetCode.BadParam);
+            core.HMA_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -76919,6 +79367,31 @@ public final class Core {
          core.HT_DCPERIOD_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("HT_DCPERIOD updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("HT_DCPERIOD updateAndFill: BadParam", RetCode.BadParam);
+            core.HT_DCPERIOD_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -78807,6 +81280,31 @@ public final class Core {
          core.HT_DCPHASE_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("HT_DCPHASE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("HT_DCPHASE updateAndFill: BadParam", RetCode.BadParam);
+            core.HT_DCPHASE_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -80703,6 +83201,38 @@ public final class Core {
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
          return this.cachedValue;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outInPhase[], double outQuadrature[] ) {
+         final int barCount = inReal.length;
+         if( outInPhase.length < barCount || outQuadrature.length < barCount || (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature )
+            throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
+               core.HT_PHASOR_StepImpl(this, inReal[i]);
+               outInPhase[i] = this.cur_outInPhase;
+               outQuadrature[i] = this.cur_outQuadrature;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
+         }
       }
 
       /**
@@ -82639,6 +85169,38 @@ public final class Core {
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
          return this.cachedValue;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outSine[], double outLeadSine[] ) {
+         final int barCount = inReal.length;
+         if( outSine.length < barCount || outLeadSine.length < barCount || (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine )
+            throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
+               core.HT_SINE_StepImpl(this, inReal[i]);
+               outSine[i] = this.cur_outSine;
+               outLeadSine[i] = this.cur_outLeadSine;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
+         }
       }
 
       /**
@@ -84602,6 +87164,31 @@ public final class Core {
          core.HT_TRENDLINE_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("HT_TRENDLINE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("HT_TRENDLINE updateAndFill: BadParam", RetCode.BadParam);
+            core.HT_TRENDLINE_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -86777,6 +89364,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], int outInteger[] ) {
+         final int barCount = inReal.length;
+         if( outInteger.length < barCount || (Object)outInteger == (Object)inReal )
+            throw new TaLibArgumentException("HT_TRENDMODE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("HT_TRENDMODE updateAndFill: BadParam", RetCode.BadParam);
+            core.HT_TRENDMODE_StepImpl(this, inReal[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -88111,6 +90723,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inClose[], double outReal[] ) {
+         final int barCount = inOpen.length;
+         if( inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("IMI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("IMI updateAndFill: BadParam", RetCode.BadParam);
+            core.IMI_StepImpl(this, inOpen[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -88925,6 +91562,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("KAMA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("KAMA updateAndFill: BadParam", RetCode.BadParam);
+            core.KAMA_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -89721,6 +92383,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("LINEARREG updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("LINEARREG updateAndFill: BadParam", RetCode.BadParam);
+            core.LINEARREG_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -90411,6 +93098,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("LINEARREG_ANGLE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("LINEARREG_ANGLE updateAndFill: BadParam", RetCode.BadParam);
+            core.LINEARREG_ANGLE_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -91095,6 +93807,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("LINEARREG_INTERCEPT updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("LINEARREG_INTERCEPT updateAndFill: BadParam", RetCode.BadParam);
+            core.LINEARREG_INTERCEPT_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -91775,6 +94512,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("LINEARREG_SLOPE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("LINEARREG_SLOPE updateAndFill: BadParam", RetCode.BadParam);
+            core.LINEARREG_SLOPE_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -92274,6 +95036,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("LN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("LN updateAndFill: BadParam", RetCode.BadParam);
+            core.LN_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -92664,6 +95451,31 @@ public final class Core {
          core.LOG10_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("LOG10 updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("LOG10 updateAndFill: BadParam", RetCode.BadParam);
+            core.LOG10_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -93461,6 +96273,31 @@ public final class Core {
          core.MA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("MA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("MA updateAndFill: BadParam", RetCode.BadParam);
+            core.MA_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -94703,6 +97540,39 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
+         final int barCount = inReal.length;
+         if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
+            throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
+               core.MACD_StepImpl(this, inReal[i]);
+               outMACD[i] = this.cur_outMACD;
+               outMACDSignal[i] = this.cur_outMACDSignal;
+               outMACDHist[i] = this.cur_outMACDHist;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -95779,6 +98649,39 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
+         final int barCount = inReal.length;
+         if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
+            throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
+               core.MACDEXT_StepImpl(this, inReal[i]);
+               outMACD[i] = this.cur_outMACD;
+               outMACDSignal[i] = this.cur_outMACDSignal;
+               outMACDHist[i] = this.cur_outMACDHist;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -96694,6 +99597,39 @@ public final class Core {
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
+         final int barCount = inReal.length;
+         if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
+            throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
+               core.MACDFIX_StepImpl(this, inReal[i]);
+               outMACD[i] = this.cur_outMACD;
+               outMACDSignal[i] = this.cur_outMACDSignal;
+               outMACDHist[i] = this.cur_outMACDHist;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+         }
       }
 
       /**
@@ -98255,6 +101191,38 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outMAMA[], double outFAMA[] ) {
+         final int barCount = inReal.length;
+         if( outMAMA.length < barCount || outFAMA.length < barCount || (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA )
+            throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
+               core.MAMA_StepImpl(this, inReal[i]);
+               outMAMA[i] = this.cur_outMAMA;
+               outFAMA[i] = this.cur_outFAMA;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -99343,6 +102311,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("MARKETFI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("MARKETFI updateAndFill: BadParam", RetCode.BadParam);
+            core.MARKETFI_StepImpl(this, inHigh[i], inLow[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -100316,6 +103309,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double inPeriods[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( inPeriods.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal || (Object)outReal == (Object)inPeriods )
+            throw new TaLibArgumentException("MAVP updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) || !Double.isFinite(inPeriods[i]) )
+               throw new TaLibArgumentException("MAVP updateAndFill: BadParam", RetCode.BadParam);
+            core.MAVP_StepImpl(this, inReal[i], inPeriods[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -101076,6 +104094,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("MAX updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("MAX updateAndFill: BadParam", RetCode.BadParam);
+            core.MAX_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -101739,6 +104782,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], int outInteger[] ) {
+         final int barCount = inReal.length;
+         if( outInteger.length < barCount || (Object)outInteger == (Object)inReal )
+            throw new TaLibArgumentException("MAXINDEX updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("MAXINDEX updateAndFill: BadParam", RetCode.BadParam);
+            core.MAXINDEX_StepImpl(this, inReal[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -102252,6 +105320,31 @@ public final class Core {
          core.MEDPRICE_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
+            throw new TaLibArgumentException("MEDPRICE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+               throw new TaLibArgumentException("MEDPRICE updateAndFill: BadParam", RetCode.BadParam);
+            core.MEDPRICE_StepImpl(this, inHigh[i], inLow[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -102959,6 +106052,31 @@ public final class Core {
          core.MFI_StepImpl(this, inHigh, inLow, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("MFI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("MFI updateAndFill: BadParam", RetCode.BadParam);
+            core.MFI_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -103861,6 +106979,31 @@ public final class Core {
          core.MIDPOINT_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("MIDPOINT updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("MIDPOINT updateAndFill: BadParam", RetCode.BadParam);
+            core.MIDPOINT_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -104789,6 +107932,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
+            throw new TaLibArgumentException("MIDPRICE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+               throw new TaLibArgumentException("MIDPRICE updateAndFill: BadParam", RetCode.BadParam);
+            core.MIDPRICE_StepImpl(this, inHigh[i], inLow[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -105614,6 +108782,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("MIN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("MIN updateAndFill: BadParam", RetCode.BadParam);
+            core.MIN_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -106272,6 +109465,31 @@ public final class Core {
          core.MININDEX_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outInteger;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], int outInteger[] ) {
+         final int barCount = inReal.length;
+         if( outInteger.length < barCount || (Object)outInteger == (Object)inReal )
+            throw new TaLibArgumentException("MININDEX updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("MININDEX updateAndFill: BadParam", RetCode.BadParam);
+            core.MININDEX_StepImpl(this, inReal[i]);
+            outInteger[i] = this.cur_outInteger;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -107153,6 +110371,38 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outMin[], double outMax[] ) {
+         final int barCount = inReal.length;
+         if( outMin.length < barCount || outMax.length < barCount || (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax )
+            throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
+               core.MINMAX_StepImpl(this, inReal[i]);
+               outMin[i] = this.cur_outMin;
+               outMax[i] = this.cur_outMax;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -107960,6 +111210,38 @@ public final class Core {
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
          return this.cachedValue;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], int outMinIdx[], int outMaxIdx[] ) {
+         final int barCount = inReal.length;
+         if( outMinIdx.length < barCount || outMaxIdx.length < barCount || (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx )
+            throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
+               core.MINMAXINDEX_StepImpl(this, inReal[i]);
+               outMinIdx[i] = this.cur_outMinIdx;
+               outMaxIdx[i] = this.cur_outMaxIdx;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
+         }
       }
 
       /**
@@ -109060,6 +112342,31 @@ public final class Core {
          core.MINUS_DI_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("MINUS_DI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("MINUS_DI updateAndFill: BadParam", RetCode.BadParam);
+            core.MINUS_DI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -110316,6 +113623,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
+            throw new TaLibArgumentException("MINUS_DM updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+               throw new TaLibArgumentException("MINUS_DM updateAndFill: BadParam", RetCode.BadParam);
+            core.MINUS_DM_StepImpl(this, inHigh[i], inLow[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -111144,6 +114476,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("MOM updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("MOM updateAndFill: BadParam", RetCode.BadParam);
+            core.MOM_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -111620,6 +114977,31 @@ public final class Core {
          core.MULT_StepImpl(this, inReal0, inReal1);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal0.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+         final int barCount = inReal0.length;
+         if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
+            throw new TaLibArgumentException("MULT updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
+               throw new TaLibArgumentException("MULT updateAndFill: BadParam", RetCode.BadParam);
+            core.MULT_StepImpl(this, inReal0[i], inReal1[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -112373,6 +115755,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("NATR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("NATR updateAndFill: BadParam", RetCode.BadParam);
+            core.NATR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -113084,6 +116491,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inClose.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
+         final int barCount = inClose.length;
+         if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("NVI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("NVI updateAndFill: BadParam", RetCode.BadParam);
+            core.NVI_StepImpl(this, inClose[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -113580,6 +117012,31 @@ public final class Core {
          core.OBV_StepImpl(this, inReal, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double inVolume[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("OBV updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("OBV updateAndFill: BadParam", RetCode.BadParam);
+            core.OBV_StepImpl(this, inReal[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -114559,6 +118016,31 @@ public final class Core {
          core.PLUS_DI_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("PLUS_DI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("PLUS_DI updateAndFill: BadParam", RetCode.BadParam);
+            core.PLUS_DI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -115814,6 +119296,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
+            throw new TaLibArgumentException("PLUS_DM updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+               throw new TaLibArgumentException("PLUS_DM updateAndFill: BadParam", RetCode.BadParam);
+            core.PLUS_DM_StepImpl(this, inHigh[i], inLow[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -116752,6 +120259,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("PPO updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("PPO updateAndFill: BadParam", RetCode.BadParam);
+            core.PPO_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -117344,6 +120876,31 @@ public final class Core {
          core.PVI_StepImpl(this, inClose, inVolume);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inClose.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
+         final int barCount = inClose.length;
+         if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("PVI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("PVI updateAndFill: BadParam", RetCode.BadParam);
+            core.PVI_StepImpl(this, inClose[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -118026,6 +121583,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inVolume.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inVolume[], double outReal[] ) {
+         final int barCount = inVolume.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("PVO updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("PVO updateAndFill: BadParam", RetCode.BadParam);
+            core.PVO_StepImpl(this, inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -118681,6 +122263,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inOpen.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inOpen[], double inClose[], double outReal[] ) {
+         final int barCount = inOpen.length;
+         if( inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("QSTICK updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("QSTICK updateAndFill: BadParam", RetCode.BadParam);
+            core.QSTICK_StepImpl(this, inOpen[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -119286,6 +122893,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("ROC updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("ROC updateAndFill: BadParam", RetCode.BadParam);
+            core.ROC_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -119880,6 +123512,31 @@ public final class Core {
          core.ROCP_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("ROCP updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("ROCP updateAndFill: BadParam", RetCode.BadParam);
+            core.ROCP_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -120483,6 +124140,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("ROCR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("ROCR updateAndFill: BadParam", RetCode.BadParam);
+            core.ROCR_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -121082,6 +124764,31 @@ public final class Core {
          core.ROCR100_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("ROCR100 updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("ROCR100 updateAndFill: BadParam", RetCode.BadParam);
+            core.ROCR100_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -121880,6 +125587,31 @@ public final class Core {
          core.RSI_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("RSI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("RSI updateAndFill: BadParam", RetCode.BadParam);
+            core.RSI_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -122907,6 +126639,31 @@ public final class Core {
          core.SAR_StepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
+            throw new TaLibArgumentException("SAR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+               throw new TaLibArgumentException("SAR updateAndFill: BadParam", RetCode.BadParam);
+            core.SAR_StepImpl(this, inHigh[i], inLow[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -124364,6 +128121,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow )
+            throw new TaLibArgumentException("SAREXT updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+               throw new TaLibArgumentException("SAREXT updateAndFill: BadParam", RetCode.BadParam);
+            core.SAREXT_StepImpl(this, inHigh[i], inLow[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -125207,6 +128989,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("SIN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("SIN updateAndFill: BadParam", RetCode.BadParam);
+            core.SIN_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -125589,6 +129396,31 @@ public final class Core {
          core.SINH_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("SINH updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("SINH updateAndFill: BadParam", RetCode.BadParam);
+            core.SINH_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -126111,6 +129943,31 @@ public final class Core {
          core.SMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("SMA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("SMA updateAndFill: BadParam", RetCode.BadParam);
+            core.SMA_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -127311,6 +131168,38 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outSMI[], double outSMISignal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outSMI.length < barCount || outSMISignal.length < barCount || (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal )
+            throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+                  throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
+               core.SMI_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+               outSMI[i] = this.cur_outSMI;
+               outSMISignal[i] = this.cur_outSMISignal;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -128084,6 +131973,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("SQRT updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("SQRT updateAndFill: BadParam", RetCode.BadParam);
+            core.SQRT_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -128604,6 +132518,31 @@ public final class Core {
          core.STDDEV_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("STDDEV updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("STDDEV updateAndFill: BadParam", RetCode.BadParam);
+            core.STDDEV_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -129666,6 +133605,38 @@ public final class Core {
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
          return this.cachedValue;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outSlowK[], double outSlowD[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outSlowK.length < barCount || outSlowD.length < barCount || (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD )
+            throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+                  throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
+               core.STOCH_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+               outSlowK[i] = this.cur_outSlowK;
+               outSlowD[i] = this.cur_outSlowD;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
+         }
       }
 
       /**
@@ -130914,6 +134885,38 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outFastK[], double outFastD[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD )
+            throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+                  throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
+               core.STOCHF_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+               outFastK[i] = this.cur_outFastK;
+               outFastD[i] = this.cur_outFastD;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -131911,6 +135914,38 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outFastK[], double outFastD[] ) {
+         final int barCount = inReal.length;
+         if( outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD )
+            throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inReal[i]) )
+                  throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
+               core.STOCHRSI_StepImpl(this, inReal[i]);
+               outFastK[i] = this.cur_outFastK;
+               outFastD[i] = this.cur_outFastD;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -132421,6 +136456,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal0.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
+         final int barCount = inReal0.length;
+         if( inReal1.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 )
+            throw new TaLibArgumentException("SUB updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal0[i]) || !Double.isFinite(inReal1[i]) )
+               throw new TaLibArgumentException("SUB updateAndFill: BadParam", RetCode.BadParam);
+            core.SUB_StepImpl(this, inReal0[i], inReal1[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -132916,6 +136976,31 @@ public final class Core {
          core.SUM_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("SUM updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("SUM updateAndFill: BadParam", RetCode.BadParam);
+            core.SUM_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -133744,6 +137829,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("T3 updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("T3 updateAndFill: BadParam", RetCode.BadParam);
+            core.T3_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -134323,6 +138433,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("TAN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("TAN updateAndFill: BadParam", RetCode.BadParam);
+            core.TAN_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -134707,6 +138842,31 @@ public final class Core {
          core.TANH_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("TANH updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("TANH updateAndFill: BadParam", RetCode.BadParam);
+            core.TANH_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -135373,6 +139533,31 @@ public final class Core {
          core.TEMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("TEMA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("TEMA updateAndFill: BadParam", RetCode.BadParam);
+            core.TEMA_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -136045,6 +140230,31 @@ public final class Core {
          core.TRANGE_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("TRANGE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("TRANGE updateAndFill: BadParam", RetCode.BadParam);
+            core.TRANGE_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -136945,6 +141155,31 @@ public final class Core {
          core.TRIMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("TRIMA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("TRIMA updateAndFill: BadParam", RetCode.BadParam);
+            core.TRIMA_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -138062,6 +142297,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("TRIX updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("TRIX updateAndFill: BadParam", RetCode.BadParam);
+            core.TRIX_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -138758,6 +143018,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("TSF updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("TSF updateAndFill: BadParam", RetCode.BadParam);
+            core.TSF_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -139281,6 +143566,31 @@ public final class Core {
          core.TYPPRICE_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("TYPPRICE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("TYPPRICE updateAndFill: BadParam", RetCode.BadParam);
+            core.TYPPRICE_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -140213,6 +144523,31 @@ public final class Core {
          core.ULTOSC_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("ULTOSC updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("ULTOSC updateAndFill: BadParam", RetCode.BadParam);
+            core.ULTOSC_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -141263,6 +145598,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("VAR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("VAR updateAndFill: BadParam", RetCode.BadParam);
+            core.VAR_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -142159,6 +146519,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("VWAP updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("VWAP updateAndFill: BadParam", RetCode.BadParam);
+            core.VWAP_StepImpl(this, inHigh[i], inLow[i], inClose[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -142977,6 +147362,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double inVolume[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( inVolume.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume )
+            throw new TaLibArgumentException("VWMA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) || !Double.isFinite(inVolume[i]) )
+               throw new TaLibArgumentException("VWMA updateAndFill: BadParam", RetCode.BadParam);
+            core.VWMA_StepImpl(this, inReal[i], inVolume[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -143679,6 +148089,31 @@ public final class Core {
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("WAD updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("WAD updateAndFill: BadParam", RetCode.BadParam);
+            core.WAD_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
@@ -144168,6 +148603,31 @@ public final class Core {
          core.WCLPRICE_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("WCLPRICE updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("WCLPRICE updateAndFill: BadParam", RetCode.BadParam);
+            core.WCLPRICE_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -144962,6 +149422,31 @@ public final class Core {
          core.WILLR_StepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose )
+            throw new TaLibArgumentException("WILLR updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) )
+               throw new TaLibArgumentException("WILLR updateAndFill: BadParam", RetCode.BadParam);
+            core.WILLR_StepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**
@@ -145770,6 +150255,31 @@ public final class Core {
          core.WMA_StepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("WMA updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("WMA updateAndFill: BadParam", RetCode.BadParam);
+            core.WMA_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
       }
 
       /**

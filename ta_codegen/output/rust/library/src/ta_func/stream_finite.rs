@@ -223,3 +223,214 @@ fn a_nan_real_parameter_is_rejected() {
         "the control open must succeed"
     );
 }
+
+// ---------------------------------------------------------------------------
+// `update_and_fill`: n bars in one call, and what a rejected bar leaves behind
+// (issue #246).
+// ---------------------------------------------------------------------------
+
+const UF_N: usize = 6;
+const UF_BAD: usize = 3;
+const UF_CANARY: f64 = -1.234_567_890_123_4e300;
+const UF_CANARY_I: i32 = -987_654_321;
+
+/// `update_and_fill` is n back-to-back `update`s and nothing else, so a
+/// non-finite bar `k` is rejected exactly as `update` rejects it — and the bars
+/// before it stay committed with their values written.
+///
+/// That is the one place in the API where a call returns an error AND leaves
+/// output behind, so what it leaves is pinned against a CONTROL handle driven
+/// over the same first `k` bars one at a time: same range, same values, same
+/// answer on the next good bar. A whole-array pre-scan would satisfy "it
+/// rejects" and fail every one of those.
+#[test]
+fn update_and_fill_commits_the_bars_before_a_rejected_one() {
+    let core = Core::new();
+    let (open, high, low, close, periods) = series(WARM + UF_N + 1);
+    let (o, h, l, c, p) = (
+        &open[..WARM],
+        &high[..WARM],
+        &low[..WARM],
+        &close[..WARM],
+        &periods[..WARM],
+    );
+    let next = WARM + UF_N;
+    let mut commits = 0usize;
+    let mut values = 0usize;
+    let mut untouched = 0usize;
+
+    for &bad in &BAD {
+        let mut bars: Vec<f64> = (0..UF_N).map(|i| close[WARM + i]).collect();
+        bars[UF_BAD] = bad;
+
+        // --- the shared step loop (loop / dual-mode / composed all reach it) --
+        let (mut sa, _) = core.SMA_Open(c, 14).unwrap();
+        let (mut sb, _) = core.SMA_Open(c, 14).unwrap();
+        let want: Vec<f64> = (0..UF_BAD).map(|i| sb.update(bars[i]).unwrap()).collect();
+        let mut out = vec![UF_CANARY; UF_N];
+        assert!(
+            is_bad_param(&sa.update_and_fill(&bars, &mut out)),
+            "SMA.update_and_fill accepted {bad}"
+        );
+        assert!(
+            probed(&mut commits, sa.out_range() == sb.out_range()),
+            "SMA: committed {:?}, {UF_BAD} updates committed {:?}",
+            sa.out_range(),
+            sb.out_range()
+        );
+        for i in 0..UF_BAD {
+            assert!(probed(&mut values, out[i].to_bits() == want[i].to_bits()), "SMA: value {i}");
+        }
+        for i in UF_BAD..UF_N {
+            assert!(
+                probed(&mut untouched, out[i].to_bits() == UF_CANARY.to_bits()),
+                "SMA: wrote slot {i}, at or past the rejected bar"
+            );
+        }
+        assert_eq!(
+            sa.update(close[next]).unwrap().to_bits(),
+            sb.update(close[next]).unwrap().to_bits(),
+            "SMA: a rejected update_and_fill left the handle out of step"
+        );
+
+        // --- composed, three outputs: the commit has to be consistent across all
+        let (mut ba, _) = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
+        let (mut bb, _) = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
+        let wantb: Vec<(f64, f64, f64)> =
+            (0..UF_BAD).map(|i| bb.update(bars[i]).unwrap()).collect();
+        let (mut bu, mut bm, mut bl) =
+            (vec![UF_CANARY; UF_N], vec![UF_CANARY; UF_N], vec![UF_CANARY; UF_N]);
+        assert!(
+            is_bad_param(&ba.update_and_fill(&bars, &mut bu, &mut bm, &mut bl)),
+            "BBANDS.update_and_fill accepted {bad}"
+        );
+        assert!(probed(&mut commits, ba.out_range() == bb.out_range()), "BBANDS: commit");
+        for i in 0..UF_BAD {
+            let got = (bu[i].to_bits(), bm[i].to_bits(), bl[i].to_bits());
+            let w = (wantb[i].0.to_bits(), wantb[i].1.to_bits(), wantb[i].2.to_bits());
+            assert!(probed(&mut values, got == w), "BBANDS: value {i}");
+        }
+        for i in UF_BAD..UF_N {
+            let clean = bu[i].to_bits() == UF_CANARY.to_bits()
+                && bm[i].to_bits() == UF_CANARY.to_bits()
+                && bl[i].to_bits() == UF_CANARY.to_bits();
+            assert!(probed(&mut untouched, clean), "BBANDS: wrote slot {i}");
+        }
+
+        // --- dispatch, both arms: period 1 is the identity loop, which never
+        // reaches a sub-stream and carries its own copy of the per-bar check.
+        for period in [1i32, 14] {
+            let (mut ma, _) = core.MA_Open(c, period, MAType::SMA).unwrap();
+            let (mut mb, _) = core.MA_Open(c, period, MAType::SMA).unwrap();
+            let wantm: Vec<f64> = (0..UF_BAD).map(|i| mb.update(bars[i]).unwrap()).collect();
+            let mut mo = vec![UF_CANARY; UF_N];
+            assert!(
+                is_bad_param(&ma.update_and_fill(&bars, &mut mo)),
+                "MA({period}).update_and_fill accepted {bad}"
+            );
+            assert!(probed(&mut commits, ma.out_range() == mb.out_range()), "MA({period}): commit");
+            for i in 0..UF_BAD {
+                assert!(probed(&mut values, mo[i].to_bits() == wantm[i].to_bits()), "MA({period}): value {i}");
+            }
+            for i in UF_BAD..UF_N {
+                assert!(probed(&mut untouched, mo[i].to_bits() == UF_CANARY.to_bits()), "MA({period}): slot {i}");
+            }
+        }
+
+        // --- period-bank: the poisoned slot is the PERIOD series, the one input
+        // that reaches an `as i32`.
+        let good_bars: Vec<f64> = (0..UF_N).map(|i| close[WARM + i]).collect();
+        let mut pers: Vec<f64> = (0..UF_N).map(|i| 2.0 + (i % 8) as f64).collect();
+        pers[UF_BAD] = bad;
+        let (mut va, _) = core.MAVP_Open(c, p, 2, 30, MAType::SMA).unwrap();
+        let (mut vb, _) = core.MAVP_Open(c, p, 2, 30, MAType::SMA).unwrap();
+        let wantv: Vec<f64> = (0..UF_BAD)
+            .map(|i| vb.update(good_bars[i], pers[i]).unwrap())
+            .collect();
+        let mut vo = vec![UF_CANARY; UF_N];
+        assert!(
+            is_bad_param(&va.update_and_fill(&good_bars, &pers, &mut vo)),
+            "MAVP.update_and_fill accepted {bad} in the period series"
+        );
+        assert!(probed(&mut commits, va.out_range() == vb.out_range()), "MAVP: commit");
+        for i in 0..UF_BAD {
+            assert!(probed(&mut values, vo[i].to_bits() == wantv[i].to_bits()), "MAVP: value {i}");
+        }
+        for i in UF_BAD..UF_N {
+            assert!(probed(&mut untouched, vo[i].to_bits() == UF_CANARY.to_bits()), "MAVP: slot {i}");
+        }
+
+        // --- integer output over four price inputs; poison the LOW, so a check
+        // that only looked at the first input array would still be caught.
+        let mut lows: Vec<f64> = (0..UF_N).map(|i| low[WARM + i]).collect();
+        lows[UF_BAD] = bad;
+        let opens: Vec<f64> = (0..UF_N).map(|i| open[WARM + i]).collect();
+        let highs: Vec<f64> = (0..UF_N).map(|i| high[WARM + i]).collect();
+        let (mut ja, _) = core.CDLDOJI_Open(o, h, l, c).unwrap();
+        let (mut jb, _) = core.CDLDOJI_Open(o, h, l, c).unwrap();
+        let wantj: Vec<i32> = (0..UF_BAD)
+            .map(|i| jb.update(opens[i], highs[i], lows[i], good_bars[i]).unwrap())
+            .collect();
+        let mut jo = vec![UF_CANARY_I; UF_N];
+        assert!(
+            is_bad_param(&ja.update_and_fill(&opens, &highs, &lows, &good_bars, &mut jo)),
+            "CDLDOJI.update_and_fill accepted {bad} in the low series"
+        );
+        assert!(probed(&mut commits, ja.out_range() == jb.out_range()), "CDLDOJI: commit");
+        for i in 0..UF_BAD {
+            assert!(probed(&mut values, jo[i] == wantj[i]), "CDLDOJI: value {i}");
+        }
+        for i in UF_BAD..UF_N {
+            assert!(probed(&mut untouched, jo[i] == UF_CANARY_I), "CDLDOJI: slot {i}");
+        }
+    }
+    // Literal floors, every counter incremented inside the assertion it counts.
+    assert!(commits >= 18, "the commit sweep ran {commits} compares");
+    assert!(values >= 54, "the value sweep ran {values} compares");
+    assert!(untouched >= 54, "the untouched sweep ran {untouched} compares");
+}
+
+/// The two rejections Rust can reach that C cannot: slices carry their own
+/// lengths, so a ragged input set and an output too short for the run are
+/// answerable before anything is committed. Both must leave the handle exactly
+/// where it was — and a zero-bar call is a success that does the same.
+#[test]
+fn update_and_fill_rejects_bad_lengths_and_treats_zero_bars_as_a_no_op() {
+    let core = Core::new();
+    let (_, high, low, close, _) = series(WARM + UF_N + 1);
+    let c = &close[..WARM];
+    let bars: Vec<f64> = (0..UF_N).map(|i| close[WARM + i]).collect();
+
+    let (mut s, _) = core.SMA_Open(c, 14).unwrap();
+    let before = s.out_range();
+    let mut out = vec![UF_CANARY; UF_N];
+
+    assert!(s.update_and_fill(&[], &mut out).is_ok(), "zero bars must be a no-op");
+    assert_eq!(s.out_range(), before, "a zero-bar call moved the handle");
+    assert_eq!(out[0].to_bits(), UF_CANARY.to_bits(), "a zero-bar call wrote a value");
+
+    assert!(
+        is_bad_param(&s.update_and_fill(&bars, &mut out[..UF_N - 1])),
+        "an output shorter than the run must reject"
+    );
+    assert_eq!(s.out_range(), before, "a short output moved the handle");
+
+    // Ragged inputs, on a multi-input function.
+    let (mut d, _) = core
+        .MINUS_DI_Open(&high[..WARM], &low[..WARM], c, 14)
+        .unwrap();
+    let dbefore = d.out_range();
+    let hs: Vec<f64> = (0..UF_N).map(|i| high[WARM + i]).collect();
+    let ls: Vec<f64> = (0..UF_N).map(|i| low[WARM + i]).collect();
+    let mut dout = vec![UF_CANARY; UF_N];
+    assert!(
+        is_bad_param(&d.update_and_fill(&hs, &ls[..UF_N - 1], &bars, &mut dout)),
+        "input series of different lengths must reject"
+    );
+    assert_eq!(d.out_range(), dbefore, "a ragged input set moved the handle");
+
+    // Control: the same call with everything the right length succeeds and
+    // advances by exactly the bars it was handed.
+    assert!(d.update_and_fill(&hs, &ls, &bars, &mut dout).is_ok());
+    assert_eq!(d.out_range().count, dbefore.count + UF_N);
+}

@@ -263,6 +263,31 @@
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("ASIN updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) )
+               throw new TaLibArgumentException("ASIN updateAndFill: BadParam", RetCode.BadParam);
+            core.ASIN_StepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may

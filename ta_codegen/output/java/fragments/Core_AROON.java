@@ -528,6 +528,38 @@
       }
 
       /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * bars {@code 0..k} committed and written, bar {@code k} and everything
+       * after it not, and the count advanced by {@code k}.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double outAroonDown[], double outAroonUp[] ) {
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || outAroonDown.length < barCount || outAroonUp.length < barCount || (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp )
+            throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
+         int done = 0;
+         try {
+            for( int i = 0; i < barCount; i++ ) {
+               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) )
+                  throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
+               core.AROON_StepImpl(this, inHigh[i], inLow[i]);
+               outAroonDown[i] = this.cur_outAroonDown;
+               outAroonUp[i] = this.cur_outAroonUp;
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               done = i + 1;
+            }
+         } finally {
+            if( done > 0 ) this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
+         }
+      }
+
+      /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may

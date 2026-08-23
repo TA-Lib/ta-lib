@@ -943,6 +943,29 @@ TA_LIB_API TA_RetCode TA_MAVP_Peek( const TA_MAVP_Stream *stream, double inReal,
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_MAVP_UpdateAndFill( TA_MAVP_Stream *stream, const double inReal[], const double inPeriods[], int barCount, double outReal[] )
+{
+   int i, k, cp;
+   double cpReal;
+
+   if( !stream || !inReal || !inPeriods || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal || (const void *)outReal == (const void *)inPeriods ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inReal[i] ) || !TA_IS_FINITE( inPeriods[i] ) ) return TA_BAD_PARAM;
+      for( k = 0; k < stream->nBank; k++ )
+         TA_MA_Update( stream->bank[k], inReal[i], &stream->scratch[k] );
+      cpReal = inPeriods[i];
+      if( !(cpReal >= stream->optInMinPeriod) ) cp = stream->optInMinPeriod;
+      else if( cpReal > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
+      else cp = (int)cpReal;
+      outReal[i] = stream->scratch[cp - stream->optInMinPeriod];
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MAVP_Close( TA_MAVP_Stream *stream )
 {
    int k;

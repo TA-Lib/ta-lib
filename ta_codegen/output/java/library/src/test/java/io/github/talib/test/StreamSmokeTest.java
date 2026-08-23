@@ -328,6 +328,241 @@ public class StreamSmokeTest {
               + nfOpenRejects + "/" + nfBarRejects + "/" + nfStateHolds + ")");
     }
 
+    /** UpdateAndFill counters, incremented AT the assertion rather than derived. */
+    private static int ufCommits = 0;
+    private static int ufValues = 0;
+    private static int ufSlots = 0;
+
+    private static final int UF_N = 6;
+    private static final int UF_BAD = 3;
+    private static final double UF_CANARY = -1.2345678901234e300;
+    private static final int UF_CANARY_I = -987654321;
+
+    /**
+     * {@code updateAndFill} is n back-to-back {@code update}s and nothing else,
+     * so a non-finite bar {@code k} throws exactly as {@code update} would — and
+     * the bars before it stay committed with their values written.
+     *
+     * <p>That is the one place in the API where a call fails AND leaves output
+     * behind, so what it leaves is pinned against a CONTROL handle driven over
+     * the same first {@code k} bars one at a time: same {@code outRange()}, same
+     * values, same answer on the next good bar, and nothing written at or above
+     * {@code k}. A whole-array pre-scan would satisfy "it throws" and fail every
+     * one of those.
+     *
+     * <p>Coverage is by the emitters {@code updateAndFill} is generated from,
+     * which is one for every tier — so SMA stands for the whole step-loop family,
+     * BBANDS adds three outputs, MA both dispatch arms, MAVP the period bank and
+     * CDLDOJI an integer output over four inputs.
+     */
+    private static void updateAndFillCommitsThePrefix(
+            Core core, double[] open, double[] high, double[] low, double[] close) {
+        final double[] bad = { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
+        final int warm = 60;
+        final double[] cw = java.util.Arrays.copyOf(close, warm);
+        final double[] hw = java.util.Arrays.copyOf(high, warm);
+        final double[] lw = java.util.Arrays.copyOf(low, warm);
+        final double[] ow = java.util.Arrays.copyOf(open, warm);
+        final double[] pw = new double[warm];
+        for (int i = 0; i < warm; i++) {
+            pw[i] = 5.0 + (i % 11);
+        }
+
+        for (final double v : bad) {
+            final double[] bars = new double[UF_N];
+            final double[] goodBars = new double[UF_N];
+            for (int i = 0; i < UF_N; i++) {
+                bars[i] = close[warm + i];
+                goodBars[i] = close[warm + i];
+            }
+            bars[UF_BAD] = v;
+
+            /* --- the shared step loop --------------------------------------- */
+            final Core.SMA_Stream sa = core.SMA_Open(cw, 14);
+            final Core.SMA_Stream sb = core.SMA_Open(cw, 14);
+            final double[] want = new double[UF_BAD];
+            for (int i = 0; i < UF_BAD; i++) {
+                want[i] = sb.update(bars[i]);
+            }
+            final double[] out = new double[UF_N];
+            java.util.Arrays.fill(out, UF_CANARY);
+            barMustReject("SMA.updateAndFill", () -> sa.updateAndFill(bars, out));
+            ufRangeEq("SMA", sa.outRange(), sb.outRange());
+            for (int i = 0; i < UF_BAD; i++) {
+                ufValueEq("SMA", out[i], want[i]);
+            }
+            for (int i = UF_BAD; i < UF_N; i++) {
+                ufUntouched("SMA", out[i], UF_CANARY);
+            }
+            stateMustHold("SMA(updateAndFill)",
+                sa.update(close[warm + UF_N]), sb.update(close[warm + UF_N]));
+
+            /* --- composed, three outputs ------------------------------------ */
+            final Core.BBANDS_Stream ba = core.BBANDS_Open(cw, 20, 2.0, 2.0, MAType.SMA);
+            final Core.BBANDS_Stream bb = core.BBANDS_Open(cw, 20, 2.0, 2.0, MAType.SMA);
+            final Core.BBANDS_Stream.Value[] wantB = new Core.BBANDS_Stream.Value[UF_BAD];
+            for (int i = 0; i < UF_BAD; i++) {
+                wantB[i] = bb.update(bars[i]);
+            }
+            final double[] bu = new double[UF_N];
+            final double[] bm = new double[UF_N];
+            final double[] bl = new double[UF_N];
+            java.util.Arrays.fill(bu, UF_CANARY);
+            java.util.Arrays.fill(bm, UF_CANARY);
+            java.util.Arrays.fill(bl, UF_CANARY);
+            barMustReject("BBANDS.updateAndFill", () -> ba.updateAndFill(bars, bu, bm, bl));
+            ufRangeEq("BBANDS", ba.outRange(), bb.outRange());
+            for (int i = 0; i < UF_BAD; i++) {
+                ufValueEq("BBANDS.upper", bu[i], wantB[i].realUpperBand());
+                ufValueEq("BBANDS.middle", bm[i], wantB[i].realMiddleBand());
+                ufValueEq("BBANDS.lower", bl[i], wantB[i].realLowerBand());
+            }
+            for (int i = UF_BAD; i < UF_N; i++) {
+                ufUntouched("BBANDS.upper", bu[i], UF_CANARY);
+                ufUntouched("BBANDS.middle", bm[i], UF_CANARY);
+                ufUntouched("BBANDS.lower", bl[i], UF_CANARY);
+            }
+            /* value() must name the last COMMITTED bar, not the one before the
+             * call: the multi-output cache is refreshed on the throwing path
+             * too. */
+            check(bitEq(ba.value().realUpperBand(), wantB[UF_BAD - 1].realUpperBand()),
+                  "BBANDS: value() must name the last committed bar after a partial fill");
+            ufValues++;
+
+            /* --- dispatch, both arms (period 1 is the identity loop) --------- */
+            for (final int period : new int[] { 1, 14 }) {
+                final Core.MA_Stream ma = core.MA_Open(cw, period, MAType.SMA);
+                final Core.MA_Stream mb = core.MA_Open(cw, period, MAType.SMA);
+                final double[] wantM = new double[UF_BAD];
+                for (int i = 0; i < UF_BAD; i++) {
+                    wantM[i] = mb.update(bars[i]);
+                }
+                final double[] mo = new double[UF_N];
+                java.util.Arrays.fill(mo, UF_CANARY);
+                barMustReject("MA(" + period + ").updateAndFill", () -> ma.updateAndFill(bars, mo));
+                ufRangeEq("MA(" + period + ")", ma.outRange(), mb.outRange());
+                for (int i = 0; i < UF_BAD; i++) {
+                    ufValueEq("MA", mo[i], wantM[i]);
+                }
+                for (int i = UF_BAD; i < UF_N; i++) {
+                    ufUntouched("MA", mo[i], UF_CANARY);
+                }
+            }
+
+            /* --- period bank: poison the PERIOD series, the input that reaches
+             * an (int) cast ---------------------------------------------------- */
+            final double[] pers = new double[UF_N];
+            for (int i = 0; i < UF_N; i++) {
+                pers[i] = 2.0 + (i % 8);
+            }
+            pers[UF_BAD] = v;
+            final Core.MAVP_Stream va = core.MAVP_Open(cw, pw, 2, 30, MAType.SMA);
+            final Core.MAVP_Stream vb = core.MAVP_Open(cw, pw, 2, 30, MAType.SMA);
+            final double[] wantV = new double[UF_BAD];
+            for (int i = 0; i < UF_BAD; i++) {
+                wantV[i] = vb.update(goodBars[i], pers[i]);
+            }
+            final double[] vo = new double[UF_N];
+            java.util.Arrays.fill(vo, UF_CANARY);
+            barMustReject("MAVP.updateAndFill", () -> va.updateAndFill(goodBars, pers, vo));
+            ufRangeEq("MAVP", va.outRange(), vb.outRange());
+            for (int i = 0; i < UF_BAD; i++) {
+                ufValueEq("MAVP", vo[i], wantV[i]);
+            }
+            for (int i = UF_BAD; i < UF_N; i++) {
+                ufUntouched("MAVP", vo[i], UF_CANARY);
+            }
+
+            /* --- integer output, four inputs; poison the LOW ----------------- */
+            final double[] opens = new double[UF_N];
+            final double[] highs = new double[UF_N];
+            final double[] lows = new double[UF_N];
+            for (int i = 0; i < UF_N; i++) {
+                opens[i] = open[warm + i];
+                highs[i] = high[warm + i];
+                lows[i] = low[warm + i];
+            }
+            lows[UF_BAD] = v;
+            final Core.CDLDOJI_Stream ja = core.CDLDOJI_Open(ow, hw, lw, cw);
+            final Core.CDLDOJI_Stream jb = core.CDLDOJI_Open(ow, hw, lw, cw);
+            final int[] wantJ = new int[UF_BAD];
+            for (int i = 0; i < UF_BAD; i++) {
+                wantJ[i] = jb.update(opens[i], highs[i], lows[i], goodBars[i]);
+            }
+            final int[] jo = new int[UF_N];
+            java.util.Arrays.fill(jo, UF_CANARY_I);
+            barMustReject("CDLDOJI.updateAndFill",
+                () -> ja.updateAndFill(opens, highs, lows, goodBars, jo));
+            ufRangeEq("CDLDOJI", ja.outRange(), jb.outRange());
+            for (int i = 0; i < UF_BAD; i++) {
+                check(jo[i] == wantJ[i], "CDLDOJI: updateAndFill wrote " + jo[i]
+                      + " where update returned " + wantJ[i]);
+                ufValues++;
+            }
+            for (int i = UF_BAD; i < UF_N; i++) {
+                check(jo[i] == UF_CANARY_I, "CDLDOJI: updateAndFill wrote past the rejected bar");
+                ufSlots++;
+            }
+        }
+
+        /* The rejections Java can make that C cannot: array lengths. Plus the
+         * two the language does allow it to see — an output that IS an input,
+         * and a zero-bar call, which is a success that changes nothing. */
+        final Core.SMA_Stream s = core.SMA_Open(cw, 14);
+        final OutRange before = s.outRange();
+        final double[] out = new double[UF_N];
+        java.util.Arrays.fill(out, UF_CANARY);
+        final double[] bars = new double[UF_N];
+        for (int i = 0; i < UF_N; i++) {
+            bars[i] = close[warm + i];
+        }
+        s.updateAndFill(new double[0], out);
+        check(before.begIdx() == s.outRange().begIdx() && before.count() == s.outRange().count(),
+              "a zero-bar updateAndFill must not move the handle");
+        ufCommits++;
+        check(bitEq(out[0], UF_CANARY), "a zero-bar updateAndFill must write nothing");
+        ufSlots++;
+        barMustReject("SMA.updateAndFill(short output)",
+            () -> s.updateAndFill(bars, new double[UF_N - 1]));
+        barMustReject("SMA.updateAndFill(output aliases input)",
+            () -> s.updateAndFill(bars, bars));
+        check(before.begIdx() == s.outRange().begIdx() && before.count() == s.outRange().count(),
+              "a rejected updateAndFill must not move the handle");
+        ufCommits++;
+        /* Control: the same call, correctly sized, succeeds and advances by
+         * exactly the bars it was handed — so the rejections above cannot be
+         * passing because updateAndFill rejects everything. */
+        s.updateAndFill(bars, out);
+        check(s.outRange().count() == before.count() + UF_N,
+              "updateAndFill must advance by every bar it commits");
+        ufCommits++;
+
+        /* Non-vacuity. Literal floors, every counter incremented at its
+         * assertion. */
+        check(ufCommits >= 21 && ufValues >= 75 && ufSlots >= 73,
+              "the updateAndFill gate ran fewer checks than it was written with ("
+              + ufCommits + "/" + ufValues + "/" + ufSlots + ")");
+    }
+
+    /** Handles have no common supertype — {@code outRange()} is declared on each
+     *  generated class — so the caller passes the two ranges, not the handles. */
+    private static void ufRangeEq(String what, OutRange ra, OutRange rb) {
+        check(ra.begIdx() == rb.begIdx() && ra.count() == rb.count(),
+              what + ": updateAndFill committed (" + ra.begIdx() + "," + ra.count()
+              + "), " + UF_BAD + " updates committed (" + rb.begIdx() + "," + rb.count() + ")");
+        ufCommits++;
+    }
+
+    private static void ufValueEq(String what, double a, double b) {
+        check(bitEq(a, b), what + ": updateAndFill wrote " + a + " where update returned " + b);
+        ufValues++;
+    }
+
+    private static void ufUntouched(String what, double x, double canary) {
+        check(bitEq(x, canary), what + ": updateAndFill wrote past the bar it rejected");
+        ufSlots++;
+    }
+
     public static void main(String[] args) {
         final int n = 300;
         double[] close = new double[n];
@@ -592,6 +827,7 @@ public class StreamSmokeTest {
               "candle settings captured per Core instance");
 
         nonFiniteInputsAreRejected(core, open, high, low, close);
+        updateAndFillCommitsThePrefix(core, open, high, low, close);
 
 
         if (failures == 0) {

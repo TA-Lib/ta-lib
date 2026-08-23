@@ -17,6 +17,7 @@ Every TA function gets these calls:
 | `TA_<NAME>_Open`   | once                                | validate params, consume warm-up history, return a **stream** + current value |
 | `TA_<NAME>_OpenAndFill` | once, instead of `Open`        | like `Open`, but returns the output for **every** history bar — see [below](#get-the-full-history-output-openandfill) |
 | `TA_<NAME>_Update` | once per **closed** bar             | commit one bar, return the new value |
+| `TA_<NAME>_UpdateAndFill` | instead of a loop of `Update` | commit `barCount` closed bars and write the `barCount` values — see [below](#catch-up-n-bars-at-once-updateandfill) |
 | `TA_<NAME>_Peek`   | any time on the **forming** bar     | evaluate a provisional bar **without** committing state |
 | `TA_<NAME>_Close`  | once                                | free the stream |
 
@@ -69,6 +70,27 @@ TA_SMA_Update( s, newClose, &sma );
 
 The optional parameters and outputs (`outBegIdx`, `outNBElement`, one array per output) are exactly the [batch API](/api/)'s; everything else matches `Open`.
 
+## Catch up n bars at once (`UpdateAndFill`)
+
+Feeding a gap one `Update` at a time works; `UpdateAndFill` does the same thing
+in one call, writing one value per bar into your array:
+
+```c
+double gap[64], out[64];         /* one output array per output */
+
+TA_SMA_UpdateAndFill( s, gap, 64, out );   /* out[i] is the SMA at gap[i] */
+```
+
+It is exactly `barCount` back-to-back `Update` calls — same values, same state —
+with one set of argument checks instead of `barCount`. There is no `outBegIdx` /
+`outNBElement` pair: `TA_StreamOutRange( s, &begIdx, &nbElement )` reports the
+bars the handle has a value for, before and after.
+
+That includes a call that fails partway. A non-finite bar is rejected exactly as
+`Update` rejects it, which means the bars **before** it are already committed and
+their values already written; the range tells you how many. Outputs must not
+alias the inputs or each other, and `barCount == 0` is a no-op.
+
 ## Multi-input / multi-output
 
 Inputs and outputs mirror the batch function — OHLCV in, one out-pointer per output:
@@ -87,6 +109,7 @@ TA_MACD_Update( s, close, &macd, &signal, &hist );
 |------|---------|
 | `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | `TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1` — the one failure worth retrying, since another bar fixes it — or `TA_BAD_PARAM` (bad param, empty history) or `TA_ALLOC_ERR`; `*stream` is NULL on failure. `OpenAndFill` also requires non-NULL, non-overlapping output arguments. |
 | `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` on NULL arguments, and on a non-finite bar value — in which case the handle is left exactly as it was |
+| `TA_<NAME>_UpdateAndFill` | `TA_BAD_PARAM` on NULL arguments, a negative `barCount`, an output aliasing an input or another output — none of which commits anything — and on a non-finite bar, which commits the bars before it |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
 
 ## Discovering streamable functions

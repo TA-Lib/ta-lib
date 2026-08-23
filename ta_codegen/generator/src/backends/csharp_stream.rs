@@ -1219,6 +1219,96 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, "scratch"));
     let _ = writeln!(o, "      }}");
 
+    // --- UpdateAndFill ------------------------------------------------------
+    // One emitter for every tier: each owns a `<base>_StepImpl` with the same
+    // surface, so the n-bar filler is that step in a loop (issue #246). No
+    // `Value` cache to keep in step on the way out, unlike Java: a multi-output
+    // `Value` here is a record struct built fresh from the handle's fields.
+    let mut sig = String::new();
+    for a in &inputs {
+        let _ = write!(sig, "ReadOnlySpan<double> {a}, ");
+    }
+    for out in &func.outputs {
+        let t = if out_is_int(func, &out.name) { "int" } else { "double" };
+        let _ = write!(sig, "Span<{t}> {}, ", out.name);
+    }
+    let sig = sig.trim_end_matches(", ");
+    let count_src = inputs
+        .first()
+        .map_or_else(|| "0".to_string(), |a| format!("{a}.Length"));
+    let mut d = XmlDoc::new();
+    d.summary(
+        "Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.",
+    );
+    d.open("remarks");
+    d.para(
+        "Exactly <c>n</c> back-to-back <see cref=\"Update\"/> calls, with one set of \
+         argument checks instead of <c>n</c>. The outputs must hold at least <c>n</c> \
+         values and must not overlap an input or each other.",
+    );
+    d.para(
+        "<see cref=\"OutRange\"/> counts what was committed, which is what makes a \
+         rejection readable: a non-finite bar <c>k</c> throws \
+         <see cref=\"System.ArgumentException\"/> exactly as <see cref=\"Update\"/> would, \
+         with bars <c>0..k</c> committed and written, bar <c>k</c> and everything after it \
+         not, and the count advanced by <c>k</c>.",
+    );
+    d.close("remarks");
+    for input in &inputs {
+        d.param(input, &format!("Closed bars for <c>{input}</c>, oldest first."));
+    }
+    for out in &func.outputs {
+        d.param(
+            &out.name,
+            &format!("Receives one <c>{}</c> value per bar committed.", out.name),
+        );
+    }
+    o.push('\n');
+    o.push_str(&d.render(6));
+    let _ = writeln!(o, "      public void UpdateAndFill( {sig} )");
+    let _ = writeln!(o, "      {{");
+    let _ = writeln!(o, "         int barCount = {count_src};");
+    let mut checks: Vec<String> = inputs
+        .iter()
+        .skip(1)
+        .map(|a| format!("{a}.Length != barCount"))
+        .collect();
+    for out in &func.outputs {
+        checks.push(format!("{}.Length < barCount", out.name));
+    }
+    if let Some(alias) = alias_condition(func, &inputs) {
+        checks.push(alias);
+    }
+    if !checks.is_empty() {
+        let _ = writeln!(
+            o,
+            "         if( {} ) throw Core.StreamFailure(\"{base}\", \"updateAndFill\", RetCode.BadParam);",
+            checks.join(" || ")
+        );
+    }
+    let _ = writeln!(o, "         for( int i = 0; i < barCount; i++ )");
+    let _ = writeln!(o, "         {{");
+    if !inputs.is_empty() {
+        let conds: Vec<String> = inputs
+            .iter()
+            .map(|b| format!("!double.IsFinite({b}[i])"))
+            .collect();
+        let _ = writeln!(
+            o,
+            "            if( {} ) throw Core.StreamFailure(\"{base}\", \"updateAndFill\", RetCode.BadParam);",
+            conds.join(" || ")
+        );
+    }
+    let idx_bars: Vec<String> = inputs.iter().map(|a| format!("{a}[i]")).collect();
+    let _ = writeln!(o, "            core.{base}_StepImpl(this, {});", idx_bars.join(", "));
+    for out in &func.outputs {
+        let name = &out.name;
+        let _ = writeln!(o, "            {name}[i] = cur_{name};");
+    }
+    let _ = writeln!(o, "            if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;");
+    let _ = writeln!(o, "         }}");
+    let _ = writeln!(o, "      }}");
+
     // --- Value --------------------------------------------------------------
     let mut d = XmlDoc::new();
     d.summary(

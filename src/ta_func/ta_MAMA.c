@@ -1716,6 +1716,22 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_MAMA_UpdateAndFill( TA_MAMA_Stream *stream, const double inReal[], int barCount, double outMAMA[], double outFAMA[] )
+{
+   int i;
+
+   if( !stream || !inReal || !outMAMA ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outMAMA == (const void *)inReal || (const void *)outFAMA == (const void *)inReal || (const void *)outMAMA == (const void *)outFAMA ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      TA_MAMA_StepImpl( stream, inReal[i], &outMAMA[i], outFAMA ? &outFAMA[i] : NULL );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MAMA_Close( TA_MAMA_Stream *stream )
 {
    TA_MAMA_ReleaseImpl( stream );

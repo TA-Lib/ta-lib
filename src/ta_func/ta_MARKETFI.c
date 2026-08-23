@@ -342,6 +342,22 @@ TA_LIB_API TA_RetCode TA_MARKETFI_Peek( const TA_MARKETFI_Stream *stream, double
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_MARKETFI_UpdateAndFill( TA_MARKETFI_Stream *stream, const double inHigh[], const double inLow[], const double inVolume[], int barCount, double outReal[] )
+{
+   int i;
+
+   if( !stream || !inHigh || !inLow || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inVolume[i] ) ) return TA_BAD_PARAM;
+      TA_MARKETFI_StepImpl( stream, inHigh[i], inLow[i], inVolume[i], &outReal[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MARKETFI_Close( TA_MARKETFI_Stream *stream )
 {
    if( stream ) TA_Free( stream );

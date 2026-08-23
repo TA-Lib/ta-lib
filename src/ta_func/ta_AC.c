@@ -868,6 +868,22 @@ TA_LIB_API TA_RetCode TA_AC_Peek( const TA_AC_Stream *stream, double inHigh, dou
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_AC_UpdateAndFill( TA_AC_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outReal[] )
+{
+   int i;
+
+   if( !stream || !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) ) return TA_BAD_PARAM;
+      TA_AC_StepImpl( stream, inHigh[i], inLow[i], &outReal[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_AC_Close( TA_AC_Stream *stream )
 {
    TA_AC_ReleaseImpl( stream );

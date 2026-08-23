@@ -17,6 +17,7 @@ Each streamable function adds two constructors on `Core` and a handful of method
 | `core.<NAME>_Open(history, params)` | once | validate params, consume warm-up history, return `(stream, value)` |
 | `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar, returning `(stream, OutRange)` — see [below](#full-history-output-openandfill) |
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
+| `stream.update_and_fill(bars, outs)` | instead of a loop of `update` | commit `n` closed bars and write the `n` values — see [below](#catch-up-n-bars-at-once-update_and_fill) |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 | `stream.out_range()` | any time | the bars this stream has a value for — the batch range over the same bars |
 
@@ -68,6 +69,29 @@ let v = s.update(new_close)?;
 ```
 
 `OpenAndFill` takes the [batch method](/api/rust/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream. The output slices must not alias the input or each other.
+
+## Catch up n bars at once (`update_and_fill`)
+
+Feeding a gap one `update` at a time works; `update_and_fill` does the same
+thing in one call, writing one value per bar into your slice:
+
+```rust
+let mut out = vec![0.0; gap.len()];
+
+s.update_and_fill(&gap, &mut out)?;    // out[i] is the SMA at gap[i]
+```
+
+It is exactly `gap.len()` back-to-back `update` calls — same values, same state —
+with one set of argument checks instead of `n`. `s.out_range()` reports the bars
+the handle has a value for, before and after; there is no second return value
+for it.
+
+That includes a call that fails partway. A non-finite bar returns
+`Err(RetCode::BadParam)` exactly as `update` does, which means the bars
+**before** it are already committed and their values already written; the range
+tells you how many. `Err(RetCode::BadParam)` before anything is committed if the
+input slices differ in length or an output is shorter than the bar count; a zero
+bar count is a successful no-op.
 
 ## Multi-input / multi-output
 

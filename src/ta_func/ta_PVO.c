@@ -566,6 +566,24 @@ TA_LIB_API TA_RetCode TA_PVO_Peek( const TA_PVO_Stream *stream, double inVolume,
    return TA_PVO_StepImpl( &scratch, inVolume, outReal );
 }
 
+TA_LIB_API TA_RetCode TA_PVO_UpdateAndFill( TA_PVO_Stream *stream, const double inVolume[], int barCount, double outReal[] )
+{
+   int i;
+   TA_RetCode retCode;
+
+   if( !stream || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inVolume[i] ) ) return TA_BAD_PARAM;
+      retCode = TA_PVO_StepImpl( stream, inVolume[i], &outReal[i] );
+      if( retCode != TA_SUCCESS ) return retCode;
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_PVO_Close( TA_PVO_Stream *stream )
 {
    if( !stream ) return TA_SUCCESS;

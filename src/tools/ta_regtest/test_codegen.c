@@ -1771,6 +1771,7 @@ typedef struct {
     int               streamSkipped;
     int               streamRejectArms;
     int               streamFillFunctions; /* funcs whose OpenAndFill == batch(0,n-1) bitwise */
+    int               streamUFillFunctions;/* funcs whose UpdateAndFill == batch over the same bars (#246) */
     int               streamStateFunctions; /* funcs whose handle state matched Open(n) (#240) */
     int               streamStateLegs;      /* legs that compared handle state (#240) */
     int               streamRangeFunctions; /* funcs whose handle OutRange matched batch (#241) */
@@ -3280,6 +3281,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int vecIsMin[STREAM_MAX_VEC];
     int nvec, v, variant, legs = 0, rejArms = 0, vecOverflow = 0;
     int fillChecked = 0;   /* set once any leg reports OpenAndFill was verified */
+    int ufillChecked = 0;  /* set once any leg reports UpdateAndFill was verified (#246) */
     int stateChecked = 0;  /* set once any leg reports the state-equivalence compare */
     int stateLegs = 0;     /* how many legs actually compared handle state */
     int stateOfLegs = 0;   /* value legs in the requests that reported it */
@@ -3448,6 +3450,27 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     return;
                 }
             }
+            /* UpdateAndFill leg (#246): Open(P) plus ONE UpdateAndFill over the
+             * remaining bars must write exactly what batch(0,n-1) reports for
+             * those bars, reject an aliased output, and treat a zero count as a
+             * no-op. Reported apart from fill_ok so a regression names which of
+             * the two filling entry points broke; folded into ok server-side
+             * too, so it fails even if this check regresses. */
+            if( stream_flag(ctx->responseBuf, "\"ufill_checked\":") == 1 )
+            {
+                ufillChecked = 1;
+                if( stream_flag(ctx->responseBuf, "\"ufill_ok\":") != 1 )
+                {
+                    printf("STREAM UPDATEFILL MISMATCH [TA_%s] vector=%d K=%d compat=%d "
+                           "(UpdateAndFill over the tail != batch over the same bars)\n"
+                           "  request:  %s\n  response: %s\n",
+                           funcInfo->name, v, K, compat,
+                           ctx->requestBuf, ctx->responseBuf);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
+            }
             /* State-equivalence leg (#240): the handle after Open(P) + (n-P)
              * updates must be bit-identical to the handle after Open(n). It
              * compares STATE, so it fires on the bar a running total first
@@ -3557,6 +3580,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * the run — see FuncStreamCounters. */
     record_stream_counters(funcInfo->name, ctx->langIndex, legs, benign);
     if( fillChecked ) ctx->streamFillFunctions++;
+    if( ufillChecked ) ctx->streamUFillFunctions++;
     if( stateChecked ) ctx->streamStateFunctions++;
     if( rangeChecked ) ctx->streamRangeFunctions++;
     ctx->streamRangeLegs += rangeLegs;
@@ -4313,6 +4337,7 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamSkipped       = 0;
             ctx.streamRejectArms    = 0;
             ctx.streamFillFunctions = 0;
+            ctx.streamUFillFunctions = 0;
             ctx.streamStateFunctions = 0;
             ctx.streamStateLegs     = 0;
             ctx.streamRangeFunctions = 0;
@@ -4329,12 +4354,14 @@ static ErrorNumber test_codegen_for_language(
                    "%d expected-reject probes, %d without a stream, "
                    "%lld benign signed-zero\n"
                    "  OpenAndFill verify: %d functions, filled array == batch(0,n-1) bitwise\n"
+                   "  UpdateAndFill verify: %d functions, n bars in one call == batch over the same bars\n"
                    "  State-equivalence verify: %d functions, %d legs, handle after "
                    "Open(P)+updates == handle after Open(n) bitwise\n"
                    "  OutRange verify: %d functions, %d legs across %d of %d compare "
                    "site(s), the handle's range == the batch range over the same bars\n",
                    ctx.streamFunctions, ctx.streamLegs, ctx.streamRejectArms,
                    ctx.streamSkipped, ctx.streamBenign, ctx.streamFillFunctions,
+                   ctx.streamUFillFunctions,
                    ctx.streamStateFunctions, ctx.streamStateLegs,
                    ctx.streamRangeFunctions, ctx.streamRangeLegs,
                    codegen_popcount(ctx.streamRangeSites), ctx.streamRangeSitesN);
@@ -4352,6 +4379,21 @@ static ErrorNumber test_codegen_for_language(
                        "verified OpenAndFill — every streamable function must also "
                        "gate-verify its fill array\n",
                        ctx.streamFillFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            /* The same ratchet for UpdateAndFill (#246). It has the same shape
+             * as the fill floor above and exists for the same reason: the leg
+             * is unconditional in every server, so a function that streams and
+             * reports no UpdateAndFill leg is a tier whose emitter was missed —
+             * which the legs floor and the value legs both read as full
+             * coverage. */
+            if( ctx.error == TA_TEST_PASS &&
+                ctx.streamUFillFunctions != ctx.streamFunctions )
+            {
+                printf("STREAM UPDATEFILL VACUOUS: only %d of %d streaming functions "
+                       "verified UpdateAndFill — every streamable function must also "
+                       "gate-verify its n-bar filler\n",
+                       ctx.streamUFillFunctions, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             /* The same ratchet for the state-equivalence leg (#240). The

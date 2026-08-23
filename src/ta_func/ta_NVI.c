@@ -394,6 +394,22 @@ TA_LIB_API TA_RetCode TA_NVI_Peek( const TA_NVI_Stream *stream, double inClose, 
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_NVI_UpdateAndFill( TA_NVI_Stream *stream, const double inClose[], const double inVolume[], int barCount, double outReal[] )
+{
+   int i;
+
+   if( !stream || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inClose[i] ) || !TA_IS_FINITE( inVolume[i] ) ) return TA_BAD_PARAM;
+      TA_NVI_StepImpl( stream, inClose[i], inVolume[i], &outReal[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_NVI_Close( TA_NVI_Stream *stream )
 {
    if( stream ) TA_Free( stream );

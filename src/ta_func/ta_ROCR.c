@@ -450,6 +450,22 @@ TA_LIB_API TA_RetCode TA_ROCR_Peek( const TA_ROCR_Stream *stream, double inReal,
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_ROCR_UpdateAndFill( TA_ROCR_Stream *stream, const double inReal[], int barCount, double outReal[] )
+{
+   int i;
+
+   if( !stream || !inReal || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      TA_ROCR_StepImpl( stream, inReal[i], &outReal[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ROCR_Close( TA_ROCR_Stream *stream )
 {
    TA_ROCR_ReleaseImpl( stream );

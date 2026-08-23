@@ -475,6 +475,22 @@ TA_LIB_API TA_RetCode TA_QSTICK_Peek( const TA_QSTICK_Stream *stream, double inO
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_QSTICK_UpdateAndFill( TA_QSTICK_Stream *stream, const double inOpen[], const double inClose[], int barCount, double outReal[] )
+{
+   int i;
+
+   if( !stream || !inOpen || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inOpen || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      TA_QSTICK_StepImpl( stream, inOpen[i], inClose[i], &outReal[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_QSTICK_Close( TA_QSTICK_Stream *stream )
 {
    TA_QSTICK_ReleaseImpl( stream );

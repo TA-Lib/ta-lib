@@ -2240,6 +2240,103 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
     );
     let _ = writeln!(o, "        Ok({ret})");
     let _ = writeln!(o, "    }}\n");
+    // --- update_and_fill ------------------------------------------------------
+    // One emitter for every tier: each one owns a `<n>_step_impl` with the same
+    // surface, so the n-bar filler is that step in a loop whatever the tier
+    // underneath is (issue #246).
+    //
+    // Slices carry their own lengths, so there is no `barCount` parameter and no
+    // aliasing guard — `&[f64]` and `&mut [f64]` cannot alias, which is the C
+    // hazard the C wrapper has to reject by hand.
+    let mut in_sig = String::new();
+    let mut len_checks: Vec<String> = Vec::new();
+    for (k, a) in inputs.iter().enumerate() {
+        let _ = write!(in_sig, "{a}: &[f64], ");
+        if k > 0 {
+            len_checks.push(format!("{a}.len() != {}.len()", inputs[0]));
+        }
+    }
+    let mut out_sig = String::new();
+    for out in &func.outputs {
+        let t = if out_is_int(func, &out.name) { "i32" } else { "f64" };
+        let _ = write!(out_sig, "{}: &mut [{t}], ", out.name);
+        len_checks.push(format!("{}.len() < barCount", out.name));
+    }
+    let count_src = inputs
+        .first()
+        .map_or_else(|| "0".to_string(), |a| format!("{a}.len()"));
+    let idx_bars: String = inputs
+        .iter()
+        .map(|a| format!("{a}[i]"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let idx_outs: String = func
+        .outputs
+        .iter()
+        .map(|out| format!("&mut {}[i]", out.name))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let step_args = if idx_bars.is_empty() {
+        idx_outs.clone()
+    } else {
+        format!("{idx_bars}, {idx_outs}")
+    };
+    let _ = writeln!(
+        o,
+        "    /// Commit `n` closed bars and write their `n` values, in one call —\n\
+         \x20   /// exactly `n` back-to-back [`Self::update`] calls, with one set of\n\
+         \x20   /// argument checks instead of `n`. `n` is `{count_src}`; the outputs must\n\
+         \x20   /// hold at least that many. Never allocates.\n\
+         \x20   ///\n\
+         \x20   /// [`Self::out_range`] counts what was committed, which is what makes the\n\
+         \x20   /// rejection below readable: there is no second out-parameter for it.\n\
+         \x20   ///\n\
+         \x20   /// # Errors\n\
+         \x20   ///\n\
+         \x20   /// [`RetCode::BadParam`] if the input slices differ in length, if an output\n\
+         \x20   /// is shorter than the bar count — neither commits anything — or if a bar\n\
+         \x20   /// is not finite. A non-finite bar `k` is rejected exactly as `update`\n\
+         \x20   /// rejects it: bars `0..k` stay committed and their values written, bar `k`\n\
+         \x20   /// and everything after it is not, and `out_range().count` has advanced by\n\
+         \x20   /// `k`."
+    );
+    let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_UpdateAndFill\")]");
+    let _ = writeln!(
+        o,
+        "    pub fn update_and_fill(&mut self, {}) -> Result<(), RetCode> {{",
+        format!("{in_sig}{out_sig}").trim_end_matches(", ")
+    );
+    let _ = writeln!(o, "        let barCount = {count_src};");
+    if !len_checks.is_empty() {
+        let _ = writeln!(
+            o,
+            "        if {} {{\n            return Err(RetCode::BadParam);\n        }}",
+            len_checks.join(" || ")
+        );
+    }
+    let _ = writeln!(o, "        for i in 0..barCount {{");
+    if !inputs.is_empty() {
+        let conds: Vec<String> = inputs.iter().map(|a| format!("!{a}[i].is_finite()")).collect();
+        let _ = writeln!(
+            o,
+            "            if {} {{\n                return Err(RetCode::BadParam);\n            }}",
+            conds.join(" || ")
+        );
+    }
+    let _ = writeln!(
+        o,
+        "            self.core.{sn}_step_impl(&mut self.state, {step_args}){step_try};"
+    );
+    let _ = writeln!(
+        o,
+        "            if self.out.count < Core::MAX_INDEX {{\n\
+         \x20               self.out.count += 1;\n\
+         \x20           }}"
+    );
+    let _ = writeln!(o, "        }}");
+    let _ = writeln!(o, "        Ok(())");
+    let _ = writeln!(o, "    }}\n");
+
     let alloc_note = if reuse {
         "The copy it runs on is held per thread and reused,\n    /// so only the first peek of this function on a thread allocates."
     } else if shape.owns_heap() {

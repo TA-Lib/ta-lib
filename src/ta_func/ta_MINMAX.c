@@ -873,6 +873,22 @@ TA_LIB_API TA_RetCode TA_MINMAX_Peek( const TA_MINMAX_Stream *stream, double inR
    return TA_SUCCESS;
 }
 
+TA_LIB_API TA_RetCode TA_MINMAX_UpdateAndFill( TA_MINMAX_Stream *stream, const double inReal[], int barCount, double outMin[], double outMax[] )
+{
+   int i;
+
+   if( !stream || !inReal || !outMin || !outMax ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outMin == (const void *)inReal || (const void *)outMax == (const void *)inReal || (const void *)outMin == (const void *)outMax ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      TA_MINMAX_StepImpl( stream, inReal[i], &outMin[i], &outMax[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MINMAX_Close( TA_MINMAX_Stream *stream )
 {
    TA_MINMAX_ReleaseImpl( stream );

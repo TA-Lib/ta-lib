@@ -7798,8 +7798,8 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
 /// Neither is visible at run time: both leave a full mask. So the check is on
 /// the emitted text — the set of bits a server actually ORs in must be exactly
 /// `{1, 2, .., 2^(n-1)}` for the `n` it declares. C, Java and C# reach the
-/// anchored `_OpenInternal` seam and declare 3; Rust's server is a separate
-/// crate and cannot, so it declares 2 and says so.
+/// anchored `_OpenInternal` seam and declare 4; Rust's server is a separate
+/// crate and cannot, so it declares 3 and says so.
 #[test]
 fn sv_range_sites_mask_matches_the_declared_count() {
     let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
@@ -7807,10 +7807,10 @@ fn sv_range_sites_mask_matches_the_declared_count() {
     let funcs: Vec<ir::FuncDef> = discover_indicators().iter().map(|n| load_indicator(n).0).collect();
 
     let servers = [
-        ("c", ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums), 3usize),
-        ("java", ta_codegen_lib::server_gen::generate_java_server(&funcs, &enums), 3),
-        ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 3),
-        ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 2),
+        ("c", ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums), 4usize),
+        ("java", ta_codegen_lib::server_gen::generate_java_server(&funcs, &enums), 4),
+        ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 4),
+        ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 3),
     ];
 
     for (lang, src, want_n) in servers {
@@ -8024,7 +8024,10 @@ fn test_c_mavp_period_bank() {
     assert!(upd.contains("*outReal = stream->scratch[cp - stream->optInMinPeriod];"), "outputs the selected slot");
     // Peek: only the selected slot (non-committing).
     let peek = s.split("TA_MAVP_Peek").nth(1).unwrap();
-    let peek = &peek[..peek.find("TA_MAVP_Close").unwrap_or(peek.len())];
+    // Up to the NEXT entry point, which is the n-bar filler (#246) — it drives
+    // the bank the way Update does, so slicing all the way to Close would read
+    // its body as Peek's.
+    let peek = &peek[..peek.find("TA_MAVP_UpdateAndFill").unwrap_or(peek.len())];
     assert!(peek.contains("TA_MA_Peek( stream->bank[cp - stream->optInMinPeriod], inReal, outReal );"), "peeks only the selected slot");
     assert!(!peek.contains("TA_MA_Update"), "peek never advances the bank");
     // Close frees every sub-stream + the arrays.
