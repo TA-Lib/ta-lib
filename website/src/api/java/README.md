@@ -63,7 +63,7 @@ Misuse throws rather than returning an error code:
 | An array too short for the range requested | `IllegalArgumentException` |
 | A null input or output array | `NullPointerException` |
 
-Array lengths are checked before anything is written, so a rejected call leaves every buffer untouched. This is the batch API; the [streaming API](./stream/) does not check capacity — an undersized `OpenAndFill` output faults inside the fill. An input must reach `endIdx`; an output must hold the values actually produced, `endIdx - max(startIdx, lookback) + 1`. The message names the array and both sizes — `SMA: outReal has length 3, needs 191`.
+Array lengths are checked before anything is written, so a rejected call leaves every buffer untouched. This is the batch API; in the [streaming API](./stream/) only `updateAndFill` checks capacity — an undersized `OpenAndFill` output faults inside the fill instead. An input must reach `endIdx`; an output must hold the values actually produced, `endIdx - max(startIdx, lookback) + 1`. The message names the array and both sizes — `SMA: outReal has length 3, needs 191`.
 
 ## `float` inputs
 
