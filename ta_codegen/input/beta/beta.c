@@ -14,6 +14,8 @@
  *  071626 MF,CC Fix reversed inReal0/inReal1 roles in the algorithm
  *               description: inReal0 holds the index prices and inReal1
  *               the stock prices (SourceForge bug 98).
+ *  082326 MF    Fix #242. Cancellation-free regression sums (shifted returns
+ *               + reseed) and a scale-relative denominator test.
  */
 
 int beta_lookback(int optInTimePeriod)
@@ -37,6 +39,13 @@ TA_RetCode beta(int startIdx, int endIdx,
    double trailing_last_price_x = 0.0f; /* same as last_price_x except used to remove elements from the trailing summation */
    double trailing_last_price_y = 0.0f; /* same as last_price_y except used to remove elements from the trailing summation */
    double tmp_real = 0.0f; /* temporary variable */
+   double shift_x = 0.0f; /* origin the x returns are measured against */
+   double shift_y = 0.0f; /* origin the y returns are measured against */
+   double denom = 0.0f; /* n*S_xx - S_x*S_x, the regression denominator */
+   double denom_scale = 0.0f; /* n*S_xx, the scale denom is extracted from */
+   double prev_x = 0.0f; /* price walked forward when rebuilding the window */
+   double prev_y = 0.0f;
+   int j, windowStart, barsSinceReseed;
    double x; /* the 'x' value, which is the last change between values in inReal0 */
    double y; /* the 'y' value, which is the last change between values in inReal1 */
    double n = 0.0f;
@@ -80,23 +89,42 @@ TA_RetCode beta(int startIdx, int endIdx,
    last_price_x = trailing_last_price_x = inReal0[trailingIdx];
    last_price_y = trailing_last_price_y = inReal1[trailingIdx];
 
-   /* Process remaining of lookback until ready to output the first value. */
+   /* Measure the returns against a shift near the window, as TA_VAR does for
+    * its values (#118) and TA_CORREL for its prices (#242).
+    *
+    * Returns are near-zero-mean, so on a series that jitters this changes
+    * little. It is decisive on a series that DRIFTS: a steadily rising price
+    * gives near-identical returns, S_x*S_x then equals n*S_xx to every digit,
+    * and the denominator n*S_xx - S_x*S_x is left as pure rounding noise --
+    * measured at +/-2e-16 of its own scale, sign included. Wilkinson's BIG and
+    * LITTLE are exactly that shape, and beta of such a series against itself
+    * came back 0 instead of 1.
+    *
+    * Anchor on the window's first return here; every later re-anchor uses the
+    * window mean, which is better centred but costs a pass this one cannot
+    * afford before the sums exist.
+    */
    i = ++trailingIdx;
+
+   if( !TA_IS_ZERO(last_price_x) )
+      shift_x = (inReal0[i]-last_price_x)/last_price_x;
+   if( !TA_IS_ZERO(last_price_y) )
+      shift_y = (inReal1[i]-last_price_y)/last_price_y;
 
    while( i < startIdx )
    {
       tmp_real = inReal0[i];
       if( !TA_IS_ZERO(last_price_x) )
-         x = (tmp_real-last_price_x)/last_price_x;
+         x = (tmp_real-last_price_x)/last_price_x - shift_x;
       else
-         x = 0.0;
+         x = -shift_x;
       last_price_x = tmp_real;
 
       tmp_real = inReal1[i++];
       if( !TA_IS_ZERO(last_price_y) )
-         y = (tmp_real-last_price_y)/last_price_y;
+         y = (tmp_real-last_price_y)/last_price_y - shift_y;
       else
-         y = 0.0;
+         y = -shift_y;
       last_price_y = tmp_real;
 
       S_xx += x*x;
@@ -107,20 +135,21 @@ TA_RetCode beta(int startIdx, int endIdx,
 
    outIdx = 0; /* First output always start at index zero */
    n = (double)optInTimePeriod;
+   barsSinceReseed = 32 * optInTimePeriod;
    do
    {
       tmp_real = inReal0[i];
       if( !TA_IS_ZERO(last_price_x) )
-         x = (tmp_real-last_price_x)/last_price_x;
+         x = (tmp_real-last_price_x)/last_price_x - shift_x;
       else
-         x = 0.0;
+         x = -shift_x;
       last_price_x = tmp_real;
 
       tmp_real = inReal1[i++];
       if( !TA_IS_ZERO(last_price_y) )
-         y = (tmp_real-last_price_y)/last_price_y;
+         y = (tmp_real-last_price_y)/last_price_y - shift_y;
       else
-         y = 0.0;
+         y = -shift_y;
       last_price_y = tmp_real;
 
       S_xx += x*x;
@@ -128,27 +157,118 @@ TA_RetCode beta(int startIdx, int endIdx,
       S_x += x;
       S_y += y;
 
+      denom_scale = n * S_xx;
+      denom = denom_scale - (S_x * S_x);
+
+      /* Re-anchor and rebuild when the shift has gone stale. Same three
+       * triggers as TA_VAR, less its outlier one: the denominator has shrunk
+       * below 1e-6 of the scale it is extracted from, OR at least every 32
+       * windows. TA_VAR's third trigger guards against a value far from the
+       * shift burying the window's small terms -- a PRICE-scale hazard. Returns
+       * are stationary and bounded by comparison, so that trigger only cost a
+       * multiply and a compare on every bar here and caught nothing.
+       *
+       * Reading the window here is safe when outReal aliases an input: the
+       * outputs written so far occupy [0, outIdx-1] while windowStart-1 is
+       * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
+       */
+      barsSinceReseed--;
+      if( denom < 0.000001 * denom_scale
+         || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = trailingIdx;
+
+         /* Walk the window forward from the price the trailing cursor already
+          * carries. A return needs its predecessor, and reading inReal[j-1]
+          * would reach one slot BEFORE the window -- which the batch can do and
+          * a streaming ring sized for the window cannot. trailing_last_price_*
+          * IS that predecessor, so carrying it forward keeps every read inside
+          * [trailingIdx, i-1] and the two paths stay identical.
+          */
+         prev_x = trailing_last_price_x;
+         prev_y = trailing_last_price_y;
+         tmp_real = 0.0;
+         shift_y = 0.0;
+         for( j=windowStart; j < i; j++ )
+         {
+            if( !TA_IS_ZERO(prev_x) )
+               tmp_real += (inReal0[j]-prev_x)/prev_x;
+            prev_x = inReal0[j];
+            if( !TA_IS_ZERO(prev_y) )
+               shift_y += (inReal1[j]-prev_y)/prev_y;
+            prev_y = inReal1[j];
+         }
+         shift_x = tmp_real/n;
+         shift_y = shift_y/n;
+
+         prev_x = trailing_last_price_x;
+         prev_y = trailing_last_price_y;
+         S_xx = 0.0;
+         S_xy = 0.0;
+         S_x = 0.0;
+         S_y = 0.0;
+         for( j=windowStart; j < i; j++ )
+         {
+            if( !TA_IS_ZERO(prev_x) )
+               x = (inReal0[j]-prev_x)/prev_x - shift_x;
+            else
+               x = -shift_x;
+            prev_x = inReal0[j];
+            if( !TA_IS_ZERO(prev_y) )
+               y = (inReal1[j]-prev_y)/prev_y - shift_y;
+            else
+               y = -shift_y;
+            prev_y = inReal1[j];
+            S_xx += x*x;
+            S_xy += x*y;
+            S_x += x;
+            S_y += y;
+         }
+
+         denom_scale = n * S_xx;
+         denom = denom_scale - (S_x * S_x);
+
+         /* n*S_xx - S_x*S_x is non-negative by Cauchy-Schwarz, but it is
+          * extracted as a difference, so its SIGN is not guaranteed on a window
+          * whose returns are all the same value. Enforce the invariant HERE and
+          * not at the divide: a negative denom always reseeds on the same bar
+          * (it makes the first trigger true whenever denom_scale is positive,
+          * and denom_scale == 0 reduces that trigger to `denom < 0`), so the
+          * divide below can rely on it being >= 0.
+          */
+         if( denom < 0.0 )
+            denom = 0.0;
+      }
+
       /* Always read the trailing before writing the output because the input and output
        * buffer can be the same.
        */
       tmp_real = inReal0[trailingIdx];
       if( !TA_IS_ZERO(trailing_last_price_x) )
-         x = (tmp_real-trailing_last_price_x)/trailing_last_price_x;
+         x = (tmp_real-trailing_last_price_x)/trailing_last_price_x - shift_x;
       else
-         x = 0.0;
+         x = -shift_x;
       trailing_last_price_x = tmp_real;
 
-      tmp_real = inReal1[trailingIdx++];
+      tmp_real = inReal1[trailingIdx];
+      trailingIdx++;
       if( !TA_IS_ZERO(trailing_last_price_y) )
-         y = (tmp_real-trailing_last_price_y)/trailing_last_price_y;
+         y = (tmp_real-trailing_last_price_y)/trailing_last_price_y - shift_y;
       else
-         y = 0.0;
+         y = -shift_y;
       trailing_last_price_y = tmp_real;
 
-      /* Write the output */
-      tmp_real = (n * S_xx) - (S_x * S_x);
-      if( !TA_IS_ZERO(tmp_real) )
-         outReal[outIdx++] = ((n * S_xy) - (S_x * S_y)) / tmp_real;
+      /* Write the output.
+       *
+       * The denominator is tested against ITS OWN scale, not a fixed band: it
+       * is quadratic in the return volatility, so an absolute 1e-14 threshold
+       * stops meaning "the regressor does not vary" and starts meaning "the
+       * returns are small". The literal is TA_EPSILON, and the plain `>` also
+       * rejects a negative denominator rather than dividing by it.
+       */
+      if( denom > 0.00000000000001 * denom_scale )
+         outReal[outIdx++] = ((n * S_xy) - (S_x * S_y)) / denom;
       else
          outReal[outIdx++] = 0.0;
 

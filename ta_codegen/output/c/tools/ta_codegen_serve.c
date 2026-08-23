@@ -1030,23 +1030,34 @@ static int sv_steq_TA_BETA( const struct TA_BETA_Stream *a, const struct TA_BETA
    if( sv_xtier_ne(a->last_price_y, b->last_price_y, z) ) { *w = "last_price_y"; return 1; }
    if( sv_xtier_ne(a->trailing_last_price_x, b->trailing_last_price_x, z) ) { *w = "trailing_last_price_x"; return 1; }
    if( sv_xtier_ne(a->trailing_last_price_y, b->trailing_last_price_y, z) ) { *w = "trailing_last_price_y"; return 1; }
+   if( sv_xtier_ne(a->shift_x, b->shift_x, z) ) { *w = "shift_x"; return 1; }
+   if( sv_xtier_ne(a->shift_y, b->shift_y, z) ) { *w = "shift_y"; return 1; }
+   if( sv_xtier_ne(a->denom, b->denom, z) ) { *w = "denom"; return 1; }
+   if( sv_xtier_ne(a->denom_scale, b->denom_scale, z) ) { *w = "denom_scale"; return 1; }
+   if( sv_xtier_ne(a->prev_x, b->prev_x, z) ) { *w = "prev_x"; return 1; }
+   if( sv_xtier_ne(a->prev_y, b->prev_y, z) ) { *w = "prev_y"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( a->windowStart != b->windowStart ) { *w = "windowStart"; return 1; }
+   if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
    if( sv_xtier_ne(a->x, b->x, z) ) { *w = "x"; return 1; }
    if( sv_xtier_ne(a->y, b->y, z) ) { *w = "y"; return 1; }
    if( sv_xtier_ne(a->n, b->n, z) ) { *w = "n"; return 1; }
-   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
-   if( (a->ring_trailingIdx_inReal0 == NULL) != (b->ring_trailingIdx_inReal0 == NULL) ) { *w = "ring_trailingIdx_inReal0"; return 1; }
-   if( a->ring_trailingIdx_inReal0 ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->i != b->i ) { *w = "i"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal0 == NULL) != (b->x_inReal0 == NULL) ) { *w = "x_inReal0"; return 1; }
+   if( a->x_inReal0 ) for( k = 0; k < a->xCap; k++ )
    {
-      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
-      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
-      if( sv_xtier_ne(a->ring_trailingIdx_inReal0[ia], b->ring_trailingIdx_inReal0[ib], z) ) { *w = "ring_trailingIdx_inReal0"; return 1; }
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal0[ix], b->x_inReal0[ix], z) ) { *w = "x_inReal0"; return 1; }
    }
-   if( (a->ring_trailingIdx_inReal1 == NULL) != (b->ring_trailingIdx_inReal1 == NULL) ) { *w = "ring_trailingIdx_inReal1"; return 1; }
-   if( a->ring_trailingIdx_inReal1 ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   if( (a->x_inReal1 == NULL) != (b->x_inReal1 == NULL) ) { *w = "x_inReal1"; return 1; }
+   if( a->x_inReal1 ) for( k = 0; k < a->xCap; k++ )
    {
-      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
-      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
-      if( sv_xtier_ne(a->ring_trailingIdx_inReal1[ia], b->ring_trailingIdx_inReal1[ib], z) ) { *w = "ring_trailingIdx_inReal1"; return 1; }
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal1[ix], b->x_inReal1[ix], z) ) { *w = "x_inReal1"; return 1; }
    }
    return 0;
 }

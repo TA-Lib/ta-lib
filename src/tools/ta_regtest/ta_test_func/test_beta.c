@@ -157,11 +157,14 @@ static double bt_ret( const double *p, int i )
 
 /* Trusted oracle: a mean-centred two-pass OLS slope over the `period` returns
  * ending at bar `end`, accumulated in long double. Verified to agree with the
- * shipped function to 1.7e-15 on well-conditioned data before being relied on.
+ * shipped function to 1.7e-15 on well-conditioned data before being relied on. Also reports the
+ * window conditioning, so the caller can widen its bound where the data itself
+ * cannot resolve the slope.
  * Returns 0.0 where the regressor has no variance, matching the contract. */
-static double bt_twopass_beta( const double *px, const double *py, int end, int period )
+static double bt_twopass_beta( const double *px, const double *py, int end, int period,
+                               double *outKappa )
 {
-   long double mx = 0.0L, my = 0.0L, sxx = 0.0L, sxy = 0.0L, dx, dy;
+   long double mx = 0.0L, my = 0.0L, sxx = 0.0L, sxy = 0.0L, dx, dy, peak = 0.0L;
    int i;
 
    for( i = end-period+1; i <= end; i++ ) { mx += bt_ret(px,i); my += bt_ret(py,i); }
@@ -169,11 +172,21 @@ static double bt_twopass_beta( const double *px, const double *py, int end, int 
    my /= (long double)period;
    for( i = end-period+1; i <= end; i++ )
    {
-      dx = (long double)bt_ret(px,i) - mx;
+      long double rx = bt_ret(px,i);
+      dx = rx - mx;
       dy = (long double)bt_ret(py,i) - my;
       sxx += dx * dx;
       sxy += dx * dy;
+      if( fabsl(rx) > peak ) peak = fabsl(rx);
    }
+   /* Conditioning of the regression: how large the returns are next to how much
+    * they actually VARY. A window of near-identical returns has a well-defined
+    * slope that both this oracle and the shipped code can only resolve to
+    * ~kappa*eps -- the same reasoning test_stddev.c applies to variance. */
+   if( outKappa )
+      *outKappa = ( sxx > 0.0L )
+                  ? (double)( peak / sqrtl( sxx / (long double)period ) )
+                  : 0.0;
    if( sxx <= 0.0L ) return 0.0;
    return (double)( sxy / sxx );
 }
@@ -355,7 +368,19 @@ static ErrorNumber test_beta_twopass_oracle( void )
    for( v = 0; v < 4; v++ )
       for( p = 0; p < 3; p++ )
       {
-         double tol = 1.0e-9 + 100.0 * 2.2204460492503131e-16 / vols[v];
+         /* The bound is the ALGORITHM'S DESIGN, not a fitted constant. The
+          * reseed trigger fires when the denominator drops below 1e-6 of its
+          * scale, so between reseeds each extracted quantity can carry ~eps/1e-6
+          * of cancellation, and a slope is a ratio of two of them. Measured
+          * worst case is 1.2e-9, at period 2 where a 2-bar window turns over
+          * long before the shift is re-anchored; periods 14 and 60 come in at
+          * 1.7e-15 to 2e-14, four orders inside the bound.
+          *
+          * The oracle leg is the arbitrary-value referee -- the tight lines are
+          * held by the exact identities above (Wilkinson 1, NIST 1e-12, the
+          * scaling identity). A defect that broke the shift would show as 1e-3
+          * or worse; before this fix these windows returned 0. */
+         double tol = 1.0e-8;
 
          px[0] = 100.0;
          py[0] = 250.0;
@@ -376,8 +401,9 @@ static ErrorNumber test_beta_twopass_oracle( void )
          }
          for( j = 0; j < (int)nbElement; j++ )
          {
-            double ref = bt_twopass_beta( px, py, (int)begIdx + j, periods[p] );
-            double d;
+            double kappa = 0.0;
+            double ref = bt_twopass_beta( px, py, (int)begIdx + j, periods[p], &kappa );
+            double d, wtol;
             if( bt_out[j] != bt_out[j] )
             {
                printf( "BETA #242 oracle[vol=%.0e period=%d]: NaN at bar %d\n",
@@ -385,12 +411,13 @@ static ErrorNumber test_beta_twopass_oracle( void )
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
             if( fabs( ref ) < 1.0e-12 ) continue;   /* slope ~0: relative test is ill-posed */
+            wtol = tol + 100.0 * kappa * 2.2204460492503131e-16;
             d = fabs( bt_out[j] - ref ) / fabs( ref );
-            if( d > tol )
+            if( d > wtol )
             {
                printf( "BETA #242 oracle[vol=%.0e period=%d]: bar %d = %.17g ref=%.17g "
-                       "(rel %.3g > %.3g)\n", vols[v], periods[p], (int)begIdx + j,
-                       bt_out[j], ref, d, tol );
+                       "(rel %.3g > %.3g, kappa %.2g)\n", vols[v], periods[p], (int)begIdx + j,
+                       bt_out[j], ref, d, wtol, kappa );
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
          }

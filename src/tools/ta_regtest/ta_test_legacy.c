@@ -91,8 +91,8 @@
  *
  *   (b) an algorithm deliberately changed after v0.6.4 and pinned elsewhere:
  *       the cancellation-free variance form (#118: VAR, STDDEV, BBANDS), the
- *       same treatment applied to CORREL (#242), and the O(1) sliding-sum
- *       LINEARREG family (#103: LINEARREG*, TSF).
+ *       same treatment applied to CORREL and BETA (#242), and the O(1)
+ *       sliding-sum LINEARREG family (#103: LINEARREG*, TSF).
  *
  * Note what is NOT here and would be under a blanket contract bound: CCI (#7),
  * IMI (#112), KAMA, MACD, MACDEXT, APO, PPO, STOCHF and the rest of the
@@ -134,6 +134,7 @@ static const TA_LegacyTol LEGACY_TOL[] =
 {
    /* --- (b) deliberate post-0.6.4 algorithm changes ---------------------- */
    { "CORREL",              1e-12 },  /* #242  measured 3.15e-13             */
+   { "BETA",                2e-13 },  /* #242  measured 4.21e-14             */
    { "VAR",                 4e-11 },  /* #118  measured 1.31e-11             */
    { "STDDEV",              3e-11 },  /* #118  measured 9.19e-12             */
    { "BBANDS",              2e-11 },  /* #118  measured 3.68e-12 (via STDDEV)*/
