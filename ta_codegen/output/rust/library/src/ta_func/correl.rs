@@ -54,6 +54,9 @@
  *  120802 MF   Template creation.
  *  101003 MF   Initial Coding
  *  062804 MF   Resolve div by zero bug on limit case.
+ *  082326 MF   Fix #242. Cancellation-free sums (shifted data + reseed, as
+ *              TA_VAR does since #118), per-factor degeneracy test and a
+ *              range clamp.
  */
 
 // Import types from parent module
@@ -123,13 +126,28 @@ impl Core {
         let mut y: f64 = 0.0_f64;
         let mut trailingX: f64 = 0.0_f64;
         let mut trailingY: f64 = 0.0_f64;
+        let mut shiftX: f64 = 0.0_f64;
+        let mut shiftY: f64 = 0.0_f64;
+        let mut ssX: f64 = 0.0_f64;
+        let mut ssY: f64 = 0.0_f64;
+        let mut spXY: f64 = 0.0_f64;
+        let mut leavingX: f64 = 0.0_f64;
+        let mut leavingY: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
+        let mut j: usize = 0_usize;
+        let mut windowStart: usize = 0_usize;
+        let mut barsSinceReseed: usize = 0_usize;
         // Move up the start index if there is not
         // enough initial data.
+        // One reciprocal instead of three divisions per bar, as TA_VAR does. The
+        // extra rounding it costs is invisible next to what the shift recovers, and
+        // it is what keeps this form cheaper than the one it replaces.
+        invPeriod = 1.0 / (optInTimePeriod as f64);
         lookbackTotal = (optInTimePeriod - 1) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -142,63 +160,172 @@ impl Core {
         }
         (*outBegIdx) = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        // Calculate the initial values.
+        // Measure both series against a shift near the window, exactly as TA_VAR
+        // does (#118). The running sums then hold deviations rather than raw levels,
+        // so ssX = sumX2-(sumX*sumX)*invPeriod is no longer a difference of two
+        // ~period*mean^2 quantities. Without this the extracted sum of squares keeps
+        // only the digits that survive that subtraction: at a $100 price level with a
+        // 1e-5 spread that is three of them, and the correlation of two perfectly
+        // correlated series came back as 0, as -1, or as -1.73 (#242).
+        //
+        // Anchor on the first window value here; every later re-anchor uses the
+        // window mean, which is better centred but costs a pass this one cannot
+        // afford before the sums exist.
+        shiftX = inReal0[trailingIdx];
+        shiftY = inReal1[trailingIdx];
+        // Calculate the initial values (the window less its last bar).
         sumY2 = 0.0;
         sumX2 = sumY2;
         sumY = sumX2;
         sumX = sumY;
         sumXY = sumX;
-        for today in (trailingIdx as usize)..(startIdx as usize) + 1 {
-            x = inReal0[today];
+        // for( j = trailingIdx; j < startIdx; j += 1 )
+        j = trailingIdx;
+        while j < startIdx {
+            x = inReal0[j] - shiftX;
             sumX += x;
             sumX2 += x * x;
-            y = inReal1[today];
+            y = inReal1[j] - shiftY;
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
+            j += 1;
         }
-        today = (startIdx as usize) + 1;
-        // Write the first output.
-        // Save first the trailing values since the input
-        // and output might be the same array,
-        trailingX = inReal0[trailingIdx];
-        trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-        tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
-        if !((tempReal) < 1e-14) {
-            outReal[0] = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
-        } else {
-            outReal[0] = 0.0;
-        }
-        // Tight loop to do subsequent values.
-        outIdx = 1;
-        while today <= endIdx {
-            // Remove trailing values
-            sumX -= trailingX;
-            sumX2 -= trailingX * trailingX;
-            sumXY -= trailingX * trailingY;
-            sumY -= trailingY;
-            sumY2 -= trailingY * trailingY;
-            // Add new values
-            x = inReal0[today];
+        today = startIdx;
+        outIdx = 0;
+        barsSinceReseed = (32 * optInTimePeriod) as usize;
+        leavingX = 0.0;
+        leavingY = 0.0;
+        loop {
+            // Add the incoming value, measured against the shift.
+            x = inReal0[today] - shiftX;
             sumX += x;
             sumX2 += x * x;
-            y = inReal1[{ let _v = today; today += 1; _v }];
+            y = inReal1[today] - shiftY;
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
-            // Output new coefficient.
-            // Save first the trailing values since the input
-            // and output might be the same array,
-            trailingX = inReal0[trailingIdx];
-            trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
-            if !((tempReal) < 1e-14) {
-                outReal[outIdx] = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
+            ssX = sumX2 - sumX * sumX * invPeriod;
+            ssY = sumY2 - sumY * sumY * invPeriod;
+            spXY = sumXY - sumX * sumY * invPeriod;
+            // Re-anchor and rebuild with a fresh two-pass when the shift has gone
+            // stale. Same three triggers as TA_VAR: either sum of squares has shrunk
+            // below 1e-6 of the squared deviations it is extracted from; OR the value
+            // that just left sat so far from the shift that its squared term dwarfs
+            // what remains (a large outlier transiting the window buries the small
+            // terms below its ulp, and the residue it leaves is cancellation
+            // garbage); OR at least every 32 windows, so a slow drift stays bounded
+            // however long the series runs.
+            //
+            // The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
+            // legitimate answer - two uncorrelated series - not a loss of digits, and
+            // reseeding on it would rebuild the window on every bar of ordinary data.
+            // This is where the analogy with TA_VAR stops: variance has one extracted
+            // quantity and all of it is signal.
+            //
+            // Reading the window here is safe when outReal aliases an input: the
+            // outputs written so far occupy [0, outIdx-1] while windowStart is
+            // startIdx-lookbackTotal+outIdx, which is >= outIdx.
+            barsSinceReseed -= 1;
+            if ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 {
+                barsSinceReseed = (32 * optInTimePeriod) as usize;
+                windowStart = today - lookbackTotal;
+                // Both means in one pass over the window: the rebuild below is the
+                // only O(period) work on this function's hot path, so it is walked
+                // twice, not three times.
+                tempReal = 0.0;
+                shiftY = 0.0;
+                for j in (windowStart as usize)..(today as usize) + 1 {
+                    tempReal += inReal0[j];
+                    shiftY += inReal1[j];
+                }
+                j = (today as usize) + 1;
+                shiftX = tempReal * invPeriod;
+                shiftY = shiftY * invPeriod;
+                sumY2 = 0.0;
+                sumX2 = sumY2;
+                sumY = sumX2;
+                sumX = sumY;
+                sumXY = sumX;
+                for j in (windowStart as usize)..(today as usize) + 1 {
+                    x = inReal0[j] - shiftX;
+                    sumX += x;
+                    sumX2 += x * x;
+                    y = inReal1[j] - shiftY;
+                    sumXY += x * y;
+                    sumY += y;
+                    sumY2 += y * y;
+                }
+                j = (today as usize) + 1;
+                ssX = sumX2 - sumX * sumX * invPeriod;
+                ssY = sumY2 - sumY * sumY * invPeriod;
+                spXY = sumXY - sumX * sumY * invPeriod;
+                // A sum of squares is non-negative by definition, but this one is
+                // extracted as a difference, so its SIGN is not guaranteed on a window
+                // sitting inside a flat stretch. Enforce the invariant HERE and not at
+                // the divide: a negative ssX always reseeds on the same bar (it makes
+                // the first trigger's `negative < non-negative` true whenever sumX2 is
+                // positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
+                // divide below can rely on both being >= 0 and needs no sign test of
+                // its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+                if ssX < 0.0 {
+                    ssX = 0.0;
+                }
+                if ssY < 0.0 {
+                    ssY = 0.0;
+                }
+            }
+            // Save the trailing values before writing the output, since the input
+            // and output might be the same array.
+            trailingX = inReal0[trailingIdx] - shiftX;
+            trailingY = inReal1[trailingIdx] - shiftY;
+            trailingIdx += 1;
+            // Output the new coefficient.
+            //
+            // Each sum of squares is tested against its OWN scale, not the pair
+            // against a fixed band. The product ssX*ssY carries the fourth power of
+            // the window's spread, so an absolute threshold on it rejects a perfectly
+            // well-defined correlation as soon as the data is small - and, worse,
+            // lets a pair of NEGATIVE sums through, their signs cancelling into a
+            // plausible-looking result of the wrong sign. Testing each factor
+            // separately is what forecloses both.
+            //
+            // The literal is TA_EPSILON. This is deliberately NOT TA_IS_ZERO_SCALED,
+            // whose fabs() would admit a LARGE NEGATIVE ssX -- exactly the operand
+            // that must never reach the square root. A plain `>` rejects it, and it
+            // is also the cheaper test: the two fabs() cost ~7% of this function's
+            // runtime, and buy a wrong answer.
+            //
+            // sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+            // established both are positive, so the product needs no protection from
+            // a negative operand, and the second square root is worth ~25% of the
+            // runtime. In this library's input domain (|x| <= TA_REAL_MAX) the
+            // product cannot overflow.
+            if ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 {
+                tempReal = spXY / (ssX * ssY).sqrt();
+                // A correlation coefficient cannot leave [-1,1]; rounding in the
+                // three sums can still put it a few ulp outside.
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                } else if tempReal < 0_f64 - 1.0 {
+                    tempReal = 0_f64 - 1.0;
+                }
+                outReal[outIdx] = tempReal;
                 outIdx += 1;
             } else {
                 outReal[outIdx] = 0.0;
                 outIdx += 1;
             }
+            // Remove the trailing values (prepares the next window).
+            leavingX = trailingX * trailingX;
+            leavingY = trailingY * trailingY;
+            sumX -= trailingX;
+            sumX2 -= leavingX;
+            sumXY -= trailingX * trailingY;
+            sumY -= trailingY;
+            sumY2 -= leavingY;
+            today += 1;
+            if !(today <= endIdx) { break; }
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;
@@ -345,15 +472,27 @@ struct CORREL_StreamState {
     sumY: f64,
     sumX2: f64,
     sumY2: f64,
-    x: f64,
     y: f64,
     trailingX: f64,
     trailingY: f64,
+    shiftX: f64,
+    shiftY: f64,
+    ssX: f64,
+    ssY: f64,
+    spXY: f64,
+    leavingX: f64,
+    leavingY: f64,
     tempReal: f64,
-    ringPos_trailingIdx: usize,
-    ringCap_trailingIdx: usize,
-    ring_trailingIdx_inReal0: Vec<f64>,
-    ring_trailingIdx_inReal1: Vec<f64>,
+    invPeriod: f64,
+    lookbackTotal: usize,
+    trailingIdx: i32,
+    j: i32,
+    windowStart: usize,
+    barsSinceReseed: usize,
+    today: i32,
+    xMask: i32,
+    x_inReal0: Vec<f64>,
+    x_inReal1: Vec<f64>,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -367,15 +506,27 @@ impl CORREL_StreamState {
         self.sumY = src.sumY;
         self.sumX2 = src.sumX2;
         self.sumY2 = src.sumY2;
-        self.x = src.x;
         self.y = src.y;
         self.trailingX = src.trailingX;
         self.trailingY = src.trailingY;
+        self.shiftX = src.shiftX;
+        self.shiftY = src.shiftY;
+        self.ssX = src.ssX;
+        self.ssY = src.ssY;
+        self.spXY = src.spXY;
+        self.leavingX = src.leavingX;
+        self.leavingY = src.leavingY;
         self.tempReal = src.tempReal;
-        self.ringPos_trailingIdx = src.ringPos_trailingIdx;
-        self.ringCap_trailingIdx = src.ringCap_trailingIdx;
-        self.ring_trailingIdx_inReal0.clone_from(&src.ring_trailingIdx_inReal0);
-        self.ring_trailingIdx_inReal1.clone_from(&src.ring_trailingIdx_inReal1);
+        self.invPeriod = src.invPeriod;
+        self.lookbackTotal = src.lookbackTotal;
+        self.trailingIdx = src.trailingIdx;
+        self.j = src.j;
+        self.windowStart = src.windowStart;
+        self.barsSinceReseed = src.barsSinceReseed;
+        self.today = src.today;
+        self.xMask = src.xMask;
+        self.x_inReal0.clone_from(&src.x_inReal0);
+        self.x_inReal1.clone_from(&src.x_inReal1);
     }
 }
 
@@ -387,41 +538,145 @@ impl CORREL_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn CORREL_step_internal(&self, sp: &mut CORREL_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
-        if sp.ringCap_trailingIdx == 0 {
-            sp.ring_trailingIdx_inReal0[0] = inReal0;
-            sp.ring_trailingIdx_inReal1[0] = inReal1;
+        let mut x: f64 = 0.0_f64;
+        if sp.today >= 1073741824 {
+            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
+            sp.today -= rebaseShift;
+            sp.trailingIdx -= rebaseShift;
+            sp.j -= rebaseShift;
         }
-        // Remove trailing values
-        sp.sumX -= sp.trailingX;
-        sp.sumX2 -= sp.trailingX * sp.trailingX;
-        sp.sumXY -= sp.trailingX * sp.trailingY;
-        sp.sumY -= sp.trailingY;
-        sp.sumY2 -= sp.trailingY * sp.trailingY;
-        // Add new values
-        sp.x = inReal0;
-        sp.sumX += sp.x;
-        sp.sumX2 += sp.x * sp.x;
-        sp.y = inReal1;
-        sp.sumXY += sp.x * sp.y;
+        sp.x_inReal0[(sp.today & sp.xMask) as usize] = inReal0;
+        sp.x_inReal1[(sp.today & sp.xMask) as usize] = inReal1;
+        // Add the incoming value, measured against the shift.
+        x = sp.x_inReal0[(sp.today & sp.xMask) as usize] - sp.shiftX;
+        sp.sumX += x;
+        sp.sumX2 += x * x;
+        sp.y = sp.x_inReal1[(sp.today & sp.xMask) as usize] - sp.shiftY;
+        sp.sumXY += x * sp.y;
         sp.sumY += sp.y;
         sp.sumY2 += sp.y * sp.y;
-        // Output new coefficient.
-        // Save first the trailing values since the input
-        // and output might be the same array,
-        sp.trailingX = sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx];
-        sp.trailingY = sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx];
-        sp.tempReal = (sp.sumX2 - sp.sumX * sp.sumX / ((sp.optInTimePeriod) as f64)) * (sp.sumY2 - sp.sumY * sp.sumY / ((sp.optInTimePeriod) as f64));
-        if !((sp.tempReal) < 1e-14) {
-            (*outReal) = (sp.sumXY - sp.sumX * sp.sumY / ((sp.optInTimePeriod) as f64)) / (sp.tempReal).sqrt();
+        sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+        sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+        sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+        // Re-anchor and rebuild with a fresh two-pass when the shift has gone
+        // stale. Same three triggers as TA_VAR: either sum of squares has shrunk
+        // below 1e-6 of the squared deviations it is extracted from; OR the value
+        // that just left sat so far from the shift that its squared term dwarfs
+        // what remains (a large outlier transiting the window buries the small
+        // terms below its ulp, and the residue it leaves is cancellation
+        // garbage); OR at least every 32 windows, so a slow drift stays bounded
+        // however long the series runs.
+        //
+        // The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
+        // legitimate answer - two uncorrelated series - not a loss of digits, and
+        // reseeding on it would rebuild the window on every bar of ordinary data.
+        // This is where the analogy with TA_VAR stops: variance has one extracted
+        // quantity and all of it is signal.
+        //
+        // Reading the window here is safe when outReal aliases an input: the
+        // outputs written so far occupy [0, outIdx-1] while windowStart is
+        // startIdx-lookbackTotal+outIdx, which is >= outIdx.
+        sp.barsSinceReseed -= 1;
+        if sp.ssX < 0.000001 * sp.sumX2 || sp.ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 {
+            sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
+            sp.windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
+            // Both means in one pass over the window: the rebuild below is the
+            // only O(period) work on this function's hot path, so it is walked
+            // twice, not three times.
+            sp.tempReal = 0.0;
+            sp.shiftY = 0.0;
+            // for( sp.j = (sp.windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
+            sp.j = (sp.windowStart) as i32;
+            while sp.j <= sp.today {
+                sp.tempReal += sp.x_inReal0[(sp.j & sp.xMask) as usize];
+                sp.shiftY += sp.x_inReal1[(sp.j & sp.xMask) as usize];
+                sp.j += 1;
+            }
+            sp.shiftX = sp.tempReal * sp.invPeriod;
+            sp.shiftY = sp.shiftY * sp.invPeriod;
+            sp.sumY2 = 0.0;
+            sp.sumX2 = sp.sumY2;
+            sp.sumY = sp.sumX2;
+            sp.sumX = sp.sumY;
+            sp.sumXY = sp.sumX;
+            // for( sp.j = (sp.windowStart) as i32; sp.j <= sp.today; sp.j += 1 )
+            sp.j = (sp.windowStart) as i32;
+            while sp.j <= sp.today {
+                x = sp.x_inReal0[(sp.j & sp.xMask) as usize] - sp.shiftX;
+                sp.sumX += x;
+                sp.sumX2 += x * x;
+                sp.y = sp.x_inReal1[(sp.j & sp.xMask) as usize] - sp.shiftY;
+                sp.sumXY += x * sp.y;
+                sp.sumY += sp.y;
+                sp.sumY2 += sp.y * sp.y;
+                sp.j += 1;
+            }
+            sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+            sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+            sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+            // A sum of squares is non-negative by definition, but this one is
+            // extracted as a difference, so its SIGN is not guaranteed on a window
+            // sitting inside a flat stretch. Enforce the invariant HERE and not at
+            // the divide: a negative ssX always reseeds on the same bar (it makes
+            // the first trigger's `negative < non-negative` true whenever sumX2 is
+            // positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
+            // divide below can rely on both being >= 0 and needs no sign test of
+            // its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+            if sp.ssX < 0.0 {
+                sp.ssX = 0.0;
+            }
+            if sp.ssY < 0.0 {
+                sp.ssY = 0.0;
+            }
+        }
+        // Save the trailing values before writing the output, since the input
+        // and output might be the same array.
+        sp.trailingX = sp.x_inReal0[(sp.trailingIdx & sp.xMask) as usize] - sp.shiftX;
+        sp.trailingY = sp.x_inReal1[(sp.trailingIdx & sp.xMask) as usize] - sp.shiftY;
+        sp.trailingIdx += 1;
+        // Output the new coefficient.
+        //
+        // Each sum of squares is tested against its OWN scale, not the pair
+        // against a fixed band. The product ssX*ssY carries the fourth power of
+        // the window's spread, so an absolute threshold on it rejects a perfectly
+        // well-defined correlation as soon as the data is small - and, worse,
+        // lets a pair of NEGATIVE sums through, their signs cancelling into a
+        // plausible-looking result of the wrong sign. Testing each factor
+        // separately is what forecloses both.
+        //
+        // The literal is TA_EPSILON. This is deliberately NOT TA_IS_ZERO_SCALED,
+        // whose fabs() would admit a LARGE NEGATIVE ssX -- exactly the operand
+        // that must never reach the square root. A plain `>` rejects it, and it
+        // is also the cheaper test: the two fabs() cost ~7% of this function's
+        // runtime, and buy a wrong answer.
+        //
+        // sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+        // established both are positive, so the product needs no protection from
+        // a negative operand, and the second square root is worth ~25% of the
+        // runtime. In this library's input domain (|x| <= TA_REAL_MAX) the
+        // product cannot overflow.
+        if sp.ssX > 0.00000000000001 * sp.sumX2 && sp.ssY > 0.00000000000001 * sp.sumY2 {
+            sp.tempReal = sp.spXY / (sp.ssX * sp.ssY).sqrt();
+            // A correlation coefficient cannot leave [-1,1]; rounding in the
+            // three sums can still put it a few ulp outside.
+            if sp.tempReal > 1.0 {
+                sp.tempReal = 1.0;
+            } else if sp.tempReal < 0_f64 - 1.0 {
+                sp.tempReal = 0_f64 - 1.0;
+            }
+            (*outReal) = sp.tempReal;
         } else {
             (*outReal) = 0.0;
         }
-        sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx] = inReal0;
-        sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx] = inReal1;
-        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-            sp.ringPos_trailingIdx = 0;
-        }
+        // Remove the trailing values (prepares the next window).
+        sp.leavingX = sp.trailingX * sp.trailingX;
+        sp.leavingY = sp.trailingY * sp.trailingY;
+        sp.sumX -= sp.trailingX;
+        sp.sumX2 -= sp.leavingX;
+        sp.sumXY -= sp.trailingX * sp.trailingY;
+        sp.sumY -= sp.trailingY;
+        sp.sumY2 -= sp.leavingY;
+        sp.today += 1;
     }
 
     /// The single whole-history transcription behind [`Core::CORREL_OpenInternal`]
@@ -459,13 +714,28 @@ impl Core {
         let mut y: f64 = 0.0_f64;
         let mut trailingX: f64 = 0.0_f64;
         let mut trailingY: f64 = 0.0_f64;
+        let mut shiftX: f64 = 0.0_f64;
+        let mut shiftY: f64 = 0.0_f64;
+        let mut ssX: f64 = 0.0_f64;
+        let mut ssY: f64 = 0.0_f64;
+        let mut spXY: f64 = 0.0_f64;
+        let mut leavingX: f64 = 0.0_f64;
+        let mut leavingY: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
+        let mut j: usize = 0_usize;
+        let mut windowStart: usize = 0_usize;
+        let mut barsSinceReseed: usize = 0_usize;
         // Move up the start index if there is not
         // enough initial data.
+        // One reciprocal instead of three divisions per bar, as TA_VAR does. The
+        // extra rounding it costs is invisible next to what the shift recovers, and
+        // it is what keeps this form cheaper than the one it replaces.
+        invPeriod = 1.0 / (optInTimePeriod as f64);
         lookbackTotal = (optInTimePeriod - 1) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -478,76 +748,192 @@ impl Core {
         }
         (*outBegIdx) = startIdx;
         trailingIdx = startIdx - lookbackTotal;
-        // Calculate the initial values.
+        // Measure both series against a shift near the window, exactly as TA_VAR
+        // does (#118). The running sums then hold deviations rather than raw levels,
+        // so ssX = sumX2-(sumX*sumX)*invPeriod is no longer a difference of two
+        // ~period*mean^2 quantities. Without this the extracted sum of squares keeps
+        // only the digits that survive that subtraction: at a $100 price level with a
+        // 1e-5 spread that is three of them, and the correlation of two perfectly
+        // correlated series came back as 0, as -1, or as -1.73 (#242).
+        //
+        // Anchor on the first window value here; every later re-anchor uses the
+        // window mean, which is better centred but costs a pass this one cannot
+        // afford before the sums exist.
+        shiftX = inReal0[trailingIdx];
+        shiftY = inReal1[trailingIdx];
+        // Calculate the initial values (the window less its last bar).
         sumY2 = 0.0;
         sumX2 = sumY2;
         sumY = sumX2;
         sumX = sumY;
         sumXY = sumX;
-        for today in (trailingIdx as usize)..(startIdx as usize) + 1 {
-            x = inReal0[today];
+        // for( j = trailingIdx; j < startIdx; j += 1 )
+        j = trailingIdx;
+        while j < startIdx {
+            x = inReal0[j] - shiftX;
             sumX += x;
             sumX2 += x * x;
-            y = inReal1[today];
+            y = inReal1[j] - shiftY;
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
+            j += 1;
         }
-        today = (startIdx as usize) + 1;
-        // Write the first output.
-        // Save first the trailing values since the input
-        // and output might be the same array,
-        trailingX = inReal0[trailingIdx];
-        trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-        tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
-        if !((tempReal) < 1e-14) {
-            outReal[(0 * outStride) as usize] = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
-        } else {
-            outReal[(0 * outStride) as usize] = 0.0;
-        }
-        // Tight loop to do subsequent values.
-        outIdx = 1;
-        while today <= endIdx {
-            // Remove trailing values
-            sumX -= trailingX;
-            sumX2 -= trailingX * trailingX;
-            sumXY -= trailingX * trailingY;
-            sumY -= trailingY;
-            sumY2 -= trailingY * trailingY;
-            // Add new values
-            x = inReal0[today];
+        today = startIdx;
+        outIdx = 0;
+        barsSinceReseed = (32 * optInTimePeriod) as usize;
+        leavingX = 0.0;
+        leavingY = 0.0;
+        loop {
+            // Add the incoming value, measured against the shift.
+            x = inReal0[today] - shiftX;
             sumX += x;
             sumX2 += x * x;
-            y = inReal1[{ let _v = today; today += 1; _v }];
+            y = inReal1[today] - shiftY;
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
-            // Output new coefficient.
-            // Save first the trailing values since the input
-            // and output might be the same array,
-            trailingX = inReal0[trailingIdx];
-            trailingY = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            tempReal = (sumX2 - sumX * sumX / ((optInTimePeriod) as f64)) * (sumY2 - sumY * sumY / ((optInTimePeriod) as f64));
-            if !((tempReal) < 1e-14) {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (sumXY - sumX * sumY / ((optInTimePeriod) as f64)) / (tempReal).sqrt();
+            ssX = sumX2 - sumX * sumX * invPeriod;
+            ssY = sumY2 - sumY * sumY * invPeriod;
+            spXY = sumXY - sumX * sumY * invPeriod;
+            // Re-anchor and rebuild with a fresh two-pass when the shift has gone
+            // stale. Same three triggers as TA_VAR: either sum of squares has shrunk
+            // below 1e-6 of the squared deviations it is extracted from; OR the value
+            // that just left sat so far from the shift that its squared term dwarfs
+            // what remains (a large outlier transiting the window buries the small
+            // terms below its ulp, and the residue it leaves is cancellation
+            // garbage); OR at least every 32 windows, so a slow drift stays bounded
+            // however long the series runs.
+            //
+            // The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
+            // legitimate answer - two uncorrelated series - not a loss of digits, and
+            // reseeding on it would rebuild the window on every bar of ordinary data.
+            // This is where the analogy with TA_VAR stops: variance has one extracted
+            // quantity and all of it is signal.
+            //
+            // Reading the window here is safe when outReal aliases an input: the
+            // outputs written so far occupy [0, outIdx-1] while windowStart is
+            // startIdx-lookbackTotal+outIdx, which is >= outIdx.
+            barsSinceReseed -= 1;
+            if ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 {
+                barsSinceReseed = (32 * optInTimePeriod) as usize;
+                windowStart = today - lookbackTotal;
+                // Both means in one pass over the window: the rebuild below is the
+                // only O(period) work on this function's hot path, so it is walked
+                // twice, not three times.
+                tempReal = 0.0;
+                shiftY = 0.0;
+                for j in (windowStart as usize)..(today as usize) + 1 {
+                    tempReal += inReal0[j];
+                    shiftY += inReal1[j];
+                }
+                j = (today as usize) + 1;
+                shiftX = tempReal * invPeriod;
+                shiftY = shiftY * invPeriod;
+                sumY2 = 0.0;
+                sumX2 = sumY2;
+                sumY = sumX2;
+                sumX = sumY;
+                sumXY = sumX;
+                for j in (windowStart as usize)..(today as usize) + 1 {
+                    x = inReal0[j] - shiftX;
+                    sumX += x;
+                    sumX2 += x * x;
+                    y = inReal1[j] - shiftY;
+                    sumXY += x * y;
+                    sumY += y;
+                    sumY2 += y * y;
+                }
+                j = (today as usize) + 1;
+                ssX = sumX2 - sumX * sumX * invPeriod;
+                ssY = sumY2 - sumY * sumY * invPeriod;
+                spXY = sumXY - sumX * sumY * invPeriod;
+                // A sum of squares is non-negative by definition, but this one is
+                // extracted as a difference, so its SIGN is not guaranteed on a window
+                // sitting inside a flat stretch. Enforce the invariant HERE and not at
+                // the divide: a negative ssX always reseeds on the same bar (it makes
+                // the first trigger's `negative < non-negative` true whenever sumX2 is
+                // positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
+                // divide below can rely on both being >= 0 and needs no sign test of
+                // its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+                if ssX < 0.0 {
+                    ssX = 0.0;
+                }
+                if ssY < 0.0 {
+                    ssY = 0.0;
+                }
+            }
+            // Save the trailing values before writing the output, since the input
+            // and output might be the same array.
+            trailingX = inReal0[trailingIdx] - shiftX;
+            trailingY = inReal1[trailingIdx] - shiftY;
+            trailingIdx += 1;
+            // Output the new coefficient.
+            //
+            // Each sum of squares is tested against its OWN scale, not the pair
+            // against a fixed band. The product ssX*ssY carries the fourth power of
+            // the window's spread, so an absolute threshold on it rejects a perfectly
+            // well-defined correlation as soon as the data is small - and, worse,
+            // lets a pair of NEGATIVE sums through, their signs cancelling into a
+            // plausible-looking result of the wrong sign. Testing each factor
+            // separately is what forecloses both.
+            //
+            // The literal is TA_EPSILON. This is deliberately NOT TA_IS_ZERO_SCALED,
+            // whose fabs() would admit a LARGE NEGATIVE ssX -- exactly the operand
+            // that must never reach the square root. A plain `>` rejects it, and it
+            // is also the cheaper test: the two fabs() cost ~7% of this function's
+            // runtime, and buy a wrong answer.
+            //
+            // sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+            // established both are positive, so the product needs no protection from
+            // a negative operand, and the second square root is worth ~25% of the
+            // runtime. In this library's input domain (|x| <= TA_REAL_MAX) the
+            // product cannot overflow.
+            if ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 {
+                tempReal = spXY / (ssX * ssY).sqrt();
+                // A correlation coefficient cannot leave [-1,1]; rounding in the
+                // three sums can still put it a few ulp outside.
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                } else if tempReal < 0_f64 - 1.0 {
+                    tempReal = 0_f64 - 1.0;
+                }
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
             } else {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
+            // Remove the trailing values (prepares the next window).
+            leavingX = trailingX * trailingX;
+            leavingY = trailingY * trailingY;
+            sumX -= trailingX;
+            sumX2 -= leavingX;
+            sumXY -= trailingX * trailingY;
+            sumY -= trailingY;
+            sumY2 -= leavingY;
+            today += 1;
+            if !(today <= endIdx) { break; }
         }
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
+        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
+        if capX < 1 || capX > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
-        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inReal0: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal0[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal0[historyLen - cap_trailingIdx as usize..]);
-        let mut ring_trailingIdx_inReal1: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal1[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal1[historyLen - cap_trailingIdx as usize..]);
+        let mut physX: i64 = 1;
+        while physX < capX {
+            physX <<= 1;
+        }
+        let mut x_inReal0: Vec<f64> = vec![0.0_f64; physX as usize];
+        let mut x_inReal1: Vec<f64> = vec![0.0_f64; physX as usize];
+        {
+            let mut fillJ: usize = historyLen - capX as usize;
+            while fillJ < historyLen {
+                x_inReal0[fillJ & (physX as usize - 1)] = inReal0[fillJ];
+                x_inReal1[fillJ & (physX as usize - 1)] = inReal1[fillJ];
+                fillJ += 1;
+            }
+        }
         let state = CORREL_StreamState {
             optInTimePeriod,
             sumXY,
@@ -555,15 +941,27 @@ impl Core {
             sumY,
             sumX2,
             sumY2,
-            x,
             y,
             trailingX,
             trailingY,
+            shiftX,
+            shiftY,
+            ssX,
+            ssY,
+            spXY,
+            leavingX,
+            leavingY,
             tempReal,
-            ringPos_trailingIdx: 0_usize,
-            ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inReal0,
-            ring_trailingIdx_inReal1,
+            invPeriod,
+            lookbackTotal,
+            trailingIdx: (trailingIdx) as i32,
+            j: (j) as i32,
+            windowStart,
+            barsSinceReseed,
+            today: (today) as i32,
+            xMask: (physX - 1) as i32,
+            x_inReal0,
+            x_inReal1,
         };
         Ok(CORREL_Stream { core: self.clone(), state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }

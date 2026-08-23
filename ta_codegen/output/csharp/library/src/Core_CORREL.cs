@@ -56,6 +56,9 @@ public partial class Core
     *  120802 MF   Template creation.
     *  101003 MF   Initial Coding
     *  062804 MF   Resolve div by zero bug on limit case.
+    *  082326 MF   Fix #242. Cancellation-free sums (shifted data + reseed, as
+    *              TA_VAR does since #118), per-factor degeneracy test and a
+    *              range clamp.
     */
    /// <summary>
    /// Number of leading input bars <c>CORREL</c> consumes before it can produce
@@ -99,11 +102,22 @@ public partial class Core
       double y = 0;
       double trailingX = 0;
       double trailingY = 0;
+      double shiftX = 0;
+      double shiftY = 0;
+      double ssX = 0;
+      double ssY = 0;
+      double spXY = 0;
+      double leavingX = 0;
+      double leavingY = 0;
       double tempReal = 0;
+      double invPeriod = 0;
       int lookbackTotal = 0;
       int today = 0;
       int trailingIdx = 0;
       int outIdx = 0;
+      int j = 0;
+      int windowStart = 0;
+      int barsSinceReseed = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -121,6 +135,11 @@ public partial class Core
       /* Move up the start index if there is not
        * enough initial data.
        */
+      /* One reciprocal instead of three divisions per bar, as TA_VAR does. The
+       * extra rounding it costs is invisible next to what the shift recovers, and
+       * it is what keeps this form cheaper than the one it replaces.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -133,63 +152,172 @@ public partial class Core
       }
       outBegIdx = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      /* Calculate the initial values. */
+      /* Measure both series against a shift near the window, exactly as TA_VAR
+       * does (#118). The running sums then hold deviations rather than raw levels,
+       * so ssX = sumX2-(sumX*sumX)*invPeriod is no longer a difference of two
+       * ~period*mean^2 quantities. Without this the extracted sum of squares keeps
+       * only the digits that survive that subtraction: at a $100 price level with a
+       * 1e-5 spread that is three of them, and the correlation of two perfectly
+       * correlated series came back as 0, as -1, or as -1.73 (#242).
+       *
+       * Anchor on the first window value here; every later re-anchor uses the
+       * window mean, which is better centred but costs a pass this one cannot
+       * afford before the sums exist.
+       */
+      shiftX = inReal0[trailingIdx];
+      shiftY = inReal1[trailingIdx];
+      /* Calculate the initial values (the window less its last bar). */
       sumY2 = 0.0;
       sumX2 = sumY2;
       sumY = sumX2;
       sumX = sumY;
       sumXY = sumX;
-      for( today = trailingIdx; today <= startIdx; today += 1 ) {
-         x = inReal0[today];
+      for( j = trailingIdx; j < startIdx; j += 1 ) {
+         x = inReal0[j] - shiftX;
          sumX += x;
          sumX2 += x * x;
-         y = inReal1[today];
+         y = inReal1[j] - shiftY;
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
       }
-      /* Write the first output.
-       * Save first the trailing values since the input
-       * and output might be the same array,
-       */
-      trailingX = inReal0[trailingIdx];
-      trailingY = inReal1[trailingIdx++];
-      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-      if( !(tempReal < 0.00000000000001) ) {
-         outReal[0] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
-      } else {
-         outReal[0] = 0.0;
-      }
-      /* Tight loop to do subsequent values. */
-      outIdx = 1;
-      while( today <= endIdx ) {
-         /* Remove trailing values */
-         sumX -= trailingX;
-         sumX2 -= trailingX * trailingX;
-         sumXY -= trailingX * trailingY;
-         sumY -= trailingY;
-         sumY2 -= trailingY * trailingY;
-         /* Add new values */
-         x = inReal0[today];
+      today = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      leavingX = 0.0;
+      leavingY = 0.0;
+      do {
+         /* Add the incoming value, measured against the shift. */
+         x = inReal0[today] - shiftX;
          sumX += x;
          sumX2 += x * x;
-         y = inReal1[today++];
+         y = inReal1[today] - shiftY;
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
-         /* Output new coefficient.
-          * Save first the trailing values since the input
-          * and output might be the same array,
+         ssX = sumX2 - sumX * sumX * invPeriod;
+         ssY = sumY2 - sumY * sumY * invPeriod;
+         spXY = sumXY - sumX * sumY * invPeriod;
+         /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
+          * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
+          * below 1e-6 of the squared deviations it is extracted from; OR the value
+          * that just left sat so far from the shift that its squared term dwarfs
+          * what remains (a large outlier transiting the window buries the small
+          * terms below its ulp, and the residue it leaves is cancellation
+          * garbage); OR at least every 32 windows, so a slow drift stays bounded
+          * however long the series runs.
+          *
+          * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
+          * legitimate answer - two uncorrelated series - not a loss of digits, and
+          * reseeding on it would rebuild the window on every bar of ordinary data.
+          * This is where the analogy with TA_VAR stops: variance has one extracted
+          * quantity and all of it is signal.
+          *
+          * Reading the window here is safe when outReal aliases an input: the
+          * outputs written so far occupy [0, outIdx-1] while windowStart is
+          * startIdx-lookbackTotal+outIdx, which is >= outIdx.
           */
-         trailingX = inReal0[trailingIdx];
-         trailingY = inReal1[trailingIdx++];
-         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-         if( !(tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
+         barsSinceReseed -= 1;
+         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = today - lookbackTotal;
+            /* Both means in one pass over the window: the rebuild below is the
+             * only O(period) work on this function's hot path, so it is walked
+             * twice, not three times.
+             */
+            tempReal = 0.0;
+            shiftY = 0.0;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempReal += inReal0[j];
+               shiftY += inReal1[j];
+            }
+            shiftX = tempReal * invPeriod;
+            shiftY = shiftY * invPeriod;
+            sumY2 = 0.0;
+            sumX2 = sumY2;
+            sumY = sumX2;
+            sumX = sumY;
+            sumXY = sumX;
+            for( j = windowStart; j <= today; j += 1 ) {
+               x = inReal0[j] - shiftX;
+               sumX += x;
+               sumX2 += x * x;
+               y = inReal1[j] - shiftY;
+               sumXY += x * y;
+               sumY += y;
+               sumY2 += y * y;
+            }
+            ssX = sumX2 - sumX * sumX * invPeriod;
+            ssY = sumY2 - sumY * sumY * invPeriod;
+            spXY = sumXY - sumX * sumY * invPeriod;
+            /* A sum of squares is non-negative by definition, but this one is
+             * extracted as a difference, so its SIGN is not guaranteed on a window
+             * sitting inside a flat stretch. Enforce the invariant HERE and not at
+             * the divide: a negative ssX always reseeds on the same bar (it makes
+             * the first trigger's `negative < non-negative` true whenever sumX2 is
+             * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
+             * divide below can rely on both being >= 0 and needs no sign test of
+             * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+             */
+            if( ssX < 0.0 ) {
+               ssX = 0.0;
+            }
+            if( ssY < 0.0 ) {
+               ssY = 0.0;
+            }
+         }
+         /* Save the trailing values before writing the output, since the input
+          * and output might be the same array.
+          */
+         trailingX = inReal0[trailingIdx] - shiftX;
+         trailingY = inReal1[trailingIdx] - shiftY;
+         trailingIdx += 1;
+         /* Output the new coefficient.
+          *
+          * Each sum of squares is tested against its OWN scale, not the pair
+          * against a fixed band. The product ssX*ssY carries the fourth power of
+          * the window's spread, so an absolute threshold on it rejects a perfectly
+          * well-defined correlation as soon as the data is small - and, worse,
+          * lets a pair of NEGATIVE sums through, their signs cancelling into a
+          * plausible-looking result of the wrong sign. Testing each factor
+          * separately is what forecloses both.
+          *
+          * The literal is TA_EPSILON. This is deliberately NOT TA_IS_ZERO_SCALED,
+          * whose fabs() would admit a LARGE NEGATIVE ssX -- exactly the operand
+          * that must never reach the square root. A plain `>` rejects it, and it
+          * is also the cheaper test: the two fabs() cost ~7% of this function's
+          * runtime, and buy a wrong answer.
+          *
+          * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+          * established both are positive, so the product needs no protection from
+          * a negative operand, and the second square root is worth ~25% of the
+          * runtime. In this library's input domain (|x| <= TA_REAL_MAX) the
+          * product cannot overflow.
+          */
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
+            tempReal = spXY / Math.Sqrt(ssX * ssY);
+            /* A correlation coefficient cannot leave [-1,1]; rounding in the
+             * three sums can still put it a few ulp outside.
+             */
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            } else if( tempReal < 0 - 1.0 ) {
+               tempReal = 0 - 1.0;
+            }
+            outReal[outIdx++] = tempReal;
          } else {
             outReal[outIdx++] = 0.0;
          }
-      }
+         /* Remove the trailing values (prepares the next window). */
+         leavingX = trailingX * trailingX;
+         leavingY = trailingY * trailingY;
+         sumX -= trailingX;
+         sumX2 -= leavingX;
+         sumXY -= trailingX * trailingY;
+         sumY -= trailingY;
+         sumY2 -= leavingY;
+         today += 1;
+      } while( today <= endIdx );
       outNBElement = outIdx;
       return RetCode.Success ;
    }
@@ -213,11 +341,22 @@ public partial class Core
       double y = 0;
       double trailingX = 0;
       double trailingY = 0;
+      double shiftX = 0;
+      double shiftY = 0;
+      double ssX = 0;
+      double ssY = 0;
+      double spXY = 0;
+      double leavingX = 0;
+      double leavingY = 0;
       double tempReal = 0;
+      double invPeriod = 0;
       int lookbackTotal = 0;
       int today = 0;
       int trailingIdx = 0;
       int outIdx = 0;
+      int j = 0;
+      int windowStart = 0;
+      int barsSinceReseed = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -229,6 +368,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -240,51 +380,97 @@ public partial class Core
       }
       outBegIdx = startIdx;
       trailingIdx = startIdx - lookbackTotal;
+      shiftX = (double)inReal0[trailingIdx];
+      shiftY = (double)inReal1[trailingIdx];
       sumY2 = 0.0;
       sumX2 = sumY2;
       sumY = sumX2;
       sumX = sumY;
       sumXY = sumX;
-      for( today = trailingIdx; today <= startIdx; today += 1 ) {
-         x = (double)inReal0[today];
+      for( j = trailingIdx; j < startIdx; j += 1 ) {
+         x = (double)inReal0[j] - shiftX;
          sumX += x;
          sumX2 += x * x;
-         y = (double)inReal1[today];
+         y = (double)inReal1[j] - shiftY;
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
       }
-      trailingX = (double)inReal0[trailingIdx];
-      trailingY = (double)inReal1[trailingIdx++];
-      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-      if( !(tempReal < 0.00000000000001) ) {
-         outReal[0] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
-      } else {
-         outReal[0] = 0.0;
-      }
-      outIdx = 1;
-      while( today <= endIdx ) {
-         sumX -= trailingX;
-         sumX2 -= trailingX * trailingX;
-         sumXY -= trailingX * trailingY;
-         sumY -= trailingY;
-         sumY2 -= trailingY * trailingY;
-         x = (double)inReal0[today];
+      today = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      leavingX = 0.0;
+      leavingY = 0.0;
+      do {
+         x = (double)inReal0[today] - shiftX;
          sumX += x;
          sumX2 += x * x;
-         y = (double)inReal1[today++];
+         y = (double)inReal1[today] - shiftY;
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
-         trailingX = (double)inReal0[trailingIdx];
-         trailingY = (double)inReal1[trailingIdx++];
-         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-         if( !(tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
+         ssX = sumX2 - sumX * sumX * invPeriod;
+         ssY = sumY2 - sumY * sumY * invPeriod;
+         spXY = sumXY - sumX * sumY * invPeriod;
+         barsSinceReseed -= 1;
+         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = today - lookbackTotal;
+            tempReal = 0.0;
+            shiftY = 0.0;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempReal += (double)inReal0[j];
+               shiftY += (double)inReal1[j];
+            }
+            shiftX = tempReal * invPeriod;
+            shiftY = shiftY * invPeriod;
+            sumY2 = 0.0;
+            sumX2 = sumY2;
+            sumY = sumX2;
+            sumX = sumY;
+            sumXY = sumX;
+            for( j = windowStart; j <= today; j += 1 ) {
+               x = (double)inReal0[j] - shiftX;
+               sumX += x;
+               sumX2 += x * x;
+               y = (double)inReal1[j] - shiftY;
+               sumXY += x * y;
+               sumY += y;
+               sumY2 += y * y;
+            }
+            ssX = sumX2 - sumX * sumX * invPeriod;
+            ssY = sumY2 - sumY * sumY * invPeriod;
+            spXY = sumXY - sumX * sumY * invPeriod;
+            if( ssX < 0.0 ) {
+               ssX = 0.0;
+            }
+            if( ssY < 0.0 ) {
+               ssY = 0.0;
+            }
+         }
+         trailingX = (double)inReal0[trailingIdx] - shiftX;
+         trailingY = (double)inReal1[trailingIdx] - shiftY;
+         trailingIdx += 1;
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
+            tempReal = spXY / Math.Sqrt(ssX * ssY);
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            } else if( tempReal < 0 - 1.0 ) {
+               tempReal = 0 - 1.0;
+            }
+            outReal[outIdx++] = tempReal;
          } else {
             outReal[outIdx++] = 0.0;
          }
-      }
+         leavingX = trailingX * trailingX;
+         leavingY = trailingY * trailingY;
+         sumX -= trailingX;
+         sumX2 -= leavingX;
+         sumXY -= trailingX * trailingY;
+         sumY -= trailingY;
+         sumY2 -= leavingY;
+         today += 1;
+      } while( today <= endIdx );
       outNBElement = outIdx;
       return RetCode.Success ;
    }
@@ -451,15 +637,27 @@ public partial class Core
       internal double sumY;
       internal double sumX2;
       internal double sumY2;
-      internal double x;
       internal double y;
       internal double trailingX;
       internal double trailingY;
+      internal double shiftX;
+      internal double shiftY;
+      internal double ssX;
+      internal double ssY;
+      internal double spXY;
+      internal double leavingX;
+      internal double leavingY;
       internal double tempReal;
-      internal int ringPos_trailingIdx;
-      internal int ringCap_trailingIdx;
-      internal double[] ring_trailingIdx_inReal0 = [];
-      internal double[] ring_trailingIdx_inReal1 = [];
+      internal double invPeriod;
+      internal int lookbackTotal;
+      internal int trailingIdx;
+      internal int j;
+      internal int windowStart;
+      internal int barsSinceReseed;
+      internal int today;
+      internal int xMask;
+      internal double[] x_inReal0 = [];
+      internal double[] x_inReal1 = [];
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
@@ -487,17 +685,29 @@ public partial class Core
          this.sumY = other.sumY;
          this.sumX2 = other.sumX2;
          this.sumY2 = other.sumY2;
-         this.x = other.x;
          this.y = other.y;
          this.trailingX = other.trailingX;
          this.trailingY = other.trailingY;
+         this.shiftX = other.shiftX;
+         this.shiftY = other.shiftY;
+         this.ssX = other.ssX;
+         this.ssY = other.ssY;
+         this.spXY = other.spXY;
+         this.leavingX = other.leavingX;
+         this.leavingY = other.leavingY;
          this.tempReal = other.tempReal;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         this.ring_trailingIdx_inReal0 = new double[other.ring_trailingIdx_inReal0.Length];
-         Array.Copy( other.ring_trailingIdx_inReal0, this.ring_trailingIdx_inReal0, other.ring_trailingIdx_inReal0.Length );
-         this.ring_trailingIdx_inReal1 = new double[other.ring_trailingIdx_inReal1.Length];
-         Array.Copy( other.ring_trailingIdx_inReal1, this.ring_trailingIdx_inReal1, other.ring_trailingIdx_inReal1.Length );
+         this.invPeriod = other.invPeriod;
+         this.lookbackTotal = other.lookbackTotal;
+         this.trailingIdx = other.trailingIdx;
+         this.j = other.j;
+         this.windowStart = other.windowStart;
+         this.barsSinceReseed = other.barsSinceReseed;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         this.x_inReal0 = new double[other.x_inReal0.Length];
+         Array.Copy( other.x_inReal0, this.x_inReal0, other.x_inReal0.Length );
+         this.x_inReal1 = new double[other.x_inReal1.Length];
+         Array.Copy( other.x_inReal1, this.x_inReal1, other.x_inReal1.Length );
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -512,21 +722,33 @@ public partial class Core
          this.sumY = other.sumY;
          this.sumX2 = other.sumX2;
          this.sumY2 = other.sumY2;
-         this.x = other.x;
          this.y = other.y;
          this.trailingX = other.trailingX;
          this.trailingY = other.trailingY;
+         this.shiftX = other.shiftX;
+         this.shiftY = other.shiftY;
+         this.ssX = other.ssX;
+         this.ssY = other.ssY;
+         this.spXY = other.spXY;
+         this.leavingX = other.leavingX;
+         this.leavingY = other.leavingY;
          this.tempReal = other.tempReal;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal0.Length != other.ring_trailingIdx_inReal0.Length ) {
-            this.ring_trailingIdx_inReal0 = new double[other.ring_trailingIdx_inReal0.Length];
+         this.invPeriod = other.invPeriod;
+         this.lookbackTotal = other.lookbackTotal;
+         this.trailingIdx = other.trailingIdx;
+         this.j = other.j;
+         this.windowStart = other.windowStart;
+         this.barsSinceReseed = other.barsSinceReseed;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         if( this.x_inReal0.Length != other.x_inReal0.Length ) {
+            this.x_inReal0 = new double[other.x_inReal0.Length];
          }
-         Array.Copy( other.ring_trailingIdx_inReal0, this.ring_trailingIdx_inReal0, other.ring_trailingIdx_inReal0.Length );
-         if( this.ring_trailingIdx_inReal1.Length != other.ring_trailingIdx_inReal1.Length ) {
-            this.ring_trailingIdx_inReal1 = new double[other.ring_trailingIdx_inReal1.Length];
+         Array.Copy( other.x_inReal0, this.x_inReal0, other.x_inReal0.Length );
+         if( this.x_inReal1.Length != other.x_inReal1.Length ) {
+            this.x_inReal1 = new double[other.x_inReal1.Length];
          }
-         Array.Copy( other.ring_trailingIdx_inReal1, this.ring_trailingIdx_inReal1, other.ring_trailingIdx_inReal1.Length );
+         Array.Copy( other.x_inReal1, this.x_inReal1, other.x_inReal1.Length );
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -601,42 +823,145 @@ public partial class Core
 
    internal void CORREL_StreamStep( CORREL_Stream sp, double inReal0, double inReal1 )
    {
-      if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inReal0[0] = inReal0;
-         sp.ring_trailingIdx_inReal1[0] = inReal1;
+      double x = 0.0;
+      if( sp.today >= 1073741824 ) {
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
+         sp.today -= rebaseShift;
+         sp.trailingIdx -= rebaseShift;
+         sp.j -= rebaseShift;
       }
-      /* Remove trailing values */
-      sp.sumX -= sp.trailingX;
-      sp.sumX2 -= sp.trailingX * sp.trailingX;
-      sp.sumXY -= sp.trailingX * sp.trailingY;
-      sp.sumY -= sp.trailingY;
-      sp.sumY2 -= sp.trailingY * sp.trailingY;
-      /* Add new values */
-      sp.x = inReal0;
-      sp.sumX += sp.x;
-      sp.sumX2 += sp.x * sp.x;
-      sp.y = inReal1;
-      sp.sumXY += sp.x * sp.y;
+      sp.x_inReal0[sp.today & sp.xMask] = inReal0;
+      sp.x_inReal1[sp.today & sp.xMask] = inReal1;
+      /* Add the incoming value, measured against the shift. */
+      x = sp.x_inReal0[sp.today & sp.xMask] - sp.shiftX;
+      sp.sumX += x;
+      sp.sumX2 += x * x;
+      sp.y = sp.x_inReal1[sp.today & sp.xMask] - sp.shiftY;
+      sp.sumXY += x * sp.y;
       sp.sumY += sp.y;
       sp.sumY2 += sp.y * sp.y;
-      /* Output new coefficient.
-       * Save first the trailing values since the input
-       * and output might be the same array,
+      sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+      sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+      sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+      /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
+       * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
+       * below 1e-6 of the squared deviations it is extracted from; OR the value
+       * that just left sat so far from the shift that its squared term dwarfs
+       * what remains (a large outlier transiting the window buries the small
+       * terms below its ulp, and the residue it leaves is cancellation
+       * garbage); OR at least every 32 windows, so a slow drift stays bounded
+       * however long the series runs.
+       *
+       * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
+       * legitimate answer - two uncorrelated series - not a loss of digits, and
+       * reseeding on it would rebuild the window on every bar of ordinary data.
+       * This is where the analogy with TA_VAR stops: variance has one extracted
+       * quantity and all of it is signal.
+       *
+       * Reading the window here is safe when outReal aliases an input: the
+       * outputs written so far occupy [0, outIdx-1] while windowStart is
+       * startIdx-lookbackTotal+outIdx, which is >= outIdx.
        */
-      sp.trailingX = sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx];
-      sp.trailingY = sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx];
-      sp.tempReal = (sp.sumX2 - sp.sumX * sp.sumX / sp.optInTimePeriod) * (sp.sumY2 - sp.sumY * sp.sumY / sp.optInTimePeriod);
-      if( !(sp.tempReal < 0.00000000000001) ) {
-         sp.cur_outReal = (sp.sumXY - sp.sumX * sp.sumY / sp.optInTimePeriod) / Math.Sqrt(sp.tempReal);
+      sp.barsSinceReseed -= 1;
+      if( sp.ssX < 0.000001 * sp.sumX2 || sp.ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 ) {
+         sp.barsSinceReseed = 32 * sp.optInTimePeriod;
+         sp.windowStart = sp.today - sp.lookbackTotal;
+         /* Both means in one pass over the window: the rebuild below is the
+          * only O(period) work on this function's hot path, so it is walked
+          * twice, not three times.
+          */
+         sp.tempReal = 0.0;
+         sp.shiftY = 0.0;
+         for( sp.j = sp.windowStart; sp.j <= sp.today; sp.j += 1 ) {
+            sp.tempReal += sp.x_inReal0[sp.j & sp.xMask];
+            sp.shiftY += sp.x_inReal1[sp.j & sp.xMask];
+         }
+         sp.shiftX = sp.tempReal * sp.invPeriod;
+         sp.shiftY = sp.shiftY * sp.invPeriod;
+         sp.sumY2 = 0.0;
+         sp.sumX2 = sp.sumY2;
+         sp.sumY = sp.sumX2;
+         sp.sumX = sp.sumY;
+         sp.sumXY = sp.sumX;
+         for( sp.j = sp.windowStart; sp.j <= sp.today; sp.j += 1 ) {
+            x = sp.x_inReal0[sp.j & sp.xMask] - sp.shiftX;
+            sp.sumX += x;
+            sp.sumX2 += x * x;
+            sp.y = sp.x_inReal1[sp.j & sp.xMask] - sp.shiftY;
+            sp.sumXY += x * sp.y;
+            sp.sumY += sp.y;
+            sp.sumY2 += sp.y * sp.y;
+         }
+         sp.ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+         sp.ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+         sp.spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+         /* A sum of squares is non-negative by definition, but this one is
+          * extracted as a difference, so its SIGN is not guaranteed on a window
+          * sitting inside a flat stretch. Enforce the invariant HERE and not at
+          * the divide: a negative ssX always reseeds on the same bar (it makes
+          * the first trigger's `negative < non-negative` true whenever sumX2 is
+          * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
+          * divide below can rely on both being >= 0 and needs no sign test of
+          * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+          */
+         if( sp.ssX < 0.0 ) {
+            sp.ssX = 0.0;
+         }
+         if( sp.ssY < 0.0 ) {
+            sp.ssY = 0.0;
+         }
+      }
+      /* Save the trailing values before writing the output, since the input
+       * and output might be the same array.
+       */
+      sp.trailingX = sp.x_inReal0[sp.trailingIdx & sp.xMask] - sp.shiftX;
+      sp.trailingY = sp.x_inReal1[sp.trailingIdx & sp.xMask] - sp.shiftY;
+      sp.trailingIdx += 1;
+      /* Output the new coefficient.
+       *
+       * Each sum of squares is tested against its OWN scale, not the pair
+       * against a fixed band. The product ssX*ssY carries the fourth power of
+       * the window's spread, so an absolute threshold on it rejects a perfectly
+       * well-defined correlation as soon as the data is small - and, worse,
+       * lets a pair of NEGATIVE sums through, their signs cancelling into a
+       * plausible-looking result of the wrong sign. Testing each factor
+       * separately is what forecloses both.
+       *
+       * The literal is TA_EPSILON. This is deliberately NOT TA_IS_ZERO_SCALED,
+       * whose fabs() would admit a LARGE NEGATIVE ssX -- exactly the operand
+       * that must never reach the square root. A plain `>` rejects it, and it
+       * is also the cheaper test: the two fabs() cost ~7% of this function's
+       * runtime, and buy a wrong answer.
+       *
+       * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+       * established both are positive, so the product needs no protection from
+       * a negative operand, and the second square root is worth ~25% of the
+       * runtime. In this library's input domain (|x| <= TA_REAL_MAX) the
+       * product cannot overflow.
+       */
+      if( sp.ssX > 0.00000000000001 * sp.sumX2 && sp.ssY > 0.00000000000001 * sp.sumY2 ) {
+         sp.tempReal = sp.spXY / Math.Sqrt(sp.ssX * sp.ssY);
+         /* A correlation coefficient cannot leave [-1,1]; rounding in the
+          * three sums can still put it a few ulp outside.
+          */
+         if( sp.tempReal > 1.0 ) {
+            sp.tempReal = 1.0;
+         } else if( sp.tempReal < 0 - 1.0 ) {
+            sp.tempReal = 0 - 1.0;
+         }
+         sp.cur_outReal = sp.tempReal;
       } else {
          sp.cur_outReal = 0.0;
       }
-      sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx] = inReal0;
-      sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx] = inReal1;
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
-      }
+      /* Remove the trailing values (prepares the next window). */
+      sp.leavingX = sp.trailingX * sp.trailingX;
+      sp.leavingY = sp.trailingY * sp.trailingY;
+      sp.sumX -= sp.trailingX;
+      sp.sumX2 -= sp.leavingX;
+      sp.sumXY -= sp.trailingX * sp.trailingY;
+      sp.sumY -= sp.trailingY;
+      sp.sumY2 -= sp.leavingY;
+      sp.today += 1;
    }
 
    private RetCode CORREL_OpenImpl( CORREL_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
@@ -652,11 +977,22 @@ public partial class Core
       double y = 0;
       double trailingX = 0;
       double trailingY = 0;
+      double shiftX = 0;
+      double shiftY = 0;
+      double ssX = 0;
+      double ssY = 0;
+      double spXY = 0;
+      double leavingX = 0;
+      double leavingY = 0;
       double tempReal = 0;
+      double invPeriod = 0;
       int lookbackTotal = 0;
       int today = 0;
       int trailingIdx = 0;
       int outIdx = 0;
+      int j = 0;
+      int windowStart = 0;
+      int barsSinceReseed = 0;
       int historyLen = inReal0.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inReal1.Length != inReal0.Length ) {
@@ -678,6 +1014,11 @@ public partial class Core
       /* Move up the start index if there is not
        * enough initial data.
        */
+      /* One reciprocal instead of three divisions per bar, as TA_VAR does. The
+       * extra rounding it costs is invisible next to what the shift recovers, and
+       * it is what keeps this form cheaper than the one it replaces.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -690,89 +1031,215 @@ public partial class Core
       }
       outBegIdx = startIdx;
       trailingIdx = startIdx - lookbackTotal;
-      /* Calculate the initial values. */
+      /* Measure both series against a shift near the window, exactly as TA_VAR
+       * does (#118). The running sums then hold deviations rather than raw levels,
+       * so ssX = sumX2-(sumX*sumX)*invPeriod is no longer a difference of two
+       * ~period*mean^2 quantities. Without this the extracted sum of squares keeps
+       * only the digits that survive that subtraction: at a $100 price level with a
+       * 1e-5 spread that is three of them, and the correlation of two perfectly
+       * correlated series came back as 0, as -1, or as -1.73 (#242).
+       *
+       * Anchor on the first window value here; every later re-anchor uses the
+       * window mean, which is better centred but costs a pass this one cannot
+       * afford before the sums exist.
+       */
+      shiftX = inReal0[trailingIdx];
+      shiftY = inReal1[trailingIdx];
+      /* Calculate the initial values (the window less its last bar). */
       sumY2 = 0.0;
       sumX2 = sumY2;
       sumY = sumX2;
       sumX = sumY;
       sumXY = sumX;
-      for( today = trailingIdx; today <= startIdx; today += 1 ) {
-         x = inReal0[today];
+      for( j = trailingIdx; j < startIdx; j += 1 ) {
+         x = inReal0[j] - shiftX;
          sumX += x;
          sumX2 += x * x;
-         y = inReal1[today];
+         y = inReal1[j] - shiftY;
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
       }
-      /* Write the first output.
-       * Save first the trailing values since the input
-       * and output might be the same array,
-       */
-      trailingX = inReal0[trailingIdx];
-      trailingY = inReal1[trailingIdx++];
-      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-      if( !(tempReal < 0.00000000000001) ) {
-         outReal[0 * outStride] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
-      } else {
-         outReal[0 * outStride] = 0.0;
-      }
-      /* Tight loop to do subsequent values. */
-      outIdx = 1;
-      while( today <= endIdx ) {
-         /* Remove trailing values */
-         sumX -= trailingX;
-         sumX2 -= trailingX * trailingX;
-         sumXY -= trailingX * trailingY;
-         sumY -= trailingY;
-         sumY2 -= trailingY * trailingY;
-         /* Add new values */
-         x = inReal0[today];
+      today = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      leavingX = 0.0;
+      leavingY = 0.0;
+      do {
+         /* Add the incoming value, measured against the shift. */
+         x = inReal0[today] - shiftX;
          sumX += x;
          sumX2 += x * x;
-         y = inReal1[today++];
+         y = inReal1[today] - shiftY;
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
-         /* Output new coefficient.
-          * Save first the trailing values since the input
-          * and output might be the same array,
+         ssX = sumX2 - sumX * sumX * invPeriod;
+         ssY = sumY2 - sumY * sumY * invPeriod;
+         spXY = sumXY - sumX * sumY * invPeriod;
+         /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
+          * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
+          * below 1e-6 of the squared deviations it is extracted from; OR the value
+          * that just left sat so far from the shift that its squared term dwarfs
+          * what remains (a large outlier transiting the window buries the small
+          * terms below its ulp, and the residue it leaves is cancellation
+          * garbage); OR at least every 32 windows, so a slow drift stays bounded
+          * however long the series runs.
+          *
+          * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
+          * legitimate answer - two uncorrelated series - not a loss of digits, and
+          * reseeding on it would rebuild the window on every bar of ordinary data.
+          * This is where the analogy with TA_VAR stops: variance has one extracted
+          * quantity and all of it is signal.
+          *
+          * Reading the window here is safe when outReal aliases an input: the
+          * outputs written so far occupy [0, outIdx-1] while windowStart is
+          * startIdx-lookbackTotal+outIdx, which is >= outIdx.
           */
-         trailingX = inReal0[trailingIdx];
-         trailingY = inReal1[trailingIdx++];
-         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-         if( !(tempReal < 0.00000000000001) ) {
-            outReal[outIdx++ * outStride] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
+         barsSinceReseed -= 1;
+         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = today - lookbackTotal;
+            /* Both means in one pass over the window: the rebuild below is the
+             * only O(period) work on this function's hot path, so it is walked
+             * twice, not three times.
+             */
+            tempReal = 0.0;
+            shiftY = 0.0;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempReal += inReal0[j];
+               shiftY += inReal1[j];
+            }
+            shiftX = tempReal * invPeriod;
+            shiftY = shiftY * invPeriod;
+            sumY2 = 0.0;
+            sumX2 = sumY2;
+            sumY = sumX2;
+            sumX = sumY;
+            sumXY = sumX;
+            for( j = windowStart; j <= today; j += 1 ) {
+               x = inReal0[j] - shiftX;
+               sumX += x;
+               sumX2 += x * x;
+               y = inReal1[j] - shiftY;
+               sumXY += x * y;
+               sumY += y;
+               sumY2 += y * y;
+            }
+            ssX = sumX2 - sumX * sumX * invPeriod;
+            ssY = sumY2 - sumY * sumY * invPeriod;
+            spXY = sumXY - sumX * sumY * invPeriod;
+            /* A sum of squares is non-negative by definition, but this one is
+             * extracted as a difference, so its SIGN is not guaranteed on a window
+             * sitting inside a flat stretch. Enforce the invariant HERE and not at
+             * the divide: a negative ssX always reseeds on the same bar (it makes
+             * the first trigger's `negative < non-negative` true whenever sumX2 is
+             * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
+             * divide below can rely on both being >= 0 and needs no sign test of
+             * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+             */
+            if( ssX < 0.0 ) {
+               ssX = 0.0;
+            }
+            if( ssY < 0.0 ) {
+               ssY = 0.0;
+            }
+         }
+         /* Save the trailing values before writing the output, since the input
+          * and output might be the same array.
+          */
+         trailingX = inReal0[trailingIdx] - shiftX;
+         trailingY = inReal1[trailingIdx] - shiftY;
+         trailingIdx += 1;
+         /* Output the new coefficient.
+          *
+          * Each sum of squares is tested against its OWN scale, not the pair
+          * against a fixed band. The product ssX*ssY carries the fourth power of
+          * the window's spread, so an absolute threshold on it rejects a perfectly
+          * well-defined correlation as soon as the data is small - and, worse,
+          * lets a pair of NEGATIVE sums through, their signs cancelling into a
+          * plausible-looking result of the wrong sign. Testing each factor
+          * separately is what forecloses both.
+          *
+          * The literal is TA_EPSILON. This is deliberately NOT TA_IS_ZERO_SCALED,
+          * whose fabs() would admit a LARGE NEGATIVE ssX -- exactly the operand
+          * that must never reach the square root. A plain `>` rejects it, and it
+          * is also the cheaper test: the two fabs() cost ~7% of this function's
+          * runtime, and buy a wrong answer.
+          *
+          * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+          * established both are positive, so the product needs no protection from
+          * a negative operand, and the second square root is worth ~25% of the
+          * runtime. In this library's input domain (|x| <= TA_REAL_MAX) the
+          * product cannot overflow.
+          */
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
+            tempReal = spXY / Math.Sqrt(ssX * ssY);
+            /* A correlation coefficient cannot leave [-1,1]; rounding in the
+             * three sums can still put it a few ulp outside.
+             */
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            } else if( tempReal < 0 - 1.0 ) {
+               tempReal = 0 - 1.0;
+            }
+            outReal[outIdx++ * outStride] = tempReal;
          } else {
             outReal[outIdx++ * outStride] = 0.0;
          }
-      }
+         /* Remove the trailing values (prepares the next window). */
+         leavingX = trailingX * trailingX;
+         leavingY = trailingY * trailingY;
+         sumX -= trailingX;
+         sumX2 -= leavingX;
+         sumXY -= trailingX * trailingY;
+         sumY -= trailingY;
+         sumY2 -= leavingY;
+         today += 1;
+      } while( today <= endIdx );
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
-      int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+      int capX = today - trailingIdx + 1;
+      if( capX < 1 || capX > historyLen ) {
          return RetCode.InternalError;
       }
-      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inReal0 = new double[allocN_trailingIdx];
-      inReal0.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inReal0);
-      double[] capRing_trailingIdx_inReal1 = new double[allocN_trailingIdx];
-      inReal1.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inReal1);
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal0 = new double[physX];
+      double[] capX_inReal1 = new double[physX];
+      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+         capX_inReal0[fillJ & (physX - 1)] = inReal0[fillJ];
+         capX_inReal1[fillJ & (physX - 1)] = inReal1[fillJ];
+      }
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumXY = sumXY;
       sp.sumX = sumX;
       sp.sumY = sumY;
       sp.sumX2 = sumX2;
       sp.sumY2 = sumY2;
-      sp.x = x;
       sp.y = y;
       sp.trailingX = trailingX;
       sp.trailingY = trailingY;
+      sp.shiftX = shiftX;
+      sp.shiftY = shiftY;
+      sp.ssX = ssX;
+      sp.ssY = ssY;
+      sp.spXY = spXY;
+      sp.leavingX = leavingX;
+      sp.leavingY = leavingY;
       sp.tempReal = tempReal;
-      sp.ringPos_trailingIdx = 0;
-      sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inReal0 = capRing_trailingIdx_inReal0;
-      sp.ring_trailingIdx_inReal1 = capRing_trailingIdx_inReal1;
+      sp.invPeriod = invPeriod;
+      sp.lookbackTotal = lookbackTotal;
+      sp.trailingIdx = trailingIdx;
+      sp.j = j;
+      sp.windowStart = windowStart;
+      sp.barsSinceReseed = barsSinceReseed;
+      sp.today = today;
+      sp.xMask = physX - 1;
+      sp.x_inReal0 = capX_inReal0;
+      sp.x_inReal1 = capX_inReal1;
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }

@@ -1008,12 +1008,23 @@ static int build_json_request(CodegenRangeTestParam *p,
  * are pinned by test_stoch.c (test_stochrsi_epsilon_issue107). Standalone STOCH/
  * STOCHF keep the same guard but do NOT diverge from the reference on raw OHLC
  * (a flat raw window has highest==lowest exactly, diff==0), so they stay strictly
- * value-compared. This exemption applies ONLY to comparisons whose baseline is
+ * value-compared.
+ *
+ * CORREL (issue #242): the reference carries the one-pass
+ * sumX2-(sumX*sumX)/period form, which keeps only the digits that survive that
+ * subtraction. It reported a perfect correlation as 0, as -1, and as -1.73 —
+ * outside [-1,1] — so it cannot referee the shifted-data form that replaced it.
+ * Its values are pinned instead by test_correl.c, against oracles that share no
+ * code with either version: a fresh per-window two-pass, NIST StRD Norris's
+ * certified R-Squared, and identities exact by construction.
+ *
+ * This exemption applies ONLY to comparisons whose baseline is
  * the frozen reference — NOT the float leg, whose baseline is the current double
  * variant (a self-consistency check, see the widenFloatInputs guard at callsite). */
 static int codegen_ref_value_exempt(const char *name)
 {
-    return strcmp(name, "STOCHRSI") == 0;
+    return strcmp(name, "STOCHRSI") == 0
+        || strcmp(name, "CORREL") == 0;
 }
 
 static void compare_codegen_output_generic(
@@ -1089,7 +1100,8 @@ static void compare_codegen_output_generic(
     }
 
     /* Structural parity verified above; skip the VALUE diff for functions that
-     * intentionally diverge from the frozen reference (issue #107 STOCHRSI).
+     * intentionally diverge from the frozen reference (#107 STOCHRSI, #242
+     * CORREL).
      * NOT in the float leg (widenFloatInputs): there the baseline is the current
      * double variant, so TA_S_ vs TA_ self-consistency must stay strictly checked. */
     if( !p->widenFloatInputs && codegen_ref_value_exempt(p->funcInfo->name) )
@@ -2315,7 +2327,8 @@ static void sweep_compare_guarded(CodegenRangeTestParam *p)
     }
 
     /* Structural parity verified above; skip the VALUE diff for functions that
-     * intentionally diverge from the frozen reference (issue #107 STOCHRSI). */
+     * intentionally diverge from the frozen reference (#107 STOCHRSI, #242
+     * CORREL). */
     if( codegen_ref_value_exempt(p->funcInfo->name) )
         return;
 
@@ -4445,6 +4458,14 @@ static ErrorNumber test_codegen_for_language(
     if( langIndex == 0 )
     {
         int s;
+        /* Name the value-exempt functions too. Their structural parity is
+         * checked here, but the frozen reference is the wrong VALUE oracle for
+         * them, so this leg compares no numbers -- and a gate that silently
+         * compares nothing reads exactly like one that compared and agreed.
+         * Say so, and say what does pin them instead. */
+        printf("    values not ref-compared (reference is the wrong oracle): "
+               "STOCHRSI (#107, pinned by test_stoch.c), "
+               "CORREL (#242, pinned by test_correl.c + --xlang-hash)\n");
         if( ctx.nbSkipNames > 0 )
         {
             printf("    no frozen-reference baseline (post-cutover): ");
