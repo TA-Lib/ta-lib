@@ -196,6 +196,23 @@ int main( int argc, char **argv )
       }
    }
 
+   /* --fuzz-064 and --xlang-hash each run their gate and RETURN, below, before
+    * the normal suite. So pairing either with the other or with --codegen runs
+    * whichever comes first and silently drops the rest -- `--codegen
+    * --xlang-hash` produced the parity gate and ZERO stream_verify legs while
+    * reading like it had run both. Reject the combination rather than pick a
+    * winner: making them additive would put the whole C suite inside the
+    * nightly's xlang-hash job, which is not what that job is for.
+    */
+   if( (doFuzz064 + doXlangHash + doCodegenTest) > 1 )
+   {
+      printf( "Error: --codegen, --fuzz-064 and --xlang-hash are separate runs.\n" );
+      printf( "       --fuzz-064 and --xlang-hash each return before anything\n" );
+      printf( "       else can run, so combining them silently skips the rest.\n" );
+      printf( "       Use one per invocation.\n" );
+      return TA_REGTEST_BAD_USER_PARAM;
+   }
+
    /* Some tests are using randomness: the range sweeps pick their startIdx and
     * sizes with rand(), so each run covers a different subset. Printed so a
     * failure can be replayed with --seed=N. */
@@ -847,6 +864,15 @@ static void printUsage(void)
       printf( "       seed-generated inputs, comparing full-precision output hashes\n" );
       printf( "       with no tolerance. Honors --function and --language (rust today).\n" );
       printf( "       Run from the bin directory (needs the language servers).\n" );
+      printf( "\n" );
+      printf( "    --fuzz-064\n" );
+      printf( "       Bit-exact differential fuzz against the released v0.6.4\n" );
+      printf( "       oracle (bin/ta_064_serve). Honors --function.\n" );
+      printf( "       Run from the bin directory.\n" );
+      printf( "\n" );
+      printf( "    --codegen, --fuzz-064 and --xlang-hash are SEPARATE runs and\n" );
+      printf( "    cannot be combined: the last two return before anything else,\n" );
+      printf( "    so a combination would silently skip what it did not reach.\n" );
       printf( "\n" );
       printf( "    --seed=N\n" );
       printf( "       Seed the range sweeps, replaying a previous run. Each run\n" );

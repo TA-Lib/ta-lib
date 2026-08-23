@@ -16,6 +16,19 @@ ta_regtest validates TA-Lib indicator implementations. It has two modes:
 | `--codegen` | Run codegen verification after C reference tests |
 | `--language=CSV` | Filter languages for codegen verification (e.g., `c,rust,java`) |
 | `-p` | Profile mode |
+| `--fuzz-064` | Differential vs the frozen v0.6.4 oracle. **Self-contained** |
+| `--xlang-hash` | Cross-language bitwise parity gate. **Self-contained** |
+
+`--codegen`, `--fuzz-064` and `--xlang-hash` are **rejected in combination**
+(`TA_REGTEST_BAD_USER_PARAM`). The last two run their gate and `return` from
+`main()` before the normal suite, so a combination ran one and silently dropped
+the rest — `--codegen --xlang-hash` produced the parity gate and **zero**
+stream_verify legs while reading like it had run both. `scripts/regtest.py` was
+the live instance: it has one `ta_regtest` invocation and always prepends
+`--codegen`, so `regtest.py --xlang-hash` printed the REGTEST banner and ran
+none of it. It no longer accepts either flag — they are their own runs
+(`scripts/build.py xlang-hash` / `fuzz-064`) and its closing report names them
+every time.
 
 Examples:
 ```bash

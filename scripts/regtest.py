@@ -285,8 +285,14 @@ def main():
         "--function=", "--language=", "--points=", "--iters=", "--period=",
         "--shape=", "--seed=", "--regime-period=", "--trend-strength=",
         "--codegen=",
-        "--fuzz-064", "--xlang-hash", "--no-guarded",
+        "--no-guarded",
     )
+    # --fuzz-064 and --xlang-hash are deliberately NOT accepted. This pipeline
+    # has one ta_regtest invocation and it always carries --codegen; ta_regtest
+    # now rejects that combination outright, and before it did the two modes
+    # returned first, so `regtest.py --xlang-hash` printed the REGTEST banner
+    # and then ran none of it. They are their own runs -- scripts/build.py
+    # xlang-hash / fuzz-064 -- and the report below names them every time.
     # --codegen is EXACT, not a prefix: a bare `startswith("--codegen")` accepts
     # any `--codegen<anything>` and forwards the typo to ta_regtest, which is a
     # louder failure than it needs to be and a quieter one than it looks.
@@ -424,7 +430,7 @@ def main():
         # and the corpus selectors — aborted this step before the bench in step
         # 6/7 ever ran. An allowlist keeps a future bench flag from breaking it.
         REGTEST_FLAGS = ("--function=", "--language=", "--codegen", "--codegen=",
-                         "--fuzz-064", "--xlang-hash", "--no-guarded", "-p")
+                         "--no-guarded", "-p")
         codegen_args = [a for a in passthrough
                         if a == "-p" or a.startswith(tuple(
                             f for f in REGTEST_FLAGS if f != "-p"))]
@@ -445,7 +451,7 @@ def main():
         print("=" * 60, flush=True)
         # Allowlist for the same reason as step 5b: ta_bench now rejects unknown
         # argv instead of ignoring it, so flags only ta_regtest knows (--codegen,
-        # --xlang-hash, ...) must not reach it.
+        # --no-guarded, ...) must not reach it.
         BENCH_FLAGS = ("--points=", "--iters=", "--language=", "--function=",
                        "--period=", "--shape=", "--seed=", "--regime-period=",
                        "--trend-strength=")
@@ -507,22 +513,26 @@ def main():
     # nightly job here would go stale the first time one is added, so point at
     # the workflow for the full list rather than copying it.
     if not no_regtest:
-        skipped = []
-        if not any(a.startswith("--xlang-hash") for a in passthrough):
-            skipped.append((
+        # Unconditional, because neither is reachable from here any more. A
+        # predicate over `passthrough` would be a constant that reads like a
+        # check -- and the one it replaced went the wrong way: passing
+        # --xlang-hash suppressed this warning about xlang while the run it
+        # produced skipped the codegen step as well.
+        skipped = [
+            (
                 "--xlang-hash",
                 "every language server bitwise vs the in-process C library "
                 "(zero tolerance, all shapes)",
                 "scripts/build.py xlang-hash",
                 "~3 min, 176 functions",
-            ))
-        if not any(a.startswith("--fuzz-064") for a in passthrough):
-            skipped.append((
+            ),
+            (
                 "--fuzz-064",
                 "differential against the frozen v0.6.4 oracle",
                 "scripts/build.py fuzz-064",
                 "",
-            ))
+            ),
+        ]
         if skipped or func_filter or lang_filter:
             print("\n" + "=" * 60)
             print("NOT RUN BY THIS PIPELINE (CI runs each as its own job)")
