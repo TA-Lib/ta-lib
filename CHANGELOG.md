@@ -43,6 +43,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~40%: ULTOSC (#154). Thanks @dexhunter !
 - ~30%: MAVP (#143). Thanks @dexhunter !
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
+- ~2.2x: MFI (#244)
 - ~20%: VAR, STDDEV, BBANDS
 - ~25-30%: STDDEV when `optInNbDev` is not 1.0 — dropping the zero test from the loop lets it vectorize (#243)
 - ~10%: ATR and NATR
@@ -90,6 +91,11 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   lives in VAR, which was already returning the right answer there. VAR additionally
   returns a bit-exact 0 — rather than a ~1e-44 rounding residue — for a window that sits
   entirely inside a flat stretch entered mid-series.
+- (#244) MFI returned 0 instead of the index whenever the money flow over the window
+  summed to less than 1.0 — a threshold on a price times a volume, so any instrument
+  quoted small enough reaches it, whether from a low price or from small volumes. The
+  index is a ratio and no longer depends on the size of the money flow at all. MFI also
+  no longer returns a value a few ulp outside 0-100.
 
 ## [0.7.1] 2026-07-03
 ### Added
