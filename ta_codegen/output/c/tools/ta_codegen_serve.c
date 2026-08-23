@@ -1035,6 +1035,7 @@ static int sv_steq_TA_BETA( const struct TA_BETA_Stream *a, const struct TA_BETA
    if( sv_xtier_ne(a->denom, b->denom, z) ) { *w = "denom"; return 1; }
    if( sv_xtier_ne(a->denom_scale, b->denom_scale, z) ) { *w = "denom_scale"; return 1; }
    if( sv_xtier_ne(a->prev_x, b->prev_x, z) ) { *w = "prev_x"; return 1; }
+   if( sv_xtier_ne(a->leaving_xx, b->leaving_xx, z) ) { *w = "leaving_xx"; return 1; }
    if( sv_xtier_ne(a->prev_y, b->prev_y, z) ) { *w = "prev_y"; return 1; }
    if( a->j != b->j ) { *w = "j"; return 1; }
    if( a->windowStart != b->windowStart ) { *w = "windowStart"; return 1; }

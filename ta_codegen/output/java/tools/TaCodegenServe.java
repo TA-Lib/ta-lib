@@ -13277,6 +13277,7 @@ class Core {
      *               the stock prices (SourceForge bug 98).
      *  082326 MF    Fix #242. Cancellation-free regression sums (shifted returns
      *               + reseed) and a scale-relative denominator test.
+     *  082326 MF,CC #242 follow-up: restore TA_VAR's outlier trigger, at 1e3.
      */
 
        /**
@@ -13324,6 +13325,7 @@ class Core {
           double denom = 0;
           double denom_scale = 0;
           double prev_x = 0;
+          double leaving_xx = 0;
           double prev_y = 0;
           int j = 0;
           int windowStart = 0;
@@ -13360,6 +13362,7 @@ class Core {
           denom = 0.0;
           denom_scale = 0.0;
           prev_x = 0.0;
+          leaving_xx = 0.0;
           prev_y = 0.0;
           n = 0.0;
           /* sum of x * x */
@@ -13376,6 +13379,7 @@ class Core {
           /* n*S_xx - S_x*S_x, the regression denominator */
           /* n*S_xx, the scale denom is extracted from */
           /* price walked forward when rebuilding the window */
+          /* squared x deviation the previous bar removed */
           /* the 'x' value, which is the last change between values in inReal0 */
           /* the 'y' value, which is the last change between values in inReal1 */
           /* DESCRIPTION OF ALGORITHM:
@@ -13479,20 +13483,36 @@ class Core {
              S_y += y;
              denom_scale = n * S_xx;
              denom = denom_scale - S_x * S_x;
-             /* Re-anchor and rebuild when the shift has gone stale. Same three
-              * triggers as TA_VAR, less its outlier one: the denominator has shrunk
-              * below 1e-6 of the scale it is extracted from, OR at least every 32
-              * windows. TA_VAR's third trigger guards against a value far from the
-              * shift burying the window's small terms -- a PRICE-scale hazard. Returns
-              * are stationary and bounded by comparison, so that trigger only cost a
-              * multiply and a compare on every bar here and caught nothing.
+             /* Re-anchor and rebuild when the shift has gone stale. The same three
+              * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
+              * it is extracted from; OR the return that just left sat so far from the
+              * shift that its squared term dwarfs what remains; OR at least every 32
+              * windows.
+              *
+              * The outlier trigger earns its multiply and compare here, contrary to
+              * what "returns are stationary" suggests: a bad tick makes one return
+              * enormous, the ordinary ones fall below its ulp and are never really
+              * added, and when it leaves the subtraction takes back a term they were
+              * never part of. The residue is a consistent OFFSET, so the cancellation
+              * trigger above cannot see it -- denom/denom_scale stays ~1 -- and only
+              * the periodic re-anchor recovers, up to 32*period bars later. Measured
+              * without it: a 1e8 tick left 286 of 386 bars wrong, the worst by 0.36
+              * ABSOLUTE. It costs at most ~3% (mostly unmeasurable against a +/-1.6%
+              * noise floor), against the 7-11% the shift itself spends.
+              *
+              * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
+              * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
+              * into S_xx, so the ratio when that term leaves lands an order or two
+              * below the value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips
+              * through and leaves a flat 2.5e-5 relative error on 285 of 386 bars.
+              * Pinned by test_beta_outlier_transit.
               *
               * Reading the window here is safe when outReal aliases an input: the
               * outputs written so far occupy [0, outIdx-1] while windowStart-1 is
               * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
               */
              barsSinceReseed -= 1;
-             if( denom < 0.000001 * denom_scale || barsSinceReseed <= 0 ) {
+             if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = trailingIdx;
                 /* Walk the window forward from the price the trailing cursor already
@@ -13588,6 +13608,7 @@ class Core {
                 outReal[outIdx++] = 0.0;
              }
              /* Remove the calculation starting with the trailingIdx. */
+             leaving_xx = x * x;
              S_xx -= x * x;
              S_xy -= x * y;
              S_x -= x;
@@ -13621,6 +13642,7 @@ class Core {
           double denom = 0;
           double denom_scale = 0;
           double prev_x = 0;
+          double leaving_xx = 0;
           double prev_y = 0;
           int j = 0;
           int windowStart = 0;
@@ -13657,6 +13679,7 @@ class Core {
           denom = 0.0;
           denom_scale = 0.0;
           prev_x = 0.0;
+          leaving_xx = 0.0;
           prev_y = 0.0;
           n = 0.0;
           nbInitialElementNeeded = optInTimePeriod;
@@ -13725,7 +13748,7 @@ class Core {
              denom_scale = n * S_xx;
              denom = denom_scale - S_x * S_x;
              barsSinceReseed -= 1;
-             if( denom < 0.000001 * denom_scale || barsSinceReseed <= 0 ) {
+             if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = trailingIdx;
                 prev_x = trailing_last_price_x;
@@ -13794,6 +13817,7 @@ class Core {
              } else {
                 outReal[outIdx++] = 0.0;
              }
+             leaving_xx = x * x;
              S_xx -= x * x;
              S_xy -= x * y;
              S_x -= x;
@@ -13972,6 +13996,7 @@ class Core {
           double denom;
           double denom_scale;
           double prev_x;
+          double leaving_xx;
           double prev_y;
           int j;
           int windowStart;
@@ -14018,6 +14043,7 @@ class Core {
              this.denom = other.denom;
              this.denom_scale = other.denom_scale;
              this.prev_x = other.prev_x;
+             this.leaving_xx = other.leaving_xx;
              this.prev_y = other.prev_y;
              this.j = other.j;
              this.windowStart = other.windowStart;
@@ -14051,6 +14077,7 @@ class Core {
              this.denom = other.denom;
              this.denom_scale = other.denom_scale;
              this.prev_x = other.prev_x;
+             this.leaving_xx = other.leaving_xx;
              this.prev_y = other.prev_y;
              this.j = other.j;
              this.windowStart = other.windowStart;
@@ -14170,20 +14197,36 @@ class Core {
           sp.S_y += sp.y;
           sp.denom_scale = sp.n * sp.S_xx;
           sp.denom = sp.denom_scale - sp.S_x * sp.S_x;
-          /* Re-anchor and rebuild when the shift has gone stale. Same three
-           * triggers as TA_VAR, less its outlier one: the denominator has shrunk
-           * below 1e-6 of the scale it is extracted from, OR at least every 32
-           * windows. TA_VAR's third trigger guards against a value far from the
-           * shift burying the window's small terms -- a PRICE-scale hazard. Returns
-           * are stationary and bounded by comparison, so that trigger only cost a
-           * multiply and a compare on every bar here and caught nothing.
+          /* Re-anchor and rebuild when the shift has gone stale. The same three
+           * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
+           * it is extracted from; OR the return that just left sat so far from the
+           * shift that its squared term dwarfs what remains; OR at least every 32
+           * windows.
+           *
+           * The outlier trigger earns its multiply and compare here, contrary to
+           * what "returns are stationary" suggests: a bad tick makes one return
+           * enormous, the ordinary ones fall below its ulp and are never really
+           * added, and when it leaves the subtraction takes back a term they were
+           * never part of. The residue is a consistent OFFSET, so the cancellation
+           * trigger above cannot see it -- denom/denom_scale stays ~1 -- and only
+           * the periodic re-anchor recovers, up to 32*period bars later. Measured
+           * without it: a 1e8 tick left 286 of 386 bars wrong, the worst by 0.36
+           * ABSOLUTE. It costs at most ~3% (mostly unmeasurable against a +/-1.6%
+           * noise floor), against the 7-11% the shift itself spends.
+           *
+           * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
+           * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
+           * into S_xx, so the ratio when that term leaves lands an order or two
+           * below the value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips
+           * through and leaves a flat 2.5e-5 relative error on 285 of 386 bars.
+           * Pinned by test_beta_outlier_transit.
            *
            * Reading the window here is safe when outReal aliases an input: the
            * outputs written so far occupy [0, outIdx-1] while windowStart-1 is
            * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
            */
           sp.barsSinceReseed -= 1;
-          if( sp.denom < 0.000001 * sp.denom_scale || sp.barsSinceReseed <= 0 ) {
+          if( sp.denom < 0.000001 * sp.denom_scale || sp.leaving_xx > 1000.0 * sp.S_xx || sp.barsSinceReseed <= 0 ) {
              sp.barsSinceReseed = 32 * sp.optInTimePeriod;
              sp.windowStart = sp.trailingIdx;
              /* Walk the window forward from the price the trailing cursor already
@@ -14279,6 +14322,7 @@ class Core {
              sp.cur_outReal = 0.0;
           }
           /* Remove the calculation starting with the trailingIdx. */
+          sp.leaving_xx = sp.x * sp.x;
           sp.S_xx -= sp.x * sp.x;
           sp.S_xy -= sp.x * sp.y;
           sp.S_x -= sp.x;
@@ -14300,6 +14344,7 @@ class Core {
           double denom = 0;
           double denom_scale = 0;
           double prev_x = 0;
+          double leaving_xx = 0;
           double prev_y = 0;
           int j = 0;
           int windowStart = 0;
@@ -14343,6 +14388,7 @@ class Core {
           denom = 0.0;
           denom_scale = 0.0;
           prev_x = 0.0;
+          leaving_xx = 0.0;
           prev_y = 0.0;
           n = 0.0;
           /* sum of x * x */
@@ -14359,6 +14405,7 @@ class Core {
           /* n*S_xx - S_x*S_x, the regression denominator */
           /* n*S_xx, the scale denom is extracted from */
           /* price walked forward when rebuilding the window */
+          /* squared x deviation the previous bar removed */
           /* the 'x' value, which is the last change between values in inReal0 */
           /* the 'y' value, which is the last change between values in inReal1 */
           /* DESCRIPTION OF ALGORITHM:
@@ -14462,20 +14509,36 @@ class Core {
              S_y += y;
              denom_scale = n * S_xx;
              denom = denom_scale - S_x * S_x;
-             /* Re-anchor and rebuild when the shift has gone stale. Same three
-              * triggers as TA_VAR, less its outlier one: the denominator has shrunk
-              * below 1e-6 of the scale it is extracted from, OR at least every 32
-              * windows. TA_VAR's third trigger guards against a value far from the
-              * shift burying the window's small terms -- a PRICE-scale hazard. Returns
-              * are stationary and bounded by comparison, so that trigger only cost a
-              * multiply and a compare on every bar here and caught nothing.
+             /* Re-anchor and rebuild when the shift has gone stale. The same three
+              * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
+              * it is extracted from; OR the return that just left sat so far from the
+              * shift that its squared term dwarfs what remains; OR at least every 32
+              * windows.
+              *
+              * The outlier trigger earns its multiply and compare here, contrary to
+              * what "returns are stationary" suggests: a bad tick makes one return
+              * enormous, the ordinary ones fall below its ulp and are never really
+              * added, and when it leaves the subtraction takes back a term they were
+              * never part of. The residue is a consistent OFFSET, so the cancellation
+              * trigger above cannot see it -- denom/denom_scale stays ~1 -- and only
+              * the periodic re-anchor recovers, up to 32*period bars later. Measured
+              * without it: a 1e8 tick left 286 of 386 bars wrong, the worst by 0.36
+              * ABSOLUTE. It costs at most ~3% (mostly unmeasurable against a +/-1.6%
+              * noise floor), against the 7-11% the shift itself spends.
+              *
+              * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
+              * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
+              * into S_xx, so the ratio when that term leaves lands an order or two
+              * below the value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips
+              * through and leaves a flat 2.5e-5 relative error on 285 of 386 bars.
+              * Pinned by test_beta_outlier_transit.
               *
               * Reading the window here is safe when outReal aliases an input: the
               * outputs written so far occupy [0, outIdx-1] while windowStart-1 is
               * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
               */
              barsSinceReseed -= 1;
-             if( denom < 0.000001 * denom_scale || barsSinceReseed <= 0 ) {
+             if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = trailingIdx;
                 /* Walk the window forward from the price the trailing cursor already
@@ -14571,6 +14634,7 @@ class Core {
                 outReal[outIdx++ * outStride] = 0.0;
              }
              /* Remove the calculation starting with the trailingIdx. */
+             leaving_xx = x * x;
              S_xx -= x * x;
              S_xy -= x * y;
              S_x -= x;
@@ -14608,6 +14672,7 @@ class Core {
           sp.denom = denom;
           sp.denom_scale = denom_scale;
           sp.prev_x = prev_x;
+          sp.leaving_xx = leaving_xx;
           sp.prev_y = prev_y;
           sp.j = j;
           sp.windowStart = windowStart;
