@@ -4317,6 +4317,11 @@ static int sv_steq_TA_MFI( const struct TA_MFI_Stream *a, const struct TA_MFI_St
    if( sv_xtier_ne(a->tempValue1, b->tempValue1, z) ) { *w = "tempValue1"; return 1; }
    if( sv_xtier_ne(a->tempValue2, b->tempValue2, z) ) { *w = "tempValue2"; return 1; }
    if( sv_xtier_ne(a->tempValue3, b->tempValue3, z) ) { *w = "tempValue3"; return 1; }
+   if( sv_xtier_ne(a->moneyFlow, b->moneyFlow, z) ) { *w = "moneyFlow"; return 1; }
+   if( sv_xtier_ne(a->posFlow, b->posFlow, z) ) { *w = "posFlow"; return 1; }
+   if( sv_xtier_ne(a->negFlow, b->negFlow, z) ) { *w = "negFlow"; return 1; }
+   if( sv_xtier_ne(a->posClamped, b->posClamped, z) ) { *w = "posClamped"; return 1; }
+   if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }
    if( a->mflow_Idx != b->mflow_Idx ) { *w = "mflow_Idx"; return 1; }
    if( a->maxIdx_mflow != b->maxIdx_mflow ) { *w = "maxIdx_mflow"; return 1; }
    if( a->cbSize_mflow != b->cbSize_mflow ) { *w = "cbSize_mflow"; return 1; }

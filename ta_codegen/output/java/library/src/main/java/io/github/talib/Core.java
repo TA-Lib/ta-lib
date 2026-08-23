@@ -105511,6 +105511,9 @@ public final class Core {
  *  071026 MF,CC Fix #107. Classify money-flow direction with a magnitude-scaled
  *               dead-zone (TA_IS_ZERO_SCALED), not an exact sign test, so an
  *               epsilon-flat typical price is "no movement", not a spurious move.
+ *  082326 MF,CC Fix #244. Detect an empty window by counting bars, not by
+ *               testing the money-flow sum against a literal 1.0; classify
+ *               branchlessly; clamp the emitted ratio into [0,100].
  */
 
    /**
@@ -105551,10 +105554,15 @@ public final class Core {
       double tempValue1 = 0;
       double tempValue2 = 0;
       double tempValue3 = 0;
+      double moneyFlow = 0;
+      double posFlow = 0;
+      double negFlow = 0;
+      double posClamped = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
       int today = 0;
+      int nullRun = 0;
       double[] mflow_positive;
       double[] mflow_negative;
       int mflow_Idx = 0;
@@ -105596,6 +105604,13 @@ public final class Core {
       prevValue = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
       posSumMF = 0.0;
       negSumMF = 0.0;
+      /* Consecutive bars that put nothing into the window, counted so that an
+       * empty window can be recognized exactly (issue #244).  The running sums
+       * cannot answer that question themselves: they are maintained by
+       * add-then-subtract, so when the window empties they hold rounding
+       * residue of arbitrary sign, not zero.
+       */
+      nullRun = 0;
       today += 1;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
@@ -105606,17 +105621,38 @@ public final class Core {
          tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
-         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
-            mflow_positive[mflow_Idx] = 0.0;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else if( tempValue2 < 0 ) {
-            mflow_negative[mflow_Idx] = tempValue1;
-            negSumMF += tempValue1;
-            mflow_positive[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = tempValue1;
-            posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
+         /* This bar's money flow, and its split into the positive and negative
+          * sums.  Selects rather than a three-arm branch: the direction of a
+          * price move is a coin flip, so that branch mispredicted on roughly
+          * every other bar and dominated the cost of the function.  Adding the
+          * unused side's 0.0 to a sum is an exact no-op, so this reproduces the
+          * branching form bit for bit.
+          *
+          * The three quantities are named rather than folded back into
+          * tempValue1/2 deliberately, at a known cost: every local in a step body
+          * becomes a field of the stream handle, so each name is another store
+          * per bar (~10% of MFI's streaming Update, +32 handle bytes).  That is
+          * the generator's to fix -- issue #252, which counts 436 such fields
+          * across 125 streaming functions -- not something to obfuscate an
+          * indicator body over.
+          */
+         moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         mflow_positive[mflow_Idx] = posFlow;
+         mflow_negative[mflow_Idx] = negFlow;
+         posSumMF += posFlow;
+         negSumMF += negFlow;
+         /* A bar contributes nothing when the typical price did not move, or
+          * when it moved but carried no volume.  Once a whole period of those
+          * has gone by, every slot of the ring is 0.0, so the sums are known to
+          * be exactly zero and the residue can be dropped.
+          */
+         nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            posSumMF = 0.0;
+            negSumMF = 0.0;
          }
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
@@ -105625,15 +105661,27 @@ public final class Core {
        *    MFI = 100 - (100 / 1 + (posSumMF/negSumMF))
        *    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
        * The second equation is used here for speed optimization.
+       *
+       * Both sums are non-negative, so the total is zero only for a window that
+       * received no money flow at all -- 0/0, reported as 0.0.  The test is on
+       * the total itself, not on a fixed threshold: money flow is a price times
+       * a volume, so any constant compared against it is a constant in some
+       * arbitrary unit, and would zero a healthy index for any instrument
+       * quoted small enough to fall under it (issue #244).
+       *
+       * Clamping the numerator into [0,total] keeps the result inside the
+       * documented 0-100 range: the sums drift by a few ulp as the window
+       * slides, and a sum whose true value is near zero can drift negative.
        */
       /* The first full window is complete: emit its output for startIdx here,
        * then slide the window over the remaining bars below.
        */
       tempValue1 = posSumMF + negSumMF;
-      if( tempValue1 < 1.0 ) {
+      posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+      if( tempValue1 <= 0.0 ) {
          outReal[outIdx++] = 0.0;
       } else {
-         outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
+         outReal[outIdx++] = 100.0 * (posClamped / tempValue1);
       }
       /* Now continue processing the remaining bars. */
       while( today <= endIdx ) {
@@ -105647,23 +105695,25 @@ public final class Core {
          tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
-         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
-            mflow_positive[mflow_Idx] = 0.0;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else if( tempValue2 < 0 ) {
-            mflow_negative[mflow_Idx] = tempValue1;
-            negSumMF += tempValue1;
-            mflow_positive[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = tempValue1;
-            posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
+         moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         mflow_positive[mflow_Idx] = posFlow;
+         mflow_negative[mflow_Idx] = negFlow;
+         posSumMF += posFlow;
+         negSumMF += negFlow;
+         nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            posSumMF = 0.0;
+            negSumMF = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
-         if( tempValue1 < 1.0 ) {
+         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         if( tempValue1 <= 0.0 ) {
             outReal[outIdx++] = 0.0;
          } else {
-            outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
+            outReal[outIdx++] = 100.0 * (posClamped / tempValue1);
          }
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
@@ -105689,10 +105739,15 @@ public final class Core {
       double tempValue1 = 0;
       double tempValue2 = 0;
       double tempValue3 = 0;
+      double moneyFlow = 0;
+      double posFlow = 0;
+      double negFlow = 0;
+      double posClamped = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
       int today = 0;
+      int nullRun = 0;
       double[] mflow_positive;
       double[] mflow_negative;
       int mflow_Idx = 0;
@@ -105727,6 +105782,7 @@ public final class Core {
       prevValue = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
       posSumMF = 0.0;
       negSumMF = 0.0;
+      nullRun = 0;
       today += 1;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          tempValue1 = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
@@ -105734,26 +105790,28 @@ public final class Core {
          tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= (double)inVolume[today++];
-         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
-            mflow_positive[mflow_Idx] = 0.0;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else if( tempValue2 < 0 ) {
-            mflow_negative[mflow_Idx] = tempValue1;
-            negSumMF += tempValue1;
-            mflow_positive[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = tempValue1;
-            posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
+         moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         mflow_positive[mflow_Idx] = posFlow;
+         mflow_negative[mflow_Idx] = negFlow;
+         posSumMF += posFlow;
+         negSumMF += negFlow;
+         nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            posSumMF = 0.0;
+            negSumMF = 0.0;
          }
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
       }
       tempValue1 = posSumMF + negSumMF;
-      if( tempValue1 < 1.0 ) {
+      posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+      if( tempValue1 <= 0.0 ) {
          outReal[outIdx++] = 0.0;
       } else {
-         outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
+         outReal[outIdx++] = 100.0 * (posClamped / tempValue1);
       }
       while( today <= endIdx ) {
          posSumMF -= mflow_positive[mflow_Idx];
@@ -105763,23 +105821,25 @@ public final class Core {
          tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= (double)inVolume[today++];
-         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
-            mflow_positive[mflow_Idx] = 0.0;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else if( tempValue2 < 0 ) {
-            mflow_negative[mflow_Idx] = tempValue1;
-            negSumMF += tempValue1;
-            mflow_positive[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = tempValue1;
-            posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
+         moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         mflow_positive[mflow_Idx] = posFlow;
+         mflow_negative[mflow_Idx] = negFlow;
+         posSumMF += posFlow;
+         negSumMF += negFlow;
+         nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            posSumMF = 0.0;
+            negSumMF = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
-         if( tempValue1 < 1.0 ) {
+         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         if( tempValue1 <= 0.0 ) {
             outReal[outIdx++] = 0.0;
          } else {
-            outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
+            outReal[outIdx++] = 100.0 * (posClamped / tempValue1);
          }
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
@@ -105799,6 +105859,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>When the typical price is unchanged from the prior bar, that bar's money flow is counted as neither positive nor negative.</li>
+    * <li>A window in which no bar contributed any money flow — every typical price unchanged, or no volume traded — leaves the index undefined (0/0); 0 is returned. The result does not otherwise depend on the size of the money flow: scaling every volume, or quoting the instrument in a different unit, leaves the index unchanged.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -105872,6 +105933,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>When the typical price is unchanged from the prior bar, that bar's money flow is counted as neither positive nor negative.</li>
+    * <li>A window in which no bar contributed any money flow — every typical price unchanged, or no volume traded — leaves the index undefined (0/0); 0 is returned. The result does not otherwise depend on the size of the money flow: scaling every volume, or quoting the instrument in a different unit, leaves the index unchanged.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -105962,6 +106024,11 @@ public final class Core {
       double tempValue1;
       double tempValue2;
       double tempValue3;
+      double moneyFlow;
+      double posFlow;
+      double negFlow;
+      double posClamped;
+      int nullRun;
       int mflow_Idx;
       int maxIdx_mflow;
       int cbSize_mflow;
@@ -105994,6 +106061,11 @@ public final class Core {
          this.tempValue1 = other.tempValue1;
          this.tempValue2 = other.tempValue2;
          this.tempValue3 = other.tempValue3;
+         this.moneyFlow = other.moneyFlow;
+         this.posFlow = other.posFlow;
+         this.negFlow = other.negFlow;
+         this.posClamped = other.posClamped;
+         this.nullRun = other.nullRun;
          this.mflow_Idx = other.mflow_Idx;
          this.maxIdx_mflow = other.maxIdx_mflow;
          this.cbSize_mflow = other.cbSize_mflow;
@@ -106013,6 +106085,11 @@ public final class Core {
          this.tempValue1 = other.tempValue1;
          this.tempValue2 = other.tempValue2;
          this.tempValue3 = other.tempValue3;
+         this.moneyFlow = other.moneyFlow;
+         this.posFlow = other.posFlow;
+         this.negFlow = other.negFlow;
+         this.posClamped = other.posClamped;
+         this.nullRun = other.nullRun;
          this.mflow_Idx = other.mflow_Idx;
          this.maxIdx_mflow = other.maxIdx_mflow;
          this.cbSize_mflow = other.cbSize_mflow;
@@ -106131,23 +106208,25 @@ public final class Core {
       sp.tempValue3 = Math.abs(sp.tempValue1) + Math.abs(sp.prevValue);
       sp.prevValue = sp.tempValue1;
       sp.tempValue1 *= inVolume;
-      if( (Math.abs(sp.tempValue2) <= 0.00000000000001 * (sp.tempValue3)) ) {
-         sp.cb_mflow_positive[sp.mflow_Idx] = 0.0;
-         sp.cb_mflow_negative[sp.mflow_Idx] = 0.0;
-      } else if( sp.tempValue2 < 0 ) {
-         sp.cb_mflow_negative[sp.mflow_Idx] = sp.tempValue1;
-         sp.negSumMF += sp.tempValue1;
-         sp.cb_mflow_positive[sp.mflow_Idx] = 0.0;
-      } else {
-         sp.cb_mflow_positive[sp.mflow_Idx] = sp.tempValue1;
-         sp.posSumMF += sp.tempValue1;
-         sp.cb_mflow_negative[sp.mflow_Idx] = 0.0;
+      sp.moneyFlow = (Math.abs(sp.tempValue2) <= 0.00000000000001 * (sp.tempValue3)) ? 0.0 : sp.tempValue1;
+      sp.posFlow = (sp.tempValue2 < 0.0) ? 0.0 : sp.moneyFlow;
+      sp.negFlow = (sp.tempValue2 < 0.0) ? sp.moneyFlow : 0.0;
+      sp.cb_mflow_positive[sp.mflow_Idx] = sp.posFlow;
+      sp.cb_mflow_negative[sp.mflow_Idx] = sp.negFlow;
+      sp.posSumMF += sp.posFlow;
+      sp.negSumMF += sp.negFlow;
+      sp.nullRun = (sp.moneyFlow == 0.0) ? sp.nullRun + 1 : 0;
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.posSumMF = 0.0;
+         sp.negSumMF = 0.0;
       }
       sp.tempValue1 = sp.posSumMF + sp.negSumMF;
-      if( sp.tempValue1 < 1.0 ) {
+      sp.posClamped = (sp.posSumMF < 0.0) ? 0.0 : ((sp.posSumMF > sp.tempValue1) ? sp.tempValue1 : sp.posSumMF);
+      if( sp.tempValue1 <= 0.0 ) {
          sp.cur_outReal = 0.0;
       } else {
-         sp.cur_outReal = 100.0 * (sp.posSumMF / sp.tempValue1);
+         sp.cur_outReal = 100.0 * (sp.posClamped / sp.tempValue1);
       }
       sp.mflow_Idx = sp.mflow_Idx + 1;
       if( sp.mflow_Idx > sp.maxIdx_mflow ) {
@@ -106162,10 +106241,15 @@ public final class Core {
       double tempValue1 = 0;
       double tempValue2 = 0;
       double tempValue3 = 0;
+      double moneyFlow = 0;
+      double posFlow = 0;
+      double negFlow = 0;
+      double posClamped = 0;
       int lookbackTotal = 0;
       int outIdx = 0;
       int i = 0;
       int today = 0;
+      int nullRun = 0;
       double[] mflow_positive;
       double[] mflow_negative;
       int mflow_Idx = 0;
@@ -106214,6 +106298,13 @@ public final class Core {
       prevValue = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
       posSumMF = 0.0;
       negSumMF = 0.0;
+      /* Consecutive bars that put nothing into the window, counted so that an
+       * empty window can be recognized exactly (issue #244).  The running sums
+       * cannot answer that question themselves: they are maintained by
+       * add-then-subtract, so when the window empties they hold rounding
+       * residue of arbitrary sign, not zero.
+       */
+      nullRun = 0;
       today += 1;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
@@ -106224,17 +106315,38 @@ public final class Core {
          tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
-         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
-            mflow_positive[mflow_Idx] = 0.0;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else if( tempValue2 < 0 ) {
-            mflow_negative[mflow_Idx] = tempValue1;
-            negSumMF += tempValue1;
-            mflow_positive[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = tempValue1;
-            posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
+         /* This bar's money flow, and its split into the positive and negative
+          * sums.  Selects rather than a three-arm branch: the direction of a
+          * price move is a coin flip, so that branch mispredicted on roughly
+          * every other bar and dominated the cost of the function.  Adding the
+          * unused side's 0.0 to a sum is an exact no-op, so this reproduces the
+          * branching form bit for bit.
+          *
+          * The three quantities are named rather than folded back into
+          * tempValue1/2 deliberately, at a known cost: every local in a step body
+          * becomes a field of the stream handle, so each name is another store
+          * per bar (~10% of MFI's streaming Update, +32 handle bytes).  That is
+          * the generator's to fix -- issue #252, which counts 436 such fields
+          * across 125 streaming functions -- not something to obfuscate an
+          * indicator body over.
+          */
+         moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         mflow_positive[mflow_Idx] = posFlow;
+         mflow_negative[mflow_Idx] = negFlow;
+         posSumMF += posFlow;
+         negSumMF += negFlow;
+         /* A bar contributes nothing when the typical price did not move, or
+          * when it moved but carried no volume.  Once a whole period of those
+          * has gone by, every slot of the ring is 0.0, so the sums are known to
+          * be exactly zero and the residue can be dropped.
+          */
+         nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            posSumMF = 0.0;
+            negSumMF = 0.0;
          }
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
@@ -106243,15 +106355,27 @@ public final class Core {
        *    MFI = 100 - (100 / 1 + (posSumMF/negSumMF))
        *    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
        * The second equation is used here for speed optimization.
+       *
+       * Both sums are non-negative, so the total is zero only for a window that
+       * received no money flow at all -- 0/0, reported as 0.0.  The test is on
+       * the total itself, not on a fixed threshold: money flow is a price times
+       * a volume, so any constant compared against it is a constant in some
+       * arbitrary unit, and would zero a healthy index for any instrument
+       * quoted small enough to fall under it (issue #244).
+       *
+       * Clamping the numerator into [0,total] keeps the result inside the
+       * documented 0-100 range: the sums drift by a few ulp as the window
+       * slides, and a sum whose true value is near zero can drift negative.
        */
       /* The first full window is complete: emit its output for startIdx here,
        * then slide the window over the remaining bars below.
        */
       tempValue1 = posSumMF + negSumMF;
-      if( tempValue1 < 1.0 ) {
+      posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+      if( tempValue1 <= 0.0 ) {
          outReal[outIdx++ * outStride] = 0.0;
       } else {
-         outReal[outIdx++ * outStride] = 100.0 * (posSumMF / tempValue1);
+         outReal[outIdx++ * outStride] = 100.0 * (posClamped / tempValue1);
       }
       /* Now continue processing the remaining bars. */
       while( today <= endIdx ) {
@@ -106265,23 +106389,25 @@ public final class Core {
          tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
-         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
-            mflow_positive[mflow_Idx] = 0.0;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else if( tempValue2 < 0 ) {
-            mflow_negative[mflow_Idx] = tempValue1;
-            negSumMF += tempValue1;
-            mflow_positive[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = tempValue1;
-            posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
+         moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         mflow_positive[mflow_Idx] = posFlow;
+         mflow_negative[mflow_Idx] = negFlow;
+         posSumMF += posFlow;
+         negSumMF += negFlow;
+         nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            posSumMF = 0.0;
+            negSumMF = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
-         if( tempValue1 < 1.0 ) {
+         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         if( tempValue1 <= 0.0 ) {
             outReal[outIdx++ * outStride] = 0.0;
          } else {
-            outReal[outIdx++ * outStride] = 100.0 * (posSumMF / tempValue1);
+            outReal[outIdx++ * outStride] = 100.0 * (posClamped / tempValue1);
          }
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
@@ -106300,6 +106426,11 @@ public final class Core {
       sp.tempValue1 = tempValue1;
       sp.tempValue2 = tempValue2;
       sp.tempValue3 = tempValue3;
+      sp.moneyFlow = moneyFlow;
+      sp.posFlow = posFlow;
+      sp.negFlow = negFlow;
+      sp.posClamped = posClamped;
+      sp.nullRun = nullRun;
       sp.mflow_Idx = mflow_Idx;
       sp.maxIdx_mflow = maxIdx_mflow;
       sp.cbSize_mflow = capCb_mflow;

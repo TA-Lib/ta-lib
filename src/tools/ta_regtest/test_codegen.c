@@ -4908,6 +4908,7 @@ typedef struct {
     long long    fmaTol;      /* cases tolerated by the one-time FMA re-baselining gate (PR #96) */
     double       maxFmaRel;   /* largest FMA-tolerated relative divergence observed (evidence vs the 1e-9 contract) */
     long long    stochRsiSkipped; /* STOCHRSI cases skipped: intentionally diverges from 0.6.4 (issue #107) */
+    long long    mfiSkipped;      /* MFI cases skipped: v0.6.4 categorically wrong there (issue #244) */
     long long    varianceSkipped; /* VAR/STDDEV/BBANDS cases skipped: cancellation-free variance re-baseline (issue #118) */
     long long    xySkipped;      /* CORREL/BETA cases skipped: same re-baseline over two series (issue #242) */
     int          reportedThisFunc;
@@ -5453,6 +5454,56 @@ static double fuzz_series_condition(const double *v, int n, int period,
 
 /* CORREL: v0.6.4 guards the PRODUCT of the two sums of squares against a fixed
  * TA_EPSILON, so the pair is what decides whether it returns a number at all. */
+/* v0.6.4 is not an oracle for the MFI cases it gets categorically wrong
+ * (issue #244). Unlike the variance and CORREL/BETA carve-outs, this is not a
+ * question of lost digits, so there is no kappa to threshold: v0.6.4 either
+ * reports the index or it reports something that is not one.
+ *
+ *   1. Its `sum < 1.0` guard fires. Money flow is a price times a volume, so
+ *      that literal lives in whatever unit the instrument happens to be quoted
+ *      in; where it fires, v0.6.4 emits 0 for an index that is well defined.
+ *   2. The window is empty -- no bar moved, or none carried volume -- so the
+ *      true sums are 0/0. v0.6.4's running sums then hold nothing but the
+ *      rounding residue they accumulated, of arbitrary sign, and it divides
+ *      that by itself.
+ *   3. Some window is one-sided: every bar that moved went the same way, so
+ *      the true sum on the other side is exactly 0 and again what v0.6.4
+ *      divides by is residue. This is what put its output above 100.
+ *
+ * Everything else IS compared, and at ZERO tolerance -- no manifest entry: over
+ * the fuzz corpus all 3222 surviving case-slots are bit-identical to v0.6.4,
+ * because neither the reseed nor the range clamp can fire on a case that got
+ * past this predicate. Two-pass on purpose, like fuzz_variance_condition()
+ * above: the test must not reuse the algorithm under test to decide whether to
+ * trust the oracle. */
+static int fuzz_mfi_064_blind( const double *h, const double *l,
+                               const double *c, const double *v,
+                               int n, int period, int s, int e )
+{
+    int t, j, first;
+
+    if( period < 1 ) return 0;
+    first = (s > period) ? s : period;
+    if( first > e || first >= n ) return 0;
+
+    for( t = first; t <= e && t < n; t++ )
+    {
+        double pos = 0.0, neg = 0.0, total;
+        for( j = t - period + 1; j <= t; j++ )
+        {
+            double tp  = (h[j]   + l[j]   + c[j])   / 3.0;
+            double tpp = (h[j-1] + l[j-1] + c[j-1]) / 3.0;
+            if     ( tp > tpp ) pos += tp * v[j];
+            else if( tp < tpp ) neg += tp * v[j];
+        }
+        total = pos + neg;
+        if( !(total > 0.0) )                return 1;   /* (2) empty window   */
+        if( total < 1.0 )                   return 1;   /* (1) v0.6.4's guard */
+        if( !(pos > 0.0) || !(neg > 0.0) )  return 1;   /* (3) one-sided      */
+    }
+    return 0;
+}
+
 static double fuzz_correl_condition(const double *x, const double *y,
                                     int n, int period, int s, int e)
 {
@@ -5728,6 +5779,7 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * (STOCH/STOCHF on raw OHLC do NOT diverge and stay strictly compared.) */
     if( strcmp(funcInfo->name, "STOCHRSI") == 0 ) { ctx->stochRsiSkipped++; return; }
 
+
     /* VAR/STDDEV/BBANDS intentionally diverge from 0.6.4 (issue #118): their
      * variance moved from the catastrophically-cancelling E[x^2]-mean^2 to a
      * cancellation-free shifted-data form, so on ILL-CONDITIONED windows 0.6.4
@@ -5891,6 +5943,14 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     if( kappa > FUZZ_XY_MAX_KAPPA ) { ctx->xySkipped++; continue; }
                 }
 
+                /* #244: skip only the cases v0.6.4 reports wrongly; the rest
+                 * stay bit-exact. g_fzBuf is O,H,L,C,V,OI and optInTimePeriod
+                 * is opt 0. */
+                if( strcmp(funcInfo->name, "MFI") == 0 &&
+                    fuzz_mfi_064_blind( g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4],
+                                        n, (int)vec[k][0], s, e ) )
+                { ctx->mfiSkipped++; continue; }
+
                 TA_Integer curBeg = 0, curNb = 0;
                 for( unsigned int o = 0; o < funcInfo->nbOutput; o++ )
                 {
@@ -6029,6 +6089,9 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.stochRsiSkipped > 0 )
         printf("stochrsi-skipped: %lld STOCHRSI function(s) skipped entirely — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
                ctx.stochRsiSkipped);
+    if( ctx.mfiSkipped > 0 )
+        printf("mfi-skipped: %lld MFI case(s) where v0.6.4 reports a non-index (issue #244): its 1.0 guard fired, the window was empty, or a one-sided window left it dividing residue. Every other MFI case was compared bit-exact\n",
+               ctx.mfiSkipped);
     if( g_frozenEnumSkips > 0 )
         printf("post-freeze enums: %lld MAType value(s) > %d excluded vs v0.6.4 "
                "(#139, #93, #182; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",

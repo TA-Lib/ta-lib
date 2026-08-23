@@ -766,6 +766,19 @@ Scope rules (deliberate):
   value (incl. a still-NaN regression, caught instead by `test_imi.c`) fails. The
   exact-`==0.0` guard keeps this the *sole* IMI divergence from 0.6.4; every
   `sum > 0` bar stays bit-identical. Reported as a `manifest-tolerated:` line.
+- **#244 MFI per-case skip:** v0.6.4 zeroed MFI whenever a window's money flow
+  summed under a literal `1.0` — a constant compared against a price times a
+  volume — and divided rounding residue by itself on an empty or one-sided
+  window, which is what put its output above 100. Those cases are skipped,
+  gated on `fuzz_mfi_064_blind()`; **every other MFI case is compared
+  bit-exact, with no manifest entry** — neither the reseed nor the range clamp
+  can fire on a case that got past the predicate, so all 3222 survivors are
+  bit-identical to v0.6.4. Categorical rather than graded, unlike the variance
+  and CORREL/BETA gates: there is no kappa, v0.6.4 either reports the index or
+  it does not. The new behaviour is additionally pinned by `test_mfi.c` against
+  two EXTERNAL oracles (Tulip Indicators 0.9.2, pandas-ta-classic 0.6.52 —
+  neither carries a threshold guard) plus an exact bit-identity sweep over
+  power-of-two volume scales. Reported as an `mfi-skipped:` line.
 - The oracle is reopened-and-retried once if it dies (latent 0.6.4 crash) so one
   bad case can't sink the run.
 

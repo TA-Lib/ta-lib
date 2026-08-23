@@ -64,6 +64,9 @@
  *  071026 MF,CC Fix #107. Classify money-flow direction with a magnitude-scaled
  *               dead-zone (TA_IS_ZERO_SCALED), not an exact sign test, so an
  *               epsilon-flat typical price is "no movement", not a spurious move.
+ *  082326 MF,CC Fix #244. Detect an empty window by counting bars, not by
+ *               testing the money-flow sum against a literal 1.0; classify
+ *               branchlessly; clamp the emitted ratio into [0,100].
  */
 
 // Import types from parent module
@@ -135,10 +138,15 @@ impl Core {
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         let mut tempValue3: f64 = 0.0_f64;
+        let mut moneyFlow: f64 = 0.0_f64;
+        let mut posFlow: f64 = 0.0_f64;
+        let mut negFlow: f64 = 0.0_f64;
+        let mut posClamped: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         let mut local_mflow_positive: [f64; 50] = [0.0_f64; 50];
         let mut heap_mflow_positive: Vec<f64> = Vec::new();
         let mut mflow_positive: &mut [f64] = &mut [];
@@ -179,6 +187,12 @@ impl Core {
         prevValue = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
         posSumMF = 0.0;
         negSumMF = 0.0;
+        // Consecutive bars that put nothing into the window, counted so that an
+        // empty window can be recognized exactly (issue #244).  The running sums
+        // cannot answer that question themselves: they are maintained by
+        // add-then-subtract, so when the window empties they hold rounding
+        // residue of arbitrary sign, not zero.
+        nullRun = 0;
         today += 1;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod) as usize;
@@ -190,17 +204,36 @@ impl Core {
             tempValue3 = (tempValue1).abs() + (prevValue).abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
-                mflow_positive[mflow_Idx] = 0.0;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else if tempValue2 < 0_f64 {
-                mflow_negative[mflow_Idx] = tempValue1;
-                negSumMF += tempValue1;
-                mflow_positive[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = tempValue1;
-                posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
+            // This bar's money flow, and its split into the positive and negative
+            // sums.  Selects rather than a three-arm branch: the direction of a
+            // price move is a coin flip, so that branch mispredicted on roughly
+            // every other bar and dominated the cost of the function.  Adding the
+            // unused side's 0.0 to a sum is an exact no-op, so this reproduces the
+            // branching form bit for bit.
+            //
+            // The three quantities are named rather than folded back into
+            // tempValue1/2 deliberately, at a known cost: every local in a step body
+            // becomes a field of the stream handle, so each name is another store
+            // per bar (~10% of MFI's streaming Update, +32 handle bytes).  That is
+            // the generator's to fix -- issue #252, which counts 436 such fields
+            // across 125 streaming functions -- not something to obfuscate an
+            // indicator body over.
+            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
+            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            mflow_positive[mflow_Idx] = posFlow;
+            mflow_negative[mflow_Idx] = negFlow;
+            posSumMF += posFlow;
+            negSumMF += negFlow;
+            // A bar contributes nothing when the typical price did not move, or
+            // when it moved but carried no volume.  Once a whole period of those
+            // has gone by, every slot of the ring is 0.0, so the sums are known to
+            // be exactly zero and the residue can be dropped.
+            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                posSumMF = 0.0;
+                negSumMF = 0.0;
             }
             mflow_Idx += 1;
             if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
@@ -210,14 +243,26 @@ impl Core {
         //    MFI = 100 - (100 / 1 + (posSumMF/negSumMF))
         //    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
         // The second equation is used here for speed optimization.
+        //
+        // Both sums are non-negative, so the total is zero only for a window that
+        // received no money flow at all -- 0/0, reported as 0.0.  The test is on
+        // the total itself, not on a fixed threshold: money flow is a price times
+        // a volume, so any constant compared against it is a constant in some
+        // arbitrary unit, and would zero a healthy index for any instrument
+        // quoted small enough to fall under it (issue #244).
+        //
+        // Clamping the numerator into [0,total] keeps the result inside the
+        // documented 0-100 range: the sums drift by a few ulp as the window
+        // slides, and a sum whose true value is near zero can drift negative.
         // The first full window is complete: emit its output for startIdx here,
         // then slide the window over the remaining bars below.
         tempValue1 = posSumMF + negSumMF;
-        if tempValue1 < 1.0 {
+        posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+        if tempValue1 <= 0.0 {
             outReal[outIdx] = 0.0;
             outIdx += 1;
         } else {
-            outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
+            outReal[outIdx] = 100.0 * (posClamped / tempValue1);
             outIdx += 1;
         }
         // Now continue processing the remaining bars.
@@ -231,24 +276,26 @@ impl Core {
             tempValue3 = (tempValue1).abs() + (prevValue).abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
-                mflow_positive[mflow_Idx] = 0.0;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else if tempValue2 < 0_f64 {
-                mflow_negative[mflow_Idx] = tempValue1;
-                negSumMF += tempValue1;
-                mflow_positive[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = tempValue1;
-                posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
+            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
+            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            mflow_positive[mflow_Idx] = posFlow;
+            mflow_negative[mflow_Idx] = negFlow;
+            posSumMF += posFlow;
+            negSumMF += negFlow;
+            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                posSumMF = 0.0;
+                negSumMF = 0.0;
             }
             tempValue1 = posSumMF + negSumMF;
-            if tempValue1 < 1.0 {
+            posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+            if tempValue1 <= 0.0 {
                 outReal[outIdx] = 0.0;
                 outIdx += 1;
             } else {
-                outReal[outIdx] = 100.0 * (posSumMF / tempValue1);
+                outReal[outIdx] = 100.0 * (posClamped / tempValue1);
                 outIdx += 1;
             }
             mflow_Idx += 1;
@@ -272,6 +319,10 @@ impl Core {
     ///
     /// * When the typical price is unchanged from the prior bar, that bar's money flow is counted
     ///   as neither positive nor negative.
+    /// * A window in which no bar contributed any money flow — every typical price unchanged, or
+    ///   no volume traded — leaves the index undefined (0/0); 0 is returned. The result does not
+    ///   otherwise depend on the size of the money flow: scaling every volume, or quoting the
+    ///   instrument in a different unit, leaves the index unchanged.
     ///
     /// # Arguments
     ///
@@ -411,6 +462,11 @@ struct MFI_StreamState {
     tempValue1: f64,
     tempValue2: f64,
     tempValue3: f64,
+    moneyFlow: f64,
+    posFlow: f64,
+    negFlow: f64,
+    posClamped: f64,
+    nullRun: usize,
     mflow_Idx: usize,
     maxIdx_mflow: usize,
     cbSize_mflow: usize,
@@ -430,6 +486,11 @@ impl MFI_StreamState {
         self.tempValue1 = src.tempValue1;
         self.tempValue2 = src.tempValue2;
         self.tempValue3 = src.tempValue3;
+        self.moneyFlow = src.moneyFlow;
+        self.posFlow = src.posFlow;
+        self.negFlow = src.negFlow;
+        self.posClamped = src.posClamped;
+        self.nullRun = src.nullRun;
         self.mflow_Idx = src.mflow_Idx;
         self.maxIdx_mflow = src.maxIdx_mflow;
         self.cbSize_mflow = src.cbSize_mflow;
@@ -455,23 +516,25 @@ impl Core {
         sp.tempValue3 = (sp.tempValue1).abs() + (sp.prevValue).abs();
         sp.prevValue = sp.tempValue1;
         sp.tempValue1 *= inVolume;
-        if ((sp.tempValue2).abs() <= 1e-14 * (sp.tempValue3)) {
-            sp.cb_mflow_positive[sp.mflow_Idx] = 0.0;
-            sp.cb_mflow_negative[sp.mflow_Idx] = 0.0;
-        } else if sp.tempValue2 < 0_f64 {
-            sp.cb_mflow_negative[sp.mflow_Idx] = sp.tempValue1;
-            sp.negSumMF += sp.tempValue1;
-            sp.cb_mflow_positive[sp.mflow_Idx] = 0.0;
-        } else {
-            sp.cb_mflow_positive[sp.mflow_Idx] = sp.tempValue1;
-            sp.posSumMF += sp.tempValue1;
-            sp.cb_mflow_negative[sp.mflow_Idx] = 0.0;
+        sp.moneyFlow = (if ((sp.tempValue2).abs() <= 1e-14 * (sp.tempValue3)) { 0.0 } else { sp.tempValue1 });
+        sp.posFlow = (if sp.tempValue2 < 0.0 { 0.0 } else { sp.moneyFlow });
+        sp.negFlow = (if sp.tempValue2 < 0.0 { sp.moneyFlow } else { 0.0 });
+        sp.cb_mflow_positive[sp.mflow_Idx] = sp.posFlow;
+        sp.cb_mflow_negative[sp.mflow_Idx] = sp.negFlow;
+        sp.posSumMF += sp.posFlow;
+        sp.negSumMF += sp.negFlow;
+        sp.nullRun = (if sp.moneyFlow == 0.0 { sp.nullRun + 1 } else { 0 });
+        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.posSumMF = 0.0;
+            sp.negSumMF = 0.0;
         }
         sp.tempValue1 = sp.posSumMF + sp.negSumMF;
-        if sp.tempValue1 < 1.0 {
+        sp.posClamped = (if sp.posSumMF < 0.0 { 0.0 } else { (if sp.posSumMF > sp.tempValue1 { sp.tempValue1 } else { sp.posSumMF }) });
+        if sp.tempValue1 <= 0.0 {
             (*outReal) = 0.0;
         } else {
-            (*outReal) = 100.0 * (sp.posSumMF / sp.tempValue1);
+            (*outReal) = 100.0 * (sp.posClamped / sp.tempValue1);
         }
         sp.mflow_Idx = sp.mflow_Idx + 1;
         if sp.mflow_Idx > sp.maxIdx_mflow {
@@ -511,10 +574,15 @@ impl Core {
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         let mut tempValue3: f64 = 0.0_f64;
+        let mut moneyFlow: f64 = 0.0_f64;
+        let mut posFlow: f64 = 0.0_f64;
+        let mut negFlow: f64 = 0.0_f64;
+        let mut posClamped: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         let mut mflow_positive: Vec<f64> = Vec::new();
         let mut mflow_negative: Vec<f64> = Vec::new();
         let mut mflow_Idx: usize = 0;
@@ -544,6 +612,12 @@ impl Core {
         prevValue = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
         posSumMF = 0.0;
         negSumMF = 0.0;
+        // Consecutive bars that put nothing into the window, counted so that an
+        // empty window can be recognized exactly (issue #244).  The running sums
+        // cannot answer that question themselves: they are maintained by
+        // add-then-subtract, so when the window empties they hold rounding
+        // residue of arbitrary sign, not zero.
+        nullRun = 0;
         today += 1;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod) as usize;
@@ -555,17 +629,36 @@ impl Core {
             tempValue3 = (tempValue1).abs() + (prevValue).abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
-                mflow_positive[mflow_Idx] = 0.0;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else if tempValue2 < 0_f64 {
-                mflow_negative[mflow_Idx] = tempValue1;
-                negSumMF += tempValue1;
-                mflow_positive[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = tempValue1;
-                posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
+            // This bar's money flow, and its split into the positive and negative
+            // sums.  Selects rather than a three-arm branch: the direction of a
+            // price move is a coin flip, so that branch mispredicted on roughly
+            // every other bar and dominated the cost of the function.  Adding the
+            // unused side's 0.0 to a sum is an exact no-op, so this reproduces the
+            // branching form bit for bit.
+            //
+            // The three quantities are named rather than folded back into
+            // tempValue1/2 deliberately, at a known cost: every local in a step body
+            // becomes a field of the stream handle, so each name is another store
+            // per bar (~10% of MFI's streaming Update, +32 handle bytes).  That is
+            // the generator's to fix -- issue #252, which counts 436 such fields
+            // across 125 streaming functions -- not something to obfuscate an
+            // indicator body over.
+            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
+            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            mflow_positive[mflow_Idx] = posFlow;
+            mflow_negative[mflow_Idx] = negFlow;
+            posSumMF += posFlow;
+            negSumMF += negFlow;
+            // A bar contributes nothing when the typical price did not move, or
+            // when it moved but carried no volume.  Once a whole period of those
+            // has gone by, every slot of the ring is 0.0, so the sums are known to
+            // be exactly zero and the residue can be dropped.
+            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                posSumMF = 0.0;
+                negSumMF = 0.0;
             }
             mflow_Idx += 1;
             if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
@@ -575,13 +668,25 @@ impl Core {
         //    MFI = 100 - (100 / 1 + (posSumMF/negSumMF))
         //    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
         // The second equation is used here for speed optimization.
+        //
+        // Both sums are non-negative, so the total is zero only for a window that
+        // received no money flow at all -- 0/0, reported as 0.0.  The test is on
+        // the total itself, not on a fixed threshold: money flow is a price times
+        // a volume, so any constant compared against it is a constant in some
+        // arbitrary unit, and would zero a healthy index for any instrument
+        // quoted small enough to fall under it (issue #244).
+        //
+        // Clamping the numerator into [0,total] keeps the result inside the
+        // documented 0-100 range: the sums drift by a few ulp as the window
+        // slides, and a sum whose true value is near zero can drift negative.
         // The first full window is complete: emit its output for startIdx here,
         // then slide the window over the remaining bars below.
         tempValue1 = posSumMF + negSumMF;
-        if tempValue1 < 1.0 {
+        posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+        if tempValue1 <= 0.0 {
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
         } else {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (posSumMF / tempValue1);
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (posClamped / tempValue1);
         }
         // Now continue processing the remaining bars.
         while today <= endIdx {
@@ -594,23 +699,25 @@ impl Core {
             tempValue3 = (tempValue1).abs() + (prevValue).abs();
             prevValue = tempValue1;
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
-            if ((tempValue2).abs() <= 1e-14 * (tempValue3)) {
-                mflow_positive[mflow_Idx] = 0.0;
-                mflow_negative[mflow_Idx] = 0.0;
-            } else if tempValue2 < 0_f64 {
-                mflow_negative[mflow_Idx] = tempValue1;
-                negSumMF += tempValue1;
-                mflow_positive[mflow_Idx] = 0.0;
-            } else {
-                mflow_positive[mflow_Idx] = tempValue1;
-                posSumMF += tempValue1;
-                mflow_negative[mflow_Idx] = 0.0;
+            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
+            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            mflow_positive[mflow_Idx] = posFlow;
+            mflow_negative[mflow_Idx] = negFlow;
+            posSumMF += posFlow;
+            negSumMF += negFlow;
+            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                posSumMF = 0.0;
+                negSumMF = 0.0;
             }
             tempValue1 = posSumMF + negSumMF;
-            if tempValue1 < 1.0 {
+            posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+            if tempValue1 <= 0.0 {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (posSumMF / tempValue1);
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (posClamped / tempValue1);
             }
             mflow_Idx += 1;
             if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
@@ -631,6 +738,11 @@ impl Core {
             tempValue1,
             tempValue2,
             tempValue3,
+            moneyFlow,
+            posFlow,
+            negFlow,
+            posClamped,
+            nullRun,
             mflow_Idx,
             maxIdx_mflow,
             cbSize_mflow: cbSize_mflow,
