@@ -487,14 +487,22 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "{}\n{{", open_and_fill_signature(func));
     let _ = writeln!(o, "   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");
+    // Out-meta only. `public_open_guards` below tests the inputs AND the same
+    // non-nullable output set, so listing the outputs here too emitted `!outReal`
+    // twice in one prologue. Both orderings answer TA_BAD_PARAM, so dropping the
+    // repeat is text, not behaviour -- but only where that call actually emits,
+    // which it does not for a function with no input series.
     let mut null_checks: Vec<String> = vec!["!outBegIdx".into(), "!outNBElement".into()];
-    null_checks.extend(
-        outs.iter()
-            .filter(|x| !nullable.contains(*x))
-            .map(|x| format!("!{x}")),
-    );
+    let guards = public_open_guards(func, "TA_BAD_PARAM");
+    if guards.is_empty() {
+        null_checks.extend(
+            outs.iter()
+                .filter(|x| !nullable.contains(*x))
+                .map(|x| format!("!{x}")),
+        );
+    }
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
-    o.push_str(&public_open_guards(func, "TA_BAD_PARAM"));
+    o.push_str(&guards);
     // Cast to `const void *` so the comparison is well-typed for any output
     // element type (an integer output vs double inputs would otherwise warn
     // "comparison of distinct pointer types lacks a cast").

@@ -897,8 +897,10 @@ claim in *Motivation* gets measured, not asserted).
      one-transition-body decision holds). Open allocates scratch output
      arrays (the tail writes real arrays), transcribes the batch body
      verbatim with out-meta mapped to dummies in both pointer forms, and
-     opens each sub-stream on its source series at the anchor
-     `max(0, sArg − callee_lookback)` IMMEDIATELY before the batch call
+     opens each sub-stream on its source series at the sub-call's own
+     `sArg`, passed VERBATIM -- the callee clamps it up to its own lookback,
+     so the composer never computes a callee's lookback -- IMMEDIATELY
+     before the batch call
      that consumes it; inserted failure returns replay the batch's own
      guarded series free (LeakSanitizer caught the omission on the
      honest-rejection legs). The expect-reject precheck composes

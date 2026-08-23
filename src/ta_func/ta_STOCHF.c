@@ -1041,7 +1041,7 @@ TA_LIB_API TA_RetCode TA_STOCHF_OpenAndFill( TA_STOCHF_Stream **stream, const do
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !outBegIdx || !outNBElement || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !inClose || !outFastK || !outFastD ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;

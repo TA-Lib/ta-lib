@@ -560,7 +560,7 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_OpenAndFill( TA_STOCHRSI_Stream **stream, cons
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( !outBegIdx || !outNBElement || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
    if( !inReal || !outFastK || !outFastD ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
