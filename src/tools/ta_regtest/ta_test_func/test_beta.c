@@ -589,9 +589,17 @@ static ErrorNumber test_beta_outlier_transit( void )
           * the threshold being too coarse (dropping it to 10 leaves the tail
           * unchanged and adds a failing rung at 1e3), so it is a second, far
           * smaller mechanism, left open deliberately and pinned here at its
-          * measured size so it cannot grow unnoticed. 2e-7 keeps 5.4x over it
-          * and still fails the defect this test exists for by 220x. */
-         tol = ( period == 5 && spikes[si] >= 1.0e5 ) ? 2.0e-7 : 1.0e-9;
+          * measured size so it cannot grow unnoticed.
+          *
+          * 1.2e-7, sized at ~3x the measurement the way this file's other bounds
+          * are: the residue is 3.69e-08 worst on the x axis and 2.31e-08 on y.
+          * An earlier 2e-7 was 5.4x, and the slack was not free -- a mutation
+          * sweep showed it sheltered a real regression. Raising beta.c's y-side
+          * trigger from 1e3 to TA_VAR's 1e6 degrades this ladder by up to 265x
+          * relative, peaking at 1.65e-07, which passed under 2e-7 and fails
+          * under 1.2e-7. Sizing the bound honestly is what made the test catch
+          * it; do not widen this without re-measuring. */
+         tol = ( period == 5 && spikes[si] >= 1.0e5 ) ? 1.2e-7 : 1.0e-9;
          tol += 100.0 * kappa * 2.2204460492503131e-16;
          d   = fabs( out[k] - ref ) / norm;
          if( d > tol )
