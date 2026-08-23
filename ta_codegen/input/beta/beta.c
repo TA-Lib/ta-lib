@@ -176,8 +176,13 @@ TA_RetCode beta(int startIdx, int endIdx,
        * trigger above cannot see it -- denom/denom_scale stays ~1 -- and only
        * the periodic re-anchor recovers, up to 32*period bars later. Measured
        * without it: a 1e8 tick left 286 of 386 bars wrong, the worst by 0.36
-       * ABSOLUTE. It costs at most ~3% (mostly unmeasurable against a +/-1.6%
-       * noise floor), against the 7-11% the shift itself spends.
+       * ABSOLUTE. Cost is ~3% and mostly unmeasurable on the bench corpus
+       * (randwalk/GBM/trend-chop), where it fires on 0.00% of bars -- but that
+       * is a corpus figure, not a bound. Isolated against the same body without
+       * the disjunct it is +16-20% on a stale-quote/illiquid series (1.5% fire
+       * rate) and +54-64% on constructed near-flat or gapped shapes (5.1%).
+       * The cost is the reseed it triggers, so it tracks the fire rate; on data
+       * that never triggers it, the compare is free.
        *
        * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
        * a tick multiplying the price by k puts k-1 into the return and (k-1)^2

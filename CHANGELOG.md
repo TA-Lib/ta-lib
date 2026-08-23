@@ -44,7 +44,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~30%: MAVP (#143). Thanks @dexhunter !
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
 - ~20%: VAR, STDDEV, BBANDS
-- ~37%: STDDEV when `optInNbDev` is not 1.0 — dropping the zero test from the loop lets it vectorize (#243)
+- ~25-30%: STDDEV when `optInNbDev` is not 1.0 — dropping the zero test from the loop lets it vectorize (#243)
 - ~10%: ATR and NATR
 
 ### Changed

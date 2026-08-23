@@ -496,9 +496,12 @@ static ErrorNumber test_stddev_pandas_oracle( void )
  * shifted-data form tracks the two-pass to ~1e-13 until the DATA quantizes: once
  * kappa*eps = ulp(mean)/sigma approaches 1 the stored doubles no longer resolve
  * the spread, and the measured error there follows ~2e-8*(kappa*eps)^2. The bound
- * below keeps >=70x margin over that. It stays >=4 orders under the relative-1.0
- * error a collapse produces at every rung (max kappa*eps on this ladder is ~5, so
- * the bound never exceeds ~2.5e-5): no cell is vacuous.
+ * below keeps >=62x margin over that. It stays >=6 orders under the relative-1.0
+ * error a collapse produces at every rung (max kappa*eps on the ladder that ships
+ * is 0.45, so the bound never exceeds 2.0e-7): no cell is vacuous. Those three
+ * figures are measured on the 12-decade ladder BELOW; an earlier draft quoted
+ * ~5 / ~2.5e-5 / 70x, which describe a 13-decade version that was never
+ * committed. The shipped bound is tighter than the prose used to claim.
  */
 static const int    sd243_ticks[60] = {
   197, 200, 199, 197, 198, 196, 194, 192, 195, 193, 195, 193,
@@ -598,12 +601,19 @@ static ErrorNumber test_stddev_flat_tail_exact_zero( void )
 {
    enum { N = 600, NOISY = 100 };
    static double x[N], out[N];
-   static const double levels[4] = { 100.0, 1234.56789, 1.0e8, 1.0e-6 };
+   /* 1e11 is not decoration. The small-scale ladder above bottoms out at a
+    * non-zero reference variance of 2.47e-27, so on its own it is satisfied by
+    * ANY per-bar absolute cliff below that -- "just make TA_EPSILON smaller"
+    * passes it, which is the exact defect class this file exists to reject. At
+    * 1e11/period 49 the residue this test requires to be bit-zero is 2.59e-26,
+    * ABOVE that floor, so no single absolute constant can satisfy both tests at
+    * once. They are only jointly satisfiable by a scale-relative floor. */
+   static const double levels[5] = { 100.0, 1234.56789, 1.0e8, 1.0e-6, 1.0e11 };
    static const int    periods[4] = { 2, 5, 20, 49 };
    TA_Integer b, nb;
    int li, pi, i, k, firstFlatWindow;
 
-   for( li = 0; li < 4; li++ )
+   for( li = 0; li < 5; li++ )
    {
       const double lvl = levels[li];
       sd_rng_state = 0xF1A77A11u + (unsigned)li;
