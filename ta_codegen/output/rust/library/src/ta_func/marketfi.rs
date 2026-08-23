@@ -311,7 +311,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MARKETFI_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MARKETFI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MARKETFI_OpenPass(
+    pub(crate) fn MARKETFI_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<MARKETFI_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inVolume.len() != inHigh.len() {
@@ -379,7 +379,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.MARKETFI_OpenPass(inHigh, inLow, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.MARKETFI_OpenImpl(inHigh, inLow, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -426,7 +426,7 @@ impl Core {
     ) -> Result<(MARKETFI_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MARKETFI_OpenPass(inHigh, inLow, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.MARKETFI_OpenAndFillInternal(inHigh, inLow, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -435,7 +435,7 @@ impl Core {
     pub(crate) fn MARKETFI_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MARKETFI_Stream, RetCode> {
-        self.MARKETFI_OpenPass(inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.MARKETFI_OpenImpl(inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

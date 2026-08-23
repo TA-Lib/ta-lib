@@ -426,7 +426,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::CORREL_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::CORREL_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CORREL_OpenPass(
+    pub(crate) fn CORREL_OpenImpl(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<CORREL_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
@@ -575,7 +575,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.CORREL_OpenPass(inReal0, inReal1, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.CORREL_OpenImpl(inReal0, inReal1, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -621,7 +621,7 @@ impl Core {
     ) -> Result<(CORREL_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CORREL_OpenPass(inReal0, inReal1, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.CORREL_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -630,7 +630,7 @@ impl Core {
     pub(crate) fn CORREL_OpenAndFillInternal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<CORREL_Stream, RetCode> {
-        self.CORREL_OpenPass(inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.CORREL_OpenImpl(inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

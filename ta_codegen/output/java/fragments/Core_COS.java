@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Element-wise trigonometric cosine of the input series. Applies the C
-    * library cos() to each sample.
+    * Element-wise cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = cos(inReal[i])
@@ -127,8 +126,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise trigonometric cosine of the input series. Applies the C
-    * library cos() to each sample.
+    * Element-wise cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = cos(inReal[i])
@@ -292,7 +290,7 @@
    {
       sp.cur_outReal = Math.cos(inReal);
    }
-   private RetCode COS_OpenPass( COS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode COS_OpenImpl( COS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -318,32 +316,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode COS_OpenImpl( COS_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = COS_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode COS_OpenAndFillImpl( COS_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return COS_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode COS_OpenAndFillInternalImpl( COS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return COS_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* COS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    COS_Stream COS_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       COS_Stream sp = new COS_Stream(this);
-      RetCode retCode = COS_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -361,7 +338,12 @@
    COS_Stream COS_OpenInternal( double inReal[], int startIdx )
    {
       COS_Stream sp = new COS_Stream(this);
-      RetCode retCode = COS_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = COS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -398,20 +380,10 @@
     */
    public COS_Stream COS_OpenAndFill( double inReal[], double outReal[] )
    {
-      COS_Stream sp = new COS_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("COS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COS_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("COS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("COS openAndFill: " + retCode, retCode);
+      return COS_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

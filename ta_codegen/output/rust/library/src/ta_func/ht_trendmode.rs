@@ -608,9 +608,9 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
-    /// Hilbert Transform classifier that labels each bar as trending (1) or cycling (0). Reuses the
-    /// MAMA dominant-cycle/phase DSP plus a SineWave/trendline test to decide the market mode. 1 =
-    /// trending market (favor trend-following); 0 = cycle/mean-reverting mode.
+    /// Hilbert Transform classifier that labels each bar 1 (trending — favor trend-following) or
+    /// 0 (cycling — favor mean-reversion). Built from the same MAMA dominant-cycle/phase DSP plus
+    /// a SineWave/trendline test used across the other HT_* functions.
     ///
     /// # Arguments
     ///
@@ -1160,7 +1160,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::HT_TRENDMODE_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::HT_TRENDMODE_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn HT_TRENDMODE_OpenPass(
+    pub(crate) fn HT_TRENDMODE_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<HT_TRENDMODE_Stream, RetCode> {
         if inReal.is_empty() {
@@ -1763,7 +1763,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.HT_TRENDMODE_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.HT_TRENDMODE_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -1806,7 +1806,7 @@ impl Core {
     ) -> Result<(HT_TRENDMODE_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.HT_TRENDMODE_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
+        let handle = self.HT_TRENDMODE_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1815,7 +1815,7 @@ impl Core {
     pub(crate) fn HT_TRENDMODE_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<HT_TRENDMODE_Stream, RetCode> {
-        self.HT_TRENDMODE_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outInteger, 1)
+        self.HT_TRENDMODE_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

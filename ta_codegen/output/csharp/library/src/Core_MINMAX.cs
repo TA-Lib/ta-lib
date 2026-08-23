@@ -426,6 +426,11 @@ public partial class Core
    /// and MAX that computes both extrema in one pass.
    /// </summary>
    /// <remarks>
+   /// <b>Formula</b>
+   /// <code>
+   /// outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
+   /// outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
+   /// </code>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -484,6 +489,11 @@ public partial class Core
    /// and MAX that computes both extrema in one pass.
    /// </summary>
    /// <remarks>
+   /// <b>Formula</b>
+   /// <code>
+   /// outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
+   /// outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
+   /// </code>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -760,7 +770,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MINMAX_OpenPass( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax, int outStride )
+   private RetCode MINMAX_OpenImpl( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -912,36 +922,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MINMAX_OpenImpl( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
-   {
-      double[] sink_outMin = new double[1];
-      double[] sink_outMax = new double[1];
-      RetCode retCode = MINMAX_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outMin, sink_outMax, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode MINMAX_OpenAndFillImpl( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outMin.Overlaps(inReal) || outMax.Overlaps(inReal) || outMin.Overlaps(outMax) ) {
-         return RetCode.BadParam;
-      }
-      return MINMAX_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1 );
-   }
-
-   private RetCode MINMAX_OpenAndFillInternalImpl( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
-   {
-      return MINMAX_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1);
-   }
-
    /* MINMAX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MINMAX_Stream MINMAX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -954,7 +939,11 @@ public partial class Core
    internal MINMAX_Stream MINMAX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      double[] sink_outMin = new double[1];
+      double[] sink_outMax = new double[1];
+      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outMin, sink_outMax, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1015,13 +1004,9 @@ public partial class Core
    public MINMAX_Stream MINMAX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outMin, Span<double> outMax )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outMin.Overlaps(inReal) || outMax.Overlaps(inReal) || outMin.Overlaps(outMax) ) {
+         throw StreamFailure("MINMAX", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("MINMAX", "openAndFill", retCode);
+      return MINMAX_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outMin, outMax);
    }
 }

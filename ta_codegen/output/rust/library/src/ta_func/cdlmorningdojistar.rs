@@ -825,7 +825,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::CDLMORNINGDOJISTAR_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::CDLMORNINGDOJISTAR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLMORNINGDOJISTAR_OpenPass(
+    pub(crate) fn CDLMORNINGDOJISTAR_OpenImpl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CDLMORNINGDOJISTAR_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
@@ -1163,7 +1163,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLMORNINGDOJISTAR_OpenPass(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.CDLMORNINGDOJISTAR_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -1213,7 +1213,7 @@ impl Core {
     ) -> Result<(CDLMORNINGDOJISTAR_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLMORNINGDOJISTAR_OpenPass(inOpen, inHigh, inLow, inClose, 0, optInPenetration, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
+        let handle = self.CDLMORNINGDOJISTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1222,7 +1222,7 @@ impl Core {
     pub(crate) fn CDLMORNINGDOJISTAR_OpenAndFillInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<CDLMORNINGDOJISTAR_Stream, RetCode> {
-        self.CDLMORNINGDOJISTAR_OpenPass(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1)
+        self.CDLMORNINGDOJISTAR_OpenImpl(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

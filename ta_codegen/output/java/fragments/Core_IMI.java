@@ -447,7 +447,7 @@
          sp.winPos_i = 0;
       }
    }
-   private RetCode IMI_OpenPass( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode IMI_OpenImpl( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int lookback = 0;
       int outIdx = 0;
@@ -520,32 +520,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode IMI_OpenImpl( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = IMI_OpenPass( sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode IMI_OpenAndFillImpl( IMI_Stream sp, double inOpen[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return IMI_OpenPass( sp, inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode IMI_OpenAndFillInternalImpl( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return IMI_OpenPass(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* IMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    IMI_Stream IMI_OpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       IMI_Stream sp = new IMI_Stream(this);
-      RetCode retCode = IMI_OpenAndFillInternalImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -563,7 +542,12 @@
    IMI_Stream IMI_OpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
    {
       IMI_Stream sp = new IMI_Stream(this);
-      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -600,20 +584,10 @@
     */
    public IMI_Stream IMI_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      IMI_Stream sp = new IMI_Stream(this);
+      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = IMI_OpenAndFillImpl(sp, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("IMI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("IMI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("IMI openAndFill: " + retCode, retCode);
+      return IMI_OpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

@@ -387,7 +387,7 @@
       }
       sp.cur_outReal = sp.ad;
    }
-   private RetCode AD_OpenPass( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode AD_OpenImpl( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -448,32 +448,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode AD_OpenImpl( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AD_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode AD_OpenAndFillImpl( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return AD_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode AD_OpenAndFillInternalImpl( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return AD_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* AD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AD_Stream AD_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       AD_Stream sp = new AD_Stream(this);
-      RetCode retCode = AD_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AD_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -491,7 +470,12 @@
    AD_Stream AD_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
    {
       AD_Stream sp = new AD_Stream(this);
-      RetCode retCode = AD_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AD_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -528,20 +512,10 @@
     */
    public AD_Stream AD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
-      AD_Stream sp = new AD_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("AD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AD_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("AD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("AD openAndFill: " + retCode, retCode);
+      return AD_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

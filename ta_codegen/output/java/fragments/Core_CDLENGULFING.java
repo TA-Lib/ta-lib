@@ -408,7 +408,7 @@
       sp.lag1_inOpen = inOpen;
       sp.lag1_inClose = inClose;
    }
-   private RetCode CDLENGULFING_OpenPass( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLENGULFING_OpenImpl( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -480,32 +480,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLENGULFING_OpenImpl( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLENGULFING_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLENGULFING_OpenAndFillImpl( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLENGULFING_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLENGULFING_OpenAndFillInternalImpl( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLENGULFING_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLENGULFING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLENGULFING_Stream CDLENGULFING_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
-      RetCode retCode = CDLENGULFING_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLENGULFING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -523,7 +502,12 @@
    CDLENGULFING_Stream CDLENGULFING_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
-      RetCode retCode = CDLENGULFING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLENGULFING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -560,20 +544,10 @@
     */
    public CDLENGULFING_Stream CDLENGULFING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLENGULFING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLENGULFING_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLENGULFING openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLENGULFING openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLENGULFING openAndFill: " + retCode, retCode);
+      return CDLENGULFING_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

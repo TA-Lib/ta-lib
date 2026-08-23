@@ -616,7 +616,7 @@ public partial class Core
       }
    }
 
-   private RetCode VWMA_OpenPass( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode VWMA_OpenImpl( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -761,35 +761,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode VWMA_OpenImpl( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = VWMA_OpenPass( sp, inReal, inVolume, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode VWMA_OpenAndFillImpl( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
-         return RetCode.BadParam;
-      }
-      return VWMA_OpenPass( sp, inReal, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode VWMA_OpenAndFillInternalImpl( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return VWMA_OpenPass(sp, inReal, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* VWMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal VWMA_Stream VWMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       VWMA_Stream sp = new VWMA_Stream(this);
-      RetCode retCode = VWMA_OpenAndFillInternalImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -802,7 +778,10 @@ public partial class Core
    internal VWMA_Stream VWMA_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       VWMA_Stream sp = new VWMA_Stream(this);
-      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -865,13 +844,9 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
-      VWMA_Stream sp = new VWMA_Stream(this);
-      RetCode retCode = VWMA_OpenAndFillImpl(sp, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
+         throw StreamFailure("VWMA", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("VWMA", "openAndFill", retCode);
+      return VWMA_OpenAndFillInternal(inReal, inVolume, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -600,7 +600,7 @@
       sp.cur_outFastK = cur_outFastK;
       sp.cur_outFastD = cur_outFastD;
    }
-   private RetCode STOCHRSI_OpenPass( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
+   private RetCode STOCHRSI_OpenImpl( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
    {
       double[] tempRSIBuffer;
       RetCode retCode;
@@ -720,33 +720,11 @@
       sp.cachedValue = new STOCHRSI_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
       return RetCode.Success;
    }
-   private RetCode STOCHRSI_OpenImpl( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outFastK = new double[1];
-      double[] sink_outFastD = new double[1];
-      RetCode retCode = STOCHRSI_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode STOCHRSI_OpenAndFillImpl( STOCHRSI_Stream sp, double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
-   {
-      if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
-         return RetCode.BadParam;
-      }
-      return STOCHRSI_OpenPass( sp, inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
-   }
-   private RetCode STOCHRSI_OpenAndFillInternalImpl( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
-   {
-      return STOCHRSI_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
-   }
    /* STOCHRSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    STOCHRSI_Stream STOCHRSI_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
    {
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
-      RetCode retCode = STOCHRSI_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -764,7 +742,13 @@
    STOCHRSI_Stream STOCHRSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
-      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outFastK = new double[1];
+      double[] sink_outFastD = new double[1];
+      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -801,20 +785,10 @@
     */
    public STOCHRSI_Stream STOCHRSI_OpenAndFill( double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
    {
-      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
+      if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
+         throw new TaLibArgumentException("STOCHRSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STOCHRSI_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("STOCHRSI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHRSI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("STOCHRSI openAndFill: " + retCode, retCode);
+      return STOCHRSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
    }

@@ -859,7 +859,7 @@
          sp.ringPos_ShadowShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLADVANCEBLOCK_OpenPass( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLADVANCEBLOCK_OpenImpl( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowShortPeriodTotal = new double[3];
       double[] ShadowLongPeriodTotal = new double[2];
@@ -1127,32 +1127,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLADVANCEBLOCK_OpenImpl( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLADVANCEBLOCK_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLADVANCEBLOCK_OpenAndFillImpl( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLADVANCEBLOCK_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLADVANCEBLOCK_OpenAndFillInternalImpl( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLADVANCEBLOCK_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLADVANCEBLOCK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
-      RetCode retCode = CDLADVANCEBLOCK_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLADVANCEBLOCK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1170,7 +1149,12 @@
    CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
-      RetCode retCode = CDLADVANCEBLOCK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLADVANCEBLOCK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1207,20 +1191,10 @@
     */
    public CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLADVANCEBLOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLADVANCEBLOCK_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLADVANCEBLOCK openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLADVANCEBLOCK openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLADVANCEBLOCK openAndFill: " + retCode, retCode);
+      return CDLADVANCEBLOCK_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }

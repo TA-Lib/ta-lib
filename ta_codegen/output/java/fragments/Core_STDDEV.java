@@ -455,7 +455,7 @@
       }
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode STDDEV_OpenPass( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode STDDEV_OpenImpl( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       RetCode retCode;
@@ -543,32 +543,11 @@
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   private RetCode STDDEV_OpenImpl( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = STDDEV_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode STDDEV_OpenAndFillImpl( STDDEV_Stream sp, double inReal[], int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return STDDEV_OpenPass( sp, inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode STDDEV_OpenAndFillInternalImpl( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return STDDEV_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
-   }
    /* STDDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    STDDEV_Stream STDDEV_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -586,7 +565,12 @@
    STDDEV_Stream STDDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {
       STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -623,20 +607,10 @@
     */
    public STDDEV_Stream STDDEV_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
-      STDDEV_Stream sp = new STDDEV_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("STDDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STDDEV_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("STDDEV openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STDDEV openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("STDDEV openAndFill: " + retCode, retCode);
+      return STDDEV_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
    }

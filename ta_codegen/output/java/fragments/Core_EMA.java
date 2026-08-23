@@ -469,7 +469,7 @@
       sp.prevMA = Math.fma(inReal - sp.prevMA, sp.optInK_1, sp.prevMA);
       sp.cur_outReal = sp.prevMA;
    }
-   private RetCode EMA_OpenPass( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode EMA_OpenImpl( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -580,32 +580,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode EMA_OpenImpl( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = EMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode EMA_OpenAndFillImpl( EMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return EMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode EMA_OpenAndFillInternalImpl( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return EMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* EMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    EMA_Stream EMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       EMA_Stream sp = new EMA_Stream(this);
-      RetCode retCode = EMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -623,7 +602,12 @@
    EMA_Stream EMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       EMA_Stream sp = new EMA_Stream(this);
-      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -660,20 +644,10 @@
     */
    public EMA_Stream EMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      EMA_Stream sp = new EMA_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("EMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("EMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("EMA openAndFill: " + retCode, retCode);
+      return EMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

@@ -392,7 +392,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::PVO_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::PVO_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn PVO_OpenPass(
+    pub(crate) fn PVO_OpenImpl(
         &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<PVO_Stream, RetCode> {
         if inVolume.is_empty() {
@@ -520,7 +520,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.PVO_OpenPass(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.PVO_OpenImpl(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -565,7 +565,7 @@ impl Core {
     ) -> Result<(PVO_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.PVO_OpenPass(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.PVO_OpenAndFillInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -574,7 +574,7 @@ impl Core {
     pub(crate) fn PVO_OpenAndFillInternal(
         &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PVO_Stream, RetCode> {
-        self.PVO_OpenPass(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
+        self.PVO_OpenImpl(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

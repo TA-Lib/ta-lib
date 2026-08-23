@@ -1102,7 +1102,7 @@
       sp.trailingIdx = sp.trailingIdx + 1;
       sp.today = sp.today + 1;
    }
-   private RetCode SMI_OpenPass( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[], int outStride )
+   private RetCode SMI_OpenImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[], int outStride )
    {
       double kSlow = 0;
       double kFast = 0;
@@ -1437,33 +1437,11 @@
       sp.cachedValue = new SMI_Stream.Value(sp.cur_outSMI, sp.cur_outSMISignal);
       return RetCode.Success;
    }
-   private RetCode SMI_OpenImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outSMI = new double[1];
-      double[] sink_outSMISignal = new double[1];
-      RetCode retCode = SMI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outSMI, sink_outSMISignal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SMI_OpenAndFillImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
-   {
-      if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
-         return RetCode.BadParam;
-      }
-      return SMI_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 );
-   }
-   private RetCode SMI_OpenAndFillInternalImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
-   {
-      return SMI_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1);
-   }
    /* SMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SMI_Stream SMI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
    {
       SMI_Stream sp = new SMI_Stream(this);
-      RetCode retCode = SMI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
+      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1481,7 +1459,13 @@
    SMI_Stream SMI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       SMI_Stream sp = new SMI_Stream(this);
-      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outSMI = new double[1];
+      double[] sink_outSMISignal = new double[1];
+      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outSMI, sink_outSMISignal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1518,20 +1502,10 @@
     */
    public SMI_Stream SMI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outSMI[], double outSMISignal[] )
    {
-      SMI_Stream sp = new SMI_Stream(this);
+      if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
+         throw new TaLibArgumentException("SMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SMI_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SMI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SMI openAndFill: " + retCode, retCode);
+      return SMI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
    }

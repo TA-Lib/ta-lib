@@ -2,7 +2,7 @@
 //!
 //! `Open` and `OpenAndFill` are the same whole-history transcription; they differ
 //! only in where the per-bar output writes land. They are emitted ONCE, as
-//! `TA_<N>_OpenPass( ..., int outStride )`: `Open` passes stride 0 and a
+//! `TA_<N>_OpenImpl( ..., int outStride )`: `Open` passes stride 0 and a
 //! one-element scalar sink (every write collapses to slot 0, which is also what
 //! makes the previous-output feedback reads resolve), `OpenAndFill` passes stride
 //! 1 and the caller's array.
@@ -112,10 +112,10 @@ fn streaming_funcs() -> Vec<String> {
 // ---------------------------------------------------------------------------
 
 #[test]
-fn loop_tier_emits_one_core_and_two_thin_wrappers() {
+fn loop_tier_emits_one_core_and_three_thin_entries() {
     let src = stream_c("cdlhammer");
     assert_eq!(
-        src.matches("static TA_RetCode TA_CDLHAMMER_OpenPass(").count(),
+        src.matches("static TA_RetCode TA_CDLHAMMER_OpenImpl(").count(),
         1,
         "the core is emitted exactly once"
     );
@@ -124,15 +124,19 @@ fn loop_tier_emits_one_core_and_two_thin_wrappers() {
         "the core takes an outStride parameter"
     );
 
-    // Both wrappers delegate; neither carries the transcribed algorithm.
-    for wrapper in [
-        "TA_RetCode TA_CDLHAMMER_OpenInternal(",
-        "TA_RetCode TA_CDLHAMMER_OpenAndFill(",
+    // Every entry delegates; none carries the transcribed algorithm. The public
+    // fill goes through the anchored seam rather than straight down, which is
+    // what gives that seam a caller for all 175 rather than only the 16 that
+    // something composes over.
+    for (wrapper, callee) in [
+        ("TA_RetCode TA_CDLHAMMER_OpenInternal(", "TA_CDLHAMMER_OpenImpl("),
+        ("TA_RetCode TA_CDLHAMMER_OpenAndFillInternal(", "TA_CDLHAMMER_OpenImpl("),
+        ("TA_RetCode TA_CDLHAMMER_OpenAndFill(", "TA_CDLHAMMER_OpenAndFillInternal("),
     ] {
         let body = body_of(&src, wrapper);
         assert!(
-            body.contains("TA_CDLHAMMER_OpenPass("),
-            "{wrapper} must delegate to the core, got:\n{body}"
+            body.contains(callee),
+            "{wrapper} must delegate to {callee}, got:\n{body}"
         );
         assert!(
             !body.contains("BodyPeriodTotal"),
@@ -156,7 +160,7 @@ fn scalar_sink_replaces_last_value_locals() {
 #[test]
 fn output_writes_are_stride_scaled() {
     let src = stream_c("cdlhammer");
-    let core = strip_comments(&body_of(&src, "TA_CDLHAMMER_OpenPass("));
+    let core = strip_comments(&body_of(&src, "TA_CDLHAMMER_OpenImpl("));
     assert!(
         core.contains("outInteger[outIdx++ * outStride] = 100;"),
         "per-bar output writes scale by outStride, got:\n{core}"
@@ -192,9 +196,16 @@ fn compound_stride_indices_are_parenthesized() {
 fn open_internal_passes_stride_zero_and_fill_passes_one() {
     let src = stream_c("cdlhammer");
     let scalar = body_of(&src, "TA_RetCode TA_CDLHAMMER_OpenInternal(");
-    let fill = body_of(&src, "TA_RetCode TA_CDLHAMMER_OpenAndFill(");
+    // The stride is now chosen one frame down, on the anchored seam the public
+    // fill delegates to; the public frame supplies the anchor instead.
+    let fill = body_of(&src, "TA_RetCode TA_CDLHAMMER_OpenAndFillInternal(");
+    let public_fill = body_of(&src, "TA_RetCode TA_CDLHAMMER_OpenAndFill(");
     assert!(scalar.contains(", 0 );"), "Open passes stride 0:\n{scalar}");
-    assert!(fill.contains(", 1 );"), "OpenAndFill passes stride 1:\n{fill}");
+    assert!(fill.contains(", 1 );"), "the anchored fill passes stride 1:\n{fill}");
+    assert!(
+        public_fill.contains("return TA_CDLHAMMER_OpenAndFillInternal( "),
+        "the public fill delegates rather than choosing a stride:\n{public_fill}"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -243,7 +254,7 @@ fn period_bank_keeps_two_bodies() {
     // MAVP's two modes are DIFFERENT algorithms, not one body with two sinks.
     let src = stream_c("mavp");
     assert!(
-        !src.contains("TA_MAVP_OpenPass("),
+        !src.contains("TA_MAVP_OpenImpl("),
         "the period-bank tier is exempt from the merge"
     );
     assert!(src.contains("TA_MAVP_OpenInternal("));
@@ -262,7 +273,7 @@ fn dispatch_keeps_its_own_bodies() {
     // the caller's array directly; there is no stride to thread through.
     let src = stream_c("ma");
     assert!(
-        !src.contains("TA_MA_OpenPass("),
+        !src.contains("TA_MA_OpenImpl("),
         "the dispatch tier is exempt from the merge"
     );
     let fill = body_of(&src, "TA_RetCode TA_MA_OpenAndFill(");
@@ -387,7 +398,7 @@ fn composed_copy_out_is_stride_guarded() {
     // final values there). Scalar mode keeps the owned history-sized scratch
     // and takes its last element.
     let src = stream_c("adxr");
-    let core = body_of(&src, "TA_ADXR_OpenPass(");
+    let core = body_of(&src, "TA_ADXR_OpenImpl(");
     assert!(
         core.contains("if( outStride ) sc_outReal = outReal;"),
         "fill mode aliases the scratch onto the caller's array:\n{core}"
@@ -433,7 +444,7 @@ fn no_output_array_escapes_the_core_unscaled() {
     for name in streaming_funcs() {
         let src = stream_c(&name);
         let upper = name.to_uppercase();
-        let needle = format!("TA_{upper}_OpenPass(");
+        let needle = format!("TA_{upper}_OpenImpl(");
         if !src.contains(&needle) {
             continue; // exempt tier
         }
@@ -490,7 +501,7 @@ fn every_mergeable_function_has_exactly_one_core() {
             continue;
         }
         let src = stream_c(&name);
-        let needle = format!("TA_{}_OpenPass(", name.to_uppercase());
+        let needle = format!("TA_{}_OpenImpl(", name.to_uppercase());
         if !src.contains(&needle) {
             missing.push(name);
         }
@@ -510,7 +521,7 @@ fn identity_fast_path_short_circuits_at_stride_zero() {
     // but linear in the warm-up for the 8 functions whose period-1 arm is
     // reachable (EMA, DEMA, TEMA, T3, KAMA, HMA, WMA, VWMA).
     let src = stream_c("ema");
-    let core = strip_comments(&body_of(&src, "TA_EMA_OpenPass("));
+    let core = strip_comments(&body_of(&src, "TA_EMA_OpenImpl("));
     assert!(
         core.contains("outReal[0] = inReal[historyLen - 1];"),
         "the identity arm takes the last bar directly at stride 0:\n{core}"

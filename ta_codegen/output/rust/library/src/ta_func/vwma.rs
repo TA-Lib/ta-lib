@@ -422,7 +422,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::VWMA_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::VWMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn VWMA_OpenPass(
+    pub(crate) fn VWMA_OpenImpl(
         &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<VWMA_Stream, RetCode> {
         if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
@@ -577,7 +577,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.VWMA_OpenPass(inReal, inVolume, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.VWMA_OpenImpl(inReal, inVolume, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -623,7 +623,7 @@ impl Core {
     ) -> Result<(VWMA_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.VWMA_OpenPass(inReal, inVolume, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.VWMA_OpenAndFillInternal(inReal, inVolume, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -632,7 +632,7 @@ impl Core {
     pub(crate) fn VWMA_OpenAndFillInternal(
         &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<VWMA_Stream, RetCode> {
-        self.VWMA_OpenPass(inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.VWMA_OpenImpl(inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

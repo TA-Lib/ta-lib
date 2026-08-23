@@ -994,7 +994,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MAMA_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MAMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MAMA_OpenPass(
+    pub(crate) fn MAMA_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64], outStride: usize,
     ) -> Result<MAMA_Stream, RetCode> {
         if inReal.is_empty() {
@@ -1460,7 +1460,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outMAMA = [0.0_f64; 1];
         let mut sink_outFAMA = [0.0_f64; 1];
-        let handle = self.MAMA_OpenPass(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, &mut sink_outFAMA, 0)?;
+        let handle = self.MAMA_OpenImpl(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, &mut sink_outFAMA, 0)?;
         Ok((handle, (sink_outMAMA[0], sink_outFAMA[0])))
     }
 
@@ -1507,7 +1507,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MAMA_OpenPass(inReal, 0, optInFastLimit, optInSlowLimit, &mut outBegIdx, &mut outNBElement, outMAMA, outFAMA, 1)?;
+        let handle = self.MAMA_OpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, &mut outBegIdx, &mut outNBElement, outMAMA, outFAMA)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1516,7 +1516,7 @@ impl Core {
     pub(crate) fn MAMA_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
     ) -> Result<MAMA_Stream, RetCode> {
-        self.MAMA_OpenPass(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
+        self.MAMA_OpenImpl(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
     }
 
 }

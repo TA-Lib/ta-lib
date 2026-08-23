@@ -531,7 +531,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MACDEXT_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MACDEXT_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MACDEXT_OpenPass(
+    pub(crate) fn MACDEXT_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
     ) -> Result<MACDEXT_Stream, RetCode> {
         if inReal.is_empty() {
@@ -743,7 +743,7 @@ impl Core {
         let mut sink_outMACD = [0.0_f64; 1];
         let mut sink_outMACDSignal = [0.0_f64; 1];
         let mut sink_outMACDHist = [0.0_f64; 1];
-        let handle = self.MACDEXT_OpenPass(inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
+        let handle = self.MACDEXT_OpenImpl(inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
         Ok((handle, (sink_outMACD[0], sink_outMACDSignal[0], sink_outMACDHist[0])))
     }
 
@@ -797,7 +797,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MACDEXT_OpenPass(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut outBegIdx, &mut outNBElement, outMACD, outMACDSignal, outMACDHist, 1)?;
+        let handle = self.MACDEXT_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut outBegIdx, &mut outNBElement, outMACD, outMACDSignal, outMACDHist)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -806,7 +806,7 @@ impl Core {
     pub(crate) fn MACDEXT_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
     ) -> Result<MACDEXT_Stream, RetCode> {
-        self.MACDEXT_OpenPass(inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
+        self.MACDEXT_OpenImpl(inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
 
 }

@@ -706,7 +706,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode BETA_OpenPass( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode BETA_OpenImpl( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double S_xx = 0;
       double S_xy = 0;
@@ -903,32 +903,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode BETA_OpenImpl( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = BETA_OpenPass( sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode BETA_OpenAndFillImpl( BETA_Stream sp, double inReal0[], double inReal1[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return BETA_OpenPass( sp, inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode BETA_OpenAndFillInternalImpl( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return BETA_OpenPass(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* BETA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    BETA_Stream BETA_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       BETA_Stream sp = new BETA_Stream(this);
-      RetCode retCode = BETA_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -946,7 +925,12 @@
    BETA_Stream BETA_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
    {
       BETA_Stream sp = new BETA_Stream(this);
-      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -983,20 +967,10 @@
     */
    public BETA_Stream BETA_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
-      BETA_Stream sp = new BETA_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("BETA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = BETA_OpenAndFillImpl(sp, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("BETA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BETA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("BETA openAndFill: " + retCode, retCode);
+      return BETA_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

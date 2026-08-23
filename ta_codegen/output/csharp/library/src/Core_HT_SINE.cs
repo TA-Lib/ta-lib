@@ -1549,7 +1549,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_SINE_OpenPass( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine, int outStride )
+   private RetCode HT_SINE_OpenImpl( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -2047,36 +2047,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_SINE_OpenImpl( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outSine = new double[1];
-      double[] sink_outLeadSine = new double[1];
-      RetCode retCode = HT_SINE_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outSine, sink_outLeadSine, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode HT_SINE_OpenAndFillImpl( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outSine.Overlaps(inReal) || outLeadSine.Overlaps(inReal) || outSine.Overlaps(outLeadSine) ) {
-         return RetCode.BadParam;
-      }
-      return HT_SINE_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outSine, outLeadSine, 1 );
-   }
-
-   private RetCode HT_SINE_OpenAndFillInternalImpl( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
-   {
-      return HT_SINE_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outSine, outLeadSine, 1);
-   }
-
    /* HT_SINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal HT_SINE_Stream HT_SINE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
    {
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outSine, outLeadSine, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -2089,7 +2064,11 @@ public partial class Core
    internal HT_SINE_Stream HT_SINE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outSine = new double[1];
+      double[] sink_outLeadSine = new double[1];
+      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outSine, sink_outLeadSine, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2144,13 +2123,9 @@ public partial class Core
    public HT_SINE_Stream HT_SINE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outSine, Span<double> outLeadSine )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outSine.Overlaps(inReal) || outLeadSine.Overlaps(inReal) || outSine.Overlaps(outLeadSine) ) {
+         throw StreamFailure("HT_SINE", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("HT_SINE", "openAndFill", retCode);
+      return HT_SINE_OpenAndFillInternal(inReal, 0, out _, out _, outSine, outLeadSine);
    }
 }

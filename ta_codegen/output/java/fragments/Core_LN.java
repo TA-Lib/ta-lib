@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Vector natural logarithm: applies the natural log (base e) elementwise to
-    * the input series.
+    * Element-wise natural logarithm of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = log(inReal[i])
@@ -130,8 +129,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector natural logarithm: applies the natural log (base e) elementwise to
-    * the input series.
+    * Element-wise natural logarithm of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = log(inReal[i])
@@ -298,7 +296,7 @@
    {
       sp.cur_outReal = Math.log(inReal);
    }
-   private RetCode LN_OpenPass( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LN_OpenImpl( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -324,32 +322,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LN_OpenImpl( LN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = LN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode LN_OpenAndFillImpl( LN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return LN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode LN_OpenAndFillInternalImpl( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return LN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* LN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LN_Stream LN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LN_Stream sp = new LN_Stream(this);
-      RetCode retCode = LN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -367,7 +344,12 @@
    LN_Stream LN_OpenInternal( double inReal[], int startIdx )
    {
       LN_Stream sp = new LN_Stream(this);
-      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -404,20 +386,10 @@
     */
    public LN_Stream LN_OpenAndFill( double inReal[], double outReal[] )
    {
-      LN_Stream sp = new LN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("LN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("LN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("LN openAndFill: " + retCode, retCode);
+      return LN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

@@ -201,13 +201,14 @@ impl Core {
     /// # Formula
     ///
     /// ```text
-    /// For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = argmin over the same window (N = optInTimePeriod).
+    /// outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])  
+    /// outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     /// ```
     ///
     /// # Notes
     ///
-    /// * When several bars in a window share the extreme value, which bar's index is returned is
-    ///   not guaranteed to be a specific one of the tied bars.
+    /// * When several bars in a window share the extreme value, the index of one of them is
+    ///   returned — not necessarily the first or the last.
     ///
     /// # Arguments
     ///
@@ -414,7 +415,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MINMAXINDEX_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MINMAXINDEX_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MINMAXINDEX_OpenPass(
+    pub(crate) fn MINMAXINDEX_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMinIdx: &mut [i32], outMaxIdx: &mut [i32], outStride: usize,
     ) -> Result<MINMAXINDEX_Stream, RetCode> {
         if inReal.is_empty() {
@@ -560,7 +561,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outMinIdx = [0_i32; 1];
         let mut sink_outMaxIdx = [0_i32; 1];
-        let handle = self.MINMAXINDEX_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMinIdx, &mut sink_outMaxIdx, 0)?;
+        let handle = self.MINMAXINDEX_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMinIdx, &mut sink_outMaxIdx, 0)?;
         Ok((handle, (sink_outMinIdx[0], sink_outMaxIdx[0])))
     }
 
@@ -607,7 +608,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MINMAXINDEX_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outMinIdx, outMaxIdx, 1)?;
+        let handle = self.MINMAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outMinIdx, outMaxIdx)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -616,7 +617,7 @@ impl Core {
     pub(crate) fn MINMAXINDEX_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMinIdx: &mut [i32], outMaxIdx: &mut [i32],
     ) -> Result<MINMAXINDEX_Stream, RetCode> {
-        self.MINMAXINDEX_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1)
+        self.MINMAXINDEX_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1)
     }
 
 }

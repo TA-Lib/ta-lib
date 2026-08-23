@@ -696,7 +696,7 @@ public partial class Core
       }
    }
 
-   private RetCode RSI_OpenPass( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode RSI_OpenImpl( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -890,35 +890,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode RSI_OpenImpl( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = RSI_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode RSI_OpenAndFillImpl( RSI_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return RSI_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode RSI_OpenAndFillInternalImpl( RSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return RSI_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* RSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal RSI_Stream RSI_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -931,7 +907,10 @@ public partial class Core
    internal RSI_Stream RSI_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -988,13 +967,9 @@ public partial class Core
    public RSI_Stream RSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("RSI", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("RSI", "openAndFill", retCode);
+      return RSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

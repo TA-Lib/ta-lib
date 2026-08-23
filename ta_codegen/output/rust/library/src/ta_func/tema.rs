@@ -483,7 +483,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::TEMA_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::TEMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn TEMA_OpenPass(
+    pub(crate) fn TEMA_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TEMA_Stream, RetCode> {
         if inReal.is_empty() {
@@ -698,7 +698,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.TEMA_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.TEMA_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -741,7 +741,7 @@ impl Core {
     ) -> Result<(TEMA_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.TEMA_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.TEMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -750,7 +750,7 @@ impl Core {
     pub(crate) fn TEMA_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TEMA_Stream, RetCode> {
-        self.TEMA_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.TEMA_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

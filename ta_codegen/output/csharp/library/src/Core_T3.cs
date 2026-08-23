@@ -722,7 +722,7 @@ public partial class Core
       sp.cur_outReal = Math.FusedMultiplyAdd(sp.c4, sp.e3, Math.FusedMultiplyAdd(sp.c3, sp.e4, Math.FusedMultiplyAdd(sp.c1, sp.e6, sp.c2 * sp.e5)));
    }
 
-   private RetCode T3_OpenPass( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode T3_OpenImpl( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -931,35 +931,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode T3_OpenImpl( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = T3_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode T3_OpenAndFillImpl( T3_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return T3_OpenPass( sp, inReal, 0, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode T3_OpenAndFillInternalImpl( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return T3_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* T3_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal T3_Stream T3_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       T3_Stream sp = new T3_Stream(this);
-      RetCode retCode = T3_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = T3_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -972,7 +948,10 @@ public partial class Core
    internal T3_Stream T3_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor )
    {
       T3_Stream sp = new T3_Stream(this);
-      RetCode retCode = T3_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = T3_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1033,13 +1012,9 @@ public partial class Core
    public T3_Stream T3_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      T3_Stream sp = new T3_Stream(this);
-      RetCode retCode = T3_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("T3", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("T3", "openAndFill", retCode);
+      return T3_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInVFactor, out _, out _, outReal);
    }
 }

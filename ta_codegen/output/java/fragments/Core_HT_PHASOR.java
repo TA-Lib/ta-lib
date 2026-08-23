@@ -675,7 +675,9 @@
    /**
     * Hilbert Transform indicator that decomposes the price series into its
     * in-phase (I) and quadrature (Q) phasor components. Shares the same
-    * detrend/Hilbert machinery as the other HT_* cycle functions.
+    * detrend/Hilbert machinery as the other HT_* cycle functions. This function
+    * is meant for building your own cycle analysis on top of the raw phasor,
+    * not as a ready-made signal.
     * <p><b>Formula</b>
     * <pre>{@code
     * Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
@@ -739,7 +741,9 @@
    /**
     * Hilbert Transform indicator that decomposes the price series into its
     * in-phase (I) and quadrature (Q) phasor components. Shares the same
-    * detrend/Hilbert machinery as the other HT_* cycle functions.
+    * detrend/Hilbert machinery as the other HT_* cycle functions. This function
+    * is meant for building your own cycle analysis on top of the raw phasor,
+    * not as a ready-made signal.
     * <p><b>Formula</b>
     * <pre>{@code
     * Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
@@ -1284,7 +1288,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_PHASOR_OpenPass( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
+   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1694,33 +1698,11 @@
       sp.cachedValue = new HT_PHASOR_Stream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
       return RetCode.Success;
    }
-   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outInPhase = new double[1];
-      double[] sink_outQuadrature = new double[1];
-      RetCode retCode = HT_PHASOR_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_PHASOR_OpenAndFillImpl( HT_PHASOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
-   {
-      if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
-         return RetCode.BadParam;
-      }
-      return HT_PHASOR_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
-   }
-   private RetCode HT_PHASOR_OpenAndFillInternalImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
-   {
-      return HT_PHASOR_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
-   }
    /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1738,7 +1720,13 @@
    HT_PHASOR_Stream HT_PHASOR_OpenInternal( double inReal[], int startIdx )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outInPhase = new double[1];
+      double[] sink_outQuadrature = new double[1];
+      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1775,20 +1763,10 @@
     */
    public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
    {
-      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
+      if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
+         throw new TaLibArgumentException("HT_PHASOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_PHASOR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_PHASOR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
+      return HT_PHASOR_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature);
    }

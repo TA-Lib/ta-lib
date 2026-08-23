@@ -121,8 +121,7 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Element-wise trigonometric cosine of the input series. Applies the C
-   /// library cos() to each sample.
+   /// Element-wise cosine of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -175,8 +174,7 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Element-wise trigonometric cosine of the input series. Applies the C
-   /// library cos() to each sample.
+   /// Element-wise cosine of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -349,7 +347,7 @@ public partial class Core
       sp.cur_outReal = Math.Cos(inReal);
    }
 
-   private RetCode COS_OpenPass( COS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode COS_OpenImpl( COS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -378,35 +376,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode COS_OpenImpl( COS_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = COS_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode COS_OpenAndFillImpl( COS_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return COS_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode COS_OpenAndFillInternalImpl( COS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return COS_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* COS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal COS_Stream COS_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       COS_Stream sp = new COS_Stream(this);
-      RetCode retCode = COS_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = COS_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -419,7 +393,10 @@ public partial class Core
    internal COS_Stream COS_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       COS_Stream sp = new COS_Stream(this);
-      RetCode retCode = COS_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = COS_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -474,13 +451,9 @@ public partial class Core
    public COS_Stream COS_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      COS_Stream sp = new COS_Stream(this);
-      RetCode retCode = COS_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("COS", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("COS", "openAndFill", retCode);
+      return COS_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

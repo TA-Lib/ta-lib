@@ -581,7 +581,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode CORREL_OpenPass( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CORREL_OpenImpl( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -716,32 +716,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CORREL_OpenImpl( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = CORREL_OpenPass( sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CORREL_OpenAndFillImpl( CORREL_Stream sp, double inReal0[], double inReal1[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return CORREL_OpenPass( sp, inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode CORREL_OpenAndFillInternalImpl( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return CORREL_OpenPass(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* CORREL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CORREL_Stream CORREL_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CORREL_Stream sp = new CORREL_Stream(this);
-      RetCode retCode = CORREL_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -759,7 +738,12 @@
    CORREL_Stream CORREL_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
    {
       CORREL_Stream sp = new CORREL_Stream(this);
-      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -796,20 +780,10 @@
     */
    public CORREL_Stream CORREL_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
-      CORREL_Stream sp = new CORREL_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("CORREL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CORREL_OpenAndFillImpl(sp, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CORREL openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CORREL openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CORREL openAndFill: " + retCode, retCode);
+      return CORREL_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

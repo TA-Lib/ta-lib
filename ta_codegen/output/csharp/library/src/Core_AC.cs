@@ -64,16 +64,12 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInFastPeriod">Number of bars in the short moving average of the median price. Default 5,
-   /// the value Williams uses and every surveyed package ships (default 5; range
-   /// 2..100000; <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInSlowPeriod">Number of bars in the long moving average of the median price. Default 34,
-   /// likewise universal (default 34; range 2..100000; <c>int.MinValue</c>
-   /// selects the default).</param>
-   /// <param name="optInSignalPeriod">Number of bars in the moving average taken over the oscillator. Default 5.
-   /// MetaTrader, Quantower and cTrader hardcode all three; trading-signals
-   /// exposes all three with these same values (default 5; range 2..100000;
-   /// <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInFastPeriod">Number of bars in the short moving average of the median price (default 5;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">Number of bars in the long moving average of the median price (default 34;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSignalPeriod">Number of bars in the moving average taken over the oscillator (default 5;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int AC_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
@@ -413,24 +409,26 @@ public partial class Core
    /// <summary>
    /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
    /// Dimensions*, 1998): the rate at which market momentum is itself speeding
-   /// up or slowing down. Where the Awesome Oscillator measures momentum, this
-   /// measures the change in that momentum, by taking the oscillator's distance
-   /// above or below its own moving average. Because acceleration turns before
-   /// speed does, the reading changes sign ahead of the oscillator it is built
-   /// from — it is meant as the early half of a pair, not as a signal on its
-   /// own. Above zero acceleration is with the bulls, below zero with the bears,
-   /// and it is drawn as a zero-centred histogram whose colour convention is the
-   /// bar-to-bar change: rising bars accelerating, falling bars decelerating.
-   /// Williams' rule of thumb is that two same-coloured bars are what confirms
-   /// the turn, which is why the sign and the direction matter more than the
-   /// level. The oscillator is one leg of Williams' Profitunity system,
-   /// alongside the Awesome Oscillator and the Alligator.
+   /// up or slowing down. Where the Awesome Oscillator
+   /// ([<c>AO</c>](/functions/ao)) measures momentum, this measures the change
+   /// in that momentum, by taking the oscillator's distance above or below its
+   /// own moving average. Because acceleration turns before speed does, the
+   /// reading changes sign ahead of the oscillator it is built from — it is
+   /// meant as the early half of a pair, not as a signal on its own. Above zero
+   /// acceleration is with the bulls, below zero with the bears, and it is drawn
+   /// as a zero-centred histogram whose colour convention is the bar-to-bar
+   /// change: rising bars accelerating, falling bars decelerating. Williams'
+   /// rule of thumb is that two same-coloured bars are what confirms the turn,
+   /// which is why the sign and the direction matter more than the level. The
+   /// oscillator is one leg of Williams' Profitunity system, alongside the
+   /// Awesome Oscillator ([<c>AO</c>](/functions/ao)) and the Alligator.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t; AC_t = AO_t − SMA(AO, signal)_t
-   /// Every leg is a plain simple moving average, so there is no seeding convention and none of the cross-library divergence that comes with one.
+   /// median_t = ( high_t + low_t ) / 2
+   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+   /// AC_t = AO_t − SMA(AO, signal)_t
    /// </code>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -444,18 +442,15 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
-   /// <param name="optInFastPeriod">Number of bars in the short moving average of the median price. Default 5,
-   /// the value Williams uses and every surveyed package ships (default 5; range
-   /// 2..100000; <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInSlowPeriod">Number of bars in the long moving average of the median price. Default 34,
-   /// likewise universal (default 34; range 2..100000; <c>int.MinValue</c>
-   /// selects the default).</param>
-   /// <param name="optInSignalPeriod">Number of bars in the moving average taken over the oscillator. Default 5.
-   /// MetaTrader, Quantower and cTrader hardcode all three; trading-signals
-   /// exposes all three with these same values (default 5; range 2..100000;
-   /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="outReal">Distance of the Awesome Oscillator from its own moving average, centred on
-   /// zero. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
+   /// <param name="optInFastPeriod">Number of bars in the short moving average of the median price (default 5;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">Number of bars in the long moving average of the median price (default 34;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSignalPeriod">Number of bars in the moving average taken over the oscillator (default 5;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Distance of the Awesome Oscillator ([<c>AO</c>](/functions/ao)) from its
+   /// own moving average, centred on zero. Must hold at least <c>endIdx -
+   /// startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -496,24 +491,26 @@ public partial class Core
    /// <summary>
    /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
    /// Dimensions*, 1998): the rate at which market momentum is itself speeding
-   /// up or slowing down. Where the Awesome Oscillator measures momentum, this
-   /// measures the change in that momentum, by taking the oscillator's distance
-   /// above or below its own moving average. Because acceleration turns before
-   /// speed does, the reading changes sign ahead of the oscillator it is built
-   /// from — it is meant as the early half of a pair, not as a signal on its
-   /// own. Above zero acceleration is with the bulls, below zero with the bears,
-   /// and it is drawn as a zero-centred histogram whose colour convention is the
-   /// bar-to-bar change: rising bars accelerating, falling bars decelerating.
-   /// Williams' rule of thumb is that two same-coloured bars are what confirms
-   /// the turn, which is why the sign and the direction matter more than the
-   /// level. The oscillator is one leg of Williams' Profitunity system,
-   /// alongside the Awesome Oscillator and the Alligator.
+   /// up or slowing down. Where the Awesome Oscillator
+   /// ([<c>AO</c>](/functions/ao)) measures momentum, this measures the change
+   /// in that momentum, by taking the oscillator's distance above or below its
+   /// own moving average. Because acceleration turns before speed does, the
+   /// reading changes sign ahead of the oscillator it is built from — it is
+   /// meant as the early half of a pair, not as a signal on its own. Above zero
+   /// acceleration is with the bulls, below zero with the bears, and it is drawn
+   /// as a zero-centred histogram whose colour convention is the bar-to-bar
+   /// change: rising bars accelerating, falling bars decelerating. Williams'
+   /// rule of thumb is that two same-coloured bars are what confirms the turn,
+   /// which is why the sign and the direction matter more than the level. The
+   /// oscillator is one leg of Williams' Profitunity system, alongside the
+   /// Awesome Oscillator ([<c>AO</c>](/functions/ao)) and the Alligator.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t; AC_t = AO_t − SMA(AO, signal)_t
-   /// Every leg is a plain simple moving average, so there is no seeding convention and none of the cross-library divergence that comes with one.
+   /// median_t = ( high_t + low_t ) / 2
+   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+   /// AC_t = AO_t − SMA(AO, signal)_t
    /// </code>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -533,18 +530,15 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
-   /// <param name="optInFastPeriod">Number of bars in the short moving average of the median price. Default 5,
-   /// the value Williams uses and every surveyed package ships (default 5; range
-   /// 2..100000; <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInSlowPeriod">Number of bars in the long moving average of the median price. Default 34,
-   /// likewise universal (default 34; range 2..100000; <c>int.MinValue</c>
-   /// selects the default).</param>
-   /// <param name="optInSignalPeriod">Number of bars in the moving average taken over the oscillator. Default 5.
-   /// MetaTrader, Quantower and cTrader hardcode all three; trading-signals
-   /// exposes all three with these same values (default 5; range 2..100000;
-   /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="outReal">Distance of the Awesome Oscillator from its own moving average, centred on
-   /// zero. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
+   /// <param name="optInFastPeriod">Number of bars in the short moving average of the median price (default 5;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">Number of bars in the long moving average of the median price (default 34;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSignalPeriod">Number of bars in the moving average taken over the oscillator (default 5;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Distance of the Awesome Oscillator ([<c>AO</c>](/functions/ao)) from its
+   /// own moving average, centred on zero. Must hold at least <c>endIdx -
+   /// startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -821,7 +815,7 @@ public partial class Core
       }
    }
 
-   private RetCode AC_OpenPass( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AC_OpenImpl( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1052,35 +1046,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AC_OpenImpl( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AC_OpenPass( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode AC_OpenAndFillImpl( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
-         return RetCode.BadParam;
-      }
-      return AC_OpenPass( sp, inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode AC_OpenAndFillInternalImpl( AC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return AC_OpenPass(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* AC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal AC_Stream AC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1093,7 +1063,10 @@ public partial class Core
    internal AC_Stream AC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1149,8 +1122,9 @@ public partial class Core
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalPeriod">As in the batch call; see <see cref="AC_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
-   /// <param name="outReal">Distance of the Awesome Oscillator from its own moving average, centred on
-   /// zero. Must hold at least <c>historyLen - AC_Lookback(...)</c> values.</param>
+   /// <param name="outReal">Distance of the Awesome Oscillator ([<c>AO</c>](/functions/ao)) from its
+   /// own moving average, centred on zero. Must hold at least <c>historyLen -
+   /// AC_Lookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AC_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
@@ -1162,13 +1136,9 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
-      AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenAndFillImpl(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+         throw StreamFailure("AC", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("AC", "openAndFill", retCode);
+      return AC_OpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outReal);
    }
 }

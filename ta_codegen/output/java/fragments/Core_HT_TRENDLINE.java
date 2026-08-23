@@ -1378,7 +1378,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_TRENDLINE_OpenPass( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HT_TRENDLINE_OpenImpl( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1839,32 +1839,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_TRENDLINE_OpenImpl( HT_TRENDLINE_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HT_TRENDLINE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_TRENDLINE_OpenAndFillImpl( HT_TRENDLINE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return HT_TRENDLINE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode HT_TRENDLINE_OpenAndFillInternalImpl( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return HT_TRENDLINE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* HT_TRENDLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1882,7 +1861,12 @@
    HT_TRENDLINE_Stream HT_TRENDLINE_OpenInternal( double inReal[], int startIdx )
    {
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1919,20 +1903,10 @@
     */
    public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( double inReal[], double outReal[] )
    {
-      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDLINE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_TRENDLINE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDLINE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + retCode, retCode);
+      return HT_TRENDLINE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

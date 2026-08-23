@@ -662,7 +662,7 @@ public partial class Core
       }
    }
 
-   private RetCode CMO_OpenPass( CMO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode CMO_OpenImpl( CMO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -849,35 +849,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CMO_OpenImpl( CMO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = CMO_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode CMO_OpenAndFillImpl( CMO_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return CMO_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode CMO_OpenAndFillInternalImpl( CMO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return CMO_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* CMO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CMO_Stream CMO_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       CMO_Stream sp = new CMO_Stream(this);
-      RetCode retCode = CMO_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = CMO_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -890,7 +866,10 @@ public partial class Core
    internal CMO_Stream CMO_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       CMO_Stream sp = new CMO_Stream(this);
-      RetCode retCode = CMO_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = CMO_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -947,13 +926,9 @@ public partial class Core
    public CMO_Stream CMO_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      CMO_Stream sp = new CMO_Stream(this);
-      RetCode retCode = CMO_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("CMO", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("CMO", "openAndFill", retCode);
+      return CMO_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

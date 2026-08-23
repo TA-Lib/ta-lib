@@ -940,7 +940,7 @@ public partial class Core
       }
    }
 
-   private RetCode HMA_OpenPass( HMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode HMA_OpenImpl( HMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1382,35 +1382,11 @@ public partial class Core
       }
    }
 
-   private RetCode HMA_OpenImpl( HMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode HMA_OpenAndFillImpl( HMA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return HMA_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode HMA_OpenAndFillInternalImpl( HMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return HMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* HMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal HMA_Stream HMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       HMA_Stream sp = new HMA_Stream(this);
-      RetCode retCode = HMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = HMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1423,7 +1399,10 @@ public partial class Core
    internal HMA_Stream HMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       HMA_Stream sp = new HMA_Stream(this);
-      RetCode retCode = HMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1482,13 +1461,9 @@ public partial class Core
    public HMA_Stream HMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      HMA_Stream sp = new HMA_Stream(this);
-      RetCode retCode = HMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("HMA", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("HMA", "openAndFill", retCode);
+      return HMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

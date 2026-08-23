@@ -528,7 +528,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MIDPRICE_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MIDPRICE_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MIDPRICE_OpenPass(
+    pub(crate) fn MIDPRICE_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<MIDPRICE_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
@@ -693,7 +693,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.MIDPRICE_OpenPass(inHigh, inLow, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.MIDPRICE_OpenImpl(inHigh, inLow, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -737,7 +737,7 @@ impl Core {
     ) -> Result<(MIDPRICE_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MIDPRICE_OpenPass(inHigh, inLow, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.MIDPRICE_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -746,7 +746,7 @@ impl Core {
     pub(crate) fn MIDPRICE_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MIDPRICE_Stream, RetCode> {
-        self.MIDPRICE_OpenPass(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.MIDPRICE_OpenImpl(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

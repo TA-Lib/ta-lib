@@ -134,7 +134,7 @@ static void TA_LOG10_StepInternal( struct TA_LOG10_Stream *sp, double inReal, do
    *outReal= log10(inReal);
 }
 
-static TA_RetCode TA_LOG10_OpenPass( struct TA_LOG10_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_LOG10_OpenImpl( struct TA_LOG10_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_LOG10_Stream *sp;
    int endIdx;
@@ -186,7 +186,7 @@ TA_RetCode TA_LOG10_OpenInternal( struct TA_LOG10_Stream **stream, const double 
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_LOG10_OpenPass( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_LOG10_OpenImpl( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -213,13 +213,13 @@ TA_LIB_API TA_RetCode TA_LOG10_OpenAndFill( TA_LOG10_Stream **stream, const doub
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   return TA_LOG10_OpenPass( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_LOG10_OpenAndFillInternal( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_LOG10_OpenAndFillInternal( struct TA_LOG10_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_LOG10_OpenPass( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_LOG10_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_LOG10_Update( TA_LOG10_Stream *stream, double inReal, double *outReal )

@@ -235,10 +235,10 @@ public partial class Core
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
+   /// outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
    /// </code>
    /// <list type="bullet">
-   /// <item><description>When several bars in a window share the highest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</description></item>
+   /// <item><description>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -296,10 +296,10 @@ public partial class Core
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
+   /// outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
    /// </code>
    /// <list type="bullet">
-   /// <item><description>When several bars in a window share the highest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</description></item>
+   /// <item><description>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -531,7 +531,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MAXINDEX_OpenPass( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -638,32 +638,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
-   {
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = MAXINDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode MAXINDEX_OpenAndFillImpl( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      return MAXINDEX_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1 );
-   }
-
-   private RetCode MAXINDEX_OpenAndFillInternalImpl( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      return MAXINDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
-   }
-
    /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -676,7 +655,10 @@ public partial class Core
    internal MAXINDEX_Stream MAXINDEX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -734,13 +716,6 @@ public partial class Core
    public MAXINDEX_Stream MAXINDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      throw StreamFailure("MAXINDEX", "openAndFill", retCode);
+      return MAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outInteger);
    }
 }

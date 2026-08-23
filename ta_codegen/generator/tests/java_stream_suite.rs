@@ -105,9 +105,9 @@ fn test_java_sma_ring_stream_section() {
     ));
     assert!(!s.contains("fillRange"), "fillRange is gone, not aliased");
     let scalar = s
-        .split("private RetCode SMA_OpenImpl(")
+        .split("SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )")
         .nth(1)
-        .expect("SMA_OpenImpl")
+        .expect("SMA_OpenInternal")
         .split("\n   }")
         .next()
         .unwrap()
@@ -115,7 +115,7 @@ fn test_java_sma_ring_stream_section() {
     assert!(
         scalar.contains("sp.outRangeBegIdx = outBegIdx.value;")
             && scalar.contains("sp.outRangeCount = outNBElement.value;"),
-        "the plain open reads the range back off the body it just ran:\n{scalar}"
+        "the plain open reads the range back off the numerics it just ran:\n{scalar}"
     );
     assert!(
         s.contains("if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;"),
@@ -440,46 +440,62 @@ fn test_java_stream_emit_ratchet() {
 }
 
 // ---------------------------------------------------------------------------
-// Merged Open family (`OpenCore` + stride)
+// Merged Open family: three entry points over one `<base>_OpenImpl`
 // ---------------------------------------------------------------------------
 //
-// `<base>_OpenImpl` and `<base>_OpenAndFillImpl` are one emission,
-// `<base>_OpenPass(..., int outStride)`. Fill passes stride 1 and the caller's
-// arrays; the scalar path passes stride 0 and a one-element sink, so every write
-// collapses onto slot 0 and that slot ends holding the last history value —
-// which is also what makes the `sp.cur_*` capture resolve with no special case.
-// `Dispatch` (MA) and `PeriodBank` (MAVP) are exempt.
+// The numerics are one emission, `<base>_OpenImpl(..., int outStride)`. The two
+// filling entries pass stride 1 and the caller's arrays; `_OpenInternal` passes
+// stride 0 and a one-element sink, so every write collapses onto slot 0 and that
+// slot ends holding the last history value — which is also what makes the
+// `sp.cur_*` capture resolve with no special case. The public `_OpenAndFill` is
+// `_OpenAndFillInternal` at anchor 0 with the aliasing guard in front, mirroring
+// `_Open` over `_OpenInternal`; that symmetry is what leaves no entry point
+// emitted unreachable. `Dispatch` (MA) and `PeriodBank` (MAVP) are exempt and
+// hand-roll a body per entry.
 
 #[test]
-fn java_open_family_is_one_core_with_two_wrappers() {
+fn java_open_family_is_one_core_with_three_entries() {
     let s = java_stream_section("cdlhammer");
     assert_eq!(
-        s.matches("private RetCode CDLHAMMER_OpenPass(").count(),
+        s.matches("private RetCode CDLHAMMER_OpenImpl(").count(),
         1,
-        "the core is emitted exactly once"
+        "the numerics are emitted exactly once"
     );
-    assert!(s.contains("int outStride )"), "the core takes a stride");
-    for w in [
-        "private RetCode CDLHAMMER_OpenImpl(",
-        "private RetCode CDLHAMMER_OpenAndFillImpl(",
+    assert!(s.contains("int outStride )"), "the numerics take a stride");
+    // Each entry reaches the numerics, and none of them re-transcribes it.
+    // The public fill goes through the anchored seam rather than straight down,
+    // which is what keeps the seam reachable for every function.
+    for (w, callee) in [
+        ("CDLHAMMER_Stream CDLHAMMER_OpenInternal(", "CDLHAMMER_OpenImpl("),
+        ("CDLHAMMER_Stream CDLHAMMER_OpenAndFillInternal(", "CDLHAMMER_OpenImpl("),
+        ("public CDLHAMMER_Stream CDLHAMMER_OpenAndFill(", "CDLHAMMER_OpenAndFillInternal("),
+        ("public CDLHAMMER_Stream CDLHAMMER_Open(", "CDLHAMMER_OpenInternal("),
     ] {
         let at = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
         let body = &s[at..at + 800.min(s.len() - at)];
-        assert!(body.contains("CDLHAMMER_OpenPass("), "{w} delegates to the core");
+        assert!(body.contains(callee), "{w} delegates to {callee}:\n{body}");
         assert!(
             !body.contains("BodyPeriodTotal"),
             "{w} must not re-transcribe the algorithm"
         );
     }
+    // No adapter tier survives between an entry point and the numerics.
+    // Both names still EXIST in the corpus -- MA and MAVP keep them -- so these
+    // are discriminators, not assertions about a word nothing emits.
+    for gone in ["CDLHAMMER_OpenAndFillImpl(", "CDLHAMMER_OpenAndFillInternalImpl("] {
+        assert!(!s.contains(gone), "{gone} is a retired tier on a merged function");
+    }
 }
 
 #[test]
-fn java_scalar_wrapper_uses_a_one_element_sink_at_stride_zero() {
+fn java_plain_open_uses_a_one_element_sink_at_stride_zero() {
     let s = java_stream_section("cdlhammer");
-    let at = s.find("private RetCode CDLHAMMER_OpenImpl(").expect("scalar wrapper");
+    let at = s
+        .find("CDLHAMMER_Stream CDLHAMMER_OpenInternal(")
+        .expect("the anchored plain open");
     let body = &s[at..at + 800.min(s.len() - at)];
     assert!(body.contains("new int[1]"), "an int output sinks into a 1-element array:\n{body}");
-    assert!(body.contains(", 0 );"), "scalar passes stride 0:\n{body}");
+    assert!(body.contains(", 0);"), "the plain open passes stride 0:\n{body}");
 }
 
 #[test]
@@ -492,42 +508,71 @@ fn java_output_writes_are_stride_scaled() {
 }
 
 #[test]
-fn java_fill_wrapper_keeps_the_aliasing_guards() {
+fn java_public_fill_keeps_the_aliasing_guards() {
     // #108/#130: Java is the one managed backend where `out == in` compiles, so
-    // the fill must reject it by reference. The scalar sink is a fresh array and
-    // has no hazard.
+    // a filling open must reject it by reference. The guard sits on the PUBLIC
+    // frame, the only one that can be handed a caller-owned array it did not
+    // vet: the plain open sinks into a fresh array, and every composed call into
+    // the anchored seam passes a destination `SubCallStep::is_fusable` already
+    // proved disjoint. It throws rather than answering a code, because the
+    // public frame is where a code becomes an exception.
     let s = java_stream_section("accbands");
     let at = s
-        .find("private RetCode ACCBANDS_OpenAndFillImpl(")
-        .expect("fill wrapper");
+        .find("public ACCBANDS_Stream ACCBANDS_OpenAndFill(")
+        .expect("public fill");
     let body = &s[at..at + 1600.min(s.len() - at)];
     assert!(
         body.contains("(Object)outRealUpperBand == (Object)inHigh"),
-        "output-vs-input guard survives on the fill wrapper:\n{body}"
+        "output-vs-input guard survives on the public fill:\n{body}"
     );
     assert!(
         body.contains("(Object)outRealUpperBand == (Object)outRealMiddleBand"),
-        "output-vs-output guard survives on the fill wrapper:\n{body}"
+        "output-vs-output guard survives on the public fill:\n{body}"
     );
-    let sat = s.find("private RetCode ACCBANDS_OpenImpl(").expect("scalar wrapper");
-    let sbody = &s[sat..sat + 800.min(s.len() - sat)];
     assert!(
-        !sbody.contains("(Object)"),
-        "Open has no aliasing hazard and must not carry the guard:\n{sbody}"
+        body.contains("throw new TaLibArgumentException(\"ACCBANDS openAndFill: \" + RetCode.BadParam, RetCode.BadParam);"),
+        "the guard throws the same text the retired ladder produced:\n{body}"
     );
+    // Paired negatives: both are false today only because the guard moved UP,
+    // so a re-render that pushes it back down fails the positive above.
+    for (w, why) in [
+        ("ACCBANDS_Stream ACCBANDS_OpenInternal(", "the plain open sinks into fresh arrays"),
+        ("ACCBANDS_Stream ACCBANDS_OpenAndFillInternal(", "the composed seam's destinations are proved disjoint"),
+    ] {
+        let sat = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
+        let sbody = &s[sat..sat + 900.min(s.len() - sat)];
+        assert!(!sbody.contains("(Object)"), "{why}, so {w} must not carry the guard:\n{sbody}");
+    }
 }
 
 #[test]
-fn java_exempt_tiers_keep_two_bodies() {
+fn java_exempt_tiers_keep_a_body_per_entry() {
+    // MA and MAVP differ between entry points by more than a stride -- which
+    // callee tier they call, and an anchor clamp -- so they hand-roll one
+    // RetCode-returning body each instead of sharing one strided `_OpenImpl`.
+    // The discriminator is that signature: an exempt `_OpenImpl` takes no
+    // stride. Asserting the ABSENCE of a name would now hold for all 176.
     for (name, base) in [("ma", "MA"), ("mavp", "MAVP")] {
         let s = java_stream_section(name);
+        let at = s
+            .find(&format!("private RetCode {base}_OpenImpl("))
+            .unwrap_or_else(|| panic!("{base}_OpenImpl"));
+        let sig = &s[at..at + s[at..].find(')').expect("signature closes")];
         assert!(
-            !s.contains(&format!("{base}_OpenPass(")),
-            "{base} is an exempt tier and must keep two bodies"
+            !sig.contains("int outStride"),
+            "{base} is exempt: its open body is not the strided numerics:\n{sig}"
         );
-        assert!(s.contains(&format!("{base}_OpenImpl(")));
-        assert!(s.contains(&format!("{base}_OpenAndFillImpl(")));
+        assert!(
+            s.contains(&format!("private RetCode {base}_OpenAndFillImpl(")),
+            "{base} keeps a separate fill body"
+        );
     }
+    // ...and the merged tiers are the other side of that discriminator.
+    let s = java_stream_section("sma");
+    let at = s.find("private RetCode SMA_OpenImpl(").expect("SMA_OpenImpl");
+    let sig = &s[at..at + s[at..].find(')').expect("signature closes")];
+    assert!(sig.contains("int outStride"), "a merged tier's open body IS the strided numerics");
+    assert!(!s.contains("private RetCode SMA_OpenAndFillImpl("), "and it needs no second body");
 }
 
 #[test]

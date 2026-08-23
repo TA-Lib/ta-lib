@@ -238,11 +238,12 @@
     * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
     * <p><b>Formula</b>
     * <pre>{@code
-    * For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = argmin over the same window (N = optInTimePeriod).
+    * outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
+    * outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the extreme value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -307,11 +308,12 @@
     * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
     * <p><b>Formula</b>
     * <pre>{@code
-    * For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = argmin over the same window (N = optInTimePeriod).
+    * outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
+    * outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the extreme value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -584,7 +586,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MINMAXINDEX_OpenPass( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
+   private RetCode MINMAXINDEX_OpenImpl( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
    {
       double highest = 0;
       double lowest = 0;
@@ -717,33 +719,11 @@
       sp.cachedValue = new MINMAXINDEX_Stream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
       return RetCode.Success;
    }
-   private RetCode MINMAXINDEX_OpenImpl( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outMinIdx = new int[1];
-      int[] sink_outMaxIdx = new int[1];
-      RetCode retCode = MINMAXINDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MINMAXINDEX_OpenAndFillImpl( MINMAXINDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
-   {
-      if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
-         return RetCode.BadParam;
-      }
-      return MINMAXINDEX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1 );
-   }
-   private RetCode MINMAXINDEX_OpenAndFillInternalImpl( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
-   {
-      return MINMAXINDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
-   }
    /* MINMAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MINMAXINDEX_Stream MINMAXINDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
    {
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -761,7 +741,13 @@
    MINMAXINDEX_Stream MINMAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outMinIdx = new int[1];
+      int[] sink_outMaxIdx = new int[1];
+      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -798,20 +784,10 @@
     */
    public MINMAXINDEX_Stream MINMAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outMinIdx[], int outMaxIdx[] )
    {
-      MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
+      if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
+         throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINMAXINDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAXINDEX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
+      return MINMAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
    }

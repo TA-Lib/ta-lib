@@ -589,7 +589,7 @@ public partial class Core
       sp.cur_outReal = cur_outReal;
    }
 
-   private RetCode PVO_OpenPass( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode PVO_OpenImpl( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -704,35 +704,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode PVO_OpenImpl( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = PVO_OpenPass( sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode PVO_OpenAndFillImpl( PVO_Stream sp, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inVolume) ) {
-         return RetCode.BadParam;
-      }
-      return PVO_OpenPass( sp, inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode PVO_OpenAndFillInternalImpl( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return PVO_OpenPass(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* PVO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal PVO_Stream PVO_OpenAndFillInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       PVO_Stream sp = new PVO_Stream(this);
-      RetCode retCode = PVO_OpenAndFillInternalImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = PVO_OpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -745,7 +721,10 @@ public partial class Core
    internal PVO_Stream PVO_OpenInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       PVO_Stream sp = new PVO_Stream(this);
-      RetCode retCode = PVO_OpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = PVO_OpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -810,13 +789,9 @@ public partial class Core
    public PVO_Stream PVO_OpenAndFill( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
-      PVO_Stream sp = new PVO_Stream(this);
-      RetCode retCode = PVO_OpenAndFillImpl(sp, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inVolume) ) {
+         throw StreamFailure("PVO", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("PVO", "openAndFill", retCode);
+      return PVO_OpenAndFillInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, outReal);
    }
 }

@@ -106,8 +106,7 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Element-wise division of two input series. Computes the quotient of corresponding values
-    /// from two real inputs.
+    /// Element-wise division of two input series.
     ///
     /// # Formula
     ///
@@ -118,7 +117,7 @@ impl Core {
     /// # Notes
     ///
     /// * Zero divided by zero gives NaN; anything else divided by zero gives positive or negative
-    ///   infinity. Neither is reported as an error — the quotient is written as computed.
+    ///   infinity. Neither is reported as an error.
     ///
     /// # Arguments
     ///
@@ -253,7 +252,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::DIV_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::DIV_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn DIV_OpenPass(
+    pub(crate) fn DIV_OpenImpl(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<DIV_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
@@ -298,7 +297,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.DIV_OpenPass(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.DIV_OpenImpl(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -344,7 +343,7 @@ impl Core {
     ) -> Result<(DIV_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.DIV_OpenPass(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.DIV_OpenAndFillInternal(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -353,7 +352,7 @@ impl Core {
     pub(crate) fn DIV_OpenAndFillInternal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<DIV_Stream, RetCode> {
-        self.DIV_OpenPass(inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.DIV_OpenImpl(inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

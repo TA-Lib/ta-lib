@@ -383,7 +383,7 @@ static void TA_AO_StepInternal( struct TA_AO_Stream *sp, double inHigh, double i
    }
 }
 
-static TA_RetCode TA_AO_OpenPass( struct TA_AO_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_AO_OpenImpl( struct TA_AO_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_AO_Stream *sp;
    int endIdx;
@@ -577,7 +577,7 @@ TA_RetCode TA_AO_OpenInternal( struct TA_AO_Stream **stream, const double inHigh
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_AO_OpenPass( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_AO_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -604,13 +604,13 @@ TA_LIB_API TA_RetCode TA_AO_OpenAndFill( TA_AO_Stream **stream, const double inH
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
-   return TA_AO_OpenPass( stream, inHigh, inLow, 0, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_AO_OpenAndFillInternal( stream, inHigh, inLow, 0, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_AO_OpenAndFillInternal( struct TA_AO_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_AO_OpenPass( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_AO_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_AO_Update( TA_AO_Stream *stream, double inHigh, double inLow, double *outReal )

@@ -675,7 +675,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLINVERTEDHAMMER_OpenPass( CDLINVERTEDHAMMER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLINVERTEDHAMMER_OpenImpl( CDLINVERTEDHAMMER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -840,32 +840,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLINVERTEDHAMMER_OpenImpl( CDLINVERTEDHAMMER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
-   {
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLINVERTEDHAMMER_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode CDLINVERTEDHAMMER_OpenAndFillImpl( CDLINVERTEDHAMMER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      return CDLINVERTEDHAMMER_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
-   }
-
-   private RetCode CDLINVERTEDHAMMER_OpenAndFillInternalImpl( CDLINVERTEDHAMMER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      return CDLINVERTEDHAMMER_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
-   }
-
    /* CDLINVERTEDHAMMER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
-      RetCode retCode = CDLINVERTEDHAMMER_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLINVERTEDHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -878,7 +857,10 @@ public partial class Core
    internal CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
-      RetCode retCode = CDLINVERTEDHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLINVERTEDHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -949,13 +931,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
-      RetCode retCode = CDLINVERTEDHAMMER_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      throw StreamFailure("CDLINVERTEDHAMMER", "openAndFill", retCode);
+      return CDLINVERTEDHAMMER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

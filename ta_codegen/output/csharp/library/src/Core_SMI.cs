@@ -1149,7 +1149,7 @@ public partial class Core
       sp.today = sp.today + 1;
    }
 
-   private RetCode SMI_OpenPass( SMI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outSMI, Span<double> outSMISignal, int outStride )
+   private RetCode SMI_OpenImpl( SMI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outSMI, Span<double> outSMISignal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1486,36 +1486,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode SMI_OpenImpl( SMI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
-   {
-      double[] sink_outSMI = new double[1];
-      double[] sink_outSMISignal = new double[1];
-      RetCode retCode = SMI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outSMI, sink_outSMISignal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode SMI_OpenAndFillImpl( SMI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outSMI, Span<double> outSMISignal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outSMI.Overlaps(inHigh) || outSMI.Overlaps(inLow) || outSMI.Overlaps(inClose) || outSMISignal.Overlaps(inHigh) || outSMISignal.Overlaps(inLow) || outSMISignal.Overlaps(inClose) || outSMI.Overlaps(outSMISignal) ) {
-         return RetCode.BadParam;
-      }
-      return SMI_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outSMI, outSMISignal, 1 );
-   }
-
-   private RetCode SMI_OpenAndFillInternalImpl( SMI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outSMI, Span<double> outSMISignal )
-   {
-      return SMI_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outSMI, outSMISignal, 1);
-   }
-
    /* SMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal SMI_Stream SMI_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outSMI, Span<double> outSMISignal )
    {
       SMI_Stream sp = new SMI_Stream(this);
-      RetCode retCode = SMI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outSMI, outSMISignal);
+      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outSMI, outSMISignal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1528,7 +1503,11 @@ public partial class Core
    internal SMI_Stream SMI_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       SMI_Stream sp = new SMI_Stream(this);
-      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      double[] sink_outSMI = new double[1];
+      double[] sink_outSMISignal = new double[1];
+      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outSMI, sink_outSMISignal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1607,13 +1586,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      SMI_Stream sp = new SMI_Stream(this);
-      RetCode retCode = SMI_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outSMI, outSMISignal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outSMI.Overlaps(inHigh) || outSMI.Overlaps(inLow) || outSMI.Overlaps(inClose) || outSMISignal.Overlaps(inHigh) || outSMISignal.Overlaps(inLow) || outSMISignal.Overlaps(inClose) || outSMI.Overlaps(outSMISignal) ) {
+         throw StreamFailure("SMI", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("SMI", "openAndFill", retCode);
+      return SMI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, outSMI, outSMISignal);
    }
 }

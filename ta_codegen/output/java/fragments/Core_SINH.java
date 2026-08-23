@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Element-wise hyperbolic sine of the input series. A vector math transform
-    * applying sinh() to each value.
+    * Element-wise hyperbolic sine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sinh(inReal[i])
@@ -125,8 +124,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise hyperbolic sine of the input series. A vector math transform
-    * applying sinh() to each value.
+    * Element-wise hyperbolic sine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sinh(inReal[i])
@@ -288,7 +286,7 @@
    {
       sp.cur_outReal = Math.sinh(inReal);
    }
-   private RetCode SINH_OpenPass( SINH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SINH_OpenImpl( SINH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -314,32 +312,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SINH_OpenImpl( SINH_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SINH_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SINH_OpenAndFillImpl( SINH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return SINH_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SINH_OpenAndFillInternalImpl( SINH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SINH_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SINH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SINH_Stream SINH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SINH_Stream sp = new SINH_Stream(this);
-      RetCode retCode = SINH_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -357,7 +334,12 @@
    SINH_Stream SINH_OpenInternal( double inReal[], int startIdx )
    {
       SINH_Stream sp = new SINH_Stream(this);
-      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -394,20 +376,10 @@
     */
    public SINH_Stream SINH_OpenAndFill( double inReal[], double outReal[] )
    {
-      SINH_Stream sp = new SINH_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("SINH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SINH_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SINH openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SINH openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SINH openAndFill: " + retCode, retCode);
+      return SINH_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

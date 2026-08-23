@@ -124,8 +124,7 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Element-wise vector subtraction of two input series. Outputs inReal0 minus
-   /// inReal1 at each index.
+   /// Element-wise subtraction of two input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -181,8 +180,7 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Element-wise vector subtraction of two input series. Outputs inReal0 minus
-   /// inReal1 at each index.
+   /// Element-wise subtraction of two input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -360,7 +358,7 @@ public partial class Core
       sp.cur_outReal = inReal0 - inReal1;
    }
 
-   private RetCode SUB_OpenPass( SUB_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode SUB_OpenImpl( SUB_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -390,35 +388,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode SUB_OpenImpl( SUB_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SUB_OpenPass( sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode SUB_OpenAndFillImpl( SUB_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
-         return RetCode.BadParam;
-      }
-      return SUB_OpenPass( sp, inReal0, inReal1, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode SUB_OpenAndFillInternalImpl( SUB_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return SUB_OpenPass(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* SUB_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal SUB_Stream SUB_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       SUB_Stream sp = new SUB_Stream(this);
-      RetCode retCode = SUB_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -431,7 +405,10 @@ public partial class Core
    internal SUB_Stream SUB_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
       SUB_Stream sp = new SUB_Stream(this);
-      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -488,13 +465,9 @@ public partial class Core
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
       if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
-      SUB_Stream sp = new SUB_Stream(this);
-      RetCode retCode = SUB_OpenAndFillImpl(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
+         throw StreamFailure("SUB", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("SUB", "openAndFill", retCode);
+      return SUB_OpenAndFillInternal(inReal0, inReal1, 0, out _, out _, outReal);
    }
 }

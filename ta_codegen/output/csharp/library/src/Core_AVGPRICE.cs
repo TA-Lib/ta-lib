@@ -389,7 +389,7 @@ public partial class Core
       sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
    }
 
-   private RetCode AVGPRICE_OpenPass( AVGPRICE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AVGPRICE_OpenImpl( AVGPRICE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -420,35 +420,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AVGPRICE_OpenImpl( AVGPRICE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AVGPRICE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode AVGPRICE_OpenAndFillImpl( AVGPRICE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
-         return RetCode.BadParam;
-      }
-      return AVGPRICE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode AVGPRICE_OpenAndFillInternalImpl( AVGPRICE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return AVGPRICE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* AVGPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal AVGPRICE_Stream AVGPRICE_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
-      RetCode retCode = AVGPRICE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = AVGPRICE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -461,7 +437,10 @@ public partial class Core
    internal AVGPRICE_Stream AVGPRICE_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
-      RetCode retCode = AVGPRICE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AVGPRICE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -527,13 +506,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
-      RetCode retCode = AVGPRICE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+         throw StreamFailure("AVGPRICE", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("AVGPRICE", "openAndFill", retCode);
+      return AVGPRICE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outReal);
    }
 }

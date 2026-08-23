@@ -9,7 +9,7 @@
 //! `peek`/`value`/`copy` methods, a deep-copy constructor), a package-private
 //! `<base>StreamStep(sp, bars...)` transition method on `Core` (so batch
 //! rendering conventions — `this.compatibility`, cross-calls, `Math.fma`
-//! sites — work verbatim), a `private RetCode <base>OpenBody(sp, ...)`
+//! sites — work verbatim), a `private RetCode <base>_OpenImpl(sp, ...)`
 //! transcription of the whole batch body, the package-private
 //! `<base>OpenInternal(in, startIdx, ...)` composition seam, and the public
 //! `<base>Open` / `<base>OpenAndFill` constructors.
@@ -23,7 +23,7 @@
 //! Deliberate Java shapings vs C/Rust (design-panel reviewed; see
 //! docs/streaming-api-design.md Java sections):
 //! - Open failures surface as unchecked exceptions. Inside the private
-//!   `OpenBody` the batch body's reject returns stay plain `RetCode` (no throw
+//!   `_OpenImpl` the batch body's reject returns stay plain `RetCode` (no throw
 //!   statements ever cross the shared renderer — its `expr_stmt` hook skips
 //!   bare identifiers); the early-SUCCESS no-data/seed-boundary returns are
 //!   mapped to `InsufficientHistory` so the thin wrapper can type the
@@ -454,48 +454,15 @@ pub fn generate(
 }
 
 
-/// `OpenBody`: the scalar wrapper onto `OpenCore`. One 1-element array per
-/// output stands in for the caller's array; at stride 0 every per-bar write
-/// lands on slot 0, so after the replay it holds the last history value —
-/// which is exactly what `sp.cur_*` was seeded from before the merge.
-fn emit_open_body_scalar_wrapper(o: &mut String, func: &FuncDef) {
-    let base = base_name(func);
-    emit_open_body_sig(o, func, OutMode::Scalar);
-    let _ = writeln!(o, "      MInteger outBegIdx = new MInteger();");
-    let _ = writeln!(o, "      MInteger outNBElement = new MInteger();");
-    let mut args: Vec<String> = vec!["sp".to_string()];
-    for input in streaming::input_array_names(func) {
-        args.push(input);
-    }
-    args.push("startIdx".to_string());
-    for p in &func.optional_inputs {
-        args.push(p.name.clone());
-    }
-    args.push("outBegIdx".to_string());
-    args.push("outNBElement".to_string());
-    for out in &func.outputs {
-        let t = out_java_type(func, &out.name);
-        let _ = writeln!(o, "      {t}[] sink_{} = new {t}[1];", out.name);
-        args.push(format!("sink_{}", out.name));
-    }
-    args.push("0".to_string());
-    // The transcribed body reports its range through the pair whatever the
-    // stride, so the plain open gets the same numbers `openAndFill` would —
-    // read back rather than re-derived from the lookback (issue #241).
-    let _ = writeln!(o, "      RetCode retCode = {base}_OpenPass( {} );", args.join(", "));
-    let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
-    let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
-    let _ = writeln!(o, "      return retCode;");
-    let _ = writeln!(o, "   }}");
-}
-
-/// `OpenAndFillBody`: the fill wrapper onto `OpenCore`. It owns the aliasing
-/// guards (#108/#130) — Java is the one managed backend where `out == in`
-/// compiles, and only this path writes caller-owned arrays.
-fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
-    let base = base_name(func);
+/// The output-aliasing pairs (#108/#130) as a Java boolean expression, or
+/// `None` when a function has nothing to compare. Java is the one managed
+/// backend where `out == in` compiles, and only a filling open writes
+/// caller-owned arrays: it writes the outputs and THEN reads the input tail to
+/// seed its rings, so the batch tier's in-place allowance is exactly what a
+/// one-pass fill must revoke. Reference equality is complete here (arrays are
+/// identical or disjoint).
+fn alias_condition(func: &FuncDef) -> Option<String> {
     let inputs = streaming::input_array_names(func);
-    emit_open_body_sig(o, func, OutMode::Fill);
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
     let mut pairs: Vec<String> = Vec::new();
     for out in &outs {
@@ -508,43 +475,24 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
             pairs.push(format!("(Object){} == (Object){b}", outs[i]));
         }
     }
-    if !pairs.is_empty() {
-        let _ = writeln!(o, "      if( {} ) {{", pairs.join(" || "));
-        let _ = writeln!(o, "         return RetCode.BadParam;");
-        let _ = writeln!(o, "      }}");
-    }
-    let mut args: Vec<String> = vec!["sp".to_string()];
-    for input in &inputs {
-        args.push(input.clone());
-    }
-    args.push("0".to_string());
-    for p in &func.optional_inputs {
-        args.push(p.name.clone());
-    }
-    args.push("outBegIdx".to_string());
-    args.push("outNBElement".to_string());
-    for out in &outs {
-        args.push((*out).to_string());
-    }
-    args.push("1".to_string());
-    let _ = writeln!(o, "      return {base}_OpenPass( {} );", args.join(", "));
-    let _ = writeln!(o, "   }}");
+    if pairs.is_empty() { None } else { Some(pairs.join(" || ")) }
 }
 
 /// Output mode for the open family (mirrors `c_stream`). `Core` is the ONE
-/// transcription both entry points share: output writes are subscripted
-/// `out[<idx> * outStride]`, so `OpenAndFillBody` passes stride 1 and the
-/// caller's arrays while `OpenBody` passes stride 0 and a one-element sink whose
-/// slot 0 ends holding the last history value. `Scalar`/`Fill` survive as
-/// signature selectors for the two exempt tiers (`Dispatch`, `PeriodBank`),
-/// which hand-roll two bodies.
+/// transcription every entry point shares — `<base>_OpenImpl`: output writes are
+/// subscripted `out[<idx> * outStride]`, so the filling entries pass stride 1
+/// and the caller's arrays while the plain open passes stride 0 and a
+/// one-element sink whose slot 0 ends holding the last history value.
+/// `Scalar`/`Fill`/`FillInternal` survive as signature selectors for the two
+/// exempt tiers (`Dispatch`, `PeriodBank`), which hand-roll a body per entry
+/// because theirs differ by more than a stride.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum OutMode {
     Scalar,
     Fill,
     /// `Fill` anchored at a caller-supplied `startIdx` — the composed-open
     /// fusion seam (issue #192). Only the Dispatch tier renders a body for it;
-    /// every tier that owns an `OpenCore` gets a thin wrapper instead.
+    /// every tier that owns a `Core` reaches the same numerics at stride 1.
     FillInternal,
     Core,
 }
@@ -595,11 +543,8 @@ fn emit_loop_shape(
         o, func, model, body, &fields, &step_settings, stream_fma, enums, registry,
         helpers, counter,
     );
-    emit_open_body_scalar_wrapper(o, func);
-    emit_open_and_fill_wrapper(o, func);
-    emit_open_and_fill_internal_body(o, func);
-    emit_open_and_fill_internal_wrapper(o, func);
-    emit_open_wrappers(o, func);
+    emit_open_and_fill_internal_wrapper(o, func, true);
+    emit_open_wrappers(o, func, true);
 }
 
 /// Prefix every non-empty line of `s` with `extra` spaces — cosmetic re-indent
@@ -1232,9 +1177,9 @@ fn build_open_body_java(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 
-/// The open-body emitter: `private RetCode <base>OpenBody(sp, in..., startIdx,
-/// opts...)` (Scalar) or `private RetCode <base>OpenAndFillBody(sp, in...,
-/// opts..., outBegIdx, outNBElement, outs...)` (Fill). `body` is the
+/// The open-body emitter: `private RetCode <base>_OpenImpl(sp, in..., startIdx,
+/// opts..., outBegIdx, outNBElement, outs..., outStride)` for a merged tier
+/// (`Core`), or the exempt tiers' `_OpenImpl` / `_OpenAndFillImpl` signatures. `body` is the
 /// transcribed batch region (loop tier: `model.body`; dual-mode:
 /// `prologue ++ general arm ++ epilogue`).
 #[allow(clippy::too_many_arguments)]
@@ -1281,8 +1226,11 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
         params.push(format!("{} {}", opt_param_java_type(&p.param_type), p.name));
     }
     let name = match mode {
+        // Exempt tiers only: their plain-open body IS their numerics, so it
+        // wears the same `_OpenImpl` name a merged tier's `Core` does. The two
+        // are never emitted for the same function.
         OutMode::Scalar => format!("{base}_OpenImpl"),
-        // The merged worker: both entry points' inputs, plus the stride that
+        // The merged worker: every entry point's inputs, plus the stride that
         // selects where the per-bar writes land.
         OutMode::Core => {
             params.push("MInteger outBegIdx".to_string());
@@ -1291,7 +1239,7 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
                 params.push(format!("{} {}[]", out_java_type(func, &out.name), out.name));
             }
             params.push("int outStride".to_string());
-            format!("{base}_OpenPass")
+            format!("{base}_OpenImpl")
         }
         OutMode::Fill => {
             params.push("MInteger outBegIdx".to_string());
@@ -1431,25 +1379,15 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &H
     let _ = writeln!(o, "      }}");
     o.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
     if mode == OutMode::Fill {
-        // FILL ONLY (the wrapper owns it once merged): OpenAndFill writes outputs then reads the
-        // input tail to seed rings — the batch tier's in==out allowance is
-        // exactly what a one-pass fill must revoke. Reference equality is
-        // complete in Java (arrays are identical or disjoint).
-        let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
-        let mut pairs: Vec<String> = Vec::new();
-        for out in &outs {
-            for input in &inputs {
-                pairs.push(format!("(Object){out} == (Object){input}"));
-            }
+        // FILL ONLY, and exempt tiers only: a merged tier carries this guard in
+        // its public `OpenAndFill`, which throws directly rather than answering
+        // a code (see `emit_open_wrappers`). The two exempt tiers hand-roll a
+        // RetCode-returning fill body, so theirs stays here.
+        if let Some(cond) = alias_condition(func) {
+            let _ = writeln!(o, "      if( {cond} ) {{");
+            let _ = writeln!(o, "         return RetCode.BadParam;");
+            let _ = writeln!(o, "      }}");
         }
-        for i in 0..outs.len() {
-            for b in &outs[i + 1..] {
-                pairs.push(format!("(Object){} == (Object){b}", outs[i]));
-            }
-        }
-        let _ = writeln!(o, "      if( {} ) {{", pairs.join(" || "));
-        let _ = writeln!(o, "         return RetCode.BadParam;");
-        let _ = writeln!(o, "      }}");
     }
 }
 
@@ -1918,9 +1856,84 @@ fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str) {
     let _ = writeln!(o, "      throw new TaLibArgumentException(\"{n} {what}: \" + retCode, retCode);");
 }
 
-/// `openInternal` (composition seam), the public `<base>Open`, and the public
-/// `<base>OpenAndFill`. Shared by every tier (the bodies differ, these don't).
-fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
+/// `<base>_OpenInternal`: the `startIdx`-anchored plain open, package-private.
+///
+/// It is the composition seam for a scalar sub-open, and the entry the JSON-RPC
+/// server drives to check an anchored range against the batch — 176 call sites,
+/// one per function, which is why it is emitted for every tier and not only the
+/// ones something composes over.
+fn emit_open_internal_seam(
+    o: &mut String,
+    func: &FuncDef,
+    merged: bool,
+    in_sig: &[String],
+    in_fwd: &[String],
+    opt_sig_str: &str,
+    opt_fwd_str: &str,
+) {
+    let base = base_name(func);
+    let class = stream_class_name(func);
+    let _ = writeln!(
+        o,
+        "   /* Internal startIdx-anchored open behind {base}_Open (composition seam). */"
+    );
+    let _ = writeln!(
+        o,
+        "   {class} {base}_OpenInternal( {}, int startIdx{opt_sig_str} )\n   {{",
+        in_sig.join(", ")
+    );
+    let _ = writeln!(o, "      {class} sp = new {class}(this);");
+    if merged {
+        let _ = writeln!(o, "      MInteger outBegIdx = new MInteger();");
+        let _ = writeln!(o, "      MInteger outNBElement = new MInteger();");
+        let mut args: Vec<String> = vec!["sp".to_string()];
+        args.extend(in_fwd.iter().cloned());
+        args.push("startIdx".to_string());
+        for p in &func.optional_inputs { args.push(p.name.clone()); }
+        args.push("outBegIdx".to_string());
+        args.push("outNBElement".to_string());
+        for out in &func.outputs {
+            let t = out_java_type(func, &out.name);
+            let _ = writeln!(o, "      {t}[] sink_{} = new {t}[1];", out.name);
+            args.push(format!("sink_{}", out.name));
+        }
+        // Stride 0 lands every per-bar write on slot 0, so after the replay it
+        // holds the last history value — what `sp.cur_*` is seeded from.
+        args.push("0".to_string());
+        let _ = writeln!(o, "      RetCode retCode = {base}_OpenImpl({});", args.join(", "));
+        // The numerics report their range through the pair whatever the stride,
+        // so the plain open gets the same numbers a fill would — read back
+        // rather than re-derived from the lookback (issue #241).
+        let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
+        let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
+    } else {
+        let _ = writeln!(
+            o,
+            "      RetCode retCode = {base}_OpenImpl(sp, {}, startIdx{opt_fwd_str});",
+            in_fwd.join(", ")
+        );
+    }
+    emit_reject_conversion(o, func, "open");
+    let _ = writeln!(o, "   }}");
+
+}
+
+/// `openInternal` (the anchored plain open), the public `<base>_Open`, and the
+/// public `<base>_OpenAndFill`.
+///
+/// `merged` says whether this function owns a `Core` — one stride-parameterized
+/// `<base>_OpenImpl` that every entry point reaches. When it does, the two
+/// package-private seams ARE the implementation: `_OpenInternal` synthesizes a
+/// one-element sink per output and calls the numerics at stride 0, and the
+/// public `_OpenAndFill` hoists the aliasing guard and then delegates to
+/// `_OpenAndFillInternal`, exactly the way `_Open` delegates to `_OpenInternal`.
+/// That symmetry is what makes the anchored fill seam reachable for every
+/// function rather than only the sixteen something composes over.
+///
+/// The two exempt tiers (`Dispatch`, `PeriodBank`) hand-roll a RetCode-returning
+/// body per entry point — theirs differ by which callee tier they call and by an
+/// anchor clamp, not by a stride — so their wrappers stay thin over those.
+fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
     let base = base_name(func);
     let class = stream_class_name(func);
     let n = func.name.to_uppercase();
@@ -1940,24 +1953,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     let opt_sig_str = if opt_sig.is_empty() { String::new() } else { format!(", {}", opt_sig.join(", ")) };
     let opt_fwd_str = if opt_fwd.is_empty() { String::new() } else { format!(", {}", opt_fwd.join(", ")) };
 
-    // openInternal: startIdx-anchored composition seam (package-private).
-    let _ = writeln!(
-        o,
-        "   /* Internal startIdx-anchored open behind {base}_Open (composition seam). */"
-    );
-    let _ = writeln!(
-        o,
-        "   {class} {base}_OpenInternal( {}, int startIdx{opt_sig_str} )\n   {{",
-        in_sig.join(", ")
-    );
-    let _ = writeln!(o, "      {class} sp = new {class}(this);");
-    let _ = writeln!(
-        o,
-        "      RetCode retCode = {base}_OpenImpl(sp, {}, startIdx{opt_fwd_str});",
-        in_fwd.join(", ")
-    );
-    emit_reject_conversion(o, func, "open");
-    let _ = writeln!(o, "   }}");
+    emit_open_internal_seam(o, func, merged, &in_sig, &in_fwd, &opt_sig_str, &opt_fwd_str);
 
     // Public open.
     let _ = writeln!(
@@ -2018,17 +2014,49 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         "   public {class} {base}_OpenAndFill( {} )\n   {{",
         fill_sig.join(", ")
     );
-    let _ = writeln!(o, "      {class} sp = new {class}(this);");
-    let _ = writeln!(o, "      MInteger outBegIdx = new MInteger();");
-    let _ = writeln!(o, "      MInteger outNBElement = new MInteger();");
-    let _ = writeln!(
-        o,
-        "      RetCode retCode = {base}_OpenAndFillImpl(sp, {});",
-        fill_fwd.join(", ")
-    );
-    let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
-    let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
-    emit_reject_conversion(o, func, "openAndFill");
+    if merged {
+        // The guard the anchored seam deliberately omits: every composed
+        // sub-call passes a destination that aliases neither its sources nor
+        // each other, so it belongs on the public frame, not the hot one. It
+        // throws here rather than answering a code, producing the identical
+        // text the shared ladder produced when the deleted fill body returned
+        // BadParam into it.
+        if let Some(cond) = alias_condition(func) {
+            let _ = writeln!(o, "      if( {cond} ) {{");
+            let _ = writeln!(
+                o,
+                "         throw new TaLibArgumentException(\"{n} openAndFill: \" + RetCode.BadParam, RetCode.BadParam);"
+            );
+            let _ = writeln!(o, "      }}");
+        }
+        let _ = writeln!(o, "      MInteger outBegIdx = new MInteger();");
+        let _ = writeln!(o, "      MInteger outNBElement = new MInteger();");
+        let mut args: Vec<String> = in_fwd.clone();
+        args.push("0".to_string());
+        args.extend(opt_fwd.iter().cloned());
+        args.push("outBegIdx".to_string());
+        args.push("outNBElement".to_string());
+        for out in &func.outputs {
+            args.push(out.name.clone());
+        }
+        let _ = writeln!(
+            o,
+            "      return {base}_OpenAndFillInternal({});",
+            args.join(", ")
+        );
+    } else {
+        let _ = writeln!(o, "      {class} sp = new {class}(this);");
+        let _ = writeln!(o, "      MInteger outBegIdx = new MInteger();");
+        let _ = writeln!(o, "      MInteger outNBElement = new MInteger();");
+        let _ = writeln!(
+            o,
+            "      RetCode retCode = {base}_OpenAndFillImpl(sp, {});",
+            fill_fwd.join(", ")
+        );
+        let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
+        let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
+        emit_reject_conversion(o, func, "openAndFill");
+    }
     let _ = writeln!(o, "   }}");
 }
 
@@ -2151,6 +2179,16 @@ fn emit_dual_mode(
         emit_open_body_sig(o, func, OutMode::Core);
         emit_open_head(o, func, &ma.outputs);
         emit_open_validation(o, func, OutMode::Core, enums);
+        // No `emit_anchor_guard` here, unlike the Loop and Composed prologues.
+        // Every dual-mode arm already rejects the anchor on its own way in, and
+        // for the identity arm the two conditions are the SAME one spelled
+        // differently: it clamps `fillLb = max(lookback, startIdx)` and then
+        // rejects `historyLen < fillLb + 1`, which at the identity period
+        // (lookback 0) reduces to exactly `startIdx > endIdx`. Emitting the
+        // prologue guard too would be dead code in 7 bodies per backend. C
+        // hoists it instead, which is why the four backends differ in PLACEMENT
+        // here and not in behaviour -- checked against every arm of all seven
+        // (EFI, HMA, MINUS_DI, MINUS_DM, PLUS_DI, PLUS_DM, TRIMA).
         // Identity (HMA period 1) short-circuits ahead of the predicate: the
         // whole union sits at its defaults, including the arrays only the
         // general arm touches. What keeps that arm from running is the step's
@@ -2189,12 +2227,9 @@ fn emit_dual_mode(
         let _ = writeln!(o, "      }}");
         let _ = writeln!(o, "   }}");
     }
-    emit_open_body_scalar_wrapper(o, func);
-    emit_open_and_fill_wrapper(o, func);
-    emit_open_and_fill_internal_body(o, func);
-    emit_open_and_fill_internal_wrapper(o, func);
+    emit_open_and_fill_internal_wrapper(o, func, true);
 
-    emit_open_wrappers(o, func);
+    emit_open_wrappers(o, func, true);
 }
 
 // ---------------------------------------------------------------------------
@@ -2555,8 +2590,8 @@ fn emit_dispatch(
         let _ = writeln!(o, "   }}");
     }
 
-    emit_open_wrappers(o, func);
-    emit_open_and_fill_internal_wrapper(o, func);
+    emit_open_wrappers(o, func, false);
+    emit_open_and_fill_internal_wrapper(o, func, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -2759,7 +2794,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      return RetCode.Success;");
     let _ = writeln!(o, "   }}");
 
-    emit_open_wrappers(o, func);
+    emit_open_wrappers(o, func, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -3103,7 +3138,7 @@ fn build_composed_open_bodies(
     )
 }
 
-/// Composed open body (Scalar = `OpenBody`, Fill = `OpenAndFillBody`):
+/// Composed open body (the merged `Core`, reached at stride 0 and stride 1):
 /// scratch `sc_` output arrays + verbatim transcription of the batch body with
 /// sub-streams opened at the exact consumption points, then capture.
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
@@ -3426,46 +3461,26 @@ fn emit_composed(
     emit_composed_open(
         o, func, cp, &step_settings, stream_fma, &outputs, enums, registry, helpers, counter,
     );
-    emit_open_body_scalar_wrapper(o, func);
-    emit_open_and_fill_wrapper(o, func);
-    emit_open_and_fill_internal_body(o, func);
-    emit_open_and_fill_internal_wrapper(o, func);
-    emit_open_wrappers(o, func);
-}
-
-/// `<base>_OpenAndFillInternalImpl` for a tier that owns an `OpenCore`: the same
-/// single pass as `OpenAndFillBody`, at the caller's `startIdx`. The Dispatch
-/// tier renders its own body instead (it has no `OpenCore`), and PeriodBank
-/// renders none at all.
-fn emit_open_and_fill_internal_body(o: &mut String, func: &FuncDef) {
-    let base = base_name(func);
-    emit_open_body_sig(o, func, OutMode::FillInternal);
-    let mut args: Vec<String> = vec!["sp".to_string()];
-    args.extend(streaming::input_array_names(func));
-    args.push("startIdx".to_string());
-    for p in &func.optional_inputs {
-        args.push(p.name.clone());
-    }
-    args.push("outBegIdx".to_string());
-    args.push("outNBElement".to_string());
-    for out in &func.outputs {
-        args.push(out.name.clone());
-    }
-    args.push("1".to_string());
-    let _ = writeln!(o, "      return {base}_OpenPass({});", args.join(", "));
-    let _ = writeln!(o, "   }}");
+    emit_open_and_fill_internal_wrapper(o, func, true);
+    emit_open_wrappers(o, func, true);
 }
 
 /// `<base>_OpenAndFillInternal`: `OpenAndFill` anchored at the caller's
 /// `startIdx` — the composed-open fusion seam (issue #192), so one pass both
 /// warms the sub-handle and fills that sub-call's destination.
 ///
-/// Goes straight to `OpenCore` rather than through `OpenAndFillBody`, which
-/// hardcodes startIdx 0 and owns the aliasing guard. Dropping that guard is
-/// deliberate: the generator emits a call here only for a sub-call whose
-/// destinations alias neither its sources nor each other
-/// ([`streaming::SubCallStep::is_fusable`]), so it could never fire.
-fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
+/// For a tier that owns a `Core` this IS the fill implementation: the public
+/// `OpenAndFill` is the same call at anchor 0 with the aliasing guard in front,
+/// so the seam is reachable for every function and none of them is emitted
+/// unreachable. Carrying no guard of its own stays deliberate — the generator
+/// emits a composed call here only for a sub-call whose destinations alias
+/// neither its sources nor each other ([`streaming::SubCallStep::is_fusable`]),
+/// and the public frame above answers for the caller-supplied case.
+///
+/// `merged` false is the Dispatch tier, which renders its own
+/// `_OpenAndFillInternalImpl` because its anchored arm calls different callee
+/// tiers than its public one and adds an anchor clamp.
+fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: bool) {
     let base = base_name(func);
     let class = stream_class_name(func);
     let in_sig: Vec<String> = streaming::input_array_names(func)
@@ -3503,11 +3518,16 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     fi_args.push("outBegIdx".to_string());
     fi_args.push("outNBElement".to_string());
     fi_args.extend(outs.iter().cloned());
-    let _ = writeln!(
-        o,
-        "      RetCode retCode = {base}_OpenAndFillInternalImpl({});",
-        fi_args.join(", ")
-    );
+    if merged {
+        fi_args.push("1".to_string());
+        let _ = writeln!(o, "      RetCode retCode = {base}_OpenImpl({});", fi_args.join(", "));
+    } else {
+        let _ = writeln!(
+            o,
+            "      RetCode retCode = {base}_OpenAndFillInternalImpl({});",
+            fi_args.join(", ")
+        );
+    }
     // The caller's pair holds the range the fill wrote — the same one every
     // composed sub-handle is opened through (issue #241).
     let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");

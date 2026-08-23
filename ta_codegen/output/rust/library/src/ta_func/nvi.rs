@@ -337,7 +337,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::NVI_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::NVI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn NVI_OpenPass(
+    pub(crate) fn NVI_OpenImpl(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<NVI_Stream, RetCode> {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
@@ -418,7 +418,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.NVI_OpenPass(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.NVI_OpenImpl(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -466,7 +466,7 @@ impl Core {
     ) -> Result<(NVI_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.NVI_OpenPass(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.NVI_OpenAndFillInternal(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -475,7 +475,7 @@ impl Core {
     pub(crate) fn NVI_OpenAndFillInternal(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<NVI_Stream, RetCode> {
-        self.NVI_OpenPass(inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.NVI_OpenImpl(inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

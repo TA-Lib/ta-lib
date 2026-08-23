@@ -305,6 +305,13 @@ impl Core {
     /// optInTimePeriod bars. An overlap-study companion to MIN and MAX that computes both extrema
     /// in one pass.
     ///
+    /// # Formula
+    ///
+    /// ```text
+    /// outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])  
+    /// outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
+    /// ```
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -512,7 +519,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MINMAX_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MINMAX_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MINMAX_OpenPass(
+    pub(crate) fn MINMAX_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMin: &mut [f64], outMax: &mut [f64], outStride: usize,
     ) -> Result<MINMAX_Stream, RetCode> {
         if inReal.is_empty() {
@@ -675,7 +682,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outMin = [0.0_f64; 1];
         let mut sink_outMax = [0.0_f64; 1];
-        let handle = self.MINMAX_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMin, &mut sink_outMax, 0)?;
+        let handle = self.MINMAX_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMin, &mut sink_outMax, 0)?;
         Ok((handle, (sink_outMin[0], sink_outMax[0])))
     }
 
@@ -722,7 +729,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MINMAX_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outMin, outMax, 1)?;
+        let handle = self.MINMAX_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outMin, outMax)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -731,7 +738,7 @@ impl Core {
     pub(crate) fn MINMAX_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMin: &mut [f64], outMax: &mut [f64],
     ) -> Result<MINMAX_Stream, RetCode> {
-        self.MINMAX_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1)
+        self.MINMAX_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1)
     }
 
 }

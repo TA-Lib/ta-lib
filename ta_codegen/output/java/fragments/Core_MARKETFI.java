@@ -381,7 +381,7 @@
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode MARKETFI_OpenPass( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -436,32 +436,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MARKETFI_OpenAndFillImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MARKETFI_OpenAndFillInternalImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MARKETFI_OpenPass(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MARKETFI_Stream MARKETFI_OpenAndFillInternal( double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenAndFillInternalImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -479,7 +458,12 @@
    MARKETFI_Stream MARKETFI_OpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -516,20 +500,10 @@
     */
    public MARKETFI_Stream MARKETFI_OpenAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] )
    {
-      MARKETFI_Stream sp = new MARKETFI_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("MARKETFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MARKETFI_OpenAndFillImpl(sp, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MARKETFI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
+      return MARKETFI_OpenAndFillInternal(inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

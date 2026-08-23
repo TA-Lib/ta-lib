@@ -1289,7 +1289,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_DCPERIOD_OpenPass( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode HT_DCPERIOD_OpenImpl( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1698,35 +1698,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_DCPERIOD_OpenImpl( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HT_DCPERIOD_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode HT_DCPERIOD_OpenAndFillImpl( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return HT_DCPERIOD_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode HT_DCPERIOD_OpenAndFillInternalImpl( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return HT_DCPERIOD_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* HT_DCPERIOD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
-      RetCode retCode = HT_DCPERIOD_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1739,7 +1715,10 @@ public partial class Core
    internal HT_DCPERIOD_Stream HT_DCPERIOD_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
-      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1794,13 +1773,9 @@ public partial class Core
    public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
-      RetCode retCode = HT_DCPERIOD_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("HT_DCPERIOD", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("HT_DCPERIOD", "openAndFill", retCode);
+      return HT_DCPERIOD_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

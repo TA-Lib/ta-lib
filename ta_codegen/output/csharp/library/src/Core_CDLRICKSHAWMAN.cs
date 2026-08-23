@@ -664,7 +664,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLRICKSHAWMAN_OpenPass( CDLRICKSHAWMAN_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLRICKSHAWMAN_OpenImpl( CDLRICKSHAWMAN_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -825,32 +825,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLRICKSHAWMAN_OpenImpl( CDLRICKSHAWMAN_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
-   {
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLRICKSHAWMAN_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode CDLRICKSHAWMAN_OpenAndFillImpl( CDLRICKSHAWMAN_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      return CDLRICKSHAWMAN_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
-   }
-
-   private RetCode CDLRICKSHAWMAN_OpenAndFillInternalImpl( CDLRICKSHAWMAN_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      return CDLRICKSHAWMAN_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
-   }
-
    /* CDLRICKSHAWMAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
-      RetCode retCode = CDLRICKSHAWMAN_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLRICKSHAWMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -863,7 +842,10 @@ public partial class Core
    internal CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
-      RetCode retCode = CDLRICKSHAWMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLRICKSHAWMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -931,13 +913,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
-      RetCode retCode = CDLRICKSHAWMAN_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      throw StreamFailure("CDLRICKSHAWMAN", "openAndFill", retCode);
+      return CDLRICKSHAWMAN_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

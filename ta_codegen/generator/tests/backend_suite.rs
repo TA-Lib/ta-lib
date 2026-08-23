@@ -7374,7 +7374,7 @@ fn test_c_ht_dcperiod_parity_stream_section() {
         .split("TA_HT_DCPERIOD_StepInternal")
         .nth(1)
         .expect("StepInternal emitted");
-    let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenPass").unwrap_or(step.len())];
+    let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenImpl").unwrap_or(step.len())];
     assert!(
         step_body.contains("*outReal= sp->smoothPeriod;"),
         "unconditional smoothPeriod output in the step"
@@ -7422,7 +7422,7 @@ fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
         .split("TA_HT_PHASOR_StepInternal")
         .nth(1)
         .expect("StepInternal emitted");
-    let step_body = &step[..step.find("TA_HT_PHASOR_OpenPass").unwrap_or(step.len())];
+    let step_body = &step[..step.find("TA_HT_PHASOR_OpenImpl").unwrap_or(step.len())];
     // The step branches on the carried parity, and BOTH outputs are written
     // unconditionally in each arm (the nested `today >= startIdx` gate stripped).
     assert!(step_body.contains("if( sp->streamParity == 0 )"), "parity branch in the step");
@@ -7475,7 +7475,7 @@ fn test_c_ht_sine_two_sin_outputs() {
     let s = ht_stream_section("ht_sine");
     assert!(s.contains("double *cb_smoothPrice;"), "shares DCPHASE's circbuf");
     let step = s.split("TA_HT_SINE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_SINE_OpenPass").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_SINE_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("*outSine="), "outSine written unconditionally");
     assert!(step.contains("*outLeadSine="), "outLeadSine written unconditionally");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
@@ -7508,7 +7508,7 @@ fn test_c_folded_window_read_is_cursor_relative_and_de_moduloed() {
         "the rescan window keeps no buffer (#229)"
     );
     let step = s.split("TA_CDL3BLACKCROWS_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_CDL3BLACKCROWS_OpenPass").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_CDL3BLACKCROWS_OpenImpl").unwrap_or(step.len())];
     let ring = "ring_ShadowVeryShortTrailingIdx_derived";
     let pos = "sp->ringPos_ShadowVeryShortTrailingIdx";
     let cap = "sp->ringCap_ShadowVeryShortTrailingIdx";
@@ -7851,7 +7851,7 @@ fn test_c_ht_trendline_raw_price_window() {
     assert!(s.contains("double *win_i_inReal;"), "rescan window over raw inReal");
     assert!(!s.contains("cb_smoothPrice"), "no smoothPrice circbuf (removed, issue #88)");
     let step = s.split("TA_HT_TRENDLINE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_TRENDLINE_OpenPass").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_TRENDLINE_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i >= sp->winCap_i) ?"), "de-modulo window read of bar today-i");
     assert!(step.contains("if( sp->i < sp->DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
     assert!(step.contains("*outReal= sp->tempReal2;"), "unconditional trendline output");
@@ -7866,7 +7866,7 @@ fn test_c_ht_trendmode_full_union() {
     assert!(s.contains("double *cb_smoothPrice;"), "smoothPrice circbuf");
     assert!(s.contains("double *win_j_inReal;"), "raw-price rescan window (counter j)");
     let step = s.split("TA_HT_TRENDMODE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_TRENDMODE_OpenPass").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_TRENDMODE_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("*outInteger="), "integer trend-mode output, unconditional");
     assert!(step.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf DC-phase read");
     assert!(step.contains("sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j >= sp->winCap_j) ?"), "de-modulo window trendline read");
@@ -7883,7 +7883,7 @@ fn test_c_mama_two_outputs_and_params() {
     assert!(s.contains("double optInFastLimit;") && s.contains("double optInSlowLimit;"), "real params carried in the handle");
     assert!(s.contains("double mama;") && s.contains("double fama;"), "coupled mama/fama carried");
     let step = s.split("TA_MAMA_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_MAMA_OpenPass").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_MAMA_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
     // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
     // step never dereferences a NULL FAMA pointer (the gate itself is stripped).
@@ -8138,8 +8138,8 @@ fn test_c_midprice_stream_uses_the_declared_alternate() {
     // wrong body; these check the emitted CODE. The block scan's scratch and
     // block cursor appear in the batch tier and nowhere in the Open.
     let (batch, open) = c
-        .split_once("TA_MIDPRICE_OpenPass")
-        .expect("OpenCore emitted");
+        .split_once("TA_MIDPRICE_OpenImpl")
+        .expect("the merged open numerics emitted");
     for marker in ["sufHighest", "preHighest", "blockNext"] {
         assert!(
             batch.contains(marker),
@@ -8282,7 +8282,7 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
         let open_at = c
             .find(&format!("TA_RetCode TA_{upper}_Open"))
             .unwrap_or_else(|| panic!("{upper} composed Open"));
-        // One `OpenCore` transcribes the region for both entry points, so every
+        // One `the merged open numerics` transcribes the region for both entry points, so every
         // buffer is checked exactly once — never twice. (Before the Open family
         // was merged this read 2, one per transcription; the invariant being
         // pinned is unchanged: the source's own check must not be emitted
@@ -8293,7 +8293,7 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
             assert_eq!(
                 n, 1,
                 "{upper}: `{buf}` must be null-checked exactly once in the composed \
-                 OpenCore, found {n} — the source's own check is being emitted \
+                 the merged open numerics, found {n} — the source's own check is being emitted \
                  alongside the injected one again"
             );
         }
@@ -10388,7 +10388,7 @@ fn test_composed_open_fuses_every_sub_call() {
     );
 }
 
-/// Every transcribed `_OpenPass` rejects an anchor that lands past the history,
+/// Every transcribed `_OpenImpl` rejects an anchor that lands past the history,
 /// in all four backends, and does it before any loop can run.
 ///
 /// The batch prologue has always rejected `endIdx < startIdx`; the streaming
@@ -10479,18 +10479,22 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
         out
     }
 
-    /// Every `_OpenPass` DEFINITION body in `src`. `_OpenPass(` alone also
-    /// matches the two call sites every function has, and a body sliced from a
-    /// call site is whatever block happens to follow it — so the definition
-    /// keyword has to be on the same line.
-    fn open_passes<'a>(src: &'a str, def_kw: &str) -> Vec<&'a str> {
+    /// Every TRANSCRIBED `_OpenImpl` DEFINITION body in `src`. Two filters, and
+    /// both are load-bearing. `_OpenImpl(` alone also matches the call sites
+    /// every function has, and a body sliced from a call site is whatever block
+    /// happens to follow it — so the definition keyword has to be on the same
+    /// line. And in Java and C# the two exempt tiers (MA, MAVP) wear the same
+    /// name over a hand-rolled body that is not the strided numerics and owns no
+    /// anchor of its own, so the parameter list must carry `outStride`.
+    fn open_impls<'a>(src: &'a str, def_kw: &str) -> Vec<&'a str> {
         let mut out = Vec::new();
         let mut at = 0;
-        while let Some(i) = src[at..].find("_OpenPass(") {
+        while let Some(i) = src[at..].find("_OpenImpl(") {
             let abs = at + i;
-            at = abs + "_OpenPass(".len();
+            at = abs + "_OpenImpl(".len();
             let line_start = src[..abs].rfind('\n').map_or(0, |n| n + 1);
-            if src[line_start..abs].contains(def_kw) {
+            let params_end = src[abs..].find('{').map_or(src.len(), |b| abs + b);
+            if src[line_start..abs].contains(def_kw) && src[abs..params_end].contains("outStride") {
                 out.push(body_after(src, abs));
             }
         }
@@ -10525,21 +10529,28 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
 
         for (b, src) in sources.iter().enumerate() {
             let (lang, guard, empty_check) = specs[b];
-            for body in open_passes(src, def_kws[b]) {
+            for body in open_impls(src, def_kws[b]) {
                 if body.is_empty() {
                     continue;
                 }
                 let body = &strip_comments(body);
                 let g = body.find(guard).unwrap_or_else(|| {
-                    panic!("{lang} {}_OpenPass: no anchor guard — an anchor past the history would run the body's loop with a negative count", func.name)
+                    panic!("{lang} {}_OpenImpl: no anchor guard — an anchor past the history would run the body's loop with a negative count", func.name)
                 });
                 if let Some(e) = body.find(empty_check) {
                     assert!(
                         e < g,
-                        "{lang} {}_OpenPass: the anchor guard evaluates the history length, so it must come after the emptiness check",
+                        "{lang} {}_OpenImpl: the anchor guard evaluates the history length, so it must come after the emptiness check",
                         func.name
                     );
                 }
+                // Arm-blind, and deliberately loose because of it: a DualMode
+                // body has one guard/loop pair PER ARM, so comparing the first
+                // of each across the whole body is the wrong shape there — add
+                // `for(` to the needle and HMA reports a false positive on its
+                // identity arm's fill loop, which its own clamp already guards.
+                // The "a guard exists" assertion above is the total one; this is
+                // a placement check that skips the 37 bodies matching no needle.
                 let first_loop = ["while", "for "]
                     .iter()
                     .filter_map(|kw| body.find(kw))
@@ -10547,7 +10558,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
                 if let Some(l) = first_loop {
                     assert!(
                         g < l,
-                        "{lang} {}_OpenPass: the anchor guard sits after the first loop, which is where the unbounded walk happens",
+                        "{lang} {}_OpenImpl: the anchor guard sits after the first loop, which is where the unbounded walk happens",
                         func.name
                     );
                 }
@@ -10562,7 +10573,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     for (b, n) in per_backend.iter().enumerate() {
         assert!(
             *n > 150,
-            "{}: only {n} _OpenPass bodies seen — the signature marker has drifted",
+            "{}: only {n} _OpenImpl bodies seen — the signature marker has drifted",
             specs[b].0
         );
     }

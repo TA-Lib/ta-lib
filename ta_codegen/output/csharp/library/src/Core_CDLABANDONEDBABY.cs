@@ -732,7 +732,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLABANDONEDBABY_OpenPass( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLABANDONEDBABY_OpenImpl( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -914,32 +914,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLABANDONEDBABY_OpenImpl( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
-   {
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLABANDONEDBABY_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode CDLABANDONEDBABY_OpenAndFillImpl( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      return CDLABANDONEDBABY_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1 );
-   }
-
-   private RetCode CDLABANDONEDBABY_OpenAndFillInternalImpl( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      return CDLABANDONEDBABY_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
-   }
-
    /* CDLABANDONEDBABY_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
-      RetCode retCode = CDLABANDONEDBABY_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -952,7 +931,10 @@ public partial class Core
    internal CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
-      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1027,13 +1009,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
-      RetCode retCode = CDLABANDONEDBABY_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      throw StreamFailure("CDLABANDONEDBABY", "openAndFill", retCode);
+      return CDLABANDONEDBABY_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
    }
 }

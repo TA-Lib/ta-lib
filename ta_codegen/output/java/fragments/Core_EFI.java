@@ -543,7 +543,7 @@
          sp.cur_outReal = sp.prevMA;
       }
    }
-   private RetCode EFI_OpenPass( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode EFI_OpenImpl( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
@@ -747,32 +747,11 @@
          return RetCode.Success;
       }
    }
-   private RetCode EFI_OpenImpl( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = EFI_OpenPass( sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode EFI_OpenAndFillImpl( EFI_Stream sp, double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return EFI_OpenPass( sp, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode EFI_OpenAndFillInternalImpl( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return EFI_OpenPass(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* EFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    EFI_Stream EFI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -790,7 +769,12 @@
    EFI_Stream EFI_OpenInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -827,20 +811,10 @@
     */
    public EFI_Stream EFI_OpenAndFill( double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      EFI_Stream sp = new EFI_Stream(this);
+      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EFI_OpenAndFillImpl(sp, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EFI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("EFI openAndFill: " + retCode, retCode);
+      return EFI_OpenAndFillInternal(inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

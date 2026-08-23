@@ -627,7 +627,7 @@ static void TA_MINMAX_StepInternal( struct TA_MINMAX_Stream *sp, double inReal, 
    sp->today += 1;
 }
 
-static TA_RetCode TA_MINMAX_OpenPass( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[], int outStride )
+static TA_RetCode TA_MINMAX_OpenImpl( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[], int outStride )
 {
    struct TA_MINMAX_Stream *sp;
    int endIdx;
@@ -814,7 +814,7 @@ TA_RetCode TA_MINMAX_OpenInternal( struct TA_MINMAX_Stream **stream, const doubl
    int dummyNBElement = 0;
    double sink_outMin = 0.0;
    double sink_outMax = 0.0;
-   retCode = TA_MINMAX_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outMin, &sink_outMax, 0 );
+   retCode = TA_MINMAX_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outMin, &sink_outMax, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outMin = sink_outMin;
@@ -842,13 +842,13 @@ TA_LIB_API TA_RetCode TA_MINMAX_OpenAndFill( TA_MINMAX_Stream **stream, const do
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outMin == (const void *)inReal || (const void *)outMax == (const void *)inReal || (const void *)outMin == (const void *)outMax ) return TA_BAD_PARAM;
-   return TA_MINMAX_OpenPass( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1 );
+   return TA_MINMAX_OpenAndFillInternal( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_MINMAX_OpenAndFillInternal( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[] )
 {
-   return TA_MINMAX_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1 );
+   return TA_MINMAX_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_MINMAX_Update( TA_MINMAX_Stream *stream, double inReal, double *outMin, double *outMax )

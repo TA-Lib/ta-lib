@@ -485,7 +485,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode TRANGE_OpenPass( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TRANGE_OpenImpl( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -564,35 +564,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode TRANGE_OpenImpl( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TRANGE_OpenPass( sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode TRANGE_OpenAndFillImpl( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
-         return RetCode.BadParam;
-      }
-      return TRANGE_OpenPass( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode TRANGE_OpenAndFillInternalImpl( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return TRANGE_OpenPass(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* TRANGE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal TRANGE_Stream TRANGE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -605,7 +581,10 @@ public partial class Core
    internal TRANGE_Stream TRANGE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -666,13 +645,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenAndFillImpl(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+         throw StreamFailure("TRANGE", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("TRANGE", "openAndFill", retCode);
+      return TRANGE_OpenAndFillInternal(inHigh, inLow, inClose, 0, out _, out _, outReal);
    }
 }

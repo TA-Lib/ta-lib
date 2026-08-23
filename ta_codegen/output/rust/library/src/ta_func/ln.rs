@@ -104,7 +104,7 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Vector natural logarithm: applies the natural log (base e) elementwise to the input series.
+    /// Element-wise natural logarithm of the input series.
     ///
     /// # Formula
     ///
@@ -162,6 +162,11 @@ impl Core {
     /// # See also
     ///
     /// [`Core::LOG10`] · [`Core::EXP`] · [`Core::SQRT`]
+    ///
+    /// # References
+    ///
+    /// * Wikipedia, *Natural logarithm*:
+    ///   [en.wikipedia.org/wiki/Natural_logarithm](https://en.wikipedia.org/wiki/Natural_logarithm)
     ///
     /// Further reading: [ta-lib.org/functions/ln](https://ta-lib.org/functions/ln)
     #[doc(alias = "NaturalLog")]
@@ -245,7 +250,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::LN_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::LN_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn LN_OpenPass(
+    pub(crate) fn LN_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<LN_Stream, RetCode> {
         if inReal.is_empty() {
@@ -290,7 +295,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.LN_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.LN_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -333,7 +338,7 @@ impl Core {
     ) -> Result<(LN_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.LN_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.LN_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -342,7 +347,7 @@ impl Core {
     pub(crate) fn LN_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<LN_Stream, RetCode> {
-        self.LN_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.LN_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

@@ -337,7 +337,7 @@
       sp.cur_outReal = sp.prevOBV;
       sp.prevReal = tempReal;
    }
-   private RetCode OBV_OpenPass( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode OBV_OpenImpl( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -378,32 +378,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode OBV_OpenImpl( OBV_Stream sp, double inReal[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = OBV_OpenPass( sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode OBV_OpenAndFillImpl( OBV_Stream sp, double inReal[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return OBV_OpenPass( sp, inReal, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode OBV_OpenAndFillInternalImpl( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return OBV_OpenPass(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    OBV_Stream OBV_OpenAndFillInternal( double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenAndFillInternalImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -421,7 +400,12 @@
    OBV_Stream OBV_OpenInternal( double inReal[], double inVolume[], int startIdx )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -458,20 +442,10 @@
     */
    public OBV_Stream OBV_OpenAndFill( double inReal[], double inVolume[], double outReal[] )
    {
-      OBV_Stream sp = new OBV_Stream(this);
+      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("OBV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = OBV_OpenAndFillImpl(sp, inReal, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("OBV openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("OBV openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("OBV openAndFill: " + retCode, retCode);
+      return OBV_OpenAndFillInternal(inReal, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

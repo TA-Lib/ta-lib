@@ -674,7 +674,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode AROON_OpenPass( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp, int outStride )
+   private RetCode AROON_OpenImpl( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -817,36 +817,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AROON_OpenImpl( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
-   {
-      double[] sink_outAroonDown = new double[1];
-      double[] sink_outAroonUp = new double[1];
-      RetCode retCode = AROON_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outAroonDown, sink_outAroonUp, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode AROON_OpenAndFillImpl( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outAroonDown.Overlaps(inHigh) || outAroonDown.Overlaps(inLow) || outAroonUp.Overlaps(inHigh) || outAroonUp.Overlaps(inLow) || outAroonDown.Overlaps(outAroonUp) ) {
-         return RetCode.BadParam;
-      }
-      return AROON_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp, 1 );
-   }
-
-   private RetCode AROON_OpenAndFillInternalImpl( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp )
-   {
-      return AROON_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp, 1);
-   }
-
    /* AROON_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal AROON_Stream AROON_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp )
    {
       AROON_Stream sp = new AROON_Stream(this);
-      RetCode retCode = AROON_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp);
+      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -859,7 +834,11 @@ public partial class Core
    internal AROON_Stream AROON_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       AROON_Stream sp = new AROON_Stream(this);
-      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      double[] sink_outAroonDown = new double[1];
+      double[] sink_outAroonUp = new double[1];
+      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outAroonDown, sink_outAroonUp, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -922,13 +901,9 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
-      AROON_Stream sp = new AROON_Stream(this);
-      RetCode retCode = AROON_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outAroonDown.Overlaps(inHigh) || outAroonDown.Overlaps(inLow) || outAroonUp.Overlaps(inHigh) || outAroonUp.Overlaps(inLow) || outAroonDown.Overlaps(outAroonUp) ) {
+         throw StreamFailure("AROON", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("AROON", "openAndFill", retCode);
+      return AROON_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, out _, out _, outAroonDown, outAroonUp);
    }
 }

@@ -379,7 +379,7 @@ static void TA_VWAP_StepInternal( struct TA_VWAP_Stream *sp, double inHigh, doub
    *outReal= sp->vwap;
 }
 
-static TA_RetCode TA_VWAP_OpenPass( struct TA_VWAP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_VWAP_OpenImpl( struct TA_VWAP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_VWAP_Stream *sp;
    int endIdx;
@@ -542,7 +542,7 @@ TA_RetCode TA_VWAP_OpenInternal( struct TA_VWAP_Stream **stream, const double in
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_VWAP_OpenPass( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_VWAP_OpenImpl( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -569,13 +569,13 @@ TA_LIB_API TA_RetCode TA_VWAP_OpenAndFill( TA_VWAP_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
-   return TA_VWAP_OpenPass( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_VWAP_OpenAndFillInternal( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_VWAP_OpenAndFillInternal( struct TA_VWAP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_VWAP_OpenPass( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_VWAP_OpenImpl( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_VWAP_Update( TA_VWAP_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )

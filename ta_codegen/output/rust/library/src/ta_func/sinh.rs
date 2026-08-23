@@ -104,8 +104,7 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Element-wise hyperbolic sine of the input series. A vector math transform applying sinh() to
-    /// each value.
+    /// Element-wise hyperbolic sine of the input series.
     ///
     /// # Formula
     ///
@@ -158,6 +157,11 @@ impl Core {
     /// # See also
     ///
     /// [`Core::COSH`] · [`Core::TANH`]
+    ///
+    /// # References
+    ///
+    /// * Wikipedia, *Hyperbolic functions*:
+    ///   [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)
     ///
     /// Further reading: [ta-lib.org/functions/sinh](https://ta-lib.org/functions/sinh)
     #[doc(alias = "HyperbolicSine")]
@@ -239,7 +243,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::SINH_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::SINH_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn SINH_OpenPass(
+    pub(crate) fn SINH_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<SINH_Stream, RetCode> {
         if inReal.is_empty() {
@@ -284,7 +288,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.SINH_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.SINH_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -327,7 +331,7 @@ impl Core {
     ) -> Result<(SINH_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.SINH_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.SINH_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -336,7 +340,7 @@ impl Core {
     pub(crate) fn SINH_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SINH_Stream, RetCode> {
-        self.SINH_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.SINH_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

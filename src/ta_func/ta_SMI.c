@@ -852,7 +852,7 @@ static void TA_SMI_StepInternal( struct TA_SMI_Stream *sp, double inHigh, double
    sp->today = sp->today + 1;
 }
 
-static TA_RetCode TA_SMI_OpenPass( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[], int outStride )
+static TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[], int outStride )
 {
    struct TA_SMI_Stream *sp;
    int endIdx;
@@ -1247,7 +1247,7 @@ TA_RetCode TA_SMI_OpenInternal( struct TA_SMI_Stream **stream, const double inHi
    int dummyNBElement = 0;
    double sink_outSMI = 0.0;
    double sink_outSMISignal = 0.0;
-   retCode = TA_SMI_OpenPass( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outSMI, &sink_outSMISignal, 0 );
+   retCode = TA_SMI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outSMI, &sink_outSMISignal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outSMI = sink_outSMI;
@@ -1275,13 +1275,13 @@ TA_LIB_API TA_RetCode TA_SMI_OpenAndFill( TA_SMI_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outSMI == (const void *)inHigh || (const void *)outSMI == (const void *)inLow || (const void *)outSMI == (const void *)inClose || (const void *)outSMISignal == (const void *)inHigh || (const void *)outSMISignal == (const void *)inLow || (const void *)outSMISignal == (const void *)inClose || (const void *)outSMI == (const void *)outSMISignal ) return TA_BAD_PARAM;
-   return TA_SMI_OpenPass( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 );
+   return TA_SMI_OpenAndFillInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_SMI_OpenAndFillInternal( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[] )
 {
-   return TA_SMI_OpenPass( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 );
+   return TA_SMI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_SMI_Update( TA_SMI_Stream *stream, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal )

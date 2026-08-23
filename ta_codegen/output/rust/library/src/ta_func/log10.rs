@@ -104,7 +104,7 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Vector base-10 logarithm. Applies log10 element-wise over each input value.
+    /// Element-wise base-10 logarithm of the input series.
     ///
     /// # Formula
     ///
@@ -162,6 +162,11 @@ impl Core {
     /// # See also
     ///
     /// [`Core::LN`] · [`Core::EXP`]
+    ///
+    /// # References
+    ///
+    /// * Wikipedia, *Common logarithm*:
+    ///   [en.wikipedia.org/wiki/Common_logarithm](https://en.wikipedia.org/wiki/Common_logarithm)
     ///
     /// Further reading: [ta-lib.org/functions/log10](https://ta-lib.org/functions/log10)
     #[doc(alias = "LogBase10")]
@@ -244,7 +249,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::LOG10_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::LOG10_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn LOG10_OpenPass(
+    pub(crate) fn LOG10_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<LOG10_Stream, RetCode> {
         if inReal.is_empty() {
@@ -289,7 +294,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.LOG10_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.LOG10_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -332,7 +337,7 @@ impl Core {
     ) -> Result<(LOG10_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.LOG10_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.LOG10_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -341,7 +346,7 @@ impl Core {
     pub(crate) fn LOG10_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<LOG10_Stream, RetCode> {
-        self.LOG10_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.LOG10_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

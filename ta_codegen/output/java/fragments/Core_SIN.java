@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Vector trigonometric sine: applies sin() element-wise to each input value.
-    * Part of the Math Transform group.
+    * Element-wise sine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sin(inReal[i])
@@ -126,8 +125,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector trigonometric sine: applies sin() element-wise to each input value.
-    * Part of the Math Transform group.
+    * Element-wise sine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sin(inReal[i])
@@ -290,7 +288,7 @@
    {
       sp.cur_outReal = Math.sin(inReal);
    }
-   private RetCode SIN_OpenPass( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SIN_OpenImpl( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -316,32 +314,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SIN_OpenImpl( SIN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SIN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SIN_OpenAndFillImpl( SIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return SIN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SIN_OpenAndFillInternalImpl( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SIN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SIN_Stream SIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SIN_Stream sp = new SIN_Stream(this);
-      RetCode retCode = SIN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -359,7 +336,12 @@
    SIN_Stream SIN_OpenInternal( double inReal[], int startIdx )
    {
       SIN_Stream sp = new SIN_Stream(this);
-      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -396,20 +378,10 @@
     */
    public SIN_Stream SIN_OpenAndFill( double inReal[], double outReal[] )
    {
-      SIN_Stream sp = new SIN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("SIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SIN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SIN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SIN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SIN openAndFill: " + retCode, retCode);
+      return SIN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

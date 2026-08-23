@@ -70,8 +70,8 @@
       return RetCode.Success ;
    }
    /**
-    * Vector floor: rounds each input value down to the nearest integer.
-    * Element-wise math transform.
+    * Element-wise floor (round down to the nearest integer) of the input
+    * series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = floor(inReal[i])
@@ -124,8 +124,8 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector floor: rounds each input value down to the nearest integer.
-    * Element-wise math transform.
+    * Element-wise floor (round down to the nearest integer) of the input
+    * series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = floor(inReal[i])
@@ -286,7 +286,7 @@
    {
       sp.cur_outReal = Math.floor(inReal);
    }
-   private RetCode FLOOR_OpenPass( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode FLOOR_OpenImpl( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -312,32 +312,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode FLOOR_OpenImpl( FLOOR_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = FLOOR_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode FLOOR_OpenAndFillImpl( FLOOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return FLOOR_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode FLOOR_OpenAndFillInternalImpl( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return FLOOR_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* FLOOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    FLOOR_Stream FLOOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -355,7 +334,12 @@
    FLOOR_Stream FLOOR_OpenInternal( double inReal[], int startIdx )
    {
       FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -392,20 +376,10 @@
     */
    public FLOOR_Stream FLOOR_OpenAndFill( double inReal[], double outReal[] )
    {
-      FLOOR_Stream sp = new FLOOR_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("FLOOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = FLOOR_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("FLOOR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FLOOR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("FLOOR openAndFill: " + retCode, retCode);
+      return FLOOR_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

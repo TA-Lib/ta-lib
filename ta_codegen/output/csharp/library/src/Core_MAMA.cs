@@ -1521,7 +1521,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode MAMA_OpenPass( MAMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA, int outStride )
+   private RetCode MAMA_OpenImpl( MAMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1984,36 +1984,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MAMA_OpenImpl( MAMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
-   {
-      double[] sink_outMAMA = new double[1];
-      double[] sink_outFAMA = new double[1];
-      RetCode retCode = MAMA_OpenPass( sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, sink_outMAMA, sink_outFAMA, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode MAMA_OpenAndFillImpl( MAMA_Stream sp, ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || outMAMA.Overlaps(outFAMA) ) {
-         return RetCode.BadParam;
-      }
-      return MAMA_OpenPass( sp, inReal, 0, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA, 1 );
-   }
-
-   private RetCode MAMA_OpenAndFillInternalImpl( MAMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA )
-   {
-      return MAMA_OpenPass(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA, 1);
-   }
-
    /* MAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MAMA_Stream MAMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA )
    {
       MAMA_Stream sp = new MAMA_Stream(this);
-      RetCode retCode = MAMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA);
+      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -2026,7 +2001,11 @@ public partial class Core
    internal MAMA_Stream MAMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
    {
       MAMA_Stream sp = new MAMA_Stream(this);
-      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit);
+      double[] sink_outMAMA = new double[1];
+      double[] sink_outFAMA = new double[1];
+      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, sink_outMAMA, sink_outFAMA, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2089,13 +2068,9 @@ public partial class Core
    public MAMA_Stream MAMA_OpenAndFill( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, Span<double> outMAMA, Span<double> outFAMA )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      MAMA_Stream sp = new MAMA_Stream(this);
-      RetCode retCode = MAMA_OpenAndFillImpl(sp, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || outMAMA.Overlaps(outFAMA) ) {
+         throw StreamFailure("MAMA", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("MAMA", "openAndFill", retCode);
+      return MAMA_OpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, out _, out _, outMAMA, outFAMA);
    }
 }

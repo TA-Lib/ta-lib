@@ -624,7 +624,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLHOMINGPIGEON_OpenPass( CDLHOMINGPIGEON_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLHOMINGPIGEON_OpenImpl( CDLHOMINGPIGEON_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -764,32 +764,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLHOMINGPIGEON_OpenImpl( CDLHOMINGPIGEON_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
-   {
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHOMINGPIGEON_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode CDLHOMINGPIGEON_OpenAndFillImpl( CDLHOMINGPIGEON_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      return CDLHOMINGPIGEON_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
-   }
-
-   private RetCode CDLHOMINGPIGEON_OpenAndFillInternalImpl( CDLHOMINGPIGEON_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      return CDLHOMINGPIGEON_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
-   }
-
    /* CDLHOMINGPIGEON_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLHOMINGPIGEON_Stream sp = new CDLHOMINGPIGEON_Stream(this);
-      RetCode retCode = CDLHOMINGPIGEON_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLHOMINGPIGEON_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -802,7 +781,10 @@ public partial class Core
    internal CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLHOMINGPIGEON_Stream sp = new CDLHOMINGPIGEON_Stream(this);
-      RetCode retCode = CDLHOMINGPIGEON_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLHOMINGPIGEON_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -872,13 +854,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      CDLHOMINGPIGEON_Stream sp = new CDLHOMINGPIGEON_Stream(this);
-      RetCode retCode = CDLHOMINGPIGEON_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      throw StreamFailure("CDLHOMINGPIGEON", "openAndFill", retCode);
+      return CDLHOMINGPIGEON_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

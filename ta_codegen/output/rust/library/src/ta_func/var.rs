@@ -530,7 +530,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::VAR_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::VAR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn VAR_OpenPass(
+    pub(crate) fn VAR_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<VAR_Stream, RetCode> {
         if inReal.is_empty() {
@@ -735,7 +735,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.VAR_OpenPass(inReal, startIdx, optInTimePeriod, optInNbDev, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.VAR_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDev, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -778,7 +778,7 @@ impl Core {
     ) -> Result<(VAR_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.VAR_OpenPass(inReal, 0, optInTimePeriod, optInNbDev, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.VAR_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -787,7 +787,7 @@ impl Core {
     pub(crate) fn VAR_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<VAR_Stream, RetCode> {
-        self.VAR_OpenPass(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
+        self.VAR_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

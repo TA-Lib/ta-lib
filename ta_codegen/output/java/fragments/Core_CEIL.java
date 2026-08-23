@@ -70,8 +70,8 @@
       return RetCode.Success ;
    }
    /**
-    * Vector ceiling: element-wise ceiling of each input value (smallest integer
-    * &gt;= input).
+    * Element-wise ceiling (round up to the nearest integer) of the input
+    * series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = ceil(inReal[i])
@@ -124,8 +124,8 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector ceiling: element-wise ceiling of each input value (smallest integer
-    * &gt;= input).
+    * Element-wise ceiling (round up to the nearest integer) of the input
+    * series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = ceil(inReal[i])
@@ -286,7 +286,7 @@
    {
       sp.cur_outReal = Math.ceil(inReal);
    }
-   private RetCode CEIL_OpenPass( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CEIL_OpenImpl( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -312,32 +312,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CEIL_OpenImpl( CEIL_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = CEIL_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CEIL_OpenAndFillImpl( CEIL_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return CEIL_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode CEIL_OpenAndFillInternalImpl( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return CEIL_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* CEIL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CEIL_Stream CEIL_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -355,7 +334,12 @@
    CEIL_Stream CEIL_OpenInternal( double inReal[], int startIdx )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = CEIL_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -392,20 +376,10 @@
     */
    public CEIL_Stream CEIL_OpenAndFill( double inReal[], double outReal[] )
    {
-      CEIL_Stream sp = new CEIL_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("CEIL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CEIL_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CEIL openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CEIL openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CEIL openAndFill: " + retCode, retCode);
+      return CEIL_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

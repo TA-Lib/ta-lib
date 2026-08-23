@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Element-wise arcsine (inverse sine) of each input value. A vector math
-    * transform, not a market indicator.
+    * Element-wise arcsine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = asin(inReal[i])
@@ -131,8 +130,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise arcsine (inverse sine) of each input value. A vector math
-    * transform, not a market indicator.
+    * Element-wise arcsine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = asin(inReal[i])
@@ -300,7 +298,7 @@
    {
       sp.cur_outReal = Math.asin(inReal);
    }
-   private RetCode ASIN_OpenPass( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ASIN_OpenImpl( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -326,32 +324,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ASIN_OpenImpl( ASIN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ASIN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ASIN_OpenAndFillImpl( ASIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ASIN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ASIN_OpenAndFillInternalImpl( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ASIN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ASIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ASIN_Stream ASIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -369,7 +346,12 @@
    ASIN_Stream ASIN_OpenInternal( double inReal[], int startIdx )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -406,20 +388,10 @@
     */
    public ASIN_Stream ASIN_OpenAndFill( double inReal[], double outReal[] )
    {
-      ASIN_Stream sp = new ASIN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ASIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ASIN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ASIN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ASIN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ASIN openAndFill: " + retCode, retCode);
+      return ASIN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

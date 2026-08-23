@@ -64,14 +64,10 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInFastPeriod">Number of bars in the short moving average. Default 5, the value Williams
-   /// uses and every surveyed package ships (default 5; range 2..100000;
+   /// <param name="optInFastPeriod">Number of bars in the short moving average (default 5; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInSlowPeriod">Number of bars in the long moving average. Default 34, likewise universal.
-   /// MetaTrader, cTrader and Tulip Indicators hardcode the pair; TradingView,
-   /// pandas-ta-classic and StockSharp expose it, and at the defaults the two
-   /// agree exactly (default 34; range 2..100000; <c>int.MinValue</c> selects
-   /// the default).</param>
+   /// <param name="optInSlowPeriod">Number of bars in the long moving average (default 34; range 2..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int AO_Lookback( int optInFastPeriod, int optInSlowPeriod )
    {
@@ -321,13 +317,15 @@ public partial class Core
    /// crossings, the twin-peaks divergence, and the run of consecutive same-side
    /// bars — which is why the sign and the bar-to-bar change matter more than
    /// the level. The oscillator is the first leg of Williams' Profitunity
-   /// system, alongside the Alligator and the Accelerator/Decelerator.
+   /// system, alongside the Alligator and the Accelerator/Decelerator
+   /// ([<c>AC</c>](/functions/ac)).
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// Both legs are plain simple moving averages, so there is no seeding convention and none of the cross-library divergence that comes with one. An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
+   /// median_t = ( high_t + low_t ) / 2
+   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+   /// An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
    /// </code>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -341,14 +339,10 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
-   /// <param name="optInFastPeriod">Number of bars in the short moving average. Default 5, the value Williams
-   /// uses and every surveyed package ships (default 5; range 2..100000;
+   /// <param name="optInFastPeriod">Number of bars in the short moving average (default 5; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInSlowPeriod">Number of bars in the long moving average. Default 34, likewise universal.
-   /// MetaTrader, cTrader and Tulip Indicators hardcode the pair; TradingView,
-   /// pandas-ta-classic and StockSharp expose it, and at the defaults the two
-   /// agree exactly (default 34; range 2..100000; <c>int.MinValue</c> selects
-   /// the default).</param>
+   /// <param name="optInSlowPeriod">Number of bars in the long moving average (default 34; range 2..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Spread between the two moving averages, centred on zero. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -399,13 +393,15 @@ public partial class Core
    /// crossings, the twin-peaks divergence, and the run of consecutive same-side
    /// bars — which is why the sign and the bar-to-bar change matter more than
    /// the level. The oscillator is the first leg of Williams' Profitunity
-   /// system, alongside the Alligator and the Accelerator/Decelerator.
+   /// system, alongside the Alligator and the Accelerator/Decelerator
+   /// ([<c>AC</c>](/functions/ac)).
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// Both legs are plain simple moving averages, so there is no seeding convention and none of the cross-library divergence that comes with one. An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
+   /// median_t = ( high_t + low_t ) / 2
+   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+   /// An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
    /// </code>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -425,14 +421,10 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
-   /// <param name="optInFastPeriod">Number of bars in the short moving average. Default 5, the value Williams
-   /// uses and every surveyed package ships (default 5; range 2..100000;
+   /// <param name="optInFastPeriod">Number of bars in the short moving average (default 5; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInSlowPeriod">Number of bars in the long moving average. Default 34, likewise universal.
-   /// MetaTrader, cTrader and Tulip Indicators hardcode the pair; TradingView,
-   /// pandas-ta-classic and StockSharp expose it, and at the defaults the two
-   /// agree exactly (default 34; range 2..100000; <c>int.MinValue</c> selects
-   /// the default).</param>
+   /// <param name="optInSlowPeriod">Number of bars in the long moving average (default 34; range 2..100000;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Spread between the two moving averages, centred on zero. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -670,7 +662,7 @@ public partial class Core
       }
    }
 
-   private RetCode AO_OpenPass( AO_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AO_OpenImpl( AO_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -836,35 +828,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AO_OpenImpl( AO_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AO_OpenPass( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode AO_OpenAndFillImpl( AO_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
-         return RetCode.BadParam;
-      }
-      return AO_OpenPass( sp, inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode AO_OpenAndFillInternalImpl( AO_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return AO_OpenPass(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* AO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal AO_Stream AO_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AO_Stream sp = new AO_Stream(this);
-      RetCode retCode = AO_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = AO_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -877,7 +845,10 @@ public partial class Core
    internal AO_Stream AO_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
       AO_Stream sp = new AO_Stream(this);
-      RetCode retCode = AO_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AO_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -942,13 +913,9 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
-      AO_Stream sp = new AO_Stream(this);
-      RetCode retCode = AO_OpenAndFillImpl(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+         throw StreamFailure("AO", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("AO", "openAndFill", retCode);
+      return AO_OpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, out _, out _, outReal);
    }
 }

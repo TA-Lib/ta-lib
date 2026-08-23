@@ -507,7 +507,7 @@ public partial class Core
       }
    }
 
-   private RetCode IMI_OpenPass( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode IMI_OpenImpl( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -583,35 +583,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode IMI_OpenImpl( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = IMI_OpenPass( sp, inOpen, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode IMI_OpenAndFillImpl( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) {
-         return RetCode.BadParam;
-      }
-      return IMI_OpenPass( sp, inOpen, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode IMI_OpenAndFillInternalImpl( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return IMI_OpenPass(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* IMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal IMI_Stream IMI_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       IMI_Stream sp = new IMI_Stream(this);
-      RetCode retCode = IMI_OpenAndFillInternalImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -624,7 +600,10 @@ public partial class Core
    internal IMI_Stream IMI_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       IMI_Stream sp = new IMI_Stream(this);
-      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -685,13 +664,9 @@ public partial class Core
    {
       if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      IMI_Stream sp = new IMI_Stream(this);
-      RetCode retCode = IMI_OpenAndFillImpl(sp, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) {
+         throw StreamFailure("IMI", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("IMI", "openAndFill", retCode);
+      return IMI_OpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -1236,7 +1236,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_DCPERIOD_OpenPass( HT_DCPERIOD_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HT_DCPERIOD_OpenImpl( HT_DCPERIOD_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1642,32 +1642,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_DCPERIOD_OpenImpl( HT_DCPERIOD_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HT_DCPERIOD_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_DCPERIOD_OpenAndFillImpl( HT_DCPERIOD_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return HT_DCPERIOD_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode HT_DCPERIOD_OpenAndFillInternalImpl( HT_DCPERIOD_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return HT_DCPERIOD_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* HT_DCPERIOD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
-      RetCode retCode = HT_DCPERIOD_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1685,7 +1664,12 @@
    HT_DCPERIOD_Stream HT_DCPERIOD_OpenInternal( double inReal[], int startIdx )
    {
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
-      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1722,20 +1706,10 @@
     */
    public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( double inReal[], double outReal[] )
    {
-      HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPERIOD_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_DCPERIOD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPERIOD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + retCode, retCode);
+      return HT_DCPERIOD_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

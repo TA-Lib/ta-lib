@@ -288,10 +288,11 @@ public partial class Core
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = argmin over the same window (N = optInTimePeriod).
+   /// outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
+   /// outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
    /// </code>
    /// <list type="bullet">
-   /// <item><description>When several bars in a window share the extreme value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</description></item>
+   /// <item><description>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -352,10 +353,11 @@ public partial class Core
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = argmin over the same window (N = optInTimePeriod).
+   /// outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
+   /// outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
    /// </code>
    /// <list type="bullet">
-   /// <item><description>When several bars in a window share the extreme value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</description></item>
+   /// <item><description>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -636,7 +638,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MINMAXINDEX_OpenPass( MINMAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outMinIdx, Span<int> outMaxIdx, int outStride )
+   private RetCode MINMAXINDEX_OpenImpl( MINMAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outMinIdx, Span<int> outMaxIdx, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -771,36 +773,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MINMAXINDEX_OpenImpl( MINMAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
-   {
-      int[] sink_outMinIdx = new int[1];
-      int[] sink_outMaxIdx = new int[1];
-      RetCode retCode = MINMAXINDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outMinIdx, sink_outMaxIdx, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode MINMAXINDEX_OpenAndFillImpl( MINMAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outMinIdx, Span<int> outMaxIdx )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outMinIdx.Overlaps(outMaxIdx) ) {
-         return RetCode.BadParam;
-      }
-      return MINMAXINDEX_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outMinIdx, outMaxIdx, 1 );
-   }
-
-   private RetCode MINMAXINDEX_OpenAndFillInternalImpl( MINMAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outMinIdx, Span<int> outMaxIdx )
-   {
-      return MINMAXINDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMinIdx, outMaxIdx, 1);
-   }
-
    /* MINMAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MINMAXINDEX_Stream MINMAXINDEX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outMinIdx, Span<int> outMaxIdx )
    {
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMinIdx, outMaxIdx);
+      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMinIdx, outMaxIdx, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -813,7 +790,11 @@ public partial class Core
    internal MINMAXINDEX_Stream MINMAXINDEX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      int[] sink_outMinIdx = new int[1];
+      int[] sink_outMaxIdx = new int[1];
+      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outMinIdx, sink_outMaxIdx, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -874,13 +855,9 @@ public partial class Core
    public MINMAXINDEX_Stream MINMAXINDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outMinIdx, Span<int> outMaxIdx )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMinIdx, outMaxIdx);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outMinIdx.Overlaps(outMaxIdx) ) {
+         throw StreamFailure("MINMAXINDEX", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("MINMAXINDEX", "openAndFill", retCode);
+      return MINMAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outMinIdx, outMaxIdx);
    }
 }

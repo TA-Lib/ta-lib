@@ -561,7 +561,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode VWMA_OpenPass( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode VWMA_OpenImpl( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -703,32 +703,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode VWMA_OpenImpl( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = VWMA_OpenPass( sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode VWMA_OpenAndFillImpl( VWMA_Stream sp, double inReal[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return VWMA_OpenPass( sp, inReal, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode VWMA_OpenAndFillInternalImpl( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return VWMA_OpenPass(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* VWMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    VWMA_Stream VWMA_OpenAndFillInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       VWMA_Stream sp = new VWMA_Stream(this);
-      RetCode retCode = VWMA_OpenAndFillInternalImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -746,7 +725,12 @@
    VWMA_Stream VWMA_OpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       VWMA_Stream sp = new VWMA_Stream(this);
-      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -783,20 +767,10 @@
     */
    public VWMA_Stream VWMA_OpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      VWMA_Stream sp = new VWMA_Stream(this);
+      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("VWMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VWMA_OpenAndFillImpl(sp, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("VWMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("VWMA openAndFill: " + retCode, retCode);
+      return VWMA_OpenAndFillInternal(inReal, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

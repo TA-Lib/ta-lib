@@ -678,7 +678,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::BBANDS_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::BBANDS_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn BBANDS_OpenPass(
+    pub(crate) fn BBANDS_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64], outStride: usize,
     ) -> Result<BBANDS_Stream, RetCode> {
         if inReal.is_empty() {
@@ -857,7 +857,7 @@ impl Core {
         let mut sink_outRealUpperBand = [0.0_f64; 1];
         let mut sink_outRealMiddleBand = [0.0_f64; 1];
         let mut sink_outRealLowerBand = [0.0_f64; 1];
-        let handle = self.BBANDS_OpenPass(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outRealUpperBand, &mut sink_outRealMiddleBand, &mut sink_outRealLowerBand, 0)?;
+        let handle = self.BBANDS_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outRealUpperBand, &mut sink_outRealMiddleBand, &mut sink_outRealLowerBand, 0)?;
         Ok((handle, (sink_outRealUpperBand[0], sink_outRealMiddleBand[0], sink_outRealLowerBand[0])))
     }
 
@@ -911,7 +911,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.BBANDS_OpenPass(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut outBegIdx, &mut outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)?;
+        let handle = self.BBANDS_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut outBegIdx, &mut outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -920,7 +920,7 @@ impl Core {
     pub(crate) fn BBANDS_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<BBANDS_Stream, RetCode> {
-        self.BBANDS_OpenPass(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
+        self.BBANDS_OpenImpl(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
     }
 
 }

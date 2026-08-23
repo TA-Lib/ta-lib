@@ -617,7 +617,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::STOCHF_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::STOCHF_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn STOCHF_OpenPass(
+    pub(crate) fn STOCHF_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64], outStride: usize,
     ) -> Result<STOCHF_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -908,7 +908,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outFastK = [0.0_f64; 1];
         let mut sink_outFastD = [0.0_f64; 1];
-        let handle = self.STOCHF_OpenPass(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outFastK, &mut sink_outFastD, 0)?;
+        let handle = self.STOCHF_OpenImpl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outFastK, &mut sink_outFastD, 0)?;
         Ok((handle, (sink_outFastK[0], sink_outFastD[0])))
     }
 
@@ -959,7 +959,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.STOCHF_OpenPass(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx, &mut outNBElement, outFastK, outFastD, 1)?;
+        let handle = self.STOCHF_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx, &mut outNBElement, outFastK, outFastD)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -968,7 +968,7 @@ impl Core {
     pub(crate) fn STOCHF_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
     ) -> Result<STOCHF_Stream, RetCode> {
-        self.STOCHF_OpenPass(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
+        self.STOCHF_OpenImpl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
     }
 
 }

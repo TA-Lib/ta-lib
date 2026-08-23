@@ -335,16 +335,16 @@ fn an_anchor_past_the_history_is_insufficient_history() {
     );
 }
 
-/// The `_OpenPass` prologue must reject an anchor past the history for EVERY
+/// The `_OpenImpl` prologue must reject an anchor past the history for EVERY
 /// function — not only the ones whose transcribed body happens to carry
 /// TA-Lib's "make sure there is still something to evaluate" preamble.
 ///
-/// 37 of the 174 `_OpenPass` bodies do not have it, because in the batch tier
+/// 37 of the 174 `_OpenImpl` bodies do not have it, because in the batch tier
 /// that case is caught by the prologue's `endIdx < startIdx` guard, which the
 /// streaming prologue never got. Their loop is `nbBar = endIdx - startIdx + 1`
 /// followed by `while nbBar != 0`, so a negative count never reaches zero: in C
 /// it walks off both the input and the output (an ASan stack-buffer-overflow in
-/// `TA_AD_OpenPass`), and here `usize` underflows and panics.
+/// `TA_AD_OpenImpl`), and here `usize` underflows and panics.
 ///
 /// The functions below are one per shape in that set, all with a lookback of 0
 /// or none at all, which is what leaves `startIdx` as the only thing bounding

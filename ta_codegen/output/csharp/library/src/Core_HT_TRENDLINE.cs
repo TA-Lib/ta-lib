@@ -1435,7 +1435,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_TRENDLINE_OpenPass( HT_TRENDLINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode HT_TRENDLINE_OpenImpl( HT_TRENDLINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1899,35 +1899,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_TRENDLINE_OpenImpl( HT_TRENDLINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HT_TRENDLINE_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode HT_TRENDLINE_OpenAndFillImpl( HT_TRENDLINE_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return HT_TRENDLINE_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode HT_TRENDLINE_OpenAndFillInternalImpl( HT_TRENDLINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return HT_TRENDLINE_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* HT_TRENDLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1940,7 +1916,10 @@ public partial class Core
    internal HT_TRENDLINE_Stream HT_TRENDLINE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1995,13 +1974,9 @@ public partial class Core
    public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("HT_TRENDLINE", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("HT_TRENDLINE", "openAndFill", retCode);
+      return HT_TRENDLINE_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

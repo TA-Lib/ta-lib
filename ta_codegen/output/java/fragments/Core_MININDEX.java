@@ -186,11 +186,11 @@
     * rather than its value.
     * <p><b>Formula</b>
     * <pre>{@code
-    * outInteger[t] = argmin_{t-period+1 <= i <= t} inReal[i]  (absolute index into inReal)
+    * outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the lowest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -252,11 +252,11 @@
     * rather than its value.
     * <p><b>Formula</b>
     * <pre>{@code
-    * outInteger[t] = argmin_{t-period+1 <= i <= t} inReal[i]  (absolute index into inReal)
+    * outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the lowest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -476,7 +476,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MININDEX_OpenPass( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode MININDEX_OpenImpl( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double lowest = 0;
       double tmp = 0;
@@ -580,32 +580,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MININDEX_OpenImpl( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = MININDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MININDEX_OpenAndFillImpl( MININDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return MININDEX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode MININDEX_OpenAndFillInternalImpl( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return MININDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* MININDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MININDEX_Stream MININDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       MININDEX_Stream sp = new MININDEX_Stream(this);
-      RetCode retCode = MININDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MININDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -623,7 +602,12 @@
    MININDEX_Stream MININDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MININDEX_Stream sp = new MININDEX_Stream(this);
-      RetCode retCode = MININDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = MININDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -660,20 +644,10 @@
     */
    public MININDEX_Stream MININDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
-      MININDEX_Stream sp = new MININDEX_Stream(this);
+      if( (Object)outInteger == (Object)inReal ) {
+         throw new TaLibArgumentException("MININDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MININDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MININDEX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MININDEX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MININDEX openAndFill: " + retCode, retCode);
+      return MININDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger);
    }

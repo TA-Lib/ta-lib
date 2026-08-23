@@ -460,7 +460,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::ACCBANDS_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::ACCBANDS_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn ACCBANDS_OpenPass(
+    pub(crate) fn ACCBANDS_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64], outStride: usize,
     ) -> Result<ACCBANDS_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -623,7 +623,7 @@ impl Core {
         let mut sink_outRealUpperBand = [0.0_f64; 1];
         let mut sink_outRealMiddleBand = [0.0_f64; 1];
         let mut sink_outRealLowerBand = [0.0_f64; 1];
-        let handle = self.ACCBANDS_OpenPass(inHigh, inLow, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outRealUpperBand, &mut sink_outRealMiddleBand, &mut sink_outRealLowerBand, 0)?;
+        let handle = self.ACCBANDS_OpenImpl(inHigh, inLow, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outRealUpperBand, &mut sink_outRealMiddleBand, &mut sink_outRealLowerBand, 0)?;
         Ok((handle, (sink_outRealUpperBand[0], sink_outRealMiddleBand[0], sink_outRealLowerBand[0])))
     }
 
@@ -681,7 +681,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.ACCBANDS_OpenPass(inHigh, inLow, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)?;
+        let handle = self.ACCBANDS_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -690,7 +690,7 @@ impl Core {
     pub(crate) fn ACCBANDS_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<ACCBANDS_Stream, RetCode> {
-        self.ACCBANDS_OpenPass(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
+        self.ACCBANDS_OpenImpl(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
     }
 
 }

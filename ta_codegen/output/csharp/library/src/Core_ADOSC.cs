@@ -663,7 +663,7 @@ public partial class Core
       sp.cur_outReal = sp.fastEMA - sp.slowEMA;
    }
 
-   private RetCode ADOSC_OpenPass( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode ADOSC_OpenImpl( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -818,35 +818,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ADOSC_OpenImpl( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ADOSC_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode ADOSC_OpenAndFillImpl( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
-         return RetCode.BadParam;
-      }
-      return ADOSC_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode ADOSC_OpenAndFillInternalImpl( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return ADOSC_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* ADOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal ADOSC_Stream ADOSC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ADOSC_Stream sp = new ADOSC_Stream(this);
-      RetCode retCode = ADOSC_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -859,7 +835,10 @@ public partial class Core
    internal ADOSC_Stream ADOSC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
       ADOSC_Stream sp = new ADOSC_Stream(this);
-      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -932,13 +911,9 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
-      ADOSC_Stream sp = new ADOSC_Stream(this);
-      RetCode retCode = ADOSC_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+         throw StreamFailure("ADOSC", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("ADOSC", "openAndFill", retCode);
+      return ADOSC_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, out _, out _, outReal);
    }
 }

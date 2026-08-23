@@ -760,7 +760,7 @@ public partial class Core
       }
    }
 
-   private RetCode BETA_OpenPass( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode BETA_OpenImpl( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -960,35 +960,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode BETA_OpenImpl( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = BETA_OpenPass( sp, inReal0, inReal1, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode BETA_OpenAndFillImpl( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
-         return RetCode.BadParam;
-      }
-      return BETA_OpenPass( sp, inReal0, inReal1, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode BETA_OpenAndFillInternalImpl( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return BETA_OpenPass(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* BETA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal BETA_Stream BETA_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       BETA_Stream sp = new BETA_Stream(this);
-      RetCode retCode = BETA_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1001,7 +977,10 @@ public partial class Core
    internal BETA_Stream BETA_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod )
    {
       BETA_Stream sp = new BETA_Stream(this);
-      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1066,13 +1045,9 @@ public partial class Core
    {
       if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
       if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
-      BETA_Stream sp = new BETA_Stream(this);
-      RetCode retCode = BETA_OpenAndFillImpl(sp, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
+         throw StreamFailure("BETA", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("BETA", "openAndFill", retCode);
+      return BETA_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

@@ -186,11 +186,11 @@
     * value.
     * <p><b>Formula</b>
     * <pre>{@code
-    * outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
+    * outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the highest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -252,11 +252,11 @@
     * value.
     * <p><b>Formula</b>
     * <pre>{@code
-    * outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
+    * outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the highest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -476,7 +476,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MAXINDEX_OpenPass( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double highest = 0;
       double tmp = 0;
@@ -580,32 +580,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = MAXINDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MAXINDEX_OpenAndFillImpl( MAXINDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return MAXINDEX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode MAXINDEX_OpenAndFillInternalImpl( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return MAXINDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -623,7 +602,12 @@
    MAXINDEX_Stream MAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -660,20 +644,10 @@
     */
    public MAXINDEX_Stream MAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
-      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
+      if( (Object)outInteger == (Object)inReal ) {
+         throw new TaLibArgumentException("MAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAXINDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MAXINDEX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAXINDEX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
+      return MAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger);
    }

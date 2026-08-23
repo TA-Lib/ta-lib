@@ -121,8 +121,7 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Vector natural logarithm: applies the natural log (base e) elementwise to
-   /// the input series.
+   /// Element-wise natural logarithm of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -178,8 +177,7 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Vector natural logarithm: applies the natural log (base e) elementwise to
-   /// the input series.
+   /// Element-wise natural logarithm of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -355,7 +353,7 @@ public partial class Core
       sp.cur_outReal = Math.Log(inReal);
    }
 
-   private RetCode LN_OpenPass( LN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode LN_OpenImpl( LN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -384,35 +382,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode LN_OpenImpl( LN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = LN_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode LN_OpenAndFillImpl( LN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return LN_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode LN_OpenAndFillInternalImpl( LN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return LN_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* LN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal LN_Stream LN_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       LN_Stream sp = new LN_Stream(this);
-      RetCode retCode = LN_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -425,7 +399,10 @@ public partial class Core
    internal LN_Stream LN_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       LN_Stream sp = new LN_Stream(this);
-      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -478,13 +455,9 @@ public partial class Core
    public LN_Stream LN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      LN_Stream sp = new LN_Stream(this);
-      RetCode retCode = LN_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("LN", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("LN", "openAndFill", retCode);
+      return LN_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

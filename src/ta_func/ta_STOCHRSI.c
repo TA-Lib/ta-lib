@@ -344,7 +344,7 @@ static TA_RetCode TA_STOCHRSI_StepInternal( struct TA_STOCHRSI_Stream *sp, doubl
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_STOCHRSI_OpenPass( struct TA_STOCHRSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[], int outStride )
+static TA_RetCode TA_STOCHRSI_OpenImpl( struct TA_STOCHRSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[], int outStride )
 {
    struct TA_STOCHRSI_Stream *sp;
    int endIdx;
@@ -537,7 +537,7 @@ TA_RetCode TA_STOCHRSI_OpenInternal( struct TA_STOCHRSI_Stream **stream, const d
    int dummyNBElement = 0;
    double sink_outFastK = 0.0;
    double sink_outFastD = 0.0;
-   retCode = TA_STOCHRSI_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &dummyBegIdx, &dummyNBElement, &sink_outFastK, &sink_outFastD, 0 );
+   retCode = TA_STOCHRSI_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &dummyBegIdx, &dummyNBElement, &sink_outFastK, &sink_outFastD, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outFastK = sink_outFastK;
@@ -565,13 +565,13 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_OpenAndFill( TA_STOCHRSI_Stream **stream, cons
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outFastK == (const void *)inReal || (const void *)outFastD == (const void *)inReal || (const void *)outFastK == (const void *)outFastD ) return TA_BAD_PARAM;
-   return TA_STOCHRSI_OpenPass( stream, inReal, 0, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
+   return TA_STOCHRSI_OpenAndFillInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_STOCHRSI_OpenAndFillInternal( struct TA_STOCHRSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[] )
 {
-   return TA_STOCHRSI_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
+   return TA_STOCHRSI_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD )

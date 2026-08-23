@@ -121,8 +121,7 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Vector trigonometric tangent: applies tan() element-wise to each input
-   /// value.
+   /// Element-wise tangent of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -175,8 +174,7 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Vector trigonometric tangent: applies tan() element-wise to each input
-   /// value.
+   /// Element-wise tangent of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -349,7 +347,7 @@ public partial class Core
       sp.cur_outReal = Math.Tan(inReal);
    }
 
-   private RetCode TAN_OpenPass( TAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TAN_OpenImpl( TAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -378,35 +376,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode TAN_OpenImpl( TAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TAN_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode TAN_OpenAndFillImpl( TAN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return TAN_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode TAN_OpenAndFillInternalImpl( TAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return TAN_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* TAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal TAN_Stream TAN_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -419,7 +393,10 @@ public partial class Core
    internal TAN_Stream TAN_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -472,13 +449,9 @@ public partial class Core
    public TAN_Stream TAN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("TAN", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("TAN", "openAndFill", retCode);
+      return TAN_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

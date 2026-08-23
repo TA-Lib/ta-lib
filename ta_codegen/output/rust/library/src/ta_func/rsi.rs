@@ -515,7 +515,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::RSI_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::RSI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn RSI_OpenPass(
+    pub(crate) fn RSI_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<RSI_Stream, RetCode> {
         if inReal.is_empty() {
@@ -764,7 +764,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.RSI_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.RSI_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -807,7 +807,7 @@ impl Core {
     ) -> Result<(RSI_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.RSI_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.RSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -816,7 +816,7 @@ impl Core {
     pub(crate) fn RSI_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<RSI_Stream, RetCode> {
-        self.RSI_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.RSI_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

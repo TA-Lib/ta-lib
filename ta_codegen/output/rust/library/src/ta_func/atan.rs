@@ -105,8 +105,7 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Vector trigonometric arc tangent: applies atan element-wise to each input. Pure math
-    /// transform with no lookback.
+    /// Element-wise arctangent of the input series.
     ///
     /// # Formula
     ///
@@ -159,6 +158,11 @@ impl Core {
     /// # See also
     ///
     /// [`Core::TAN`] · [`Core::ACOS`] · [`Core::ASIN`]
+    ///
+    /// # References
+    ///
+    /// * Wikipedia, *Inverse trigonometric functions*:
+    ///   [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)
     ///
     /// Further reading: [ta-lib.org/functions/atan](https://ta-lib.org/functions/atan)
     #[doc(alias = "arctangent")]
@@ -242,7 +246,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::ATAN_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::ATAN_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn ATAN_OpenPass(
+    pub(crate) fn ATAN_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<ATAN_Stream, RetCode> {
         if inReal.is_empty() {
@@ -288,7 +292,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.ATAN_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ATAN_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -331,7 +335,7 @@ impl Core {
     ) -> Result<(ATAN_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.ATAN_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.ATAN_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -340,7 +344,7 @@ impl Core {
     pub(crate) fn ATAN_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ATAN_Stream, RetCode> {
-        self.ATAN_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.ATAN_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

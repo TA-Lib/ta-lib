@@ -432,16 +432,14 @@ public final class Core {
     * output.
     *
     * @param optInFastPeriod Number of bars in the short moving average of the
-    *        median price. Default 5, the value Williams uses and every surveyed
-    *        package ships (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        median price (default 5; range 2..100000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @param optInSlowPeriod Number of bars in the long moving average of the
-    *        median price. Default 34, likewise universal (default 34; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
+    *        median price (default 34; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
     * @param optInSignalPeriod Number of bars in the moving average taken over
-    *        the oscillator. Default 5. MetaTrader, Quantower and cTrader hardcode all
-    *        three; trading-signals exposes all three with these same values (default
-    *        5; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        the oscillator (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int AC_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -775,22 +773,24 @@ public final class Core {
    /**
     * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
     * Dimensions*, 1998): the rate at which market momentum is itself speeding
-    * up or slowing down. Where the Awesome Oscillator measures momentum, this
-    * measures the change in that momentum, by taking the oscillator's distance
-    * above or below its own moving average. Because acceleration turns before
-    * speed does, the reading changes sign ahead of the oscillator it is built
-    * from — it is meant as the early half of a pair, not as a signal on its
-    * own. Above zero acceleration is with the bulls, below zero with the bears,
-    * and it is drawn as a zero-centred histogram whose colour convention is the
-    * bar-to-bar change: rising bars accelerating, falling bars decelerating.
-    * Williams' rule of thumb is that two same-coloured bars are what confirms
-    * the turn, which is why the sign and the direction matter more than the
-    * level. The oscillator is one leg of Williams' Profitunity system,
-    * alongside the Awesome Oscillator and the Alligator.
+    * up or slowing down. Where the Awesome Oscillator
+    * ([{@code AO}](/functions/ao)) measures momentum, this measures the change
+    * in that momentum, by taking the oscillator's distance above or below its
+    * own moving average. Because acceleration turns before speed does, the
+    * reading changes sign ahead of the oscillator it is built from — it is
+    * meant as the early half of a pair, not as a signal on its own. Above zero
+    * acceleration is with the bulls, below zero with the bears, and it is drawn
+    * as a zero-centred histogram whose colour convention is the bar-to-bar
+    * change: rising bars accelerating, falling bars decelerating. Williams'
+    * rule of thumb is that two same-coloured bars are what confirms the turn,
+    * which is why the sign and the direction matter more than the level. The
+    * oscillator is one leg of Williams' Profitunity system, alongside the
+    * Awesome Oscillator ([{@code AO}](/functions/ao)) and the Alligator.
     * <p><b>Formula</b>
     * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t; AC_t = AO_t − SMA(AO, signal)_t
-    * Every leg is a plain simple moving average, so there is no seeding convention and none of the cross-library divergence that comes with one.
+    * median_t = ( high_t + low_t ) / 2
+    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+    * AC_t = AO_t − SMA(AO, signal)_t
     * }</pre>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -803,19 +803,17 @@ public final class Core {
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInFastPeriod Number of bars in the short moving average of the
-    *        median price. Default 5, the value Williams uses and every surveyed
-    *        package ships (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        median price (default 5; range 2..100000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @param optInSlowPeriod Number of bars in the long moving average of the
-    *        median price. Default 34, likewise universal (default 34; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
+    *        median price (default 34; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
     * @param optInSignalPeriod Number of bars in the moving average taken over
-    *        the oscillator. Default 5. MetaTrader, Quantower and cTrader hardcode all
-    *        three; trading-signals exposes all three with these same values (default
-    *        5; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param outReal Distance of the Awesome Oscillator from its own moving
-    *        average, centred on zero. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        the oscillator (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outReal Distance of the Awesome Oscillator
+    *        ([{@code AO}](/functions/ao)) from its own moving average, centred on
+    *        zero. Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -864,22 +862,24 @@ public final class Core {
    /**
     * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
     * Dimensions*, 1998): the rate at which market momentum is itself speeding
-    * up or slowing down. Where the Awesome Oscillator measures momentum, this
-    * measures the change in that momentum, by taking the oscillator's distance
-    * above or below its own moving average. Because acceleration turns before
-    * speed does, the reading changes sign ahead of the oscillator it is built
-    * from — it is meant as the early half of a pair, not as a signal on its
-    * own. Above zero acceleration is with the bulls, below zero with the bears,
-    * and it is drawn as a zero-centred histogram whose colour convention is the
-    * bar-to-bar change: rising bars accelerating, falling bars decelerating.
-    * Williams' rule of thumb is that two same-coloured bars are what confirms
-    * the turn, which is why the sign and the direction matter more than the
-    * level. The oscillator is one leg of Williams' Profitunity system,
-    * alongside the Awesome Oscillator and the Alligator.
+    * up or slowing down. Where the Awesome Oscillator
+    * ([{@code AO}](/functions/ao)) measures momentum, this measures the change
+    * in that momentum, by taking the oscillator's distance above or below its
+    * own moving average. Because acceleration turns before speed does, the
+    * reading changes sign ahead of the oscillator it is built from — it is
+    * meant as the early half of a pair, not as a signal on its own. Above zero
+    * acceleration is with the bulls, below zero with the bears, and it is drawn
+    * as a zero-centred histogram whose colour convention is the bar-to-bar
+    * change: rising bars accelerating, falling bars decelerating. Williams'
+    * rule of thumb is that two same-coloured bars are what confirms the turn,
+    * which is why the sign and the direction matter more than the level. The
+    * oscillator is one leg of Williams' Profitunity system, alongside the
+    * Awesome Oscillator ([{@code AO}](/functions/ao)) and the Alligator.
     * <p><b>Formula</b>
     * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t; AC_t = AO_t − SMA(AO, signal)_t
-    * Every leg is a plain simple moving average, so there is no seeding convention and none of the cross-library divergence that comes with one.
+    * median_t = ( high_t + low_t ) / 2
+    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+    * AC_t = AO_t − SMA(AO, signal)_t
     * }</pre>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -895,19 +895,17 @@ public final class Core {
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInFastPeriod Number of bars in the short moving average of the
-    *        median price. Default 5, the value Williams uses and every surveyed
-    *        package ships (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        median price (default 5; range 2..100000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @param optInSlowPeriod Number of bars in the long moving average of the
-    *        median price. Default 34, likewise universal (default 34; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
+    *        median price (default 34; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
     * @param optInSignalPeriod Number of bars in the moving average taken over
-    *        the oscillator. Default 5. MetaTrader, Quantower and cTrader hardcode all
-    *        three; trading-signals exposes all three with these same values (default
-    *        5; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param outReal Distance of the Awesome Oscillator from its own moving
-    *        average, centred on zero. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        the oscillator (default 5; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outReal Distance of the Awesome Oscillator
+    *        ([{@code AO}](/functions/ao)) from its own moving average, centred on
+    *        zero. Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -1183,7 +1181,7 @@ public final class Core {
          sp.ringPos_trailingSlowIdx = 0;
       }
    }
-   private RetCode AC_OpenPass( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode AC_OpenImpl( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -1411,32 +1409,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode AC_OpenImpl( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AC_OpenPass( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode AC_OpenAndFillImpl( AC_Stream sp, double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return AC_OpenPass( sp, inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode AC_OpenAndFillInternalImpl( AC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return AC_OpenPass(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* AC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AC_Stream AC_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1454,7 +1431,12 @@ public final class Core {
    AC_Stream AC_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       AC_Stream sp = new AC_Stream(this);
-      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AC_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1491,22 +1473,12 @@ public final class Core {
     */
    public AC_Stream AC_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outReal[] )
    {
-      AC_Stream sp = new AC_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("AC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AC_OpenAndFillImpl(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("AC openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AC openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("AC openAndFill: " + retCode, retCode);
+      return AC_OpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -2165,7 +2137,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ACCBANDS_OpenPass( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
+   private RetCode ACCBANDS_OpenImpl( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -2317,34 +2289,11 @@ public final class Core {
       sp.cachedValue = new ACCBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
-   private RetCode ACCBANDS_OpenImpl( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outRealUpperBand = new double[1];
-      double[] sink_outRealMiddleBand = new double[1];
-      double[] sink_outRealLowerBand = new double[1];
-      RetCode retCode = ACCBANDS_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ACCBANDS_OpenAndFillImpl( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
-   {
-      if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         return RetCode.BadParam;
-      }
-      return ACCBANDS_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
-   }
-   private RetCode ACCBANDS_OpenAndFillInternalImpl( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
-   {
-      return ACCBANDS_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
-   }
    /* ACCBANDS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ACCBANDS_Stream ACCBANDS_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
       ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
-      RetCode retCode = ACCBANDS_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = ACCBANDS_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -2362,7 +2311,14 @@ public final class Core {
    ACCBANDS_Stream ACCBANDS_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
-      RetCode retCode = ACCBANDS_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outRealUpperBand = new double[1];
+      double[] sink_outRealMiddleBand = new double[1];
+      double[] sink_outRealLowerBand = new double[1];
+      RetCode retCode = ACCBANDS_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2399,22 +2355,12 @@ public final class Core {
     */
    public ACCBANDS_Stream ACCBANDS_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
-      ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
+      if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
+         throw new TaLibArgumentException("ACCBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ACCBANDS_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ACCBANDS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ACCBANDS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ACCBANDS openAndFill: " + retCode, retCode);
+      return ACCBANDS_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
    }
 /* List of contributors:
  *
@@ -2488,8 +2434,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector trigonometric arc cosine: applies acos() to each input value. A
-    * Math Transform passthrough with zero lookback.
+    * Element-wise arc cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = acos(inReal[i])
@@ -2548,8 +2493,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector trigonometric arc cosine: applies acos() to each input value. A
-    * Math Transform passthrough with zero lookback.
+    * Element-wise arc cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = acos(inReal[i])
@@ -2716,7 +2660,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.acos(inReal);
    }
-   private RetCode ACOS_OpenPass( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ACOS_OpenImpl( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -2742,32 +2686,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ACOS_OpenImpl( ACOS_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ACOS_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ACOS_OpenAndFillImpl( ACOS_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ACOS_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ACOS_OpenAndFillInternalImpl( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ACOS_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ACOS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ACOS_Stream ACOS_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -2785,7 +2708,12 @@ public final class Core {
    ACOS_Stream ACOS_OpenInternal( double inReal[], int startIdx )
    {
       ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2822,22 +2750,12 @@ public final class Core {
     */
    public ACOS_Stream ACOS_OpenAndFill( double inReal[], double outReal[] )
    {
-      ACOS_Stream sp = new ACOS_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ACOS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ACOS_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ACOS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ACOS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ACOS openAndFill: " + retCode, retCode);
+      return ACOS_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -3228,7 +3146,7 @@ public final class Core {
       }
       sp.cur_outReal = sp.ad;
    }
-   private RetCode AD_OpenPass( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode AD_OpenImpl( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -3289,32 +3207,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode AD_OpenImpl( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AD_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode AD_OpenAndFillImpl( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return AD_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode AD_OpenAndFillInternalImpl( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return AD_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* AD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AD_Stream AD_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       AD_Stream sp = new AD_Stream(this);
-      RetCode retCode = AD_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AD_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -3332,7 +3229,12 @@ public final class Core {
    AD_Stream AD_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
    {
       AD_Stream sp = new AD_Stream(this);
-      RetCode retCode = AD_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AD_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -3369,22 +3271,12 @@ public final class Core {
     */
    public AD_Stream AD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
-      AD_Stream sp = new AD_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("AD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AD_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("AD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("AD openAndFill: " + retCode, retCode);
+      return AD_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -3460,8 +3352,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector arithmetic addition. Outputs the element-wise sum of two input
-    * series.
+    * Element-wise addition of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] + inReal1[i]
@@ -3519,8 +3410,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector arithmetic addition. Outputs the element-wise sum of two input
-    * series.
+    * Element-wise addition of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] + inReal1[i]
@@ -3686,7 +3576,7 @@ public final class Core {
    {
       sp.cur_outReal = inReal0 + inReal1;
    }
-   private RetCode ADD_OpenPass( ADD_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ADD_OpenImpl( ADD_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -3712,32 +3602,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ADD_OpenImpl( ADD_Stream sp, double inReal0[], double inReal1[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ADD_OpenPass( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ADD_OpenAndFillImpl( ADD_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return ADD_OpenPass( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ADD_OpenAndFillInternalImpl( ADD_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ADD_OpenPass(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ADD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ADD_Stream ADD_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ADD_Stream sp = new ADD_Stream(this);
-      RetCode retCode = ADD_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADD_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -3755,7 +3624,12 @@ public final class Core {
    ADD_Stream ADD_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
       ADD_Stream sp = new ADD_Stream(this);
-      RetCode retCode = ADD_OpenImpl(sp, inReal0, inReal1, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ADD_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -3792,22 +3666,12 @@ public final class Core {
     */
    public ADD_Stream ADD_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      ADD_Stream sp = new ADD_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("ADD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADD_OpenAndFillImpl(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ADD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ADD openAndFill: " + retCode, retCode);
+      return ADD_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -4406,7 +4270,7 @@ public final class Core {
       sp.slowEMA = Math.fma(sp.one_minus_slowk, sp.slowEMA, sp.slowk * sp.ad);
       sp.cur_outReal = sp.fastEMA - sp.slowEMA;
    }
-   private RetCode ADOSC_OpenPass( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ADOSC_OpenImpl( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int outIdx = 0;
@@ -4558,32 +4422,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ADOSC_OpenImpl( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ADOSC_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ADOSC_OpenAndFillImpl( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return ADOSC_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ADOSC_OpenAndFillInternalImpl( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ADOSC_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ADOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ADOSC_Stream ADOSC_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ADOSC_Stream sp = new ADOSC_Stream(this);
-      RetCode retCode = ADOSC_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -4601,7 +4444,12 @@ public final class Core {
    ADOSC_Stream ADOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
       ADOSC_Stream sp = new ADOSC_Stream(this);
-      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ADOSC_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -4638,22 +4486,12 @@ public final class Core {
     */
    public ADOSC_Stream ADOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
-      ADOSC_Stream sp = new ADOSC_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("ADOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADOSC_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ADOSC openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADOSC openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ADOSC openAndFill: " + retCode, retCode);
+      return ADOSC_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -5627,7 +5465,7 @@ public final class Core {
       /* Output the ADX */
       sp.cur_outReal = sp.prevADX;
    }
-   private RetCode ADX_OpenPass( ADX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ADX_OpenImpl( ADX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -6008,32 +5846,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ADX_OpenImpl( ADX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ADX_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ADX_OpenAndFillImpl( ADX_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return ADX_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ADX_OpenAndFillInternalImpl( ADX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ADX_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ADX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ADX_Stream ADX_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ADX_Stream sp = new ADX_Stream(this);
-      RetCode retCode = ADX_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -6051,7 +5868,12 @@ public final class Core {
    ADX_Stream ADX_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       ADX_Stream sp = new ADX_Stream(this);
-      RetCode retCode = ADX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ADX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -6088,22 +5910,12 @@ public final class Core {
     */
    public ADX_Stream ADX_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      ADX_Stream sp = new ADX_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("ADX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADX_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ADX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ADX openAndFill: " + retCode, retCode);
+      return ADX_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -6564,7 +6376,7 @@ public final class Core {
       sp.lagRingPos_adx = (sp.lagRingPos_adx + 1) % sp.lagRingCap_adx;
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode ADXR_OpenPass( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ADXR_OpenImpl( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double[] adx;
       int adxrLookback = 0;
@@ -6657,32 +6469,11 @@ public final class Core {
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   private RetCode ADXR_OpenImpl( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ADXR_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ADXR_OpenAndFillImpl( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return ADXR_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ADXR_OpenAndFillInternalImpl( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ADXR_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ADXR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ADXR_Stream ADXR_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ADXR_Stream sp = new ADXR_Stream(this);
-      RetCode retCode = ADXR_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADXR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -6700,7 +6491,12 @@ public final class Core {
    ADXR_Stream ADXR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       ADXR_Stream sp = new ADXR_Stream(this);
-      RetCode retCode = ADXR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ADXR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -6737,22 +6533,12 @@ public final class Core {
     */
    public ADXR_Stream ADXR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      ADXR_Stream sp = new ADXR_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("ADXR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADXR_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ADXR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADXR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ADXR openAndFill: " + retCode, retCode);
+      return ADXR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -6775,14 +6561,10 @@ public final class Core {
     * series is requested. Feed at least {@code lookback + 1} bars to get any
     * output.
     *
-    * @param optInFastPeriod Number of bars in the short moving average. Default
-    *        5, the value Williams uses and every surveyed package ships (default 5;
-    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param optInSlowPeriod Number of bars in the long moving average. Default
-    *        34, likewise universal. MetaTrader, cTrader and Tulip Indicators hardcode
-    *        the pair; TradingView, pandas-ta-classic and StockSharp expose it, and at
-    *        the defaults the two agree exactly (default 34; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastPeriod Number of bars in the short moving average (default
+    *        5; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Number of bars in the long moving average (default
+    *        34; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int AO_Lookback( int optInFastPeriod, int optInSlowPeriod )
@@ -7026,11 +6808,13 @@ public final class Core {
     * crossings, the twin-peaks divergence, and the run of consecutive same-side
     * bars — which is why the sign and the bar-to-bar change matter more than
     * the level. The oscillator is the first leg of Williams' Profitunity
-    * system, alongside the Alligator and the Accelerator/Decelerator.
+    * system, alongside the Alligator and the Accelerator/Decelerator
+    * ([{@code AC}](/functions/ac)).
     * <p><b>Formula</b>
     * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * Both legs are plain simple moving averages, so there is no seeding convention and none of the cross-library divergence that comes with one. An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
+    * median_t = ( high_t + low_t ) / 2
+    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+    * An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
     * }</pre>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -7042,14 +6826,10 @@ public final class Core {
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
-    * @param optInFastPeriod Number of bars in the short moving average. Default
-    *        5, the value Williams uses and every surveyed package ships (default 5;
-    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param optInSlowPeriod Number of bars in the long moving average. Default
-    *        34, likewise universal. MetaTrader, cTrader and Tulip Indicators hardcode
-    *        the pair; TradingView, pandas-ta-classic and StockSharp expose it, and at
-    *        the defaults the two agree exactly (default 34; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastPeriod Number of bars in the short moving average (default
+    *        5; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Number of bars in the long moving average (default
+    *        34; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Spread between the two moving averages, centred on zero.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -7108,11 +6888,13 @@ public final class Core {
     * crossings, the twin-peaks divergence, and the run of consecutive same-side
     * bars — which is why the sign and the bar-to-bar change matter more than
     * the level. The oscillator is the first leg of Williams' Profitunity
-    * system, alongside the Alligator and the Accelerator/Decelerator.
+    * system, alongside the Alligator and the Accelerator/Decelerator
+    * ([{@code AC}](/functions/ac)).
     * <p><b>Formula</b>
     * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * Both legs are plain simple moving averages, so there is no seeding convention and none of the cross-library divergence that comes with one. An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
+    * median_t = ( high_t + low_t ) / 2
+    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+    * An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
     * }</pre>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -7127,14 +6909,10 @@ public final class Core {
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
-    * @param optInFastPeriod Number of bars in the short moving average. Default
-    *        5, the value Williams uses and every surveyed package ships (default 5;
-    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param optInSlowPeriod Number of bars in the long moving average. Default
-    *        34, likewise universal. MetaTrader, cTrader and Tulip Indicators hardcode
-    *        the pair; TradingView, pandas-ta-classic and StockSharp expose it, and at
-    *        the defaults the two agree exactly (default 34; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFastPeriod Number of bars in the short moving average (default
+    *        5; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Number of bars in the long moving average (default
+    *        34; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Spread between the two moving averages, centred on zero.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -7371,7 +7149,7 @@ public final class Core {
          sp.ringPos_trailingSlowIdx = 0;
       }
    }
-   private RetCode AO_OpenPass( AO_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode AO_OpenImpl( AO_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -7534,32 +7312,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode AO_OpenImpl( AO_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AO_OpenPass( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode AO_OpenAndFillImpl( AO_Stream sp, double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return AO_OpenPass( sp, inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode AO_OpenAndFillInternalImpl( AO_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return AO_OpenPass(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* AO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AO_Stream AO_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       AO_Stream sp = new AO_Stream(this);
-      RetCode retCode = AO_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AO_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -7577,7 +7334,12 @@ public final class Core {
    AO_Stream AO_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
       AO_Stream sp = new AO_Stream(this);
-      RetCode retCode = AO_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AO_OpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -7614,22 +7376,12 @@ public final class Core {
     */
    public AO_Stream AO_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
-      AO_Stream sp = new AO_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("AO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AO_OpenAndFillImpl(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("AO openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AO openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("AO openAndFill: " + retCode, retCode);
+      return AO_OpenAndFillInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -8150,7 +7902,7 @@ public final class Core {
       cur_outReal = cur_tempBuffer - cur_outReal;
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode APO_OpenPass( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode APO_OpenImpl( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -8254,32 +8006,11 @@ public final class Core {
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   private RetCode APO_OpenImpl( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = APO_OpenPass( sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode APO_OpenAndFillImpl( APO_Stream sp, double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return APO_OpenPass( sp, inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode APO_OpenAndFillInternalImpl( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return APO_OpenPass(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
-   }
    /* APO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    APO_Stream APO_OpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       APO_Stream sp = new APO_Stream(this);
-      RetCode retCode = APO_OpenAndFillInternalImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = APO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -8297,7 +8028,12 @@ public final class Core {
    APO_Stream APO_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       APO_Stream sp = new APO_Stream(this);
-      RetCode retCode = APO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = APO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -8334,22 +8070,12 @@ public final class Core {
     */
    public APO_Stream APO_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
-      APO_Stream sp = new APO_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("APO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = APO_OpenAndFillImpl(sp, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("APO openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("APO openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("APO openAndFill: " + retCode, retCode);
+      return APO_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -8975,7 +8701,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode AROON_OpenPass( AROON_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[], int outStride )
+   private RetCode AROON_OpenImpl( AROON_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -9116,33 +8842,11 @@ public final class Core {
       sp.cachedValue = new AROON_Stream.Value(sp.cur_outAroonDown, sp.cur_outAroonUp);
       return RetCode.Success;
    }
-   private RetCode AROON_OpenImpl( AROON_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outAroonDown = new double[1];
-      double[] sink_outAroonUp = new double[1];
-      RetCode retCode = AROON_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outAroonDown, sink_outAroonUp, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode AROON_OpenAndFillImpl( AROON_Stream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[] )
-   {
-      if( (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp ) {
-         return RetCode.BadParam;
-      }
-      return AROON_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1 );
-   }
-   private RetCode AROON_OpenAndFillInternalImpl( AROON_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[] )
-   {
-      return AROON_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1);
-   }
    /* AROON_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AROON_Stream AROON_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[] )
    {
       AROON_Stream sp = new AROON_Stream(this);
-      RetCode retCode = AROON_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -9160,7 +8864,13 @@ public final class Core {
    AROON_Stream AROON_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
       AROON_Stream sp = new AROON_Stream(this);
-      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outAroonDown = new double[1];
+      double[] sink_outAroonUp = new double[1];
+      RetCode retCode = AROON_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outAroonDown, sink_outAroonUp, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -9197,22 +8907,12 @@ public final class Core {
     */
    public AROON_Stream AROON_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outAroonDown[], double outAroonUp[] )
    {
-      AROON_Stream sp = new AROON_Stream(this);
+      if( (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp ) {
+         throw new TaLibArgumentException("AROON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AROON_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("AROON openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AROON openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("AROON openAndFill: " + retCode, retCode);
+      return AROON_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
    }
 /* List of contributors:
  *
@@ -9831,7 +9531,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode AROONOSC_OpenPass( AROONOSC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode AROONOSC_OpenImpl( AROONOSC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -9986,32 +9686,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode AROONOSC_OpenImpl( AROONOSC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AROONOSC_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode AROONOSC_OpenAndFillImpl( AROONOSC_Stream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return AROONOSC_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode AROONOSC_OpenAndFillInternalImpl( AROONOSC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return AROONOSC_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* AROONOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AROONOSC_Stream AROONOSC_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       AROONOSC_Stream sp = new AROONOSC_Stream(this);
-      RetCode retCode = AROONOSC_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AROONOSC_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -10029,7 +9708,12 @@ public final class Core {
    AROONOSC_Stream AROONOSC_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
       AROONOSC_Stream sp = new AROONOSC_Stream(this);
-      RetCode retCode = AROONOSC_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AROONOSC_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -10066,22 +9750,12 @@ public final class Core {
     */
    public AROONOSC_Stream AROONOSC_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      AROONOSC_Stream sp = new AROONOSC_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("AROONOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AROONOSC_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("AROONOSC openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AROONOSC openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("AROONOSC openAndFill: " + retCode, retCode);
+      return AROONOSC_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -10155,8 +9829,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Element-wise arcsine (inverse sine) of each input value. A vector math
-    * transform, not a market indicator.
+    * Element-wise arcsine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = asin(inReal[i])
@@ -10216,8 +9889,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise arcsine (inverse sine) of each input value. A vector math
-    * transform, not a market indicator.
+    * Element-wise arcsine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = asin(inReal[i])
@@ -10385,7 +10057,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.asin(inReal);
    }
-   private RetCode ASIN_OpenPass( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ASIN_OpenImpl( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -10411,32 +10083,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ASIN_OpenImpl( ASIN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ASIN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ASIN_OpenAndFillImpl( ASIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ASIN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ASIN_OpenAndFillInternalImpl( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ASIN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ASIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ASIN_Stream ASIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -10454,7 +10105,12 @@ public final class Core {
    ASIN_Stream ASIN_OpenInternal( double inReal[], int startIdx )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -10491,22 +10147,12 @@ public final class Core {
     */
    public ASIN_Stream ASIN_OpenAndFill( double inReal[], double outReal[] )
    {
-      ASIN_Stream sp = new ASIN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ASIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ASIN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ASIN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ASIN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ASIN openAndFill: " + retCode, retCode);
+      return ASIN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -10581,8 +10227,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector trigonometric arc tangent: applies atan element-wise to each input.
-    * Pure math transform with no lookback.
+    * Element-wise arctangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
@@ -10637,8 +10282,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector trigonometric arc tangent: applies atan element-wise to each input.
-    * Pure math transform with no lookback.
+    * Element-wise arctangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
@@ -10801,7 +10445,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.atan(inReal);
    }
-   private RetCode ATAN_OpenPass( ATAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ATAN_OpenImpl( ATAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -10828,32 +10472,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ATAN_OpenImpl( ATAN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ATAN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ATAN_OpenAndFillImpl( ATAN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ATAN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ATAN_OpenAndFillInternalImpl( ATAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ATAN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ATAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ATAN_Stream ATAN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ATAN_Stream sp = new ATAN_Stream(this);
-      RetCode retCode = ATAN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ATAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -10871,7 +10494,12 @@ public final class Core {
    ATAN_Stream ATAN_OpenInternal( double inReal[], int startIdx )
    {
       ATAN_Stream sp = new ATAN_Stream(this);
-      RetCode retCode = ATAN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ATAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -10908,22 +10536,12 @@ public final class Core {
     */
    public ATAN_Stream ATAN_OpenAndFill( double inReal[], double outReal[] )
    {
-      ATAN_Stream sp = new ATAN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ATAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ATAN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ATAN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATAN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ATAN openAndFill: " + retCode, retCode);
+      return ATAN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -11530,7 +11148,7 @@ public final class Core {
       sp.cur_outReal = sp.prevATR;
       sp.lag1_inClose = inClose;
    }
-   private RetCode ATR_OpenPass( ATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ATR_OpenImpl( ATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -11701,32 +11319,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ATR_OpenImpl( ATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ATR_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ATR_OpenAndFillImpl( ATR_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return ATR_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ATR_OpenAndFillInternalImpl( ATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ATR_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ATR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ATR_Stream ATR_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ATR_Stream sp = new ATR_Stream(this);
-      RetCode retCode = ATR_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -11744,7 +11341,12 @@ public final class Core {
    ATR_Stream ATR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       ATR_Stream sp = new ATR_Stream(this);
-      RetCode retCode = ATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -11781,22 +11383,12 @@ public final class Core {
     */
    public ATR_Stream ATR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      ATR_Stream sp = new ATR_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("ATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ATR_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ATR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ATR openAndFill: " + retCode, retCode);
+      return ATR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -12203,7 +11795,7 @@ public final class Core {
          sp.winPos_i = 0;
       }
    }
-   private RetCode AVGDEV_OpenPass( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode AVGDEV_OpenImpl( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int outIdx = 0;
@@ -12271,32 +11863,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode AVGDEV_OpenImpl( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AVGDEV_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode AVGDEV_OpenAndFillImpl( AVGDEV_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return AVGDEV_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode AVGDEV_OpenAndFillInternalImpl( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return AVGDEV_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* AVGDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AVGDEV_Stream AVGDEV_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
-      RetCode retCode = AVGDEV_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AVGDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -12314,7 +11885,12 @@ public final class Core {
    AVGDEV_Stream AVGDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
-      RetCode retCode = AVGDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AVGDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -12351,22 +11927,12 @@ public final class Core {
     */
    public AVGDEV_Stream AVGDEV_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      AVGDEV_Stream sp = new AVGDEV_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("AVGDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AVGDEV_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("AVGDEV openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGDEV openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("AVGDEV openAndFill: " + retCode, retCode);
+      return AVGDEV_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -12693,7 +12259,7 @@ public final class Core {
    {
       sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
    }
-   private RetCode AVGPRICE_OpenPass( AVGPRICE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode AVGPRICE_OpenImpl( AVGPRICE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -12721,32 +12287,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode AVGPRICE_OpenImpl( AVGPRICE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = AVGPRICE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode AVGPRICE_OpenAndFillImpl( AVGPRICE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return AVGPRICE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode AVGPRICE_OpenAndFillInternalImpl( AVGPRICE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return AVGPRICE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* AVGPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AVGPRICE_Stream AVGPRICE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
-      RetCode retCode = AVGPRICE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AVGPRICE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -12764,7 +12309,12 @@ public final class Core {
    AVGPRICE_Stream AVGPRICE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
-      RetCode retCode = AVGPRICE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = AVGPRICE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -12801,22 +12351,12 @@ public final class Core {
     */
    public AVGPRICE_Stream AVGPRICE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
-      AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
+      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("AVGPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AVGPRICE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("AVGPRICE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGPRICE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
+      return AVGPRICE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -13784,7 +13324,7 @@ public final class Core {
       sp.cur_outRealMiddleBand = cur_tempBuffer1;
       sp.cur_outRealLowerBand = cur_outRealLowerBand;
    }
-   private RetCode BBANDS_OpenPass( BBANDS_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
+   private RetCode BBANDS_OpenImpl( BBANDS_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
    {
       RetCode retCode;
       int i = 0;
@@ -13924,34 +13464,11 @@ public final class Core {
       sp.cachedValue = new BBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
-   private RetCode BBANDS_OpenImpl( BBANDS_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outRealUpperBand = new double[1];
-      double[] sink_outRealMiddleBand = new double[1];
-      double[] sink_outRealLowerBand = new double[1];
-      RetCode retCode = BBANDS_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode BBANDS_OpenAndFillImpl( BBANDS_Stream sp, double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
-   {
-      if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         return RetCode.BadParam;
-      }
-      return BBANDS_OpenPass( sp, inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
-   }
-   private RetCode BBANDS_OpenAndFillInternalImpl( BBANDS_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
-   {
-      return BBANDS_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
-   }
    /* BBANDS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    BBANDS_Stream BBANDS_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
       BBANDS_Stream sp = new BBANDS_Stream(this);
-      RetCode retCode = BBANDS_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = BBANDS_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -13969,7 +13486,14 @@ public final class Core {
    BBANDS_Stream BBANDS_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       BBANDS_Stream sp = new BBANDS_Stream(this);
-      RetCode retCode = BBANDS_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outRealUpperBand = new double[1];
+      double[] sink_outRealMiddleBand = new double[1];
+      double[] sink_outRealLowerBand = new double[1];
+      RetCode retCode = BBANDS_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -14006,22 +13530,12 @@ public final class Core {
     */
    public BBANDS_Stream BBANDS_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
-      BBANDS_Stream sp = new BBANDS_Stream(this);
+      if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
+         throw new TaLibArgumentException("BBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = BBANDS_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("BBANDS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BBANDS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("BBANDS openAndFill: " + retCode, retCode);
+      return BBANDS_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
    }
 /* List of contributors:
  *
@@ -14731,7 +14245,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode BETA_OpenPass( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode BETA_OpenImpl( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double S_xx = 0;
       double S_xy = 0;
@@ -14928,32 +14442,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode BETA_OpenImpl( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = BETA_OpenPass( sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode BETA_OpenAndFillImpl( BETA_Stream sp, double inReal0[], double inReal1[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return BETA_OpenPass( sp, inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode BETA_OpenAndFillInternalImpl( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return BETA_OpenPass(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* BETA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    BETA_Stream BETA_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       BETA_Stream sp = new BETA_Stream(this);
-      RetCode retCode = BETA_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -14971,7 +14464,12 @@ public final class Core {
    BETA_Stream BETA_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
    {
       BETA_Stream sp = new BETA_Stream(this);
-      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = BETA_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -15008,22 +14506,12 @@ public final class Core {
     */
    public BETA_Stream BETA_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
-      BETA_Stream sp = new BETA_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("BETA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = BETA_OpenAndFillImpl(sp, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("BETA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BETA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("BETA openAndFill: " + retCode, retCode);
+      return BETA_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -15359,7 +14847,7 @@ public final class Core {
          sp.cur_outReal = (inClose - inOpen) / tempReal;
       }
    }
-   private RetCode BOP_OpenPass( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode BOP_OpenImpl( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -15393,32 +14881,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode BOP_OpenImpl( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = BOP_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode BOP_OpenAndFillImpl( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return BOP_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode BOP_OpenAndFillInternalImpl( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return BOP_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* BOP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    BOP_Stream BOP_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       BOP_Stream sp = new BOP_Stream(this);
-      RetCode retCode = BOP_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = BOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -15436,7 +14903,12 @@ public final class Core {
    BOP_Stream BOP_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       BOP_Stream sp = new BOP_Stream(this);
-      RetCode retCode = BOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = BOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -15473,22 +14945,12 @@ public final class Core {
     */
    public BOP_Stream BOP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
-      BOP_Stream sp = new BOP_Stream(this);
+      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("BOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = BOP_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("BOP openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BOP openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("BOP openAndFill: " + retCode, retCode);
+      return BOP_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -16034,7 +15496,7 @@ public final class Core {
          sp.circBuffer_Idx = 0;
       }
    }
-   private RetCode CCI_OpenPass( CCI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CCI_OpenImpl( CCI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double tempReal = 0;
       double tempReal2 = 0;
@@ -16158,32 +15620,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CCI_OpenImpl( CCI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = CCI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CCI_OpenAndFillImpl( CCI_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CCI_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode CCI_OpenAndFillInternalImpl( CCI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return CCI_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* CCI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CCI_Stream CCI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CCI_Stream sp = new CCI_Stream(this);
-      RetCode retCode = CCI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CCI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -16201,7 +15642,12 @@ public final class Core {
    CCI_Stream CCI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       CCI_Stream sp = new CCI_Stream(this);
-      RetCode retCode = CCI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = CCI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -16238,22 +15684,12 @@ public final class Core {
     */
    public CCI_Stream CCI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      CCI_Stream sp = new CCI_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("CCI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CCI_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CCI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CCI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CCI openAndFill: " + retCode, retCode);
+      return CCI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -16763,7 +16199,7 @@ public final class Core {
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode CDL2CROWS_OpenPass( CDL2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDL2CROWS_OpenImpl( CDL2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -16877,32 +16313,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDL2CROWS_OpenImpl( CDL2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL2CROWS_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDL2CROWS_OpenAndFillImpl( CDL2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDL2CROWS_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDL2CROWS_OpenAndFillInternalImpl( CDL2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDL2CROWS_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDL2CROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDL2CROWS_Stream CDL2CROWS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDL2CROWS_Stream sp = new CDL2CROWS_Stream(this);
-      RetCode retCode = CDL2CROWS_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -16920,7 +16335,12 @@ public final class Core {
    CDL2CROWS_Stream CDL2CROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDL2CROWS_Stream sp = new CDL2CROWS_Stream(this);
-      RetCode retCode = CDL2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDL2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -16957,22 +16377,12 @@ public final class Core {
     */
    public CDL2CROWS_Stream CDL2CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDL2CROWS_Stream sp = new CDL2CROWS_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDL2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL2CROWS_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDL2CROWS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL2CROWS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDL2CROWS openAndFill: " + retCode, retCode);
+      return CDL2CROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -17534,7 +16944,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDL3BLACKCROWS_OpenPass( CDL3BLACKCROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDL3BLACKCROWS_OpenImpl( CDL3BLACKCROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       int i = 0;
@@ -17666,32 +17076,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDL3BLACKCROWS_OpenImpl( CDL3BLACKCROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3BLACKCROWS_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDL3BLACKCROWS_OpenAndFillImpl( CDL3BLACKCROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDL3BLACKCROWS_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDL3BLACKCROWS_OpenAndFillInternalImpl( CDL3BLACKCROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDL3BLACKCROWS_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDL3BLACKCROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDL3BLACKCROWS_Stream CDL3BLACKCROWS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDL3BLACKCROWS_Stream sp = new CDL3BLACKCROWS_Stream(this);
-      RetCode retCode = CDL3BLACKCROWS_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL3BLACKCROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -17709,7 +17098,12 @@ public final class Core {
    CDL3BLACKCROWS_Stream CDL3BLACKCROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDL3BLACKCROWS_Stream sp = new CDL3BLACKCROWS_Stream(this);
-      RetCode retCode = CDL3BLACKCROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDL3BLACKCROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -17746,22 +17140,12 @@ public final class Core {
     */
    public CDL3BLACKCROWS_Stream CDL3BLACKCROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDL3BLACKCROWS_Stream sp = new CDL3BLACKCROWS_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDL3BLACKCROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3BLACKCROWS_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDL3BLACKCROWS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3BLACKCROWS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDL3BLACKCROWS openAndFill: " + retCode, retCode);
+      return CDL3BLACKCROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -18345,7 +17729,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDL3INSIDE_OpenPass( CDL3INSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDL3INSIDE_OpenImpl( CDL3INSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -18484,32 +17868,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDL3INSIDE_OpenImpl( CDL3INSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3INSIDE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDL3INSIDE_OpenAndFillImpl( CDL3INSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDL3INSIDE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDL3INSIDE_OpenAndFillInternalImpl( CDL3INSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDL3INSIDE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDL3INSIDE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDL3INSIDE_Stream CDL3INSIDE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDL3INSIDE_Stream sp = new CDL3INSIDE_Stream(this);
-      RetCode retCode = CDL3INSIDE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL3INSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -18527,7 +17890,12 @@ public final class Core {
    CDL3INSIDE_Stream CDL3INSIDE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDL3INSIDE_Stream sp = new CDL3INSIDE_Stream(this);
-      RetCode retCode = CDL3INSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDL3INSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -18564,22 +17932,12 @@ public final class Core {
     */
    public CDL3INSIDE_Stream CDL3INSIDE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDL3INSIDE_Stream sp = new CDL3INSIDE_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDL3INSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3INSIDE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDL3INSIDE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3INSIDE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDL3INSIDE openAndFill: " + retCode, retCode);
+      return CDL3INSIDE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -19137,7 +18495,7 @@ public final class Core {
          sp.ringPos_NearTrailingIdx = 0;
       }
    }
-   private RetCode CDL3LINESTRIKE_OpenPass( CDL3LINESTRIKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDL3LINESTRIKE_OpenImpl( CDL3LINESTRIKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] NearPeriodTotal = new double[4];
       int i = 0;
@@ -19262,32 +18620,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDL3LINESTRIKE_OpenImpl( CDL3LINESTRIKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3LINESTRIKE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDL3LINESTRIKE_OpenAndFillImpl( CDL3LINESTRIKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDL3LINESTRIKE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDL3LINESTRIKE_OpenAndFillInternalImpl( CDL3LINESTRIKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDL3LINESTRIKE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDL3LINESTRIKE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
-      RetCode retCode = CDL3LINESTRIKE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL3LINESTRIKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -19305,7 +18642,12 @@ public final class Core {
    CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
-      RetCode retCode = CDL3LINESTRIKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDL3LINESTRIKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -19342,22 +18684,12 @@ public final class Core {
     */
    public CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDL3LINESTRIKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3LINESTRIKE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDL3LINESTRIKE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3LINESTRIKE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDL3LINESTRIKE openAndFill: " + retCode, retCode);
+      return CDL3LINESTRIKE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -19763,7 +19095,7 @@ public final class Core {
       sp.lag2_inClose = sp.lag1_inClose;
       sp.lag1_inClose = inClose;
    }
-   private RetCode CDL3OUTSIDE_OpenPass( CDL3OUTSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDL3OUTSIDE_OpenImpl( CDL3OUTSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -19833,32 +19165,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDL3OUTSIDE_OpenImpl( CDL3OUTSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3OUTSIDE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDL3OUTSIDE_OpenAndFillImpl( CDL3OUTSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDL3OUTSIDE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDL3OUTSIDE_OpenAndFillInternalImpl( CDL3OUTSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDL3OUTSIDE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDL3OUTSIDE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
-      RetCode retCode = CDL3OUTSIDE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL3OUTSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -19876,7 +19187,12 @@ public final class Core {
    CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
-      RetCode retCode = CDL3OUTSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDL3OUTSIDE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -19913,22 +19229,12 @@ public final class Core {
     */
    public CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDL3OUTSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3OUTSIDE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDL3OUTSIDE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3OUTSIDE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDL3OUTSIDE openAndFill: " + retCode, retCode);
+      return CDL3OUTSIDE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -20690,7 +19996,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDL3STARSINSOUTH_OpenPass( CDL3STARSINSOUTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDL3STARSINSOUTH_OpenImpl( CDL3STARSINSOUTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       double BodyShortPeriodTotal = 0;
@@ -20913,32 +20219,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDL3STARSINSOUTH_OpenImpl( CDL3STARSINSOUTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3STARSINSOUTH_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDL3STARSINSOUTH_OpenAndFillImpl( CDL3STARSINSOUTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDL3STARSINSOUTH_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDL3STARSINSOUTH_OpenAndFillInternalImpl( CDL3STARSINSOUTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDL3STARSINSOUTH_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDL3STARSINSOUTH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
-      RetCode retCode = CDL3STARSINSOUTH_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL3STARSINSOUTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -20956,7 +20241,12 @@ public final class Core {
    CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
-      RetCode retCode = CDL3STARSINSOUTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDL3STARSINSOUTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -20993,22 +20283,12 @@ public final class Core {
     */
    public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDL3STARSINSOUTH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3STARSINSOUTH_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDL3STARSINSOUTH openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3STARSINSOUTH openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDL3STARSINSOUTH openAndFill: " + retCode, retCode);
+      return CDL3STARSINSOUTH_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -21796,7 +21076,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDL3WHITESOLDIERS_OpenPass( CDL3WHITESOLDIERS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDL3WHITESOLDIERS_OpenImpl( CDL3WHITESOLDIERS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -22030,32 +21310,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDL3WHITESOLDIERS_OpenImpl( CDL3WHITESOLDIERS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDL3WHITESOLDIERS_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDL3WHITESOLDIERS_OpenAndFillImpl( CDL3WHITESOLDIERS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDL3WHITESOLDIERS_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDL3WHITESOLDIERS_OpenAndFillInternalImpl( CDL3WHITESOLDIERS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDL3WHITESOLDIERS_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDL3WHITESOLDIERS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDL3WHITESOLDIERS_Stream CDL3WHITESOLDIERS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDL3WHITESOLDIERS_Stream sp = new CDL3WHITESOLDIERS_Stream(this);
-      RetCode retCode = CDL3WHITESOLDIERS_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL3WHITESOLDIERS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -22073,7 +21332,12 @@ public final class Core {
    CDL3WHITESOLDIERS_Stream CDL3WHITESOLDIERS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDL3WHITESOLDIERS_Stream sp = new CDL3WHITESOLDIERS_Stream(this);
-      RetCode retCode = CDL3WHITESOLDIERS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDL3WHITESOLDIERS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -22110,22 +21374,12 @@ public final class Core {
     */
    public CDL3WHITESOLDIERS_Stream CDL3WHITESOLDIERS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDL3WHITESOLDIERS_Stream sp = new CDL3WHITESOLDIERS_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3WHITESOLDIERS_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDL3WHITESOLDIERS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3WHITESOLDIERS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: " + retCode, retCode);
+      return CDL3WHITESOLDIERS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -22809,7 +22063,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLABANDONEDBABY_OpenPass( CDLABANDONEDBABY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLABANDONEDBABY_OpenImpl( CDLABANDONEDBABY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -22988,32 +22242,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLABANDONEDBABY_OpenImpl( CDLABANDONEDBABY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLABANDONEDBABY_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLABANDONEDBABY_OpenAndFillImpl( CDLABANDONEDBABY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLABANDONEDBABY_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLABANDONEDBABY_OpenAndFillInternalImpl( CDLABANDONEDBABY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLABANDONEDBABY_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLABANDONEDBABY_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
-      RetCode retCode = CDLABANDONEDBABY_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -23031,7 +22264,12 @@ public final class Core {
    CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
-      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLABANDONEDBABY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -23068,22 +22306,12 @@ public final class Core {
     */
    public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
-      CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLABANDONEDBABY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLABANDONEDBABY_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLABANDONEDBABY openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLABANDONEDBABY openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLABANDONEDBABY openAndFill: " + retCode, retCode);
+      return CDLABANDONEDBABY_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -23946,7 +23174,7 @@ public final class Core {
          sp.ringPos_ShadowShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLADVANCEBLOCK_OpenPass( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLADVANCEBLOCK_OpenImpl( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowShortPeriodTotal = new double[3];
       double[] ShadowLongPeriodTotal = new double[2];
@@ -24214,32 +23442,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLADVANCEBLOCK_OpenImpl( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLADVANCEBLOCK_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLADVANCEBLOCK_OpenAndFillImpl( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLADVANCEBLOCK_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLADVANCEBLOCK_OpenAndFillInternalImpl( CDLADVANCEBLOCK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLADVANCEBLOCK_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLADVANCEBLOCK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
-      RetCode retCode = CDLADVANCEBLOCK_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLADVANCEBLOCK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -24257,7 +23464,12 @@ public final class Core {
    CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
-      RetCode retCode = CDLADVANCEBLOCK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLADVANCEBLOCK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -24294,22 +23506,12 @@ public final class Core {
     */
    public CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLADVANCEBLOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLADVANCEBLOCK_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLADVANCEBLOCK openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLADVANCEBLOCK openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLADVANCEBLOCK openAndFill: " + retCode, retCode);
+      return CDLADVANCEBLOCK_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -24856,7 +24058,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLBELTHOLD_OpenPass( CDLBELTHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLBELTHOLD_OpenImpl( CDLBELTHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -24980,32 +24182,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLBELTHOLD_OpenImpl( CDLBELTHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLBELTHOLD_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLBELTHOLD_OpenAndFillImpl( CDLBELTHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLBELTHOLD_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLBELTHOLD_OpenAndFillInternalImpl( CDLBELTHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLBELTHOLD_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLBELTHOLD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLBELTHOLD_Stream CDLBELTHOLD_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLBELTHOLD_Stream sp = new CDLBELTHOLD_Stream(this);
-      RetCode retCode = CDLBELTHOLD_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLBELTHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -25023,7 +24204,12 @@ public final class Core {
    CDLBELTHOLD_Stream CDLBELTHOLD_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLBELTHOLD_Stream sp = new CDLBELTHOLD_Stream(this);
-      RetCode retCode = CDLBELTHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLBELTHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -25060,22 +24246,12 @@ public final class Core {
     */
    public CDLBELTHOLD_Stream CDLBELTHOLD_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLBELTHOLD_Stream sp = new CDLBELTHOLD_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLBELTHOLD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLBELTHOLD_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLBELTHOLD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLBELTHOLD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLBELTHOLD openAndFill: " + retCode, retCode);
+      return CDLBELTHOLD_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -25612,7 +24788,7 @@ public final class Core {
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLBREAKAWAY_OpenPass( CDLBREAKAWAY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLBREAKAWAY_OpenImpl( CDLBREAKAWAY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -25733,32 +24909,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLBREAKAWAY_OpenImpl( CDLBREAKAWAY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLBREAKAWAY_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLBREAKAWAY_OpenAndFillImpl( CDLBREAKAWAY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLBREAKAWAY_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLBREAKAWAY_OpenAndFillInternalImpl( CDLBREAKAWAY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLBREAKAWAY_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLBREAKAWAY_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLBREAKAWAY_Stream CDLBREAKAWAY_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLBREAKAWAY_Stream sp = new CDLBREAKAWAY_Stream(this);
-      RetCode retCode = CDLBREAKAWAY_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLBREAKAWAY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -25776,7 +24931,12 @@ public final class Core {
    CDLBREAKAWAY_Stream CDLBREAKAWAY_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLBREAKAWAY_Stream sp = new CDLBREAKAWAY_Stream(this);
-      RetCode retCode = CDLBREAKAWAY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLBREAKAWAY_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -25813,22 +24973,12 @@ public final class Core {
     */
    public CDLBREAKAWAY_Stream CDLBREAKAWAY_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLBREAKAWAY_Stream sp = new CDLBREAKAWAY_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLBREAKAWAY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLBREAKAWAY_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLBREAKAWAY openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLBREAKAWAY openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLBREAKAWAY openAndFill: " + retCode, retCode);
+      return CDLBREAKAWAY_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -26371,7 +25521,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLCLOSINGMARUBOZU_OpenPass( CDLCLOSINGMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLCLOSINGMARUBOZU_OpenImpl( CDLCLOSINGMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -26495,32 +25645,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLCLOSINGMARUBOZU_OpenImpl( CDLCLOSINGMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLCLOSINGMARUBOZU_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLCLOSINGMARUBOZU_OpenAndFillImpl( CDLCLOSINGMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLCLOSINGMARUBOZU_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLCLOSINGMARUBOZU_OpenAndFillInternalImpl( CDLCLOSINGMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLCLOSINGMARUBOZU_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLCLOSINGMARUBOZU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLCLOSINGMARUBOZU_Stream sp = new CDLCLOSINGMARUBOZU_Stream(this);
-      RetCode retCode = CDLCLOSINGMARUBOZU_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLCLOSINGMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -26538,7 +25667,12 @@ public final class Core {
    CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLCLOSINGMARUBOZU_Stream sp = new CDLCLOSINGMARUBOZU_Stream(this);
-      RetCode retCode = CDLCLOSINGMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLCLOSINGMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -26575,22 +25709,12 @@ public final class Core {
     */
    public CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLCLOSINGMARUBOZU_Stream sp = new CDLCLOSINGMARUBOZU_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCLOSINGMARUBOZU_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLCLOSINGMARUBOZU openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCLOSINGMARUBOZU openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + retCode, retCode);
+      return CDLCLOSINGMARUBOZU_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -27154,7 +26278,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLCONCEALBABYSWALL_OpenPass( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLCONCEALBABYSWALL_OpenImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -27286,32 +26410,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLCONCEALBABYSWALL_OpenImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLCONCEALBABYSWALL_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLCONCEALBABYSWALL_OpenAndFillImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLCONCEALBABYSWALL_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLCONCEALBABYSWALL_OpenAndFillInternalImpl( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLCONCEALBABYSWALL_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLCONCEALBABYSWALL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
-      RetCode retCode = CDLCONCEALBABYSWALL_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLCONCEALBABYSWALL_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -27329,7 +26432,12 @@ public final class Core {
    CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
-      RetCode retCode = CDLCONCEALBABYSWALL_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLCONCEALBABYSWALL_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -27366,22 +26474,12 @@ public final class Core {
     */
    public CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCONCEALBABYSWALL_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLCONCEALBABYSWALL openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCONCEALBABYSWALL openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode, retCode);
+      return CDLCONCEALBABYSWALL_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -27962,7 +27060,7 @@ public final class Core {
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLCOUNTERATTACK_OpenPass( CDLCOUNTERATTACK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLCOUNTERATTACK_OpenImpl( CDLCOUNTERATTACK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       double[] BodyLongPeriodTotal = new double[2];
@@ -28105,32 +27203,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLCOUNTERATTACK_OpenImpl( CDLCOUNTERATTACK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLCOUNTERATTACK_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLCOUNTERATTACK_OpenAndFillImpl( CDLCOUNTERATTACK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLCOUNTERATTACK_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLCOUNTERATTACK_OpenAndFillInternalImpl( CDLCOUNTERATTACK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLCOUNTERATTACK_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLCOUNTERATTACK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLCOUNTERATTACK_Stream CDLCOUNTERATTACK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLCOUNTERATTACK_Stream sp = new CDLCOUNTERATTACK_Stream(this);
-      RetCode retCode = CDLCOUNTERATTACK_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLCOUNTERATTACK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -28148,7 +27225,12 @@ public final class Core {
    CDLCOUNTERATTACK_Stream CDLCOUNTERATTACK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLCOUNTERATTACK_Stream sp = new CDLCOUNTERATTACK_Stream(this);
-      RetCode retCode = CDLCOUNTERATTACK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLCOUNTERATTACK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -28185,22 +27267,12 @@ public final class Core {
     */
    public CDLCOUNTERATTACK_Stream CDLCOUNTERATTACK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLCOUNTERATTACK_Stream sp = new CDLCOUNTERATTACK_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLCOUNTERATTACK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCOUNTERATTACK_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLCOUNTERATTACK openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCOUNTERATTACK openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLCOUNTERATTACK openAndFill: " + retCode, retCode);
+      return CDLCOUNTERATTACK_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -28717,7 +27789,7 @@ public final class Core {
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLDARKCLOUDCOVER_OpenPass( CDLDARKCLOUDCOVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLDARKCLOUDCOVER_OpenImpl( CDLDARKCLOUDCOVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -28832,32 +27904,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLDARKCLOUDCOVER_OpenImpl( CDLDARKCLOUDCOVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLDARKCLOUDCOVER_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLDARKCLOUDCOVER_OpenAndFillImpl( CDLDARKCLOUDCOVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLDARKCLOUDCOVER_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLDARKCLOUDCOVER_OpenAndFillInternalImpl( CDLDARKCLOUDCOVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLDARKCLOUDCOVER_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLDARKCLOUDCOVER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
-      RetCode retCode = CDLDARKCLOUDCOVER_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLDARKCLOUDCOVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -28875,7 +27926,12 @@ public final class Core {
    CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
-      RetCode retCode = CDLDARKCLOUDCOVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLDARKCLOUDCOVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -28912,22 +27968,12 @@ public final class Core {
     */
    public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
-      CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLDARKCLOUDCOVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLDARKCLOUDCOVER_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLDARKCLOUDCOVER openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDARKCLOUDCOVER openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLDARKCLOUDCOVER openAndFill: " + retCode, retCode);
+      return CDLDARKCLOUDCOVER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -29378,7 +28424,7 @@ public final class Core {
          sp.ringPos_BodyDojiTrailingIdx = 0;
       }
    }
-   private RetCode CDLDOJI_OpenPass( CDLDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLDOJI_OpenImpl( CDLDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       int i = 0;
@@ -29471,32 +28517,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLDOJI_OpenImpl( CDLDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLDOJI_OpenAndFillImpl( CDLDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLDOJI_OpenAndFillInternalImpl( CDLDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLDOJI_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLDOJI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLDOJI_Stream CDLDOJI_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLDOJI_Stream sp = new CDLDOJI_Stream(this);
-      RetCode retCode = CDLDOJI_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -29514,7 +28539,12 @@ public final class Core {
    CDLDOJI_Stream CDLDOJI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLDOJI_Stream sp = new CDLDOJI_Stream(this);
-      RetCode retCode = CDLDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -29551,22 +28581,12 @@ public final class Core {
     */
    public CDLDOJI_Stream CDLDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLDOJI_Stream sp = new CDLDOJI_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLDOJI_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLDOJI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDOJI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLDOJI openAndFill: " + retCode, retCode);
+      return CDLDOJI_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -30143,7 +29163,7 @@ public final class Core {
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLDOJISTAR_OpenPass( CDLDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLDOJISTAR_OpenImpl( CDLDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -30276,32 +29296,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLDOJISTAR_OpenImpl( CDLDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLDOJISTAR_OpenAndFillImpl( CDLDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLDOJISTAR_OpenAndFillInternalImpl( CDLDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLDOJISTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLDOJISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLDOJISTAR_Stream CDLDOJISTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLDOJISTAR_Stream sp = new CDLDOJISTAR_Stream(this);
-      RetCode retCode = CDLDOJISTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -30319,7 +29318,12 @@ public final class Core {
    CDLDOJISTAR_Stream CDLDOJISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLDOJISTAR_Stream sp = new CDLDOJISTAR_Stream(this);
-      RetCode retCode = CDLDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -30356,22 +29360,12 @@ public final class Core {
     */
    public CDLDOJISTAR_Stream CDLDOJISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLDOJISTAR_Stream sp = new CDLDOJISTAR_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLDOJISTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLDOJISTAR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDOJISTAR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLDOJISTAR openAndFill: " + retCode, retCode);
+      return CDLDOJISTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -30921,7 +29915,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLDRAGONFLYDOJI_OpenPass( CDLDRAGONFLYDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLDRAGONFLYDOJI_OpenImpl( CDLDRAGONFLYDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -31046,32 +30040,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLDRAGONFLYDOJI_OpenImpl( CDLDRAGONFLYDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLDRAGONFLYDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLDRAGONFLYDOJI_OpenAndFillImpl( CDLDRAGONFLYDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLDRAGONFLYDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLDRAGONFLYDOJI_OpenAndFillInternalImpl( CDLDRAGONFLYDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLDRAGONFLYDOJI_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLDRAGONFLYDOJI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLDRAGONFLYDOJI_Stream CDLDRAGONFLYDOJI_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLDRAGONFLYDOJI_Stream sp = new CDLDRAGONFLYDOJI_Stream(this);
-      RetCode retCode = CDLDRAGONFLYDOJI_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLDRAGONFLYDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -31089,7 +30062,12 @@ public final class Core {
    CDLDRAGONFLYDOJI_Stream CDLDRAGONFLYDOJI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLDRAGONFLYDOJI_Stream sp = new CDLDRAGONFLYDOJI_Stream(this);
-      RetCode retCode = CDLDRAGONFLYDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLDRAGONFLYDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -31126,22 +30104,12 @@ public final class Core {
     */
    public CDLDRAGONFLYDOJI_Stream CDLDRAGONFLYDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLDRAGONFLYDOJI_Stream sp = new CDLDRAGONFLYDOJI_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLDRAGONFLYDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLDRAGONFLYDOJI_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLDRAGONFLYDOJI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDRAGONFLYDOJI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLDRAGONFLYDOJI openAndFill: " + retCode, retCode);
+      return CDLDRAGONFLYDOJI_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -31553,7 +30521,7 @@ public final class Core {
       sp.lag1_inOpen = inOpen;
       sp.lag1_inClose = inClose;
    }
-   private RetCode CDLENGULFING_OpenPass( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLENGULFING_OpenImpl( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -31625,32 +30593,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLENGULFING_OpenImpl( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLENGULFING_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLENGULFING_OpenAndFillImpl( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLENGULFING_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLENGULFING_OpenAndFillInternalImpl( CDLENGULFING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLENGULFING_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLENGULFING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLENGULFING_Stream CDLENGULFING_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
-      RetCode retCode = CDLENGULFING_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLENGULFING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -31668,7 +30615,12 @@ public final class Core {
    CDLENGULFING_Stream CDLENGULFING_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
-      RetCode retCode = CDLENGULFING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLENGULFING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -31705,22 +30657,12 @@ public final class Core {
     */
    public CDLENGULFING_Stream CDLENGULFING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLENGULFING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLENGULFING_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLENGULFING openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLENGULFING openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLENGULFING openAndFill: " + retCode, retCode);
+      return CDLENGULFING_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -32406,7 +31348,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLEVENINGDOJISTAR_OpenPass( CDLEVENINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLEVENINGDOJISTAR_OpenImpl( CDLEVENINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -32586,32 +31528,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLEVENINGDOJISTAR_OpenImpl( CDLEVENINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLEVENINGDOJISTAR_OpenAndFillImpl( CDLEVENINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLEVENINGDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLEVENINGDOJISTAR_OpenAndFillInternalImpl( CDLEVENINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLEVENINGDOJISTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLEVENINGDOJISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -32629,7 +31550,12 @@ public final class Core {
    CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLEVENINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -32666,22 +31592,12 @@ public final class Core {
     */
    public CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
-      CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLEVENINGDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLEVENINGDOJISTAR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLEVENINGDOJISTAR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLEVENINGDOJISTAR openAndFill: " + retCode, retCode);
+      return CDLEVENINGDOJISTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -33309,7 +32225,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLEVENINGSTAR_OpenPass( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLEVENINGSTAR_OpenImpl( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -33466,32 +32382,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLEVENINGSTAR_OpenImpl( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLEVENINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLEVENINGSTAR_OpenAndFillImpl( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLEVENINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLEVENINGSTAR_OpenAndFillInternalImpl( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLEVENINGSTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLEVENINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
-      RetCode retCode = CDLEVENINGSTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -33509,7 +32404,12 @@ public final class Core {
    CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
-      RetCode retCode = CDLEVENINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLEVENINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -33546,22 +32446,12 @@ public final class Core {
     */
    public CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
-      CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLEVENINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLEVENINGSTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLEVENINGSTAR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLEVENINGSTAR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLEVENINGSTAR openAndFill: " + retCode, retCode);
+      return CDLEVENINGSTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -34141,7 +33031,7 @@ public final class Core {
          sp.ringPos_NearTrailingIdx = 0;
       }
    }
-   private RetCode CDLGAPSIDESIDEWHITE_OpenPass( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLGAPSIDESIDEWHITE_OpenImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double NearPeriodTotal = 0;
       double EqualPeriodTotal = 0;
@@ -34286,32 +33176,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLGAPSIDESIDEWHITE_OpenImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLGAPSIDESIDEWHITE_OpenAndFillImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLGAPSIDESIDEWHITE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLGAPSIDESIDEWHITE_OpenAndFillInternalImpl( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLGAPSIDESIDEWHITE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLGAPSIDESIDEWHITE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLGAPSIDESIDEWHITE_Stream sp = new CDLGAPSIDESIDEWHITE_Stream(this);
-      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -34329,7 +33198,12 @@ public final class Core {
    CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLGAPSIDESIDEWHITE_Stream sp = new CDLGAPSIDESIDEWHITE_Stream(this);
-      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -34366,22 +33240,12 @@ public final class Core {
     */
    public CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLGAPSIDESIDEWHITE_Stream sp = new CDLGAPSIDESIDEWHITE_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLGAPSIDESIDEWHITE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLGAPSIDESIDEWHITE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGAPSIDESIDEWHITE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + retCode, retCode);
+      return CDLGAPSIDESIDEWHITE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -34931,7 +33795,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLGRAVESTONEDOJI_OpenPass( CDLGRAVESTONEDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLGRAVESTONEDOJI_OpenImpl( CDLGRAVESTONEDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -35056,32 +33920,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLGRAVESTONEDOJI_OpenImpl( CDLGRAVESTONEDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLGRAVESTONEDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLGRAVESTONEDOJI_OpenAndFillImpl( CDLGRAVESTONEDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLGRAVESTONEDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLGRAVESTONEDOJI_OpenAndFillInternalImpl( CDLGRAVESTONEDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLGRAVESTONEDOJI_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLGRAVESTONEDOJI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLGRAVESTONEDOJI_Stream CDLGRAVESTONEDOJI_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLGRAVESTONEDOJI_Stream sp = new CDLGRAVESTONEDOJI_Stream(this);
-      RetCode retCode = CDLGRAVESTONEDOJI_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLGRAVESTONEDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -35099,7 +33942,12 @@ public final class Core {
    CDLGRAVESTONEDOJI_Stream CDLGRAVESTONEDOJI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLGRAVESTONEDOJI_Stream sp = new CDLGRAVESTONEDOJI_Stream(this);
-      RetCode retCode = CDLGRAVESTONEDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLGRAVESTONEDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -35136,22 +33984,12 @@ public final class Core {
     */
    public CDLGRAVESTONEDOJI_Stream CDLGRAVESTONEDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLGRAVESTONEDOJI_Stream sp = new CDLGRAVESTONEDOJI_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLGRAVESTONEDOJI_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLGRAVESTONEDOJI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGRAVESTONEDOJI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + retCode, retCode);
+      return CDLGRAVESTONEDOJI_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -35847,7 +34685,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLHAMMER_OpenPass( CDLHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLHAMMER_OpenImpl( CDLHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -36041,32 +34879,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLHAMMER_OpenImpl( CDLHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHAMMER_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLHAMMER_OpenAndFillImpl( CDLHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLHAMMER_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLHAMMER_OpenAndFillInternalImpl( CDLHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLHAMMER_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLHAMMER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLHAMMER_Stream CDLHAMMER_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
-      RetCode retCode = CDLHAMMER_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -36084,7 +34901,12 @@ public final class Core {
    CDLHAMMER_Stream CDLHAMMER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
-      RetCode retCode = CDLHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -36121,22 +34943,12 @@ public final class Core {
     */
    public CDLHAMMER_Stream CDLHAMMER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHAMMER_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLHAMMER openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHAMMER openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLHAMMER openAndFill: " + retCode, retCode);
+      return CDLHAMMER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -36834,7 +35646,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLHANGINGMAN_OpenPass( CDLHANGINGMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLHANGINGMAN_OpenImpl( CDLHANGINGMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -37028,32 +35840,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLHANGINGMAN_OpenImpl( CDLHANGINGMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHANGINGMAN_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLHANGINGMAN_OpenAndFillImpl( CDLHANGINGMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLHANGINGMAN_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLHANGINGMAN_OpenAndFillInternalImpl( CDLHANGINGMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLHANGINGMAN_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLHANGINGMAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLHANGINGMAN_Stream CDLHANGINGMAN_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLHANGINGMAN_Stream sp = new CDLHANGINGMAN_Stream(this);
-      RetCode retCode = CDLHANGINGMAN_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHANGINGMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -37071,7 +35862,12 @@ public final class Core {
    CDLHANGINGMAN_Stream CDLHANGINGMAN_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLHANGINGMAN_Stream sp = new CDLHANGINGMAN_Stream(this);
-      RetCode retCode = CDLHANGINGMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLHANGINGMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -37108,22 +35904,12 @@ public final class Core {
     */
    public CDLHANGINGMAN_Stream CDLHANGINGMAN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLHANGINGMAN_Stream sp = new CDLHANGINGMAN_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLHANGINGMAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHANGINGMAN_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLHANGINGMAN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHANGINGMAN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLHANGINGMAN openAndFill: " + retCode, retCode);
+      return CDLHANGINGMAN_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -37723,7 +36509,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLHARAMI_OpenPass( CDLHARAMI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLHARAMI_OpenImpl( CDLHARAMI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -37872,32 +36658,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLHARAMI_OpenImpl( CDLHARAMI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHARAMI_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLHARAMI_OpenAndFillImpl( CDLHARAMI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLHARAMI_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLHARAMI_OpenAndFillInternalImpl( CDLHARAMI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLHARAMI_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLHARAMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLHARAMI_Stream CDLHARAMI_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLHARAMI_Stream sp = new CDLHARAMI_Stream(this);
-      RetCode retCode = CDLHARAMI_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHARAMI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -37915,7 +36680,12 @@ public final class Core {
    CDLHARAMI_Stream CDLHARAMI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLHARAMI_Stream sp = new CDLHARAMI_Stream(this);
-      RetCode retCode = CDLHARAMI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLHARAMI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -37952,22 +36722,12 @@ public final class Core {
     */
    public CDLHARAMI_Stream CDLHARAMI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLHARAMI_Stream sp = new CDLHARAMI_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLHARAMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHARAMI_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLHARAMI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHARAMI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLHARAMI openAndFill: " + retCode, retCode);
+      return CDLHARAMI_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -38566,7 +37326,7 @@ public final class Core {
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLHARAMICROSS_OpenPass( CDLHARAMICROSS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLHARAMICROSS_OpenImpl( CDLHARAMICROSS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -38712,32 +37472,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLHARAMICROSS_OpenImpl( CDLHARAMICROSS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHARAMICROSS_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLHARAMICROSS_OpenAndFillImpl( CDLHARAMICROSS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLHARAMICROSS_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLHARAMICROSS_OpenAndFillInternalImpl( CDLHARAMICROSS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLHARAMICROSS_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLHARAMICROSS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLHARAMICROSS_Stream CDLHARAMICROSS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLHARAMICROSS_Stream sp = new CDLHARAMICROSS_Stream(this);
-      RetCode retCode = CDLHARAMICROSS_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHARAMICROSS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -38755,7 +37494,12 @@ public final class Core {
    CDLHARAMICROSS_Stream CDLHARAMICROSS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLHARAMICROSS_Stream sp = new CDLHARAMICROSS_Stream(this);
-      RetCode retCode = CDLHARAMICROSS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLHARAMICROSS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -38792,22 +37536,12 @@ public final class Core {
     */
    public CDLHARAMICROSS_Stream CDLHARAMICROSS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLHARAMICROSS_Stream sp = new CDLHARAMICROSS_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLHARAMICROSS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHARAMICROSS_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLHARAMICROSS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHARAMICROSS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLHARAMICROSS openAndFill: " + retCode, retCode);
+      return CDLHARAMICROSS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -39353,7 +38087,7 @@ public final class Core {
          sp.ringPos_ShadowTrailingIdx = 0;
       }
    }
-   private RetCode CDLHIGHWAVE_OpenPass( CDLHIGHWAVE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLHIGHWAVE_OpenImpl( CDLHIGHWAVE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -39476,32 +38210,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLHIGHWAVE_OpenImpl( CDLHIGHWAVE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHIGHWAVE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLHIGHWAVE_OpenAndFillImpl( CDLHIGHWAVE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLHIGHWAVE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLHIGHWAVE_OpenAndFillInternalImpl( CDLHIGHWAVE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLHIGHWAVE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLHIGHWAVE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
-      RetCode retCode = CDLHIGHWAVE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHIGHWAVE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -39519,7 +38232,12 @@ public final class Core {
    CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
-      RetCode retCode = CDLHIGHWAVE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLHIGHWAVE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -39556,22 +38274,12 @@ public final class Core {
     */
    public CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLHIGHWAVE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHIGHWAVE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLHIGHWAVE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIGHWAVE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLHIGHWAVE openAndFill: " + retCode, retCode);
+      return CDLHIGHWAVE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -40078,7 +38786,7 @@ public final class Core {
       sp.lag2_inLow = sp.lag1_inLow;
       sp.lag1_inLow = inLow;
    }
-   private RetCode CDLHIKKAKE_OpenPass( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLHIKKAKE_OpenImpl( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -40195,32 +38903,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLHIKKAKE_OpenImpl( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHIKKAKE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLHIKKAKE_OpenAndFillImpl( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLHIKKAKE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLHIKKAKE_OpenAndFillInternalImpl( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLHIKKAKE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLHIKKAKE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
-      RetCode retCode = CDLHIKKAKE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -40238,7 +38925,12 @@ public final class Core {
    CDLHIKKAKE_Stream CDLHIKKAKE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
-      RetCode retCode = CDLHIKKAKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLHIKKAKE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -40275,22 +38967,12 @@ public final class Core {
     */
    public CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLHIKKAKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHIKKAKE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLHIKKAKE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIKKAKE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLHIKKAKE openAndFill: " + retCode, retCode);
+      return CDLHIKKAKE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -40909,7 +39591,7 @@ public final class Core {
          sp.ringPos_NearTrailingIdx = 0;
       }
    }
-   private RetCode CDLHIKKAKEMOD_OpenPass( CDLHIKKAKEMOD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLHIKKAKEMOD_OpenImpl( CDLHIKKAKEMOD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -41078,32 +39760,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLHIKKAKEMOD_OpenImpl( CDLHIKKAKEMOD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHIKKAKEMOD_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLHIKKAKEMOD_OpenAndFillImpl( CDLHIKKAKEMOD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLHIKKAKEMOD_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLHIKKAKEMOD_OpenAndFillInternalImpl( CDLHIKKAKEMOD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLHIKKAKEMOD_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLHIKKAKEMOD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLHIKKAKEMOD_Stream CDLHIKKAKEMOD_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLHIKKAKEMOD_Stream sp = new CDLHIKKAKEMOD_Stream(this);
-      RetCode retCode = CDLHIKKAKEMOD_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKEMOD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -41121,7 +39782,12 @@ public final class Core {
    CDLHIKKAKEMOD_Stream CDLHIKKAKEMOD_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLHIKKAKEMOD_Stream sp = new CDLHIKKAKEMOD_Stream(this);
-      RetCode retCode = CDLHIKKAKEMOD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLHIKKAKEMOD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -41158,22 +39824,12 @@ public final class Core {
     */
    public CDLHIKKAKEMOD_Stream CDLHIKKAKEMOD_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLHIKKAKEMOD_Stream sp = new CDLHIKKAKEMOD_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHIKKAKEMOD_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLHIKKAKEMOD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIKKAKEMOD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: " + retCode, retCode);
+      return CDLHIKKAKEMOD_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -41742,7 +40398,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLHOMINGPIGEON_OpenPass( CDLHOMINGPIGEON_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLHOMINGPIGEON_OpenImpl( CDLHOMINGPIGEON_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -41879,32 +40535,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLHOMINGPIGEON_OpenImpl( CDLHOMINGPIGEON_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLHOMINGPIGEON_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLHOMINGPIGEON_OpenAndFillImpl( CDLHOMINGPIGEON_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLHOMINGPIGEON_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLHOMINGPIGEON_OpenAndFillInternalImpl( CDLHOMINGPIGEON_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLHOMINGPIGEON_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLHOMINGPIGEON_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLHOMINGPIGEON_Stream sp = new CDLHOMINGPIGEON_Stream(this);
-      RetCode retCode = CDLHOMINGPIGEON_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHOMINGPIGEON_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -41922,7 +40557,12 @@ public final class Core {
    CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLHOMINGPIGEON_Stream sp = new CDLHOMINGPIGEON_Stream(this);
-      RetCode retCode = CDLHOMINGPIGEON_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLHOMINGPIGEON_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -41959,22 +40599,12 @@ public final class Core {
     */
    public CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLHOMINGPIGEON_Stream sp = new CDLHOMINGPIGEON_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLHOMINGPIGEON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHOMINGPIGEON_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLHOMINGPIGEON openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHOMINGPIGEON openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLHOMINGPIGEON openAndFill: " + retCode, retCode);
+      return CDLHOMINGPIGEON_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -42606,7 +41236,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLIDENTICAL3CROWS_OpenPass( CDLIDENTICAL3CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLIDENTICAL3CROWS_OpenImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] EqualPeriodTotal = new double[3];
@@ -42770,32 +41400,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLIDENTICAL3CROWS_OpenImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLIDENTICAL3CROWS_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLIDENTICAL3CROWS_OpenAndFillImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLIDENTICAL3CROWS_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLIDENTICAL3CROWS_OpenAndFillInternalImpl( CDLIDENTICAL3CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLIDENTICAL3CROWS_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLIDENTICAL3CROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLIDENTICAL3CROWS_Stream sp = new CDLIDENTICAL3CROWS_Stream(this);
-      RetCode retCode = CDLIDENTICAL3CROWS_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLIDENTICAL3CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -42813,7 +41422,12 @@ public final class Core {
    CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLIDENTICAL3CROWS_Stream sp = new CDLIDENTICAL3CROWS_Stream(this);
-      RetCode retCode = CDLIDENTICAL3CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLIDENTICAL3CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -42850,22 +41464,12 @@ public final class Core {
     */
    public CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLIDENTICAL3CROWS_Stream sp = new CDLIDENTICAL3CROWS_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLIDENTICAL3CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLIDENTICAL3CROWS_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLIDENTICAL3CROWS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLIDENTICAL3CROWS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLIDENTICAL3CROWS openAndFill: " + retCode, retCode);
+      return CDLIDENTICAL3CROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -43438,7 +42042,7 @@ public final class Core {
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLINNECK_OpenPass( CDLINNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLINNECK_OpenImpl( CDLINNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -43577,32 +42181,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLINNECK_OpenImpl( CDLINNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLINNECK_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLINNECK_OpenAndFillImpl( CDLINNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLINNECK_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLINNECK_OpenAndFillInternalImpl( CDLINNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLINNECK_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLINNECK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLINNECK_Stream CDLINNECK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLINNECK_Stream sp = new CDLINNECK_Stream(this);
-      RetCode retCode = CDLINNECK_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLINNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -43620,7 +42203,12 @@ public final class Core {
    CDLINNECK_Stream CDLINNECK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLINNECK_Stream sp = new CDLINNECK_Stream(this);
-      RetCode retCode = CDLINNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLINNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -43657,22 +42245,12 @@ public final class Core {
     */
    public CDLINNECK_Stream CDLINNECK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLINNECK_Stream sp = new CDLINNECK_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLINNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLINNECK_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLINNECK openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLINNECK openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLINNECK openAndFill: " + retCode, retCode);
+      return CDLINNECK_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -44292,7 +42870,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLINVERTEDHAMMER_OpenPass( CDLINVERTEDHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLINVERTEDHAMMER_OpenImpl( CDLINVERTEDHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -44454,32 +43032,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLINVERTEDHAMMER_OpenImpl( CDLINVERTEDHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLINVERTEDHAMMER_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLINVERTEDHAMMER_OpenAndFillImpl( CDLINVERTEDHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLINVERTEDHAMMER_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLINVERTEDHAMMER_OpenAndFillInternalImpl( CDLINVERTEDHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLINVERTEDHAMMER_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLINVERTEDHAMMER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
-      RetCode retCode = CDLINVERTEDHAMMER_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLINVERTEDHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -44497,7 +43054,12 @@ public final class Core {
    CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
-      RetCode retCode = CDLINVERTEDHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLINVERTEDHAMMER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -44534,22 +43096,12 @@ public final class Core {
     */
    public CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLINVERTEDHAMMER_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLINVERTEDHAMMER openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLINVERTEDHAMMER openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: " + retCode, retCode);
+      return CDLINVERTEDHAMMER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -45140,7 +43692,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLKICKING_OpenPass( CDLKICKING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLKICKING_OpenImpl( CDLKICKING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[2];
       double[] BodyLongPeriodTotal = new double[2];
@@ -45288,32 +43840,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLKICKING_OpenImpl( CDLKICKING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLKICKING_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLKICKING_OpenAndFillImpl( CDLKICKING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLKICKING_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLKICKING_OpenAndFillInternalImpl( CDLKICKING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLKICKING_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLKICKING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLKICKING_Stream CDLKICKING_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLKICKING_Stream sp = new CDLKICKING_Stream(this);
-      RetCode retCode = CDLKICKING_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLKICKING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -45331,7 +43862,12 @@ public final class Core {
    CDLKICKING_Stream CDLKICKING_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLKICKING_Stream sp = new CDLKICKING_Stream(this);
-      RetCode retCode = CDLKICKING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLKICKING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -45368,22 +43904,12 @@ public final class Core {
     */
    public CDLKICKING_Stream CDLKICKING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLKICKING_Stream sp = new CDLKICKING_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLKICKING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLKICKING_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLKICKING openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLKICKING openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLKICKING openAndFill: " + retCode, retCode);
+      return CDLKICKING_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -45969,7 +44495,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLKICKINGBYLENGTH_OpenPass( CDLKICKINGBYLENGTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLKICKINGBYLENGTH_OpenImpl( CDLKICKINGBYLENGTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[2];
       double[] BodyLongPeriodTotal = new double[2];
@@ -46118,32 +44644,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLKICKINGBYLENGTH_OpenImpl( CDLKICKINGBYLENGTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLKICKINGBYLENGTH_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLKICKINGBYLENGTH_OpenAndFillImpl( CDLKICKINGBYLENGTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLKICKINGBYLENGTH_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLKICKINGBYLENGTH_OpenAndFillInternalImpl( CDLKICKINGBYLENGTH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLKICKINGBYLENGTH_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLKICKINGBYLENGTH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLKICKINGBYLENGTH_Stream CDLKICKINGBYLENGTH_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLKICKINGBYLENGTH_Stream sp = new CDLKICKINGBYLENGTH_Stream(this);
-      RetCode retCode = CDLKICKINGBYLENGTH_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLKICKINGBYLENGTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -46161,7 +44666,12 @@ public final class Core {
    CDLKICKINGBYLENGTH_Stream CDLKICKINGBYLENGTH_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLKICKINGBYLENGTH_Stream sp = new CDLKICKINGBYLENGTH_Stream(this);
-      RetCode retCode = CDLKICKINGBYLENGTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLKICKINGBYLENGTH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -46198,22 +44708,12 @@ public final class Core {
     */
    public CDLKICKINGBYLENGTH_Stream CDLKICKINGBYLENGTH_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLKICKINGBYLENGTH_Stream sp = new CDLKICKINGBYLENGTH_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLKICKINGBYLENGTH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLKICKINGBYLENGTH_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLKICKINGBYLENGTH openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLKICKINGBYLENGTH openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLKICKINGBYLENGTH openAndFill: " + retCode, retCode);
+      return CDLKICKINGBYLENGTH_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -46739,7 +45239,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLLADDERBOTTOM_OpenPass( CDLLADDERBOTTOM_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLLADDERBOTTOM_OpenImpl( CDLLADDERBOTTOM_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double ShadowVeryShortPeriodTotal = 0;
       int i = 0;
@@ -46859,32 +45359,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLLADDERBOTTOM_OpenImpl( CDLLADDERBOTTOM_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLLADDERBOTTOM_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLLADDERBOTTOM_OpenAndFillImpl( CDLLADDERBOTTOM_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLLADDERBOTTOM_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLLADDERBOTTOM_OpenAndFillInternalImpl( CDLLADDERBOTTOM_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLLADDERBOTTOM_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLLADDERBOTTOM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLLADDERBOTTOM_Stream sp = new CDLLADDERBOTTOM_Stream(this);
-      RetCode retCode = CDLLADDERBOTTOM_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLLADDERBOTTOM_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -46902,7 +45381,12 @@ public final class Core {
    CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLLADDERBOTTOM_Stream sp = new CDLLADDERBOTTOM_Stream(this);
-      RetCode retCode = CDLLADDERBOTTOM_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLLADDERBOTTOM_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -46939,22 +45423,12 @@ public final class Core {
     */
    public CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLLADDERBOTTOM_Stream sp = new CDLLADDERBOTTOM_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLLADDERBOTTOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLLADDERBOTTOM_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLLADDERBOTTOM openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLADDERBOTTOM openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLLADDERBOTTOM openAndFill: " + retCode, retCode);
+      return CDLLADDERBOTTOM_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -47496,7 +45970,7 @@ public final class Core {
          sp.ringPos_ShadowLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLLONGLEGGEDDOJI_OpenPass( CDLLONGLEGGEDDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLLONGLEGGEDDOJI_OpenImpl( CDLLONGLEGGEDDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -47619,32 +46093,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLLONGLEGGEDDOJI_OpenImpl( CDLLONGLEGGEDDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLLONGLEGGEDDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLLONGLEGGEDDOJI_OpenAndFillImpl( CDLLONGLEGGEDDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLLONGLEGGEDDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLLONGLEGGEDDOJI_OpenAndFillInternalImpl( CDLLONGLEGGEDDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLLONGLEGGEDDOJI_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLLONGLEGGEDDOJI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLLONGLEGGEDDOJI_Stream sp = new CDLLONGLEGGEDDOJI_Stream(this);
-      RetCode retCode = CDLLONGLEGGEDDOJI_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLLONGLEGGEDDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -47662,7 +46115,12 @@ public final class Core {
    CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLLONGLEGGEDDOJI_Stream sp = new CDLLONGLEGGEDDOJI_Stream(this);
-      RetCode retCode = CDLLONGLEGGEDDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLLONGLEGGEDDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -47699,22 +46157,12 @@ public final class Core {
     */
    public CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLLONGLEGGEDDOJI_Stream sp = new CDLLONGLEGGEDDOJI_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLLONGLEGGEDDOJI_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLLONGLEGGEDDOJI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLONGLEGGEDDOJI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + retCode, retCode);
+      return CDLLONGLEGGEDDOJI_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -48239,7 +46687,7 @@ public final class Core {
          sp.ringPos_ShadowTrailingIdx = 0;
       }
    }
-   private RetCode CDLLONGLINE_OpenPass( CDLLONGLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLLONGLINE_OpenImpl( CDLLONGLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -48361,32 +46809,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLLONGLINE_OpenImpl( CDLLONGLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLLONGLINE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLLONGLINE_OpenAndFillImpl( CDLLONGLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLLONGLINE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLLONGLINE_OpenAndFillInternalImpl( CDLLONGLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLLONGLINE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLLONGLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLLONGLINE_Stream CDLLONGLINE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLLONGLINE_Stream sp = new CDLLONGLINE_Stream(this);
-      RetCode retCode = CDLLONGLINE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLLONGLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -48404,7 +46831,12 @@ public final class Core {
    CDLLONGLINE_Stream CDLLONGLINE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLLONGLINE_Stream sp = new CDLLONGLINE_Stream(this);
-      RetCode retCode = CDLLONGLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLLONGLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -48441,22 +46873,12 @@ public final class Core {
     */
    public CDLLONGLINE_Stream CDLLONGLINE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLLONGLINE_Stream sp = new CDLLONGLINE_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLLONGLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLLONGLINE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLLONGLINE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLONGLINE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLLONGLINE openAndFill: " + retCode, retCode);
+      return CDLLONGLINE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -48993,7 +47415,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLMARUBOZU_OpenPass( CDLMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLMARUBOZU_OpenImpl( CDLMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -49115,32 +47537,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLMARUBOZU_OpenImpl( CDLMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMARUBOZU_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLMARUBOZU_OpenAndFillImpl( CDLMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLMARUBOZU_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLMARUBOZU_OpenAndFillInternalImpl( CDLMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLMARUBOZU_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLMARUBOZU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLMARUBOZU_Stream CDLMARUBOZU_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLMARUBOZU_Stream sp = new CDLMARUBOZU_Stream(this);
-      RetCode retCode = CDLMARUBOZU_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -49158,7 +47559,12 @@ public final class Core {
    CDLMARUBOZU_Stream CDLMARUBOZU_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLMARUBOZU_Stream sp = new CDLMARUBOZU_Stream(this);
-      RetCode retCode = CDLMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLMARUBOZU_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -49195,22 +47601,12 @@ public final class Core {
     */
    public CDLMARUBOZU_Stream CDLMARUBOZU_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLMARUBOZU_Stream sp = new CDLMARUBOZU_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMARUBOZU_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLMARUBOZU openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMARUBOZU openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLMARUBOZU openAndFill: " + retCode, retCode);
+      return CDLMARUBOZU_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -49694,7 +48090,7 @@ public final class Core {
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLMATCHINGLOW_OpenPass( CDLMATCHINGLOW_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLMATCHINGLOW_OpenImpl( CDLMATCHINGLOW_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -49797,32 +48193,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLMATCHINGLOW_OpenImpl( CDLMATCHINGLOW_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMATCHINGLOW_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLMATCHINGLOW_OpenAndFillImpl( CDLMATCHINGLOW_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLMATCHINGLOW_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLMATCHINGLOW_OpenAndFillInternalImpl( CDLMATCHINGLOW_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLMATCHINGLOW_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLMATCHINGLOW_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
-      RetCode retCode = CDLMATCHINGLOW_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMATCHINGLOW_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -49840,7 +48215,12 @@ public final class Core {
    CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
-      RetCode retCode = CDLMATCHINGLOW_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLMATCHINGLOW_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -49877,22 +48257,12 @@ public final class Core {
     */
    public CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLMATCHINGLOW openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATCHINGLOW_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLMATCHINGLOW openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMATCHINGLOW openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLMATCHINGLOW openAndFill: " + retCode, retCode);
+      return CDLMATCHINGLOW_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -50582,7 +48952,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLMATHOLD_OpenPass( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLMATHOLD_OpenImpl( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -50762,32 +49132,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLMATHOLD_OpenImpl( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMATHOLD_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLMATHOLD_OpenAndFillImpl( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLMATHOLD_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLMATHOLD_OpenAndFillInternalImpl( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLMATHOLD_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLMATHOLD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLMATHOLD_Stream CDLMATHOLD_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
-      RetCode retCode = CDLMATHOLD_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMATHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -50805,7 +49154,12 @@ public final class Core {
    CDLMATHOLD_Stream CDLMATHOLD_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
-      RetCode retCode = CDLMATHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLMATHOLD_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -50842,22 +49196,12 @@ public final class Core {
     */
    public CDLMATHOLD_Stream CDLMATHOLD_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
-      CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLMATHOLD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATHOLD_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLMATHOLD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMATHOLD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLMATHOLD openAndFill: " + retCode, retCode);
+      return CDLMATHOLD_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -51550,7 +49894,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLMORNINGDOJISTAR_OpenPass( CDLMORNINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLMORNINGDOJISTAR_OpenImpl( CDLMORNINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -51730,32 +50074,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLMORNINGDOJISTAR_OpenImpl( CDLMORNINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMORNINGDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLMORNINGDOJISTAR_OpenAndFillImpl( CDLMORNINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLMORNINGDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLMORNINGDOJISTAR_OpenAndFillInternalImpl( CDLMORNINGDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLMORNINGDOJISTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLMORNINGDOJISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLMORNINGDOJISTAR_Stream sp = new CDLMORNINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLMORNINGDOJISTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMORNINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -51773,7 +50096,12 @@ public final class Core {
    CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       CDLMORNINGDOJISTAR_Stream sp = new CDLMORNINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLMORNINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLMORNINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -51810,22 +50138,12 @@ public final class Core {
     */
    public CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
-      CDLMORNINGDOJISTAR_Stream sp = new CDLMORNINGDOJISTAR_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMORNINGDOJISTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLMORNINGDOJISTAR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMORNINGDOJISTAR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + retCode, retCode);
+      return CDLMORNINGDOJISTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -52461,7 +50779,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLMORNINGSTAR_OpenPass( CDLMORNINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLMORNINGSTAR_OpenImpl( CDLMORNINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -52618,32 +50936,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLMORNINGSTAR_OpenImpl( CDLMORNINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMORNINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLMORNINGSTAR_OpenAndFillImpl( CDLMORNINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLMORNINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLMORNINGSTAR_OpenAndFillInternalImpl( CDLMORNINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLMORNINGSTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLMORNINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLMORNINGSTAR_Stream CDLMORNINGSTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLMORNINGSTAR_Stream sp = new CDLMORNINGSTAR_Stream(this);
-      RetCode retCode = CDLMORNINGSTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMORNINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -52661,7 +50958,12 @@ public final class Core {
    CDLMORNINGSTAR_Stream CDLMORNINGSTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       CDLMORNINGSTAR_Stream sp = new CDLMORNINGSTAR_Stream(this);
-      RetCode retCode = CDLMORNINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLMORNINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -52698,22 +51000,12 @@ public final class Core {
     */
    public CDLMORNINGSTAR_Stream CDLMORNINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
-      CDLMORNINGSTAR_Stream sp = new CDLMORNINGSTAR_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLMORNINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMORNINGSTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLMORNINGSTAR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMORNINGSTAR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLMORNINGSTAR openAndFill: " + retCode, retCode);
+      return CDLMORNINGSTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -53284,7 +51576,7 @@ public final class Core {
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLONNECK_OpenPass( CDLONNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLONNECK_OpenImpl( CDLONNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -53423,32 +51715,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLONNECK_OpenImpl( CDLONNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLONNECK_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLONNECK_OpenAndFillImpl( CDLONNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLONNECK_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLONNECK_OpenAndFillInternalImpl( CDLONNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLONNECK_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLONNECK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLONNECK_Stream CDLONNECK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLONNECK_Stream sp = new CDLONNECK_Stream(this);
-      RetCode retCode = CDLONNECK_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLONNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -53466,7 +51737,12 @@ public final class Core {
    CDLONNECK_Stream CDLONNECK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLONNECK_Stream sp = new CDLONNECK_Stream(this);
-      RetCode retCode = CDLONNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLONNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -53503,22 +51779,12 @@ public final class Core {
     */
    public CDLONNECK_Stream CDLONNECK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLONNECK_Stream sp = new CDLONNECK_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLONNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLONNECK_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLONNECK openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLONNECK openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLONNECK openAndFill: " + retCode, retCode);
+      return CDLONNECK_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -54035,7 +52301,7 @@ public final class Core {
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLPIERCING_OpenPass( CDLPIERCING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLPIERCING_OpenImpl( CDLPIERCING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] BodyLongPeriodTotal = new double[2];
       int i = 0;
@@ -54150,32 +52416,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLPIERCING_OpenImpl( CDLPIERCING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLPIERCING_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLPIERCING_OpenAndFillImpl( CDLPIERCING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLPIERCING_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLPIERCING_OpenAndFillInternalImpl( CDLPIERCING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLPIERCING_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLPIERCING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLPIERCING_Stream CDLPIERCING_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLPIERCING_Stream sp = new CDLPIERCING_Stream(this);
-      RetCode retCode = CDLPIERCING_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLPIERCING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -54193,7 +52438,12 @@ public final class Core {
    CDLPIERCING_Stream CDLPIERCING_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLPIERCING_Stream sp = new CDLPIERCING_Stream(this);
-      RetCode retCode = CDLPIERCING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLPIERCING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -54230,22 +52480,12 @@ public final class Core {
     */
    public CDLPIERCING_Stream CDLPIERCING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLPIERCING_Stream sp = new CDLPIERCING_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLPIERCING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLPIERCING_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLPIERCING openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLPIERCING openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLPIERCING openAndFill: " + retCode, retCode);
+      return CDLPIERCING_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -54854,7 +53094,7 @@ public final class Core {
          sp.ringPos_ShadowLongTrailingIdx = 0;
       }
    }
-   private RetCode CDLRICKSHAWMAN_OpenPass( CDLRICKSHAWMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLRICKSHAWMAN_OpenImpl( CDLRICKSHAWMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -55012,32 +53252,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLRICKSHAWMAN_OpenImpl( CDLRICKSHAWMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLRICKSHAWMAN_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLRICKSHAWMAN_OpenAndFillImpl( CDLRICKSHAWMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLRICKSHAWMAN_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLRICKSHAWMAN_OpenAndFillInternalImpl( CDLRICKSHAWMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLRICKSHAWMAN_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLRICKSHAWMAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
-      RetCode retCode = CDLRICKSHAWMAN_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLRICKSHAWMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -55055,7 +53274,12 @@ public final class Core {
    CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
-      RetCode retCode = CDLRICKSHAWMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLRICKSHAWMAN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -55092,22 +53316,12 @@ public final class Core {
     */
    public CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLRICKSHAWMAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLRICKSHAWMAN_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLRICKSHAWMAN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLRICKSHAWMAN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLRICKSHAWMAN openAndFill: " + retCode, retCode);
+      return CDLRICKSHAWMAN_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -55779,7 +53993,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLRISEFALL3METHODS_OpenPass( CDLRISEFALL3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLRISEFALL3METHODS_OpenImpl( CDLRISEFALL3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -55954,32 +54168,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLRISEFALL3METHODS_OpenImpl( CDLRISEFALL3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLRISEFALL3METHODS_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLRISEFALL3METHODS_OpenAndFillImpl( CDLRISEFALL3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLRISEFALL3METHODS_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLRISEFALL3METHODS_OpenAndFillInternalImpl( CDLRISEFALL3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLRISEFALL3METHODS_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLRISEFALL3METHODS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
-      RetCode retCode = CDLRISEFALL3METHODS_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLRISEFALL3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -55997,7 +54190,12 @@ public final class Core {
    CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
-      RetCode retCode = CDLRISEFALL3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLRISEFALL3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -56034,22 +54232,12 @@ public final class Core {
     */
    public CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLRISEFALL3METHODS_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLRISEFALL3METHODS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLRISEFALL3METHODS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: " + retCode, retCode);
+      return CDLRISEFALL3METHODS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -56682,7 +54870,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLSEPARATINGLINES_OpenPass( CDLSEPARATINGLINES_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLSEPARATINGLINES_OpenImpl( CDLSEPARATINGLINES_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double ShadowVeryShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -56848,32 +55036,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLSEPARATINGLINES_OpenImpl( CDLSEPARATINGLINES_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSEPARATINGLINES_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLSEPARATINGLINES_OpenAndFillImpl( CDLSEPARATINGLINES_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLSEPARATINGLINES_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLSEPARATINGLINES_OpenAndFillInternalImpl( CDLSEPARATINGLINES_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLSEPARATINGLINES_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLSEPARATINGLINES_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLSEPARATINGLINES_Stream sp = new CDLSEPARATINGLINES_Stream(this);
-      RetCode retCode = CDLSEPARATINGLINES_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSEPARATINGLINES_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -56891,7 +55058,12 @@ public final class Core {
    CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLSEPARATINGLINES_Stream sp = new CDLSEPARATINGLINES_Stream(this);
-      RetCode retCode = CDLSEPARATINGLINES_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLSEPARATINGLINES_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -56928,22 +55100,12 @@ public final class Core {
     */
    public CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLSEPARATINGLINES_Stream sp = new CDLSEPARATINGLINES_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLSEPARATINGLINES openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSEPARATINGLINES_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLSEPARATINGLINES openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSEPARATINGLINES openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLSEPARATINGLINES openAndFill: " + retCode, retCode);
+      return CDLSEPARATINGLINES_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -57567,7 +55729,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLSHOOTINGSTAR_OpenPass( CDLSHOOTINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLSHOOTINGSTAR_OpenImpl( CDLSHOOTINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -57729,32 +55891,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLSHOOTINGSTAR_OpenImpl( CDLSHOOTINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSHOOTINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLSHOOTINGSTAR_OpenAndFillImpl( CDLSHOOTINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLSHOOTINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLSHOOTINGSTAR_OpenAndFillInternalImpl( CDLSHOOTINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLSHOOTINGSTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLSHOOTINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
-      RetCode retCode = CDLSHOOTINGSTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSHOOTINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -57772,7 +55913,12 @@ public final class Core {
    CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
-      RetCode retCode = CDLSHOOTINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLSHOOTINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -57809,22 +55955,12 @@ public final class Core {
     */
    public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLSHOOTINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSHOOTINGSTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLSHOOTINGSTAR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSHOOTINGSTAR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLSHOOTINGSTAR openAndFill: " + retCode, retCode);
+      return CDLSHOOTINGSTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -58364,7 +56500,7 @@ public final class Core {
          sp.ringPos_ShadowTrailingIdx = 0;
       }
    }
-   private RetCode CDLSHORTLINE_OpenPass( CDLSHORTLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLSHORTLINE_OpenImpl( CDLSHORTLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -58487,32 +56623,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLSHORTLINE_OpenImpl( CDLSHORTLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSHORTLINE_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLSHORTLINE_OpenAndFillImpl( CDLSHORTLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLSHORTLINE_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLSHORTLINE_OpenAndFillInternalImpl( CDLSHORTLINE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLSHORTLINE_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLSHORTLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLSHORTLINE_Stream CDLSHORTLINE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLSHORTLINE_Stream sp = new CDLSHORTLINE_Stream(this);
-      RetCode retCode = CDLSHORTLINE_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSHORTLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -58530,7 +56645,12 @@ public final class Core {
    CDLSHORTLINE_Stream CDLSHORTLINE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLSHORTLINE_Stream sp = new CDLSHORTLINE_Stream(this);
-      RetCode retCode = CDLSHORTLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLSHORTLINE_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -58567,22 +56687,12 @@ public final class Core {
     */
    public CDLSHORTLINE_Stream CDLSHORTLINE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLSHORTLINE_Stream sp = new CDLSHORTLINE_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLSHORTLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSHORTLINE_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLSHORTLINE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSHORTLINE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLSHORTLINE openAndFill: " + retCode, retCode);
+      return CDLSHORTLINE_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -59033,7 +57143,7 @@ public final class Core {
          sp.ringPos_BodyTrailingIdx = 0;
       }
    }
-   private RetCode CDLSPINNINGTOP_OpenPass( CDLSPINNINGTOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLSPINNINGTOP_OpenImpl( CDLSPINNINGTOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -59126,32 +57236,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLSPINNINGTOP_OpenImpl( CDLSPINNINGTOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSPINNINGTOP_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLSPINNINGTOP_OpenAndFillImpl( CDLSPINNINGTOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLSPINNINGTOP_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLSPINNINGTOP_OpenAndFillInternalImpl( CDLSPINNINGTOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLSPINNINGTOP_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLSPINNINGTOP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
-      RetCode retCode = CDLSPINNINGTOP_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSPINNINGTOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -59169,7 +57258,12 @@ public final class Core {
    CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
-      RetCode retCode = CDLSPINNINGTOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLSPINNINGTOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -59206,22 +57300,12 @@ public final class Core {
     */
    public CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLSPINNINGTOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSPINNINGTOP_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLSPINNINGTOP openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSPINNINGTOP openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLSPINNINGTOP openAndFill: " + retCode, retCode);
+      return CDLSPINNINGTOP_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -59985,7 +58069,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLSTALLEDPATTERN_OpenPass( CDLSTALLEDPATTERN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLSTALLEDPATTERN_OpenImpl( CDLSTALLEDPATTERN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] BodyLongPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -60210,32 +58294,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLSTALLEDPATTERN_OpenImpl( CDLSTALLEDPATTERN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSTALLEDPATTERN_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLSTALLEDPATTERN_OpenAndFillImpl( CDLSTALLEDPATTERN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLSTALLEDPATTERN_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLSTALLEDPATTERN_OpenAndFillInternalImpl( CDLSTALLEDPATTERN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLSTALLEDPATTERN_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLSTALLEDPATTERN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLSTALLEDPATTERN_Stream CDLSTALLEDPATTERN_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLSTALLEDPATTERN_Stream sp = new CDLSTALLEDPATTERN_Stream(this);
-      RetCode retCode = CDLSTALLEDPATTERN_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSTALLEDPATTERN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -60253,7 +58316,12 @@ public final class Core {
    CDLSTALLEDPATTERN_Stream CDLSTALLEDPATTERN_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLSTALLEDPATTERN_Stream sp = new CDLSTALLEDPATTERN_Stream(this);
-      RetCode retCode = CDLSTALLEDPATTERN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLSTALLEDPATTERN_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -60290,22 +58358,12 @@ public final class Core {
     */
    public CDLSTALLEDPATTERN_Stream CDLSTALLEDPATTERN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLSTALLEDPATTERN_Stream sp = new CDLSTALLEDPATTERN_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLSTALLEDPATTERN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSTALLEDPATTERN_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLSTALLEDPATTERN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSTALLEDPATTERN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLSTALLEDPATTERN openAndFill: " + retCode, retCode);
+      return CDLSTALLEDPATTERN_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -60806,7 +58864,7 @@ public final class Core {
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLSTICKSANDWICH_OpenPass( CDLSTICKSANDWICH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLSTICKSANDWICH_OpenImpl( CDLSTICKSANDWICH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -60918,32 +58976,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLSTICKSANDWICH_OpenImpl( CDLSTICKSANDWICH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLSTICKSANDWICH_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLSTICKSANDWICH_OpenAndFillImpl( CDLSTICKSANDWICH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLSTICKSANDWICH_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLSTICKSANDWICH_OpenAndFillInternalImpl( CDLSTICKSANDWICH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLSTICKSANDWICH_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLSTICKSANDWICH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLSTICKSANDWICH_Stream sp = new CDLSTICKSANDWICH_Stream(this);
-      RetCode retCode = CDLSTICKSANDWICH_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSTICKSANDWICH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -60961,7 +58998,12 @@ public final class Core {
    CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLSTICKSANDWICH_Stream sp = new CDLSTICKSANDWICH_Stream(this);
-      RetCode retCode = CDLSTICKSANDWICH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLSTICKSANDWICH_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -60998,22 +59040,12 @@ public final class Core {
     */
    public CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLSTICKSANDWICH_Stream sp = new CDLSTICKSANDWICH_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSTICKSANDWICH_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLSTICKSANDWICH openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSTICKSANDWICH openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode, retCode);
+      return CDLSTICKSANDWICH_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -61619,7 +59651,7 @@ public final class Core {
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLTAKURI_OpenPass( CDLTAKURI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLTAKURI_OpenImpl( CDLTAKURI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -61774,32 +59806,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLTAKURI_OpenImpl( CDLTAKURI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLTAKURI_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLTAKURI_OpenAndFillImpl( CDLTAKURI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLTAKURI_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLTAKURI_OpenAndFillInternalImpl( CDLTAKURI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLTAKURI_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLTAKURI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLTAKURI_Stream CDLTAKURI_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLTAKURI_Stream sp = new CDLTAKURI_Stream(this);
-      RetCode retCode = CDLTAKURI_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLTAKURI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -61817,7 +59828,12 @@ public final class Core {
    CDLTAKURI_Stream CDLTAKURI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLTAKURI_Stream sp = new CDLTAKURI_Stream(this);
-      RetCode retCode = CDLTAKURI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLTAKURI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -61854,22 +59870,12 @@ public final class Core {
     */
    public CDLTAKURI_Stream CDLTAKURI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLTAKURI_Stream sp = new CDLTAKURI_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLTAKURI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLTAKURI_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLTAKURI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTAKURI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLTAKURI openAndFill: " + retCode, retCode);
+      return CDLTAKURI_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -62382,7 +60388,7 @@ public final class Core {
          sp.ringPos_NearTrailingIdx = 0;
       }
    }
-   private RetCode CDLTASUKIGAP_OpenPass( CDLTASUKIGAP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLTASUKIGAP_OpenImpl( CDLTASUKIGAP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -62502,32 +60508,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLTASUKIGAP_OpenImpl( CDLTASUKIGAP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLTASUKIGAP_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLTASUKIGAP_OpenAndFillImpl( CDLTASUKIGAP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLTASUKIGAP_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLTASUKIGAP_OpenAndFillInternalImpl( CDLTASUKIGAP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLTASUKIGAP_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLTASUKIGAP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
-      RetCode retCode = CDLTASUKIGAP_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLTASUKIGAP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -62545,7 +60530,12 @@ public final class Core {
    CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
-      RetCode retCode = CDLTASUKIGAP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLTASUKIGAP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -62582,22 +60572,12 @@ public final class Core {
     */
    public CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLTASUKIGAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLTASUKIGAP_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLTASUKIGAP openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTASUKIGAP openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLTASUKIGAP openAndFill: " + retCode, retCode);
+      return CDLTASUKIGAP_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -63168,7 +61148,7 @@ public final class Core {
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode CDLTHRUSTING_OpenPass( CDLTHRUSTING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLTHRUSTING_OpenImpl( CDLTHRUSTING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -63309,32 +61289,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLTHRUSTING_OpenImpl( CDLTHRUSTING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLTHRUSTING_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLTHRUSTING_OpenAndFillImpl( CDLTHRUSTING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLTHRUSTING_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLTHRUSTING_OpenAndFillInternalImpl( CDLTHRUSTING_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLTHRUSTING_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLTHRUSTING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLTHRUSTING_Stream CDLTHRUSTING_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLTHRUSTING_Stream sp = new CDLTHRUSTING_Stream(this);
-      RetCode retCode = CDLTHRUSTING_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLTHRUSTING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -63352,7 +61311,12 @@ public final class Core {
    CDLTHRUSTING_Stream CDLTHRUSTING_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLTHRUSTING_Stream sp = new CDLTHRUSTING_Stream(this);
-      RetCode retCode = CDLTHRUSTING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLTHRUSTING_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -63389,22 +61353,12 @@ public final class Core {
     */
    public CDLTHRUSTING_Stream CDLTHRUSTING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLTHRUSTING_Stream sp = new CDLTHRUSTING_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLTHRUSTING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLTHRUSTING_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLTHRUSTING openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTHRUSTING openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLTHRUSTING openAndFill: " + retCode, retCode);
+      return CDLTHRUSTING_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -63929,7 +61883,7 @@ public final class Core {
          sp.ringPos_BodyTrailingIdx = 0;
       }
    }
-   private RetCode CDLTRISTAR_OpenPass( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLTRISTAR_OpenImpl( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -64045,32 +61999,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLTRISTAR_OpenImpl( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLTRISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLTRISTAR_OpenAndFillImpl( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLTRISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLTRISTAR_OpenAndFillInternalImpl( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLTRISTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLTRISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLTRISTAR_Stream CDLTRISTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
-      RetCode retCode = CDLTRISTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLTRISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -64088,7 +62021,12 @@ public final class Core {
    CDLTRISTAR_Stream CDLTRISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
-      RetCode retCode = CDLTRISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLTRISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -64125,22 +62063,12 @@ public final class Core {
     */
    public CDLTRISTAR_Stream CDLTRISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLTRISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLTRISTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLTRISTAR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTRISTAR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLTRISTAR openAndFill: " + retCode, retCode);
+      return CDLTRISTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -64728,7 +62656,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLUNIQUE3RIVER_OpenPass( CDLUNIQUE3RIVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLUNIQUE3RIVER_OpenImpl( CDLUNIQUE3RIVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -64871,32 +62799,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLUNIQUE3RIVER_OpenImpl( CDLUNIQUE3RIVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLUNIQUE3RIVER_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLUNIQUE3RIVER_OpenAndFillImpl( CDLUNIQUE3RIVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLUNIQUE3RIVER_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLUNIQUE3RIVER_OpenAndFillInternalImpl( CDLUNIQUE3RIVER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLUNIQUE3RIVER_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLUNIQUE3RIVER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
-      RetCode retCode = CDLUNIQUE3RIVER_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLUNIQUE3RIVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -64914,7 +62821,12 @@ public final class Core {
    CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
-      RetCode retCode = CDLUNIQUE3RIVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLUNIQUE3RIVER_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -64951,22 +62863,12 @@ public final class Core {
     */
    public CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLUNIQUE3RIVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLUNIQUE3RIVER_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLUNIQUE3RIVER openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUNIQUE3RIVER openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLUNIQUE3RIVER openAndFill: " + retCode, retCode);
+      return CDLUNIQUE3RIVER_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -65556,7 +63458,7 @@ public final class Core {
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode CDLUPSIDEGAP2CROWS_OpenPass( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLUPSIDEGAP2CROWS_OpenImpl( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -65701,32 +63603,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLUPSIDEGAP2CROWS_OpenImpl( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLUPSIDEGAP2CROWS_OpenAndFillImpl( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLUPSIDEGAP2CROWS_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLUPSIDEGAP2CROWS_OpenAndFillInternalImpl( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLUPSIDEGAP2CROWS_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLUPSIDEGAP2CROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
-      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -65744,7 +63625,12 @@ public final class Core {
    CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
-      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -65781,22 +63667,12 @@ public final class Core {
     */
    public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLUPSIDEGAP2CROWS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUPSIDEGAP2CROWS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + retCode, retCode);
+      return CDLUPSIDEGAP2CROWS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -66215,7 +64091,7 @@ public final class Core {
       sp.lag2_inClose = sp.lag1_inClose;
       sp.lag1_inClose = inClose;
    }
-   private RetCode CDLXSIDEGAP3METHODS_OpenPass( CDLXSIDEGAP3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode CDLXSIDEGAP3METHODS_OpenImpl( CDLXSIDEGAP3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -66292,32 +64168,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CDLXSIDEGAP3METHODS_OpenImpl( CDLXSIDEGAP3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLXSIDEGAP3METHODS_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CDLXSIDEGAP3METHODS_OpenAndFillImpl( CDLXSIDEGAP3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return CDLXSIDEGAP3METHODS_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode CDLXSIDEGAP3METHODS_OpenAndFillInternalImpl( CDLXSIDEGAP3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return CDLXSIDEGAP3METHODS_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* CDLXSIDEGAP3METHODS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       CDLXSIDEGAP3METHODS_Stream sp = new CDLXSIDEGAP3METHODS_Stream(this);
-      RetCode retCode = CDLXSIDEGAP3METHODS_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLXSIDEGAP3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -66335,7 +64190,12 @@ public final class Core {
    CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       CDLXSIDEGAP3METHODS_Stream sp = new CDLXSIDEGAP3METHODS_Stream(this);
-      RetCode retCode = CDLXSIDEGAP3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLXSIDEGAP3METHODS_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -66372,22 +64232,12 @@ public final class Core {
     */
    public CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CDLXSIDEGAP3METHODS_Stream sp = new CDLXSIDEGAP3METHODS_Stream(this);
+      if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
+         throw new TaLibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLXSIDEGAP3METHODS_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CDLXSIDEGAP3METHODS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLXSIDEGAP3METHODS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + retCode, retCode);
+      return CDLXSIDEGAP3METHODS_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -66461,8 +64311,8 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector ceiling: element-wise ceiling of each input value (smallest integer
-    * &gt;= input).
+    * Element-wise ceiling (round up to the nearest integer) of the input
+    * series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = ceil(inReal[i])
@@ -66515,8 +64365,8 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector ceiling: element-wise ceiling of each input value (smallest integer
-    * &gt;= input).
+    * Element-wise ceiling (round up to the nearest integer) of the input
+    * series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = ceil(inReal[i])
@@ -66677,7 +64527,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.ceil(inReal);
    }
-   private RetCode CEIL_OpenPass( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CEIL_OpenImpl( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -66703,32 +64553,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CEIL_OpenImpl( CEIL_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = CEIL_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CEIL_OpenAndFillImpl( CEIL_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return CEIL_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode CEIL_OpenAndFillInternalImpl( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return CEIL_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* CEIL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CEIL_Stream CEIL_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -66746,7 +64575,12 @@ public final class Core {
    CEIL_Stream CEIL_OpenInternal( double inReal[], int startIdx )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = CEIL_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -66783,22 +64617,12 @@ public final class Core {
     */
    public CEIL_Stream CEIL_OpenAndFill( double inReal[], double outReal[] )
    {
-      CEIL_Stream sp = new CEIL_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("CEIL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CEIL_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CEIL openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CEIL openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CEIL openAndFill: " + retCode, retCode);
+      return CEIL_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -67455,7 +65279,7 @@ public final class Core {
          sp.mfv_Idx = 0;
       }
    }
-   private RetCode CMF_OpenPass( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CMF_OpenImpl( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -67605,32 +65429,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CMF_OpenImpl( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = CMF_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CMF_OpenAndFillImpl( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return CMF_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode CMF_OpenAndFillInternalImpl( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return CMF_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* CMF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CMF_Stream CMF_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CMF_Stream sp = new CMF_Stream(this);
-      RetCode retCode = CMF_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMF_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -67648,7 +65451,12 @@ public final class Core {
    CMF_Stream CMF_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       CMF_Stream sp = new CMF_Stream(this);
-      RetCode retCode = CMF_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = CMF_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -67685,22 +65493,12 @@ public final class Core {
     */
    public CMF_Stream CMF_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      CMF_Stream sp = new CMF_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("CMF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMF_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CMF openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMF openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CMF openAndFill: " + retCode, retCode);
+      return CMF_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -68304,7 +66102,7 @@ public final class Core {
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode CMO_OpenPass( CMO_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CMO_OpenImpl( CMO_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -68488,32 +66286,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CMO_OpenImpl( CMO_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = CMO_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CMO_OpenAndFillImpl( CMO_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return CMO_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode CMO_OpenAndFillInternalImpl( CMO_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return CMO_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* CMO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CMO_Stream CMO_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CMO_Stream sp = new CMO_Stream(this);
-      RetCode retCode = CMO_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMO_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -68531,7 +66308,12 @@ public final class Core {
    CMO_Stream CMO_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       CMO_Stream sp = new CMO_Stream(this);
-      RetCode retCode = CMO_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = CMO_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -68568,22 +66350,12 @@ public final class Core {
     */
    public CMO_Stream CMO_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      CMO_Stream sp = new CMO_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("CMO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMO_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CMO openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMO openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CMO openAndFill: " + retCode, retCode);
+      return CMO_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -69156,7 +66928,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode CMOU_OpenPass( CMOU_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CMOU_OpenImpl( CMOU_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -69304,32 +67076,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CMOU_OpenImpl( CMOU_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = CMOU_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CMOU_OpenAndFillImpl( CMOU_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return CMOU_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode CMOU_OpenAndFillInternalImpl( CMOU_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return CMOU_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* CMOU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CMOU_Stream CMOU_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CMOU_Stream sp = new CMOU_Stream(this);
-      RetCode retCode = CMOU_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMOU_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -69347,7 +67098,12 @@ public final class Core {
    CMOU_Stream CMOU_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       CMOU_Stream sp = new CMOU_Stream(this);
-      RetCode retCode = CMOU_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = CMOU_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -69384,22 +67140,12 @@ public final class Core {
     */
    public CMOU_Stream CMOU_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      CMOU_Stream sp = new CMOU_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("CMOU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMOU_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CMOU openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMOU openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CMOU openAndFill: " + retCode, retCode);
+      return CMOU_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -69984,7 +67730,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode CORREL_OpenPass( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CORREL_OpenImpl( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -70119,32 +67865,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CORREL_OpenImpl( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = CORREL_OpenPass( sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode CORREL_OpenAndFillImpl( CORREL_Stream sp, double inReal0[], double inReal1[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return CORREL_OpenPass( sp, inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode CORREL_OpenAndFillInternalImpl( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return CORREL_OpenPass(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* CORREL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CORREL_Stream CORREL_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CORREL_Stream sp = new CORREL_Stream(this);
-      RetCode retCode = CORREL_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -70162,7 +67887,12 @@ public final class Core {
    CORREL_Stream CORREL_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
    {
       CORREL_Stream sp = new CORREL_Stream(this);
-      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = CORREL_OpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -70199,22 +67929,12 @@ public final class Core {
     */
    public CORREL_Stream CORREL_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
-      CORREL_Stream sp = new CORREL_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("CORREL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CORREL_OpenAndFillImpl(sp, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("CORREL openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CORREL openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("CORREL openAndFill: " + retCode, retCode);
+      return CORREL_OpenAndFillInternal(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -70288,8 +68008,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Element-wise trigonometric cosine of the input series. Applies the C
-    * library cos() to each sample.
+    * Element-wise cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = cos(inReal[i])
@@ -70345,8 +68064,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise trigonometric cosine of the input series. Applies the C
-    * library cos() to each sample.
+    * Element-wise cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = cos(inReal[i])
@@ -70510,7 +68228,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.cos(inReal);
    }
-   private RetCode COS_OpenPass( COS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode COS_OpenImpl( COS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -70536,32 +68254,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode COS_OpenImpl( COS_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = COS_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode COS_OpenAndFillImpl( COS_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return COS_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode COS_OpenAndFillInternalImpl( COS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return COS_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* COS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    COS_Stream COS_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       COS_Stream sp = new COS_Stream(this);
-      RetCode retCode = COS_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -70579,7 +68276,12 @@ public final class Core {
    COS_Stream COS_OpenInternal( double inReal[], int startIdx )
    {
       COS_Stream sp = new COS_Stream(this);
-      RetCode retCode = COS_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = COS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -70616,22 +68318,12 @@ public final class Core {
     */
    public COS_Stream COS_OpenAndFill( double inReal[], double outReal[] )
    {
-      COS_Stream sp = new COS_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("COS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COS_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("COS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("COS openAndFill: " + retCode, retCode);
+      return COS_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -70705,8 +68397,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector hyperbolic cosine: applies cosh element-wise to each input value. A
-    * Math Transform primitive with no lookback.
+    * Element-wise hyperbolic cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = cosh(inReal[i]) = (e^{inReal[i]} + e^{-inReal[i]}) / 2
@@ -70761,8 +68452,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector hyperbolic cosine: applies cosh element-wise to each input value. A
-    * Math Transform primitive with no lookback.
+    * Element-wise hyperbolic cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = cosh(inReal[i]) = (e^{inReal[i]} + e^{-inReal[i]}) / 2
@@ -70925,7 +68615,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.cosh(inReal);
    }
-   private RetCode COSH_OpenPass( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode COSH_OpenImpl( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -70951,32 +68641,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode COSH_OpenImpl( COSH_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = COSH_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode COSH_OpenAndFillImpl( COSH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return COSH_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode COSH_OpenAndFillInternalImpl( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return COSH_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* COSH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    COSH_Stream COSH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -70994,7 +68663,12 @@ public final class Core {
    COSH_Stream COSH_OpenInternal( double inReal[], int startIdx )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -71031,22 +68705,12 @@ public final class Core {
     */
    public COSH_Stream COSH_OpenAndFill( double inReal[], double outReal[] )
    {
-      COSH_Stream sp = new COSH_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COSH_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("COSH openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COSH openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("COSH openAndFill: " + retCode, retCode);
+      return COSH_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -71580,7 +69244,7 @@ public final class Core {
       sp.prevEMA2 = Math.fma(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
       sp.cur_outReal = 2.0 * sp.prevEMA1 - sp.prevEMA2;
    }
-   private RetCode DEMA_OpenPass( DEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode DEMA_OpenImpl( DEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -71744,32 +69408,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode DEMA_OpenImpl( DEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = DEMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode DEMA_OpenAndFillImpl( DEMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return DEMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode DEMA_OpenAndFillInternalImpl( DEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return DEMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* DEMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    DEMA_Stream DEMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       DEMA_Stream sp = new DEMA_Stream(this);
-      RetCode retCode = DEMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DEMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -71787,7 +69430,12 @@ public final class Core {
    DEMA_Stream DEMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       DEMA_Stream sp = new DEMA_Stream(this);
-      RetCode retCode = DEMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = DEMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -71824,22 +69472,12 @@ public final class Core {
     */
    public DEMA_Stream DEMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      DEMA_Stream sp = new DEMA_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("DEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DEMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("DEMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DEMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("DEMA openAndFill: " + retCode, retCode);
+      return DEMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -71915,15 +69553,14 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Element-wise division of two input series. Computes the quotient of
-    * corresponding values from two real inputs.
+    * Element-wise division of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] / inReal1[i]
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error — the quotient is written as computed.</li>
+    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -71978,15 +69615,14 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise division of two input series. Computes the quotient of
-    * corresponding values from two real inputs.
+    * Element-wise division of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] / inReal1[i]
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error — the quotient is written as computed.</li>
+    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -72149,7 +69785,7 @@ public final class Core {
    {
       sp.cur_outReal = inReal0 / inReal1;
    }
-   private RetCode DIV_OpenPass( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode DIV_OpenImpl( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -72175,32 +69811,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode DIV_OpenImpl( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = DIV_OpenPass( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode DIV_OpenAndFillImpl( DIV_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return DIV_OpenPass( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode DIV_OpenAndFillInternalImpl( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return DIV_OpenPass(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* DIV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    DIV_Stream DIV_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -72218,7 +69833,12 @@ public final class Core {
    DIV_Stream DIV_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
       DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -72255,22 +69875,12 @@ public final class Core {
     */
    public DIV_Stream DIV_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      DIV_Stream sp = new DIV_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("DIV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DIV_OpenAndFillImpl(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("DIV openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DIV openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("DIV openAndFill: " + retCode, retCode);
+      return DIV_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -73150,7 +70760,7 @@ public final class Core {
       }
       sp.lastOut_outReal = sp.cur_outReal;
    }
-   private RetCode DX_OpenPass( DX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode DX_OpenImpl( DX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -73470,32 +71080,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode DX_OpenImpl( DX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = DX_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode DX_OpenAndFillImpl( DX_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return DX_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode DX_OpenAndFillInternalImpl( DX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return DX_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* DX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    DX_Stream DX_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       DX_Stream sp = new DX_Stream(this);
-      RetCode retCode = DX_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -73513,7 +71102,12 @@ public final class Core {
    DX_Stream DX_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       DX_Stream sp = new DX_Stream(this);
-      RetCode retCode = DX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = DX_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -73550,22 +71144,12 @@ public final class Core {
     */
    public DX_Stream DX_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      DX_Stream sp = new DX_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("DX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DX_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("DX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("DX openAndFill: " + retCode, retCode);
+      return DX_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -74112,7 +71696,7 @@ public final class Core {
          sp.cur_outReal = sp.prevMA;
       }
    }
-   private RetCode EFI_OpenPass( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode EFI_OpenImpl( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
@@ -74316,32 +71900,11 @@ public final class Core {
          return RetCode.Success;
       }
    }
-   private RetCode EFI_OpenImpl( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = EFI_OpenPass( sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode EFI_OpenAndFillImpl( EFI_Stream sp, double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return EFI_OpenPass( sp, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode EFI_OpenAndFillInternalImpl( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return EFI_OpenPass(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* EFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    EFI_Stream EFI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -74359,7 +71922,12 @@ public final class Core {
    EFI_Stream EFI_OpenInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -74396,22 +71964,12 @@ public final class Core {
     */
    public EFI_Stream EFI_OpenAndFill( double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      EFI_Stream sp = new EFI_Stream(this);
+      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EFI_OpenAndFillImpl(sp, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EFI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("EFI openAndFill: " + retCode, retCode);
+      return EFI_OpenAndFillInternal(inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -74884,7 +72442,7 @@ public final class Core {
       sp.prevMA = Math.fma(inReal - sp.prevMA, sp.optInK_1, sp.prevMA);
       sp.cur_outReal = sp.prevMA;
    }
-   private RetCode EMA_OpenPass( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode EMA_OpenImpl( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -74995,32 +72553,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode EMA_OpenImpl( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = EMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode EMA_OpenAndFillImpl( EMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return EMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode EMA_OpenAndFillInternalImpl( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return EMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* EMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    EMA_Stream EMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       EMA_Stream sp = new EMA_Stream(this);
-      RetCode retCode = EMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -75038,7 +72575,12 @@ public final class Core {
    EMA_Stream EMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       EMA_Stream sp = new EMA_Stream(this);
-      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = EMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -75075,22 +72617,12 @@ public final class Core {
     */
    public EMA_Stream EMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      EMA_Stream sp = new EMA_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("EMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("EMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("EMA openAndFill: " + retCode, retCode);
+      return EMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -75164,8 +72696,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector arithmetic exponential: applies the base-e exponential to each
-    * input value. Element-wise math transform.
+    * Element-wise base-e exponential of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = exp(inReal[i]) = e^{inReal[i]}
@@ -75219,8 +72750,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector arithmetic exponential: applies the base-e exponential to each
-    * input value. Element-wise math transform.
+    * Element-wise base-e exponential of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = exp(inReal[i]) = e^{inReal[i]}
@@ -75382,7 +72912,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.exp(inReal);
    }
-   private RetCode EXP_OpenPass( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode EXP_OpenImpl( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -75408,32 +72938,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode EXP_OpenImpl( EXP_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = EXP_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode EXP_OpenAndFillImpl( EXP_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return EXP_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode EXP_OpenAndFillInternalImpl( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return EXP_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* EXP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    EXP_Stream EXP_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -75451,7 +72960,12 @@ public final class Core {
    EXP_Stream EXP_OpenInternal( double inReal[], int startIdx )
    {
       EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -75488,22 +73002,12 @@ public final class Core {
     */
    public EXP_Stream EXP_OpenAndFill( double inReal[], double outReal[] )
    {
-      EXP_Stream sp = new EXP_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("EXP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EXP_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("EXP openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EXP openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("EXP openAndFill: " + retCode, retCode);
+      return EXP_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -75577,8 +73081,8 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector floor: rounds each input value down to the nearest integer.
-    * Element-wise math transform.
+    * Element-wise floor (round down to the nearest integer) of the input
+    * series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = floor(inReal[i])
@@ -75631,8 +73135,8 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector floor: rounds each input value down to the nearest integer.
-    * Element-wise math transform.
+    * Element-wise floor (round down to the nearest integer) of the input
+    * series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = floor(inReal[i])
@@ -75793,7 +73297,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.floor(inReal);
    }
-   private RetCode FLOOR_OpenPass( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode FLOOR_OpenImpl( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -75819,32 +73323,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode FLOOR_OpenImpl( FLOOR_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = FLOOR_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode FLOOR_OpenAndFillImpl( FLOOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return FLOOR_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode FLOOR_OpenAndFillInternalImpl( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return FLOOR_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* FLOOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    FLOOR_Stream FLOOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -75862,7 +73345,12 @@ public final class Core {
    FLOOR_Stream FLOOR_OpenInternal( double inReal[], int startIdx )
    {
       FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -75899,22 +73387,12 @@ public final class Core {
     */
    public FLOOR_Stream FLOOR_OpenAndFill( double inReal[], double outReal[] )
    {
-      FLOOR_Stream sp = new FLOOR_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("FLOOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = FLOOR_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("FLOOR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FLOOR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("FLOOR openAndFill: " + retCode, retCode);
+      return FLOOR_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -76805,7 +74283,7 @@ public final class Core {
          }
       }
    }
-   private RetCode HMA_OpenPass( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HMA_OpenImpl( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
@@ -77244,32 +74722,11 @@ public final class Core {
          return RetCode.Success;
       }
    }
-   private RetCode HMA_OpenImpl( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HMA_OpenAndFillImpl( HMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return HMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode HMA_OpenAndFillInternalImpl( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return HMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* HMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HMA_Stream HMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HMA_Stream sp = new HMA_Stream(this);
-      RetCode retCode = HMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -77287,7 +74744,12 @@ public final class Core {
    HMA_Stream HMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       HMA_Stream sp = new HMA_Stream(this);
-      RetCode retCode = HMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -77324,22 +74786,12 @@ public final class Core {
     */
    public HMA_Stream HMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      HMA_Stream sp = new HMA_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("HMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HMA openAndFill: " + retCode, retCode);
+      return HMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -78579,7 +76031,7 @@ public final class Core {
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_DCPERIOD_OpenPass( HT_DCPERIOD_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HT_DCPERIOD_OpenImpl( HT_DCPERIOD_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -78985,32 +76437,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_DCPERIOD_OpenImpl( HT_DCPERIOD_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HT_DCPERIOD_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_DCPERIOD_OpenAndFillImpl( HT_DCPERIOD_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return HT_DCPERIOD_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode HT_DCPERIOD_OpenAndFillInternalImpl( HT_DCPERIOD_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return HT_DCPERIOD_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* HT_DCPERIOD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
-      RetCode retCode = HT_DCPERIOD_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -79028,7 +76459,12 @@ public final class Core {
    HT_DCPERIOD_Stream HT_DCPERIOD_OpenInternal( double inReal[], int startIdx )
    {
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
-      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HT_DCPERIOD_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -79065,22 +76501,12 @@ public final class Core {
     */
    public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( double inReal[], double outReal[] )
    {
-      HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPERIOD_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_DCPERIOD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPERIOD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + retCode, retCode);
+      return HT_DCPERIOD_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -79876,8 +77302,7 @@ public final class Core {
     * Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
     * degrees) of the dominant market cycle, derived from a homodyne
     * discriminator on a Hilbert-transformed, smoothed price. One real output
-    * per bar. Output is degrees, wrapped so it never exceeds 315 (can go
-    * negative).
+    * per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -79935,8 +77360,7 @@ public final class Core {
     * Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
     * degrees) of the dominant market cycle, derived from a homodyne
     * discriminator on a Hilbert-transformed, smoothed price. One real output
-    * per bar. Output is degrees, wrapped so it never exceeds 315 (can go
-    * negative).
+    * per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -80542,7 +77966,7 @@ public final class Core {
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_DCPHASE_OpenPass( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -81032,32 +78456,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HT_DCPHASE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_DCPHASE_OpenAndFillImpl( HT_DCPHASE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return HT_DCPHASE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode HT_DCPHASE_OpenAndFillInternalImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return HT_DCPHASE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* HT_DCPHASE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_DCPHASE_Stream HT_DCPHASE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -81075,7 +78478,12 @@ public final class Core {
    HT_DCPHASE_Stream HT_DCPHASE_OpenInternal( double inReal[], int startIdx )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -81112,22 +78520,12 @@ public final class Core {
     */
    public HT_DCPHASE_Stream HT_DCPHASE_OpenAndFill( double inReal[], double outReal[] )
    {
-      HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_DCPHASE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPHASE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + retCode, retCode);
+      return HT_DCPHASE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -81806,7 +79204,9 @@ public final class Core {
    /**
     * Hilbert Transform indicator that decomposes the price series into its
     * in-phase (I) and quadrature (Q) phasor components. Shares the same
-    * detrend/Hilbert machinery as the other HT_* cycle functions.
+    * detrend/Hilbert machinery as the other HT_* cycle functions. This function
+    * is meant for building your own cycle analysis on top of the raw phasor,
+    * not as a ready-made signal.
     * <p><b>Formula</b>
     * <pre>{@code
     * Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
@@ -81870,7 +79270,9 @@ public final class Core {
    /**
     * Hilbert Transform indicator that decomposes the price series into its
     * in-phase (I) and quadrature (Q) phasor components. Shares the same
-    * detrend/Hilbert machinery as the other HT_* cycle functions.
+    * detrend/Hilbert machinery as the other HT_* cycle functions. This function
+    * is meant for building your own cycle analysis on top of the raw phasor,
+    * not as a ready-made signal.
     * <p><b>Formula</b>
     * <pre>{@code
     * Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
@@ -82415,7 +79817,7 @@ public final class Core {
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_PHASOR_OpenPass( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
+   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -82825,33 +80227,11 @@ public final class Core {
       sp.cachedValue = new HT_PHASOR_Stream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
       return RetCode.Success;
    }
-   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outInPhase = new double[1];
-      double[] sink_outQuadrature = new double[1];
-      RetCode retCode = HT_PHASOR_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_PHASOR_OpenAndFillImpl( HT_PHASOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
-   {
-      if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
-         return RetCode.BadParam;
-      }
-      return HT_PHASOR_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
-   }
-   private RetCode HT_PHASOR_OpenAndFillInternalImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
-   {
-      return HT_PHASOR_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
-   }
    /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -82869,7 +80249,13 @@ public final class Core {
    HT_PHASOR_Stream HT_PHASOR_OpenInternal( double inReal[], int startIdx )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outInPhase = new double[1];
+      double[] sink_outQuadrature = new double[1];
+      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -82906,22 +80292,12 @@ public final class Core {
     */
    public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
    {
-      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
+      if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
+         throw new TaLibArgumentException("HT_PHASOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_PHASOR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_PHASOR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
+      return HT_PHASOR_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature);
    }
 /* List of contributors:
  *
@@ -84423,7 +81799,7 @@ public final class Core {
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_SINE_OpenPass( HT_SINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[], int outStride )
+   private RetCode HT_SINE_OpenImpl( HT_SINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -84919,33 +82295,11 @@ public final class Core {
       sp.cachedValue = new HT_SINE_Stream.Value(sp.cur_outSine, sp.cur_outLeadSine);
       return RetCode.Success;
    }
-   private RetCode HT_SINE_OpenImpl( HT_SINE_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outSine = new double[1];
-      double[] sink_outLeadSine = new double[1];
-      RetCode retCode = HT_SINE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outSine, sink_outLeadSine, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_SINE_OpenAndFillImpl( HT_SINE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
-   {
-      if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
-         return RetCode.BadParam;
-      }
-      return HT_SINE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outSine, outLeadSine, 1 );
-   }
-   private RetCode HT_SINE_OpenAndFillInternalImpl( HT_SINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
-   {
-      return HT_SINE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1);
-   }
    /* HT_SINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_SINE_Stream HT_SINE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
    {
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -84963,7 +82317,13 @@ public final class Core {
    HT_SINE_Stream HT_SINE_OpenInternal( double inReal[], int startIdx )
    {
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outSine = new double[1];
+      double[] sink_outLeadSine = new double[1];
+      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outSine, sink_outLeadSine, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -85000,22 +82360,12 @@ public final class Core {
     */
    public HT_SINE_Stream HT_SINE_OpenAndFill( double inReal[], double outSine[], double outLeadSine[] )
    {
-      HT_SINE_Stream sp = new HT_SINE_Stream(this);
+      if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
+         throw new TaLibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_SINE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_SINE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
+      return HT_SINE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outSine, outLeadSine);
    }
 /* List of contributors:
  *
@@ -86397,7 +83747,7 @@ public final class Core {
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_TRENDLINE_OpenPass( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HT_TRENDLINE_OpenImpl( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -86858,32 +84208,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_TRENDLINE_OpenImpl( HT_TRENDLINE_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HT_TRENDLINE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_TRENDLINE_OpenAndFillImpl( HT_TRENDLINE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return HT_TRENDLINE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode HT_TRENDLINE_OpenAndFillInternalImpl( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return HT_TRENDLINE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* HT_TRENDLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -86901,7 +84230,12 @@ public final class Core {
    HT_TRENDLINE_Stream HT_TRENDLINE_OpenInternal( double inReal[], int startIdx )
    {
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
-      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HT_TRENDLINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -86938,22 +84272,12 @@ public final class Core {
     */
    public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( double inReal[], double outReal[] )
    {
-      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDLINE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_TRENDLINE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDLINE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + retCode, retCode);
+      return HT_TRENDLINE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -87894,10 +85218,10 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Hilbert Transform classifier that labels each bar as trending (1) or
-    * cycling (0). Reuses the MAMA dominant-cycle/phase DSP plus a
-    * SineWave/trendline test to decide the market mode. 1 = trending market
-    * (favor trend-following); 0 = cycle/mean-reverting mode.
+    * Hilbert Transform classifier that labels each bar 1 (trending — favor
+    * trend-following) or 0 (cycling — favor mean-reversion). Built from the
+    * same MAMA dominant-cycle/phase DSP plus a SineWave/trendline test used
+    * across the other HT_* functions.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -87950,10 +85274,10 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Hilbert Transform classifier that labels each bar as trending (1) or
-    * cycling (0). Reuses the MAMA dominant-cycle/phase DSP plus a
-    * SineWave/trendline test to decide the market mode. 1 = trending market
-    * (favor trend-following); 0 = cycle/mean-reverting mode.
+    * Hilbert Transform classifier that labels each bar 1 (trending — favor
+    * trend-following) or 0 (cycling — favor mean-reversion). Built from the
+    * same MAMA dominant-cycle/phase DSP plus a SineWave/trendline test used
+    * across the other HT_* functions.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -88667,7 +85991,7 @@ public final class Core {
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_TRENDMODE_OpenPass( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode HT_TRENDMODE_OpenImpl( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -89258,32 +86582,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_TRENDMODE_OpenImpl( HT_TRENDMODE_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = HT_TRENDMODE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_TRENDMODE_OpenAndFillImpl( HT_TRENDMODE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return HT_TRENDMODE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode HT_TRENDMODE_OpenAndFillInternalImpl( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return HT_TRENDMODE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* HT_TRENDMODE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
-      RetCode retCode = HT_TRENDMODE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -89301,7 +86604,12 @@ public final class Core {
    HT_TRENDMODE_Stream HT_TRENDMODE_OpenInternal( double inReal[], int startIdx )
    {
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
-      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -89338,22 +86646,12 @@ public final class Core {
     */
    public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( double inReal[], int outInteger[] )
    {
-      HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
+      if( (Object)outInteger == (Object)inReal ) {
+         throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDMODE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_TRENDMODE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDMODE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + retCode, retCode);
+      return HT_TRENDMODE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -89804,7 +87102,7 @@ public final class Core {
          sp.winPos_i = 0;
       }
    }
-   private RetCode IMI_OpenPass( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode IMI_OpenImpl( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int lookback = 0;
       int outIdx = 0;
@@ -89877,32 +87175,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode IMI_OpenImpl( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = IMI_OpenPass( sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode IMI_OpenAndFillImpl( IMI_Stream sp, double inOpen[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return IMI_OpenPass( sp, inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode IMI_OpenAndFillInternalImpl( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return IMI_OpenPass(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* IMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    IMI_Stream IMI_OpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       IMI_Stream sp = new IMI_Stream(this);
-      RetCode retCode = IMI_OpenAndFillInternalImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -89920,7 +87197,12 @@ public final class Core {
    IMI_Stream IMI_OpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
    {
       IMI_Stream sp = new IMI_Stream(this);
-      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = IMI_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -89957,22 +87239,12 @@ public final class Core {
     */
    public IMI_Stream IMI_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      IMI_Stream sp = new IMI_Stream(this);
+      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = IMI_OpenAndFillImpl(sp, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("IMI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("IMI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("IMI openAndFill: " + retCode, retCode);
+      return IMI_OpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -90652,7 +87924,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode KAMA_OpenPass( KAMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode KAMA_OpenImpl( KAMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double constMax = 0;
       double constDiff = 0;
@@ -90863,32 +88135,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode KAMA_OpenImpl( KAMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = KAMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode KAMA_OpenAndFillImpl( KAMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return KAMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode KAMA_OpenAndFillInternalImpl( KAMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return KAMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* KAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    KAMA_Stream KAMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       KAMA_Stream sp = new KAMA_Stream(this);
-      RetCode retCode = KAMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = KAMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -90906,7 +88157,12 @@ public final class Core {
    KAMA_Stream KAMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       KAMA_Stream sp = new KAMA_Stream(this);
-      RetCode retCode = KAMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = KAMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -90943,22 +88199,12 @@ public final class Core {
     */
    public KAMA_Stream KAMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      KAMA_Stream sp = new KAMA_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("KAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = KAMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("KAMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KAMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("KAMA openAndFill: " + retCode, retCode);
+      return KAMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -91447,7 +88693,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode LINEARREG_OpenPass( LINEARREG_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LINEARREG_OpenImpl( LINEARREG_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -91572,32 +88818,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LINEARREG_OpenImpl( LINEARREG_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = LINEARREG_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode LINEARREG_OpenAndFillImpl( LINEARREG_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return LINEARREG_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode LINEARREG_OpenAndFillInternalImpl( LINEARREG_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return LINEARREG_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* LINEARREG_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LINEARREG_Stream LINEARREG_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LINEARREG_Stream sp = new LINEARREG_Stream(this);
-      RetCode retCode = LINEARREG_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -91615,7 +88840,12 @@ public final class Core {
    LINEARREG_Stream LINEARREG_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       LINEARREG_Stream sp = new LINEARREG_Stream(this);
-      RetCode retCode = LINEARREG_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = LINEARREG_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -91652,22 +88882,12 @@ public final class Core {
     */
    public LINEARREG_Stream LINEARREG_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      LINEARREG_Stream sp = new LINEARREG_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("LINEARREG openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("LINEARREG openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("LINEARREG openAndFill: " + retCode, retCode);
+      return LINEARREG_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -92161,7 +89381,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode LINEARREG_ANGLE_OpenPass( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LINEARREG_ANGLE_OpenImpl( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -92283,32 +89503,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LINEARREG_ANGLE_OpenImpl( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = LINEARREG_ANGLE_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode LINEARREG_ANGLE_OpenAndFillImpl( LINEARREG_ANGLE_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return LINEARREG_ANGLE_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode LINEARREG_ANGLE_OpenAndFillInternalImpl( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return LINEARREG_ANGLE_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* LINEARREG_ANGLE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
-      RetCode retCode = LINEARREG_ANGLE_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -92326,7 +89525,12 @@ public final class Core {
    LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
-      RetCode retCode = LINEARREG_ANGLE_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = LINEARREG_ANGLE_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -92363,22 +89567,12 @@ public final class Core {
     */
    public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_ANGLE_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("LINEARREG_ANGLE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_ANGLE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + retCode, retCode);
+      return LINEARREG_ANGLE_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -92871,7 +90065,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode LINEARREG_INTERCEPT_OpenPass( LINEARREG_INTERCEPT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LINEARREG_INTERCEPT_OpenImpl( LINEARREG_INTERCEPT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -92993,32 +90187,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LINEARREG_INTERCEPT_OpenImpl( LINEARREG_INTERCEPT_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = LINEARREG_INTERCEPT_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode LINEARREG_INTERCEPT_OpenAndFillImpl( LINEARREG_INTERCEPT_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return LINEARREG_INTERCEPT_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode LINEARREG_INTERCEPT_OpenAndFillInternalImpl( LINEARREG_INTERCEPT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return LINEARREG_INTERCEPT_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* LINEARREG_INTERCEPT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
-      RetCode retCode = LINEARREG_INTERCEPT_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_INTERCEPT_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -93036,7 +90209,12 @@ public final class Core {
    LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
-      RetCode retCode = LINEARREG_INTERCEPT_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = LINEARREG_INTERCEPT_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -93073,22 +90251,12 @@ public final class Core {
     */
    public LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("LINEARREG_INTERCEPT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_INTERCEPT_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("LINEARREG_INTERCEPT openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_INTERCEPT openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("LINEARREG_INTERCEPT openAndFill: " + retCode, retCode);
+      return LINEARREG_INTERCEPT_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -93575,7 +90743,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode LINEARREG_SLOPE_OpenPass( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LINEARREG_SLOPE_OpenImpl( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -93694,32 +90862,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LINEARREG_SLOPE_OpenImpl( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = LINEARREG_SLOPE_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode LINEARREG_SLOPE_OpenAndFillImpl( LINEARREG_SLOPE_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return LINEARREG_SLOPE_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode LINEARREG_SLOPE_OpenAndFillInternalImpl( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return LINEARREG_SLOPE_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* LINEARREG_SLOPE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
-      RetCode retCode = LINEARREG_SLOPE_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_SLOPE_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -93737,7 +90884,12 @@ public final class Core {
    LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
-      RetCode retCode = LINEARREG_SLOPE_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = LINEARREG_SLOPE_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -93774,22 +90926,12 @@ public final class Core {
     */
    public LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("LINEARREG_SLOPE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_SLOPE_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("LINEARREG_SLOPE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_SLOPE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("LINEARREG_SLOPE openAndFill: " + retCode, retCode);
+      return LINEARREG_SLOPE_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -93863,8 +91005,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector natural logarithm: applies the natural log (base e) elementwise to
-    * the input series.
+    * Element-wise natural logarithm of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = log(inReal[i])
@@ -93923,8 +91064,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector natural logarithm: applies the natural log (base e) elementwise to
-    * the input series.
+    * Element-wise natural logarithm of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = log(inReal[i])
@@ -94091,7 +91231,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.log(inReal);
    }
-   private RetCode LN_OpenPass( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LN_OpenImpl( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -94117,32 +91257,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LN_OpenImpl( LN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = LN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode LN_OpenAndFillImpl( LN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return LN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode LN_OpenAndFillInternalImpl( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return LN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* LN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LN_Stream LN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LN_Stream sp = new LN_Stream(this);
-      RetCode retCode = LN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -94160,7 +91279,12 @@ public final class Core {
    LN_Stream LN_OpenInternal( double inReal[], int startIdx )
    {
       LN_Stream sp = new LN_Stream(this);
-      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -94197,22 +91321,12 @@ public final class Core {
     */
    public LN_Stream LN_OpenAndFill( double inReal[], double outReal[] )
    {
-      LN_Stream sp = new LN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("LN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("LN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("LN openAndFill: " + retCode, retCode);
+      return LN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -94286,8 +91400,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector base-10 logarithm. Applies log10 element-wise over each input
-    * value.
+    * Element-wise base-10 logarithm of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = log10(inReal[i])
@@ -94345,8 +91458,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector base-10 logarithm. Applies log10 element-wise over each input
-    * value.
+    * Element-wise base-10 logarithm of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = log10(inReal[i])
@@ -94512,7 +91624,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.log10(inReal);
    }
-   private RetCode LOG10_OpenPass( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LOG10_OpenImpl( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -94538,32 +91650,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LOG10_OpenImpl( LOG10_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = LOG10_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode LOG10_OpenAndFillImpl( LOG10_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return LOG10_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode LOG10_OpenAndFillInternalImpl( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return LOG10_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* LOG10_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LOG10_Stream LOG10_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -94581,7 +91672,12 @@ public final class Core {
    LOG10_Stream LOG10_OpenInternal( double inReal[], int startIdx )
    {
       LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -94618,22 +91714,12 @@ public final class Core {
     */
    public LOG10_Stream LOG10_OpenAndFill( double inReal[], double outReal[] )
    {
-      LOG10_Stream sp = new LOG10_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LOG10_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("LOG10 openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LOG10 openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("LOG10 openAndFill: " + retCode, retCode);
+      return LOG10_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -96587,7 +93673,7 @@ public final class Core {
       sp.cur_outMACDSignal = sp.prevSignal;
       sp.cur_outMACDHist = macdValue - sp.prevSignal;
    }
-   private RetCode MACD_OpenPass( MACD_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+   private RetCode MACD_OpenImpl( MACD_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -96801,34 +93887,11 @@ public final class Core {
       sp.cachedValue = new MACD_Stream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
-   private RetCode MACD_OpenImpl( MACD_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outMACD = new double[1];
-      double[] sink_outMACDSignal = new double[1];
-      double[] sink_outMACDHist = new double[1];
-      RetCode retCode = MACD_OpenPass( sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MACD_OpenAndFillImpl( MACD_Stream sp, double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
-   {
-      if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         return RetCode.BadParam;
-      }
-      return MACD_OpenPass( sp, inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
-   }
-   private RetCode MACD_OpenAndFillInternalImpl( MACD_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
-   {
-      return MACD_OpenPass(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
-   }
    /* MACD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MACD_Stream MACD_OpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
       MACD_Stream sp = new MACD_Stream(this);
-      RetCode retCode = MACD_OpenAndFillInternalImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACD_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -96846,7 +93909,14 @@ public final class Core {
    MACD_Stream MACD_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       MACD_Stream sp = new MACD_Stream(this);
-      RetCode retCode = MACD_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outMACD = new double[1];
+      double[] sink_outMACDSignal = new double[1];
+      double[] sink_outMACDHist = new double[1];
+      RetCode retCode = MACD_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -96883,22 +93953,12 @@ public final class Core {
     */
    public MACD_Stream MACD_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
-      MACD_Stream sp = new MACD_Stream(this);
+      if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
+         throw new TaLibArgumentException("MACD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MACD_OpenAndFillImpl(sp, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MACD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MACD openAndFill: " + retCode, retCode);
+      return MACD_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
    }
 /* List of contributors:
  *
@@ -97698,7 +94758,7 @@ public final class Core {
       sp.cur_outMACDSignal = cur_outMACDSignal;
       sp.cur_outMACDHist = cur_outMACDHist;
    }
-   private RetCode MACDEXT_OpenPass( MACDEXT_Stream sp, double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+   private RetCode MACDEXT_OpenImpl( MACDEXT_Stream sp, double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
    {
       double[] slowMABuffer;
       double[] fastMABuffer;
@@ -97872,34 +94932,11 @@ public final class Core {
       sp.cachedValue = new MACDEXT_Stream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
-   private RetCode MACDEXT_OpenImpl( MACDEXT_Stream sp, double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outMACD = new double[1];
-      double[] sink_outMACDSignal = new double[1];
-      double[] sink_outMACDHist = new double[1];
-      RetCode retCode = MACDEXT_OpenPass( sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MACDEXT_OpenAndFillImpl( MACDEXT_Stream sp, double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
-   {
-      if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         return RetCode.BadParam;
-      }
-      return MACDEXT_OpenPass( sp, inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
-   }
-   private RetCode MACDEXT_OpenAndFillInternalImpl( MACDEXT_Stream sp, double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
-   {
-      return MACDEXT_OpenPass(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
-   }
    /* MACDEXT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MACDEXT_Stream MACDEXT_OpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
       MACDEXT_Stream sp = new MACDEXT_Stream(this);
-      RetCode retCode = MACDEXT_OpenAndFillInternalImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDEXT_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -97917,7 +94954,14 @@ public final class Core {
    MACDEXT_Stream MACDEXT_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       MACDEXT_Stream sp = new MACDEXT_Stream(this);
-      RetCode retCode = MACDEXT_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outMACD = new double[1];
+      double[] sink_outMACDSignal = new double[1];
+      double[] sink_outMACDHist = new double[1];
+      RetCode retCode = MACDEXT_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -97954,22 +94998,12 @@ public final class Core {
     */
    public MACDEXT_Stream MACDEXT_OpenAndFill( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
-      MACDEXT_Stream sp = new MACDEXT_Stream(this);
+      if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
+         throw new TaLibArgumentException("MACDEXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MACDEXT_OpenAndFillImpl(sp, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MACDEXT openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDEXT openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MACDEXT openAndFill: " + retCode, retCode);
+      return MACDEXT_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
    }
 /* List of contributors:
  *
@@ -98633,7 +95667,7 @@ public final class Core {
       sp.cur_outMACDSignal = sp.prevSignal;
       sp.cur_outMACDHist = macdValue - sp.prevSignal;
    }
-   private RetCode MACDFIX_OpenPass( MACDFIX_Stream sp, double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+   private RetCode MACDFIX_OpenImpl( MACDFIX_Stream sp, double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -98822,34 +95856,11 @@ public final class Core {
       sp.cachedValue = new MACDFIX_Stream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
-   private RetCode MACDFIX_OpenImpl( MACDFIX_Stream sp, double inReal[], int startIdx, int optInSignalPeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outMACD = new double[1];
-      double[] sink_outMACDSignal = new double[1];
-      double[] sink_outMACDHist = new double[1];
-      RetCode retCode = MACDFIX_OpenPass( sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MACDFIX_OpenAndFillImpl( MACDFIX_Stream sp, double inReal[], int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
-   {
-      if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         return RetCode.BadParam;
-      }
-      return MACDFIX_OpenPass( sp, inReal, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
-   }
-   private RetCode MACDFIX_OpenAndFillInternalImpl( MACDFIX_Stream sp, double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
-   {
-      return MACDFIX_OpenPass(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
-   }
    /* MACDFIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MACDFIX_Stream MACDFIX_OpenAndFillInternal( double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
       MACDFIX_Stream sp = new MACDFIX_Stream(this);
-      RetCode retCode = MACDFIX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -98867,7 +95878,14 @@ public final class Core {
    MACDFIX_Stream MACDFIX_OpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
    {
       MACDFIX_Stream sp = new MACDFIX_Stream(this);
-      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outMACD = new double[1];
+      double[] sink_outMACDSignal = new double[1];
+      double[] sink_outMACDHist = new double[1];
+      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -98904,22 +95922,12 @@ public final class Core {
     */
    public MACDFIX_Stream MACDFIX_OpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
-      MACDFIX_Stream sp = new MACDFIX_Stream(this);
+      if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
+         throw new TaLibArgumentException("MACDFIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MACDFIX_OpenAndFillImpl(sp, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MACDFIX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDFIX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
+      return MACDFIX_OpenAndFillInternal(inReal, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
    }
 /* List of contributors:
  *
@@ -100390,7 +97398,7 @@ public final class Core {
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode MAMA_OpenPass( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
+   private RetCode MAMA_OpenImpl( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -100851,33 +97859,11 @@ public final class Core {
       sp.cachedValue = new MAMA_Stream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
       return RetCode.Success;
    }
-   private RetCode MAMA_OpenImpl( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outMAMA = new double[1];
-      double[] sink_outFAMA = new double[1];
-      RetCode retCode = MAMA_OpenPass( sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, sink_outMAMA, sink_outFAMA, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MAMA_OpenAndFillImpl( MAMA_Stream sp, double inReal[], double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
-   {
-      if( (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA ) {
-         return RetCode.BadParam;
-      }
-      return MAMA_OpenPass( sp, inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
-   }
-   private RetCode MAMA_OpenAndFillInternalImpl( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
-   {
-      return MAMA_OpenPass(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1);
-   }
    /* MAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MAMA_Stream MAMA_OpenAndFillInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
    {
       MAMA_Stream sp = new MAMA_Stream(this);
-      RetCode retCode = MAMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -100895,7 +97881,13 @@ public final class Core {
    MAMA_Stream MAMA_OpenInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
    {
       MAMA_Stream sp = new MAMA_Stream(this);
-      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outMAMA = new double[1];
+      double[] sink_outFAMA = new double[1];
+      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, sink_outMAMA, sink_outFAMA, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -100932,22 +97924,12 @@ public final class Core {
     */
    public MAMA_Stream MAMA_OpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
    {
-      MAMA_Stream sp = new MAMA_Stream(this);
+      if( (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA ) {
+         throw new TaLibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAMA_OpenAndFillImpl(sp, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MAMA openAndFill: " + retCode, retCode);
+      return MAMA_OpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
    }
 /* List of contributors:
  *
@@ -101332,7 +98314,7 @@ public final class Core {
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode MARKETFI_OpenPass( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -101387,32 +98369,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MARKETFI_OpenAndFillImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MARKETFI_OpenAndFillInternalImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MARKETFI_OpenPass(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MARKETFI_Stream MARKETFI_OpenAndFillInternal( double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenAndFillInternalImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -101430,7 +98391,12 @@ public final class Core {
    MARKETFI_Stream MARKETFI_OpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -101467,22 +98433,12 @@ public final class Core {
     */
    public MARKETFI_Stream MARKETFI_OpenAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] )
    {
-      MARKETFI_Stream sp = new MARKETFI_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("MARKETFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MARKETFI_OpenAndFillImpl(sp, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MARKETFI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
+      return MARKETFI_OpenAndFillInternal(inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -103104,7 +100060,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MAX_OpenPass( MAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MAX_OpenImpl( MAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double highest = 0;
       double tmp = 0;
@@ -103218,32 +100174,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MAX_OpenImpl( MAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MAX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MAX_OpenAndFillImpl( MAX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return MAX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MAX_OpenAndFillInternalImpl( MAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MAX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MAX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MAX_Stream MAX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MAX_Stream sp = new MAX_Stream(this);
-      RetCode retCode = MAX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -103261,7 +100196,12 @@ public final class Core {
    MAX_Stream MAX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MAX_Stream sp = new MAX_Stream(this);
-      RetCode retCode = MAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -103298,22 +100238,12 @@ public final class Core {
     */
    public MAX_Stream MAX_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      MAX_Stream sp = new MAX_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("MAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MAX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MAX openAndFill: " + retCode, retCode);
+      return MAX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -103503,11 +100433,11 @@ public final class Core {
     * value.
     * <p><b>Formula</b>
     * <pre>{@code
-    * outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
+    * outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the highest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -103569,11 +100499,11 @@ public final class Core {
     * value.
     * <p><b>Formula</b>
     * <pre>{@code
-    * outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
+    * outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the highest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -103793,7 +100723,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MAXINDEX_OpenPass( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double highest = 0;
       double tmp = 0;
@@ -103897,32 +100827,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = MAXINDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MAXINDEX_OpenAndFillImpl( MAXINDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return MAXINDEX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode MAXINDEX_OpenAndFillInternalImpl( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return MAXINDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -103940,7 +100849,12 @@ public final class Core {
    MAXINDEX_Stream MAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -103977,22 +100891,12 @@ public final class Core {
     */
    public MAXINDEX_Stream MAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
-      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
+      if( (Object)outInteger == (Object)inReal ) {
+         throw new TaLibArgumentException("MAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAXINDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MAXINDEX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAXINDEX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
+      return MAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -104308,7 +101212,7 @@ public final class Core {
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }
-   private RetCode MEDPRICE_OpenPass( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MEDPRICE_OpenImpl( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -104341,32 +101245,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MEDPRICE_OpenImpl( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MEDPRICE_OpenPass( sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MEDPRICE_OpenAndFillImpl( MEDPRICE_Stream sp, double inHigh[], double inLow[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return MEDPRICE_OpenPass( sp, inHigh, inLow, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MEDPRICE_OpenAndFillInternalImpl( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MEDPRICE_OpenPass(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MEDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MEDPRICE_Stream MEDPRICE_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -104384,7 +101267,12 @@ public final class Core {
    MEDPRICE_Stream MEDPRICE_OpenInternal( double inHigh[], double inLow[], int startIdx )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -104421,22 +101309,12 @@ public final class Core {
     */
    public MEDPRICE_Stream MEDPRICE_OpenAndFill( double inHigh[], double inLow[], double outReal[] )
    {
-      MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("MEDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MEDPRICE_OpenAndFillImpl(sp, inHigh, inLow, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MEDPRICE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MEDPRICE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MEDPRICE openAndFill: " + retCode, retCode);
+      return MEDPRICE_OpenAndFillInternal(inHigh, inLow, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -105080,7 +101958,7 @@ public final class Core {
          sp.mflow_Idx = 0;
       }
    }
-   private RetCode MFI_OpenPass( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MFI_OpenImpl( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double posSumMF = 0;
       double negSumMF = 0;
@@ -105234,32 +102112,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MFI_OpenImpl( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MFI_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MFI_OpenAndFillImpl( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return MFI_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MFI_OpenAndFillInternalImpl( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MFI_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MFI_Stream MFI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MFI_Stream sp = new MFI_Stream(this);
-      RetCode retCode = MFI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MFI_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -105277,7 +102134,12 @@ public final class Core {
    MFI_Stream MFI_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       MFI_Stream sp = new MFI_Stream(this);
-      RetCode retCode = MFI_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MFI_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -105314,22 +102176,12 @@ public final class Core {
     */
    public MFI_Stream MFI_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      MFI_Stream sp = new MFI_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("MFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MFI_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MFI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MFI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MFI openAndFill: " + retCode, retCode);
+      return MFI_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -106012,7 +102864,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MIDPOINT_OpenPass( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MIDPOINT_OpenImpl( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -106165,32 +103017,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MIDPOINT_OpenImpl( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MIDPOINT_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MIDPOINT_OpenAndFillImpl( MIDPOINT_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return MIDPOINT_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MIDPOINT_OpenAndFillInternalImpl( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MIDPOINT_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MIDPOINT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MIDPOINT_Stream MIDPOINT_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
-      RetCode retCode = MIDPOINT_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -106208,7 +103039,12 @@ public final class Core {
    MIDPOINT_Stream MIDPOINT_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
-      RetCode retCode = MIDPOINT_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MIDPOINT_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -106245,22 +103081,12 @@ public final class Core {
     */
    public MIDPOINT_Stream MIDPOINT_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("MIDPOINT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPOINT_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MIDPOINT openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPOINT openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MIDPOINT openAndFill: " + retCode, retCode);
+      return MIDPOINT_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -106974,7 +103800,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MIDPRICE_OpenPass( MIDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MIDPRICE_OpenImpl( MIDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -107126,32 +103952,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MIDPRICE_OpenImpl( MIDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MIDPRICE_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MIDPRICE_OpenAndFillImpl( MIDPRICE_Stream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return MIDPRICE_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MIDPRICE_OpenAndFillInternalImpl( MIDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MIDPRICE_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MIDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MIDPRICE_Stream MIDPRICE_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
-      RetCode retCode = MIDPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -107169,7 +103974,12 @@ public final class Core {
    MIDPRICE_Stream MIDPRICE_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
-      RetCode retCode = MIDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MIDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -107206,22 +104016,12 @@ public final class Core {
     */
    public MIDPRICE_Stream MIDPRICE_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("MIDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPRICE_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MIDPRICE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPRICE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MIDPRICE openAndFill: " + retCode, retCode);
+      return MIDPRICE_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -107798,7 +104598,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MIN_OpenPass( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MIN_OpenImpl( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double tmp = 0;
@@ -107910,32 +104710,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MIN_OpenImpl( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MIN_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MIN_OpenAndFillImpl( MIN_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return MIN_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MIN_OpenAndFillInternalImpl( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MIN_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MIN_Stream MIN_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MIN_Stream sp = new MIN_Stream(this);
-      RetCode retCode = MIN_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIN_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -107953,7 +104732,12 @@ public final class Core {
    MIN_Stream MIN_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MIN_Stream sp = new MIN_Stream(this);
-      RetCode retCode = MIN_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MIN_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -107990,22 +104774,12 @@ public final class Core {
     */
    public MIN_Stream MIN_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      MIN_Stream sp = new MIN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("MIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIN_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MIN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MIN openAndFill: " + retCode, retCode);
+      return MIN_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -108195,11 +104969,11 @@ public final class Core {
     * rather than its value.
     * <p><b>Formula</b>
     * <pre>{@code
-    * outInteger[t] = argmin_{t-period+1 <= i <= t} inReal[i]  (absolute index into inReal)
+    * outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the lowest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -108261,11 +105035,11 @@ public final class Core {
     * rather than its value.
     * <p><b>Formula</b>
     * <pre>{@code
-    * outInteger[t] = argmin_{t-period+1 <= i <= t} inReal[i]  (absolute index into inReal)
+    * outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the lowest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -108485,7 +105259,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MININDEX_OpenPass( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode MININDEX_OpenImpl( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double lowest = 0;
       double tmp = 0;
@@ -108589,32 +105363,11 @@ public final class Core {
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MININDEX_OpenImpl( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = MININDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MININDEX_OpenAndFillImpl( MININDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return MININDEX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode MININDEX_OpenAndFillInternalImpl( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return MININDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* MININDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MININDEX_Stream MININDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       MININDEX_Stream sp = new MININDEX_Stream(this);
-      RetCode retCode = MININDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MININDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -108632,7 +105385,12 @@ public final class Core {
    MININDEX_Stream MININDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MININDEX_Stream sp = new MININDEX_Stream(this);
-      RetCode retCode = MININDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = MININDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -108669,22 +105427,12 @@ public final class Core {
     */
    public MININDEX_Stream MININDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
-      MININDEX_Stream sp = new MININDEX_Stream(this);
+      if( (Object)outInteger == (Object)inReal ) {
+         throw new TaLibArgumentException("MININDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MININDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MININDEX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MININDEX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MININDEX openAndFill: " + retCode, retCode);
+      return MININDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger);
    }
 /* List of contributors:
  *
@@ -109061,6 +105809,11 @@ public final class Core {
     * Returns both the lowest and highest values of the input over a rolling
     * window of the last optInTimePeriod bars. An overlap-study companion to MIN
     * and MAX that computes both extrema in one pass.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
+    * outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
+    * }</pre>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -109123,6 +105876,11 @@ public final class Core {
     * Returns both the lowest and highest values of the input over a rolling
     * window of the last optInTimePeriod bars. An overlap-study companion to MIN
     * and MAX that computes both extrema in one pass.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
+    * outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
+    * }</pre>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -109396,7 +106154,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MINMAX_OpenPass( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[], int outStride )
+   private RetCode MINMAX_OpenImpl( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[], int outStride )
    {
       double highest = 0;
       double lowest = 0;
@@ -109546,33 +106304,11 @@ public final class Core {
       sp.cachedValue = new MINMAX_Stream.Value(sp.cur_outMin, sp.cur_outMax);
       return RetCode.Success;
    }
-   private RetCode MINMAX_OpenImpl( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outMin = new double[1];
-      double[] sink_outMax = new double[1];
-      RetCode retCode = MINMAX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMin, sink_outMax, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MINMAX_OpenAndFillImpl( MINMAX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
-   {
-      if( (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax ) {
-         return RetCode.BadParam;
-      }
-      return MINMAX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1 );
-   }
-   private RetCode MINMAX_OpenAndFillInternalImpl( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
-   {
-      return MINMAX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1);
-   }
    /* MINMAX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MINMAX_Stream MINMAX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -109590,7 +106326,13 @@ public final class Core {
    MINMAX_Stream MINMAX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outMin = new double[1];
+      double[] sink_outMax = new double[1];
+      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMin, sink_outMax, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -109627,22 +106369,12 @@ public final class Core {
     */
    public MINMAX_Stream MINMAX_OpenAndFill( double inReal[], int optInTimePeriod, double outMin[], double outMax[] )
    {
-      MINMAX_Stream sp = new MINMAX_Stream(this);
+      if( (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax ) {
+         throw new TaLibArgumentException("MINMAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINMAX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MINMAX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MINMAX openAndFill: " + retCode, retCode);
+      return MINMAX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
    }
 /* List of contributors:
  *
@@ -109884,11 +106616,12 @@ public final class Core {
     * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
     * <p><b>Formula</b>
     * <pre>{@code
-    * For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = argmin over the same window (N = optInTimePeriod).
+    * outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
+    * outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the extreme value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -109953,11 +106686,12 @@ public final class Core {
     * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
     * <p><b>Formula</b>
     * <pre>{@code
-    * For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = argmin over the same window (N = optInTimePeriod).
+    * outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
+    * outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the extreme value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.</li>
+    * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -110230,7 +106964,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MINMAXINDEX_OpenPass( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
+   private RetCode MINMAXINDEX_OpenImpl( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
    {
       double highest = 0;
       double lowest = 0;
@@ -110363,33 +107097,11 @@ public final class Core {
       sp.cachedValue = new MINMAXINDEX_Stream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
       return RetCode.Success;
    }
-   private RetCode MINMAXINDEX_OpenImpl( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outMinIdx = new int[1];
-      int[] sink_outMaxIdx = new int[1];
-      RetCode retCode = MINMAXINDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MINMAXINDEX_OpenAndFillImpl( MINMAXINDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
-   {
-      if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
-         return RetCode.BadParam;
-      }
-      return MINMAXINDEX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1 );
-   }
-   private RetCode MINMAXINDEX_OpenAndFillInternalImpl( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
-   {
-      return MINMAXINDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
-   }
    /* MINMAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MINMAXINDEX_Stream MINMAXINDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
    {
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -110407,7 +107119,13 @@ public final class Core {
    MINMAXINDEX_Stream MINMAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
-      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outMinIdx = new int[1];
+      int[] sink_outMaxIdx = new int[1];
+      RetCode retCode = MINMAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -110444,22 +107162,12 @@ public final class Core {
     */
    public MINMAXINDEX_Stream MINMAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outMinIdx[], int outMaxIdx[] )
    {
-      MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
+      if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
+         throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINMAXINDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAXINDEX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
+      return MINMAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
    }
 /* List of contributors:
  *
@@ -111382,7 +108090,7 @@ public final class Core {
          }
       }
    }
-   private RetCode MINUS_DI_OpenPass( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MINUS_DI_OpenImpl( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -111849,32 +108557,11 @@ public final class Core {
          return RetCode.Success;
       }
    }
-   private RetCode MINUS_DI_OpenImpl( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MINUS_DI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MINUS_DI_OpenAndFillImpl( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return MINUS_DI_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MINUS_DI_OpenAndFillInternalImpl( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MINUS_DI_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MINUS_DI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MINUS_DI_Stream MINUS_DI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
-      RetCode retCode = MINUS_DI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -111892,7 +108579,12 @@ public final class Core {
    MINUS_DI_Stream MINUS_DI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
-      RetCode retCode = MINUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MINUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -111929,22 +108621,12 @@ public final class Core {
     */
    public MINUS_DI_Stream MINUS_DI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("MINUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DI_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
+      return MINUS_DI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -112623,7 +109305,7 @@ public final class Core {
          sp.cur_outReal = sp.prevMinusDM;
       }
    }
-   private RetCode MINUS_DM_OpenPass( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MINUS_DM_OpenImpl( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -112945,32 +109627,11 @@ public final class Core {
          return RetCode.Success;
       }
    }
-   private RetCode MINUS_DM_OpenImpl( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MINUS_DM_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MINUS_DM_OpenAndFillImpl( MINUS_DM_Stream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return MINUS_DM_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MINUS_DM_OpenAndFillInternalImpl( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MINUS_DM_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MINUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MINUS_DM_Stream MINUS_DM_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
-      RetCode retCode = MINUS_DM_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -112988,7 +109649,12 @@ public final class Core {
    MINUS_DM_Stream MINUS_DM_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
       MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
-      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -113025,22 +109691,12 @@ public final class Core {
     */
    public MINUS_DM_Stream MINUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("MINUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DM_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MINUS_DM openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DM openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MINUS_DM openAndFill: " + retCode, retCode);
+      return MINUS_DM_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -113453,7 +110109,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode MOM_OpenPass( MOM_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MOM_OpenImpl( MOM_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -113547,32 +110203,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MOM_OpenImpl( MOM_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MOM_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MOM_OpenAndFillImpl( MOM_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return MOM_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MOM_OpenAndFillInternalImpl( MOM_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MOM_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MOM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MOM_Stream MOM_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MOM_Stream sp = new MOM_Stream(this);
-      RetCode retCode = MOM_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MOM_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -113590,7 +110225,12 @@ public final class Core {
    MOM_Stream MOM_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MOM_Stream sp = new MOM_Stream(this);
-      RetCode retCode = MOM_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MOM_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -113627,22 +110267,12 @@ public final class Core {
     */
    public MOM_Stream MOM_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      MOM_Stream sp = new MOM_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("MOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MOM_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MOM openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MOM openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MOM openAndFill: " + retCode, retCode);
+      return MOM_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -113726,8 +110356,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Element-wise multiplication of two input series. Produces outReal[i] =
-    * inReal0[i] * inReal1[i].
+    * Element-wise multiplication of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] * inReal1[i]
@@ -113785,8 +110414,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise multiplication of two input series. Produces outReal[i] =
-    * inReal0[i] * inReal1[i].
+    * Element-wise multiplication of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] * inReal1[i]
@@ -113952,7 +110580,7 @@ public final class Core {
    {
       sp.cur_outReal = inReal0 * inReal1;
    }
-   private RetCode MULT_OpenPass( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MULT_OpenImpl( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -113982,32 +110610,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MULT_OpenImpl( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MULT_OpenPass( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MULT_OpenAndFillImpl( MULT_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return MULT_OpenPass( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MULT_OpenAndFillInternalImpl( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MULT_OpenPass(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MULT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MULT_Stream MULT_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MULT_Stream sp = new MULT_Stream(this);
-      RetCode retCode = MULT_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -114025,7 +110632,12 @@ public final class Core {
    MULT_Stream MULT_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
       MULT_Stream sp = new MULT_Stream(this);
-      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -114062,22 +110674,12 @@ public final class Core {
     */
    public MULT_Stream MULT_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      MULT_Stream sp = new MULT_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("MULT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MULT_OpenAndFillImpl(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MULT openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MULT openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MULT openAndFill: " + retCode, retCode);
+      return MULT_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -114761,7 +111363,7 @@ public final class Core {
       }
       sp.lag1_inClose = inClose;
    }
-   private RetCode NATR_OpenPass( NATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode NATR_OpenImpl( NATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -114975,32 +111577,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode NATR_OpenImpl( NATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = NATR_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode NATR_OpenAndFillImpl( NATR_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return NATR_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode NATR_OpenAndFillInternalImpl( NATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return NATR_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* NATR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    NATR_Stream NATR_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       NATR_Stream sp = new NATR_Stream(this);
-      RetCode retCode = NATR_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -115018,7 +111599,12 @@ public final class Core {
    NATR_Stream NATR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       NATR_Stream sp = new NATR_Stream(this);
-      RetCode retCode = NATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = NATR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -115055,22 +111641,12 @@ public final class Core {
     */
    public NATR_Stream NATR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      NATR_Stream sp = new NATR_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("NATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NATR_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("NATR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NATR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("NATR openAndFill: " + retCode, retCode);
+      return NATR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -115493,7 +112069,7 @@ public final class Core {
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode NVI_OpenPass( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode NVI_OpenImpl( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -115562,32 +112138,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode NVI_OpenImpl( NVI_Stream sp, double inClose[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = NVI_OpenPass( sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode NVI_OpenAndFillImpl( NVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return NVI_OpenPass( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode NVI_OpenAndFillInternalImpl( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return NVI_OpenPass(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* NVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    NVI_Stream NVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -115605,7 +112160,12 @@ public final class Core {
    NVI_Stream NVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {
       NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -115642,22 +112202,12 @@ public final class Core {
     */
    public NVI_Stream NVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
-      NVI_Stream sp = new NVI_Stream(this);
+      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("NVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NVI_OpenAndFillImpl(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("NVI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NVI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("NVI openAndFill: " + retCode, retCode);
+      return NVI_OpenAndFillInternal(inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -115998,7 +112548,7 @@ public final class Core {
       sp.cur_outReal = sp.prevOBV;
       sp.prevReal = tempReal;
    }
-   private RetCode OBV_OpenPass( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode OBV_OpenImpl( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -116039,32 +112589,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode OBV_OpenImpl( OBV_Stream sp, double inReal[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = OBV_OpenPass( sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode OBV_OpenAndFillImpl( OBV_Stream sp, double inReal[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return OBV_OpenPass( sp, inReal, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode OBV_OpenAndFillInternalImpl( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return OBV_OpenPass(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    OBV_Stream OBV_OpenAndFillInternal( double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenAndFillInternalImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -116082,7 +112611,12 @@ public final class Core {
    OBV_Stream OBV_OpenInternal( double inReal[], double inVolume[], int startIdx )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -116119,22 +112653,12 @@ public final class Core {
     */
    public OBV_Stream OBV_OpenAndFill( double inReal[], double inVolume[], double outReal[] )
    {
-      OBV_Stream sp = new OBV_Stream(this);
+      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("OBV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = OBV_OpenAndFillImpl(sp, inReal, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("OBV openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("OBV openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("OBV openAndFill: " + retCode, retCode);
+      return OBV_OpenAndFillInternal(inReal, inVolume, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -117065,7 +113589,7 @@ public final class Core {
          }
       }
    }
-   private RetCode PLUS_DI_OpenPass( PLUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode PLUS_DI_OpenImpl( PLUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -117532,32 +114056,11 @@ public final class Core {
          return RetCode.Success;
       }
    }
-   private RetCode PLUS_DI_OpenImpl( PLUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = PLUS_DI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode PLUS_DI_OpenAndFillImpl( PLUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return PLUS_DI_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode PLUS_DI_OpenAndFillInternalImpl( PLUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return PLUS_DI_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* PLUS_DI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PLUS_DI_Stream PLUS_DI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
-      RetCode retCode = PLUS_DI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PLUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -117575,7 +114078,12 @@ public final class Core {
    PLUS_DI_Stream PLUS_DI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
-      RetCode retCode = PLUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = PLUS_DI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -117612,22 +114120,12 @@ public final class Core {
     */
    public PLUS_DI_Stream PLUS_DI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("PLUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PLUS_DI_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("PLUS_DI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("PLUS_DI openAndFill: " + retCode, retCode);
+      return PLUS_DI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -118305,7 +114803,7 @@ public final class Core {
          sp.cur_outReal = sp.prevPlusDM;
       }
    }
-   private RetCode PLUS_DM_OpenPass( PLUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode PLUS_DM_OpenImpl( PLUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -118627,32 +115125,11 @@ public final class Core {
          return RetCode.Success;
       }
    }
-   private RetCode PLUS_DM_OpenImpl( PLUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = PLUS_DM_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode PLUS_DM_OpenAndFillImpl( PLUS_DM_Stream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return PLUS_DM_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode PLUS_DM_OpenAndFillInternalImpl( PLUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return PLUS_DM_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* PLUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PLUS_DM_Stream PLUS_DM_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
-      RetCode retCode = PLUS_DM_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PLUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -118670,7 +115147,12 @@ public final class Core {
    PLUS_DM_Stream PLUS_DM_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
       PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
-      RetCode retCode = PLUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = PLUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -118707,22 +115189,12 @@ public final class Core {
     */
    public PLUS_DM_Stream PLUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("PLUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PLUS_DM_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("PLUS_DM openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DM openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("PLUS_DM openAndFill: " + retCode, retCode);
+      return PLUS_DM_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -119258,7 +115730,7 @@ public final class Core {
       }
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode PPO_OpenPass( PPO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode PPO_OpenImpl( PPO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -119368,32 +115840,11 @@ public final class Core {
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   private RetCode PPO_OpenImpl( PPO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = PPO_OpenPass( sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode PPO_OpenAndFillImpl( PPO_Stream sp, double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return PPO_OpenPass( sp, inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode PPO_OpenAndFillInternalImpl( PPO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return PPO_OpenPass(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
-   }
    /* PPO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PPO_Stream PPO_OpenAndFillInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       PPO_Stream sp = new PPO_Stream(this);
-      RetCode retCode = PPO_OpenAndFillInternalImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PPO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -119411,7 +115862,12 @@ public final class Core {
    PPO_Stream PPO_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       PPO_Stream sp = new PPO_Stream(this);
-      RetCode retCode = PPO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = PPO_OpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -119448,22 +115904,12 @@ public final class Core {
     */
    public PPO_Stream PPO_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
-      PPO_Stream sp = new PPO_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("PPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PPO_OpenAndFillImpl(sp, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("PPO openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PPO openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("PPO openAndFill: " + retCode, retCode);
+      return PPO_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -119886,7 +116332,7 @@ public final class Core {
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode PVI_OpenPass( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode PVI_OpenImpl( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -119955,32 +116401,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode PVI_OpenImpl( PVI_Stream sp, double inClose[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = PVI_OpenPass( sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode PVI_OpenAndFillImpl( PVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return PVI_OpenPass( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode PVI_OpenAndFillInternalImpl( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return PVI_OpenPass(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* PVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PVI_Stream PVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       PVI_Stream sp = new PVI_Stream(this);
-      RetCode retCode = PVI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -119998,7 +116423,12 @@ public final class Core {
    PVI_Stream PVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {
       PVI_Stream sp = new PVI_Stream(this);
-      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -120035,22 +116465,12 @@ public final class Core {
     */
    public PVI_Stream PVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
-      PVI_Stream sp = new PVI_Stream(this);
+      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("PVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PVI_OpenAndFillImpl(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("PVI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("PVI openAndFill: " + retCode, retCode);
+      return PVI_OpenAndFillInternal(inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -120584,7 +117004,7 @@ public final class Core {
       }
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode PVO_OpenPass( PVO_Stream sp, double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode PVO_OpenImpl( PVO_Stream sp, double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -120694,32 +117114,11 @@ public final class Core {
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   private RetCode PVO_OpenImpl( PVO_Stream sp, double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = PVO_OpenPass( sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode PVO_OpenAndFillImpl( PVO_Stream sp, double inVolume[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return PVO_OpenPass( sp, inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode PVO_OpenAndFillInternalImpl( PVO_Stream sp, double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return PVO_OpenPass(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
-   }
    /* PVO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PVO_Stream PVO_OpenAndFillInternal( double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       PVO_Stream sp = new PVO_Stream(this);
-      RetCode retCode = PVO_OpenAndFillInternalImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVO_OpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -120737,7 +117136,12 @@ public final class Core {
    PVO_Stream PVO_OpenInternal( double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       PVO_Stream sp = new PVO_Stream(this);
-      RetCode retCode = PVO_OpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = PVO_OpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -120774,22 +117178,12 @@ public final class Core {
     */
    public PVO_Stream PVO_OpenAndFill( double inVolume[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
-      PVO_Stream sp = new PVO_Stream(this);
+      if( (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("PVO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PVO_OpenAndFillImpl(sp, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("PVO openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVO openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("PVO openAndFill: " + retCode, retCode);
+      return PVO_OpenAndFillInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -121255,7 +117649,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode QSTICK_OpenPass( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode QSTICK_OpenImpl( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -121362,32 +117756,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode QSTICK_OpenImpl( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = QSTICK_OpenPass( sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode QSTICK_OpenAndFillImpl( QSTICK_Stream sp, double inOpen[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return QSTICK_OpenPass( sp, inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode QSTICK_OpenAndFillInternalImpl( QSTICK_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return QSTICK_OpenPass(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* QSTICK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    QSTICK_Stream QSTICK_OpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       QSTICK_Stream sp = new QSTICK_Stream(this);
-      RetCode retCode = QSTICK_OpenAndFillInternalImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = QSTICK_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -121405,7 +117778,12 @@ public final class Core {
    QSTICK_Stream QSTICK_OpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
    {
       QSTICK_Stream sp = new QSTICK_Stream(this);
-      RetCode retCode = QSTICK_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = QSTICK_OpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -121442,22 +117820,12 @@ public final class Core {
     */
    public QSTICK_Stream QSTICK_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      QSTICK_Stream sp = new QSTICK_Stream(this);
+      if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("QSTICK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = QSTICK_OpenAndFillImpl(sp, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("QSTICK openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("QSTICK openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("QSTICK openAndFill: " + retCode, retCode);
+      return QSTICK_OpenAndFillInternal(inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -121889,7 +118257,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ROC_OpenPass( ROC_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ROC_OpenImpl( ROC_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -121987,32 +118355,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ROC_OpenImpl( ROC_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ROC_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ROC_OpenAndFillImpl( ROC_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ROC_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ROC_OpenAndFillInternalImpl( ROC_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ROC_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ROC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ROC_Stream ROC_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ROC_Stream sp = new ROC_Stream(this);
-      RetCode retCode = ROC_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROC_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -122030,7 +118377,12 @@ public final class Core {
    ROC_Stream ROC_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       ROC_Stream sp = new ROC_Stream(this);
-      RetCode retCode = ROC_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ROC_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -122067,22 +118419,12 @@ public final class Core {
     */
    public ROC_Stream ROC_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      ROC_Stream sp = new ROC_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ROC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROC_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ROC openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROC openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ROC openAndFill: " + retCode, retCode);
+      return ROC_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -122512,7 +118854,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ROCP_OpenPass( ROCP_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ROCP_OpenImpl( ROCP_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -122610,32 +118952,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ROCP_OpenImpl( ROCP_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ROCP_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ROCP_OpenAndFillImpl( ROCP_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ROCP_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ROCP_OpenAndFillInternalImpl( ROCP_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ROCP_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ROCP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ROCP_Stream ROCP_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ROCP_Stream sp = new ROCP_Stream(this);
-      RetCode retCode = ROCP_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCP_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -122653,7 +118974,12 @@ public final class Core {
    ROCP_Stream ROCP_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       ROCP_Stream sp = new ROCP_Stream(this);
-      RetCode retCode = ROCP_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ROCP_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -122690,22 +119016,12 @@ public final class Core {
     */
    public ROCP_Stream ROCP_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      ROCP_Stream sp = new ROCP_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ROCP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROCP_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ROCP openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCP openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ROCP openAndFill: " + retCode, retCode);
+      return ROCP_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -123138,7 +119454,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ROCR_OpenPass( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ROCR_OpenImpl( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -123236,32 +119552,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ROCR_OpenImpl( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ROCR_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ROCR_OpenAndFillImpl( ROCR_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ROCR_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ROCR_OpenAndFillInternalImpl( ROCR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ROCR_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ROCR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ROCR_Stream ROCR_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ROCR_Stream sp = new ROCR_Stream(this);
-      RetCode retCode = ROCR_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -123279,7 +119574,12 @@ public final class Core {
    ROCR_Stream ROCR_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       ROCR_Stream sp = new ROCR_Stream(this);
-      RetCode retCode = ROCR_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ROCR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -123316,22 +119616,12 @@ public final class Core {
     */
    public ROCR_Stream ROCR_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      ROCR_Stream sp = new ROCR_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ROCR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROCR_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ROCR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ROCR openAndFill: " + retCode, retCode);
+      return ROCR_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -123766,7 +120056,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ROCR100_OpenPass( ROCR100_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ROCR100_OpenImpl( ROCR100_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -123864,32 +120154,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ROCR100_OpenImpl( ROCR100_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ROCR100_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ROCR100_OpenAndFillImpl( ROCR100_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ROCR100_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ROCR100_OpenAndFillInternalImpl( ROCR100_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ROCR100_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ROCR100_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ROCR100_Stream ROCR100_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ROCR100_Stream sp = new ROCR100_Stream(this);
-      RetCode retCode = ROCR100_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCR100_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -123907,7 +120176,12 @@ public final class Core {
    ROCR100_Stream ROCR100_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       ROCR100_Stream sp = new ROCR100_Stream(this);
-      RetCode retCode = ROCR100_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ROCR100_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -123944,22 +120218,12 @@ public final class Core {
     */
    public ROCR100_Stream ROCR100_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      ROCR100_Stream sp = new ROCR100_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ROCR100 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROCR100_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ROCR100 openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCR100 openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ROCR100 openAndFill: " + retCode, retCode);
+      return ROCR100_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -124599,7 +120863,7 @@ public final class Core {
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode RSI_OpenPass( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode RSI_OpenImpl( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -124790,32 +121054,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode RSI_OpenImpl( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = RSI_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode RSI_OpenAndFillImpl( RSI_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return RSI_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode RSI_OpenAndFillInternalImpl( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return RSI_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* RSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    RSI_Stream RSI_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -124833,7 +121076,12 @@ public final class Core {
    RSI_Stream RSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       RSI_Stream sp = new RSI_Stream(this);
-      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = RSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -124870,22 +121118,12 @@ public final class Core {
     */
    public RSI_Stream RSI_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      RSI_Stream sp = new RSI_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("RSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RSI_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RSI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("RSI openAndFill: " + retCode, retCode);
+      return RSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -125743,7 +121981,7 @@ public final class Core {
          }
       }
    }
-   private RetCode SAR_OpenPass( SAR_Stream sp, double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SAR_OpenImpl( SAR_Stream sp, double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       RetCode retCode;
       int isLong = 0;
@@ -126010,32 +122248,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SAR_OpenImpl( SAR_Stream sp, double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SAR_OpenPass( sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SAR_OpenAndFillImpl( SAR_Stream sp, double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return SAR_OpenPass( sp, inHigh, inLow, 0, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SAR_OpenAndFillInternalImpl( SAR_Stream sp, double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SAR_OpenPass(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SAR_Stream SAR_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SAR_Stream sp = new SAR_Stream(this);
-      RetCode retCode = SAR_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SAR_OpenImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -126053,7 +122270,12 @@ public final class Core {
    SAR_Stream SAR_OpenInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
    {
       SAR_Stream sp = new SAR_Stream(this);
-      RetCode retCode = SAR_OpenImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SAR_OpenImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -126090,22 +122312,12 @@ public final class Core {
     */
    public SAR_Stream SAR_OpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, double outReal[] )
    {
-      SAR_Stream sp = new SAR_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("SAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAR_OpenAndFillImpl(sp, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SAR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SAR openAndFill: " + retCode, retCode);
+      return SAR_OpenAndFillInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -127229,7 +123441,7 @@ public final class Core {
          }
       }
    }
-   private RetCode SAREXT_OpenPass( SAREXT_Stream sp, double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SAREXT_OpenImpl( SAREXT_Stream sp, double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       RetCode retCode;
       int isLong = 0;
@@ -127591,32 +123803,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SAREXT_OpenImpl( SAREXT_Stream sp, double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SAREXT_OpenPass( sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SAREXT_OpenAndFillImpl( SAREXT_Stream sp, double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return SAREXT_OpenPass( sp, inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SAREXT_OpenAndFillInternalImpl( SAREXT_Stream sp, double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SAREXT_OpenPass(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SAREXT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SAREXT_Stream SAREXT_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SAREXT_Stream sp = new SAREXT_Stream(this);
-      RetCode retCode = SAREXT_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SAREXT_OpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -127634,7 +123825,12 @@ public final class Core {
    SAREXT_Stream SAREXT_OpenInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
       SAREXT_Stream sp = new SAREXT_Stream(this);
-      RetCode retCode = SAREXT_OpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SAREXT_OpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -127671,22 +123867,12 @@ public final class Core {
     */
    public SAREXT_Stream SAREXT_OpenAndFill( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, double outReal[] )
    {
-      SAREXT_Stream sp = new SAREXT_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("SAREXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAREXT_OpenAndFillImpl(sp, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SAREXT openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAREXT openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SAREXT openAndFill: " + retCode, retCode);
+      return SAREXT_OpenAndFillInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -127760,8 +123946,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector trigonometric sine: applies sin() element-wise to each input value.
-    * Part of the Math Transform group.
+    * Element-wise sine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sin(inReal[i])
@@ -127816,8 +124001,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector trigonometric sine: applies sin() element-wise to each input value.
-    * Part of the Math Transform group.
+    * Element-wise sine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sin(inReal[i])
@@ -127980,7 +124164,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.sin(inReal);
    }
-   private RetCode SIN_OpenPass( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SIN_OpenImpl( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -128006,32 +124190,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SIN_OpenImpl( SIN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SIN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SIN_OpenAndFillImpl( SIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return SIN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SIN_OpenAndFillInternalImpl( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SIN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SIN_Stream SIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SIN_Stream sp = new SIN_Stream(this);
-      RetCode retCode = SIN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -128049,7 +124212,12 @@ public final class Core {
    SIN_Stream SIN_OpenInternal( double inReal[], int startIdx )
    {
       SIN_Stream sp = new SIN_Stream(this);
-      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -128086,22 +124254,12 @@ public final class Core {
     */
    public SIN_Stream SIN_OpenAndFill( double inReal[], double outReal[] )
    {
-      SIN_Stream sp = new SIN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("SIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SIN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SIN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SIN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SIN openAndFill: " + retCode, retCode);
+      return SIN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -128175,8 +124333,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Element-wise hyperbolic sine of the input series. A vector math transform
-    * applying sinh() to each value.
+    * Element-wise hyperbolic sine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sinh(inReal[i])
@@ -128230,8 +124387,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise hyperbolic sine of the input series. A vector math transform
-    * applying sinh() to each value.
+    * Element-wise hyperbolic sine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sinh(inReal[i])
@@ -128393,7 +124549,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.sinh(inReal);
    }
-   private RetCode SINH_OpenPass( SINH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SINH_OpenImpl( SINH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -128419,32 +124575,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SINH_OpenImpl( SINH_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SINH_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SINH_OpenAndFillImpl( SINH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return SINH_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SINH_OpenAndFillInternalImpl( SINH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SINH_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SINH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SINH_Stream SINH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SINH_Stream sp = new SINH_Stream(this);
-      RetCode retCode = SINH_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -128462,7 +124597,12 @@ public final class Core {
    SINH_Stream SINH_OpenInternal( double inReal[], int startIdx )
    {
       SINH_Stream sp = new SINH_Stream(this);
-      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SINH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -128499,22 +124639,12 @@ public final class Core {
     */
    public SINH_Stream SINH_OpenAndFill( double inReal[], double outReal[] )
    {
-      SINH_Stream sp = new SINH_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("SINH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SINH_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SINH openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SINH openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SINH openAndFill: " + retCode, retCode);
+      return SINH_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -128952,7 +125082,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode SMA_OpenPass( SMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SMA_OpenImpl( SMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -129039,32 +125169,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SMA_OpenImpl( SMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SMA_OpenAndFillImpl( SMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return SMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SMA_OpenAndFillInternalImpl( SMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SMA_Stream SMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SMA_Stream sp = new SMA_Stream(this);
-      RetCode retCode = SMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -129082,7 +125191,12 @@ public final class Core {
    SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       SMA_Stream sp = new SMA_Stream(this);
-      RetCode retCode = SMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -129119,22 +125233,12 @@ public final class Core {
     */
    public SMA_Stream SMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      SMA_Stream sp = new SMA_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("SMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SMA openAndFill: " + retCode, retCode);
+      return SMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -130240,7 +126344,7 @@ public final class Core {
       sp.trailingIdx = sp.trailingIdx + 1;
       sp.today = sp.today + 1;
    }
-   private RetCode SMI_OpenPass( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[], int outStride )
+   private RetCode SMI_OpenImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[], int outStride )
    {
       double kSlow = 0;
       double kFast = 0;
@@ -130575,33 +126679,11 @@ public final class Core {
       sp.cachedValue = new SMI_Stream.Value(sp.cur_outSMI, sp.cur_outSMISignal);
       return RetCode.Success;
    }
-   private RetCode SMI_OpenImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outSMI = new double[1];
-      double[] sink_outSMISignal = new double[1];
-      RetCode retCode = SMI_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outSMI, sink_outSMISignal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SMI_OpenAndFillImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
-   {
-      if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
-         return RetCode.BadParam;
-      }
-      return SMI_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 );
-   }
-   private RetCode SMI_OpenAndFillInternalImpl( SMI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
-   {
-      return SMI_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1);
-   }
    /* SMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SMI_Stream SMI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outSMI[], double outSMISignal[] )
    {
       SMI_Stream sp = new SMI_Stream(this);
-      RetCode retCode = SMI_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
+      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -130619,7 +126701,13 @@ public final class Core {
    SMI_Stream SMI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       SMI_Stream sp = new SMI_Stream(this);
-      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outSMI = new double[1];
+      double[] sink_outSMISignal = new double[1];
+      RetCode retCode = SMI_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outSMI, sink_outSMISignal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -130656,22 +126744,12 @@ public final class Core {
     */
    public SMI_Stream SMI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outSMI[], double outSMISignal[] )
    {
-      SMI_Stream sp = new SMI_Stream(this);
+      if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
+         throw new TaLibArgumentException("SMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SMI_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SMI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SMI openAndFill: " + retCode, retCode);
+      return SMI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
    }
 /* List of contributors:
  *
@@ -130745,8 +126823,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector square root: applies the square-root function element-wise to each
-    * input value.
+    * Element-wise square root of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sqrt(inReal[i])
@@ -130801,8 +126878,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector square root: applies the square-root function element-wise to each
-    * input value.
+    * Element-wise square root of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = sqrt(inReal[i])
@@ -130965,7 +127041,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.sqrt(inReal);
    }
-   private RetCode SQRT_OpenPass( SQRT_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SQRT_OpenImpl( SQRT_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -130991,32 +127067,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SQRT_OpenImpl( SQRT_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SQRT_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SQRT_OpenAndFillImpl( SQRT_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return SQRT_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SQRT_OpenAndFillInternalImpl( SQRT_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SQRT_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SQRT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SQRT_Stream SQRT_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SQRT_Stream sp = new SQRT_Stream(this);
-      RetCode retCode = SQRT_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SQRT_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -131034,7 +127089,12 @@ public final class Core {
    SQRT_Stream SQRT_OpenInternal( double inReal[], int startIdx )
    {
       SQRT_Stream sp = new SQRT_Stream(this);
-      RetCode retCode = SQRT_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SQRT_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -131071,22 +127131,12 @@ public final class Core {
     */
    public SQRT_Stream SQRT_OpenAndFill( double inReal[], double outReal[] )
    {
-      SQRT_Stream sp = new SQRT_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("SQRT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SQRT_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SQRT openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SQRT openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SQRT openAndFill: " + retCode, retCode);
+      return SQRT_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -131545,7 +127595,7 @@ public final class Core {
       }
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode STDDEV_OpenPass( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode STDDEV_OpenImpl( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       RetCode retCode;
@@ -131633,32 +127683,11 @@ public final class Core {
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   private RetCode STDDEV_OpenImpl( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = STDDEV_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode STDDEV_OpenAndFillImpl( STDDEV_Stream sp, double inReal[], int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return STDDEV_OpenPass( sp, inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode STDDEV_OpenAndFillInternalImpl( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return STDDEV_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
-   }
    /* STDDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    STDDEV_Stream STDDEV_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -131676,7 +127705,12 @@ public final class Core {
    STDDEV_Stream STDDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {
       STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -131713,22 +127747,12 @@ public final class Core {
     */
    public STDDEV_Stream STDDEV_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
-      STDDEV_Stream sp = new STDDEV_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("STDDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STDDEV_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("STDDEV openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STDDEV openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("STDDEV openAndFill: " + retCode, retCode);
+      return STDDEV_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -132700,7 +128724,7 @@ public final class Core {
       sp.cur_outSlowK = cur_tempBuffer;
       sp.cur_outSlowD = cur_outSlowD;
    }
-   private RetCode STOCH_OpenPass( STOCH_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[], int outStride )
+   private RetCode STOCH_OpenImpl( STOCH_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[], int outStride )
    {
       RetCode retCode;
       double lowest = 0;
@@ -132993,33 +129017,11 @@ public final class Core {
       sp.cachedValue = new STOCH_Stream.Value(sp.cur_outSlowK, sp.cur_outSlowD);
       return RetCode.Success;
    }
-   private RetCode STOCH_OpenImpl( STOCH_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outSlowK = new double[1];
-      double[] sink_outSlowD = new double[1];
-      RetCode retCode = STOCH_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sink_outSlowK, sink_outSlowD, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode STOCH_OpenAndFillImpl( STOCH_Stream sp, double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[] )
-   {
-      if( (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD ) {
-         return RetCode.BadParam;
-      }
-      return STOCH_OpenPass( sp, inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1 );
-   }
-   private RetCode STOCH_OpenAndFillInternalImpl( STOCH_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[] )
-   {
-      return STOCH_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1);
-   }
    /* STOCH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    STOCH_Stream STOCH_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outSlowK[], double outSlowD[] )
    {
       STOCH_Stream sp = new STOCH_Stream(this);
-      RetCode retCode = STOCH_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
+      RetCode retCode = STOCH_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -133037,7 +129039,13 @@ public final class Core {
    STOCH_Stream STOCH_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
       STOCH_Stream sp = new STOCH_Stream(this);
-      RetCode retCode = STOCH_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outSlowK = new double[1];
+      double[] sink_outSlowD = new double[1];
+      RetCode retCode = STOCH_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sink_outSlowK, sink_outSlowD, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -133074,22 +129082,12 @@ public final class Core {
     */
    public STOCH_Stream STOCH_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, double outSlowK[], double outSlowD[] )
    {
-      STOCH_Stream sp = new STOCH_Stream(this);
+      if( (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD ) {
+         throw new TaLibArgumentException("STOCH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STOCH_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("STOCH openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCH openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("STOCH openAndFill: " + retCode, retCode);
+      return STOCH_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
    }
 /* List of contributors:
  *
@@ -133970,7 +129968,7 @@ public final class Core {
       sp.cur_outFastK = cur_tempBuffer;
       sp.cur_outFastD = cur_outFastD;
    }
-   private RetCode STOCHF_OpenPass( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
+   private RetCode STOCHF_OpenImpl( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
    {
       RetCode retCode;
       double lowest = 0;
@@ -134238,33 +130236,11 @@ public final class Core {
       sp.cachedValue = new STOCHF_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
       return RetCode.Success;
    }
-   private RetCode STOCHF_OpenImpl( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outFastK = new double[1];
-      double[] sink_outFastD = new double[1];
-      RetCode retCode = STOCHF_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode STOCHF_OpenAndFillImpl( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
-   {
-      if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
-         return RetCode.BadParam;
-      }
-      return STOCHF_OpenPass( sp, inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
-   }
-   private RetCode STOCHF_OpenAndFillInternalImpl( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
-   {
-      return STOCHF_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
-   }
    /* STOCHF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    STOCHF_Stream STOCHF_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
    {
       STOCHF_Stream sp = new STOCHF_Stream(this);
-      RetCode retCode = STOCHF_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHF_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -134282,7 +130258,13 @@ public final class Core {
    STOCHF_Stream STOCHF_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       STOCHF_Stream sp = new STOCHF_Stream(this);
-      RetCode retCode = STOCHF_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outFastK = new double[1];
+      double[] sink_outFastD = new double[1];
+      RetCode retCode = STOCHF_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -134319,22 +130301,12 @@ public final class Core {
     */
    public STOCHF_Stream STOCHF_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
    {
-      STOCHF_Stream sp = new STOCHF_Stream(this);
+      if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
+         throw new TaLibArgumentException("STOCHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STOCHF_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("STOCHF openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHF openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("STOCHF openAndFill: " + retCode, retCode);
+      return STOCHF_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
    }
 /* List of contributors:
  *
@@ -134938,7 +130910,7 @@ public final class Core {
       sp.cur_outFastK = cur_outFastK;
       sp.cur_outFastD = cur_outFastD;
    }
-   private RetCode STOCHRSI_OpenPass( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
+   private RetCode STOCHRSI_OpenImpl( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
    {
       double[] tempRSIBuffer;
       RetCode retCode;
@@ -135058,33 +131030,11 @@ public final class Core {
       sp.cachedValue = new STOCHRSI_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
       return RetCode.Success;
    }
-   private RetCode STOCHRSI_OpenImpl( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outFastK = new double[1];
-      double[] sink_outFastD = new double[1];
-      RetCode retCode = STOCHRSI_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode STOCHRSI_OpenAndFillImpl( STOCHRSI_Stream sp, double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
-   {
-      if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
-         return RetCode.BadParam;
-      }
-      return STOCHRSI_OpenPass( sp, inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
-   }
-   private RetCode STOCHRSI_OpenAndFillInternalImpl( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
-   {
-      return STOCHRSI_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
-   }
    /* STOCHRSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    STOCHRSI_Stream STOCHRSI_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
    {
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
-      RetCode retCode = STOCHRSI_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -135102,7 +131052,13 @@ public final class Core {
    STOCHRSI_Stream STOCHRSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
-      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outFastK = new double[1];
+      double[] sink_outFastD = new double[1];
+      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -135139,22 +131095,12 @@ public final class Core {
     */
    public STOCHRSI_Stream STOCHRSI_OpenAndFill( double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
    {
-      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
+      if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
+         throw new TaLibArgumentException("STOCHRSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STOCHRSI_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("STOCHRSI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHRSI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("STOCHRSI openAndFill: " + retCode, retCode);
+      return STOCHRSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
    }
 /* List of contributors:
  *
@@ -135231,8 +131177,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Element-wise vector subtraction of two input series. Outputs inReal0 minus
-    * inReal1 at each index.
+    * Element-wise subtraction of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] - inReal1[i]
@@ -135290,8 +131235,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise vector subtraction of two input series. Outputs inReal0 minus
-    * inReal1 at each index.
+    * Element-wise subtraction of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] - inReal1[i]
@@ -135457,7 +131401,7 @@ public final class Core {
    {
       sp.cur_outReal = inReal0 - inReal1;
    }
-   private RetCode SUB_OpenPass( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SUB_OpenImpl( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -135484,32 +131428,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SUB_OpenImpl( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SUB_OpenPass( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SUB_OpenAndFillImpl( SUB_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return SUB_OpenPass( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SUB_OpenAndFillInternalImpl( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SUB_OpenPass(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SUB_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SUB_Stream SUB_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SUB_Stream sp = new SUB_Stream(this);
-      RetCode retCode = SUB_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -135527,7 +131450,12 @@ public final class Core {
    SUB_Stream SUB_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
       SUB_Stream sp = new SUB_Stream(this);
-      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -135564,22 +131492,12 @@ public final class Core {
     */
    public SUB_Stream SUB_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      SUB_Stream sp = new SUB_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("SUB openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SUB_OpenAndFillImpl(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SUB openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUB openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SUB openAndFill: " + retCode, retCode);
+      return SUB_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -135992,7 +131910,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode SUM_OpenPass( SUM_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SUM_OpenImpl( SUM_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -136075,32 +131993,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SUM_OpenImpl( SUM_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SUM_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SUM_OpenAndFillImpl( SUM_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return SUM_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SUM_OpenAndFillInternalImpl( SUM_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SUM_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SUM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SUM_Stream SUM_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SUM_Stream sp = new SUM_Stream(this);
-      RetCode retCode = SUM_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SUM_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -136118,7 +132015,12 @@ public final class Core {
    SUM_Stream SUM_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       SUM_Stream sp = new SUM_Stream(this);
-      RetCode retCode = SUM_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SUM_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -136155,22 +132057,12 @@ public final class Core {
     */
    public SUM_Stream SUM_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      SUM_Stream sp = new SUM_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("SUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SUM_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SUM openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUM openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SUM openAndFill: " + retCode, retCode);
+      return SUM_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -136842,7 +132734,7 @@ public final class Core {
       sp.e6 = Math.fma(sp.one_minus_k, sp.e6, sp.k * sp.e5);
       sp.cur_outReal = Math.fma(sp.c4, sp.e3, Math.fma(sp.c3, sp.e4, Math.fma(sp.c1, sp.e6, sp.c2 * sp.e5)));
    }
-   private RetCode T3_OpenPass( T3_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode T3_OpenImpl( T3_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -137048,32 +132940,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode T3_OpenImpl( T3_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = T3_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode T3_OpenAndFillImpl( T3_Stream sp, double inReal[], int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return T3_OpenPass( sp, inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode T3_OpenAndFillInternalImpl( T3_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return T3_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1);
-   }
    /* T3_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    T3_Stream T3_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       T3_Stream sp = new T3_Stream(this);
-      RetCode retCode = T3_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      RetCode retCode = T3_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -137091,7 +132962,12 @@ public final class Core {
    T3_Stream T3_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
    {
       T3_Stream sp = new T3_Stream(this);
-      RetCode retCode = T3_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = T3_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -137128,22 +133004,12 @@ public final class Core {
     */
    public T3_Stream T3_OpenAndFill( double inReal[], int optInTimePeriod, double optInVFactor, double outReal[] )
    {
-      T3_Stream sp = new T3_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("T3 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = T3_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("T3 openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("T3 openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("T3 openAndFill: " + retCode, retCode);
+      return T3_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -137217,8 +133083,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector trigonometric tangent: applies tan() element-wise to each input
-    * value.
+    * Element-wise tangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = tan(inReal[i])
@@ -137274,8 +133139,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector trigonometric tangent: applies tan() element-wise to each input
-    * value.
+    * Element-wise tangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = tan(inReal[i])
@@ -137439,7 +133303,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.tan(inReal);
    }
-   private RetCode TAN_OpenPass( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TAN_OpenImpl( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -137465,32 +133329,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TAN_OpenImpl( TAN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TAN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode TAN_OpenAndFillImpl( TAN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return TAN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode TAN_OpenAndFillInternalImpl( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return TAN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* TAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TAN_Stream TAN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -137508,7 +133351,12 @@ public final class Core {
    TAN_Stream TAN_OpenInternal( double inReal[], int startIdx )
    {
       TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -137545,22 +133393,12 @@ public final class Core {
     */
    public TAN_Stream TAN_OpenAndFill( double inReal[], double outReal[] )
    {
-      TAN_Stream sp = new TAN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("TAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TAN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("TAN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TAN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("TAN openAndFill: " + retCode, retCode);
+      return TAN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -137634,7 +133472,7 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Vector hyperbolic tangent: applies tanh element-wise to the input series.
+    * Element-wise hyperbolic tangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = tanh(inReal[i])
@@ -137689,7 +133527,7 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector hyperbolic tangent: applies tanh element-wise to the input series.
+    * Element-wise hyperbolic tangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = tanh(inReal[i])
@@ -137852,7 +133690,7 @@ public final class Core {
    {
       sp.cur_outReal = Math.tanh(inReal);
    }
-   private RetCode TANH_OpenPass( TANH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TANH_OpenImpl( TANH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -137878,32 +133716,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TANH_OpenImpl( TANH_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TANH_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode TANH_OpenAndFillImpl( TANH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return TANH_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode TANH_OpenAndFillInternalImpl( TANH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return TANH_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* TANH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TANH_Stream TANH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TANH_Stream sp = new TANH_Stream(this);
-      RetCode retCode = TANH_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TANH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -137921,7 +133738,12 @@ public final class Core {
    TANH_Stream TANH_OpenInternal( double inReal[], int startIdx )
    {
       TANH_Stream sp = new TANH_Stream(this);
-      RetCode retCode = TANH_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TANH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -137958,22 +133780,12 @@ public final class Core {
     */
    public TANH_Stream TANH_OpenAndFill( double inReal[], double outReal[] )
    {
-      TANH_Stream sp = new TANH_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("TANH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TANH_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("TANH openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TANH openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("TANH openAndFill: " + retCode, retCode);
+      return TANH_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -138551,7 +134363,7 @@ public final class Core {
       sp.prevEMA3 = Math.fma(sp.prevEMA2 - sp.prevEMA3, sp.optInK_1, sp.prevEMA3);
       sp.cur_outReal = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
    }
-   private RetCode TEMA_OpenPass( TEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TEMA_OpenImpl( TEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -138742,32 +134554,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TEMA_OpenImpl( TEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TEMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode TEMA_OpenAndFillImpl( TEMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return TEMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode TEMA_OpenAndFillInternalImpl( TEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return TEMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* TEMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TEMA_Stream TEMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TEMA_Stream sp = new TEMA_Stream(this);
-      RetCode retCode = TEMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TEMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -138785,7 +134576,12 @@ public final class Core {
    TEMA_Stream TEMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       TEMA_Stream sp = new TEMA_Stream(this);
-      RetCode retCode = TEMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TEMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -138822,22 +134618,12 @@ public final class Core {
     */
    public TEMA_Stream TEMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      TEMA_Stream sp = new TEMA_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("TEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TEMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("TEMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TEMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("TEMA openAndFill: " + retCode, retCode);
+      return TEMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -139262,7 +135048,7 @@ public final class Core {
       sp.cur_outReal = greatest;
       sp.lag1_inClose = inClose;
    }
-   private RetCode TRANGE_OpenPass( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TRANGE_OpenImpl( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int outIdx = 0;
@@ -139338,32 +135124,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TRANGE_OpenImpl( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TRANGE_OpenPass( sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode TRANGE_OpenAndFillImpl( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return TRANGE_OpenPass( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode TRANGE_OpenAndFillInternalImpl( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return TRANGE_OpenPass(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* TRANGE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TRANGE_Stream TRANGE_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -139381,7 +135146,12 @@ public final class Core {
    TRANGE_Stream TRANGE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       TRANGE_Stream sp = new TRANGE_Stream(this);
-      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TRANGE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -139418,22 +135188,12 @@ public final class Core {
     */
    public TRANGE_Stream TRANGE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
-      TRANGE_Stream sp = new TRANGE_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("TRANGE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TRANGE_OpenAndFillImpl(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("TRANGE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRANGE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("TRANGE openAndFill: " + retCode, retCode);
+      return TRANGE_OpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -140240,7 +136000,7 @@ public final class Core {
          }
       }
    }
-   private RetCode TRIMA_OpenPass( TRIMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TRIMA_OpenImpl( TRIMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
@@ -140689,32 +136449,11 @@ public final class Core {
          return RetCode.Success;
       }
    }
-   private RetCode TRIMA_OpenImpl( TRIMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TRIMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode TRIMA_OpenAndFillImpl( TRIMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return TRIMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode TRIMA_OpenAndFillInternalImpl( TRIMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return TRIMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* TRIMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TRIMA_Stream TRIMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TRIMA_Stream sp = new TRIMA_Stream(this);
-      RetCode retCode = TRIMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -140732,7 +136471,12 @@ public final class Core {
    TRIMA_Stream TRIMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       TRIMA_Stream sp = new TRIMA_Stream(this);
-      RetCode retCode = TRIMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TRIMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -140769,22 +136513,12 @@ public final class Core {
     */
    public TRIMA_Stream TRIMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      TRIMA_Stream sp = new TRIMA_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("TRIMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TRIMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("TRIMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("TRIMA openAndFill: " + retCode, retCode);
+      return TRIMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -141317,7 +137051,7 @@ public final class Core {
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode TRIX_OpenPass( TRIX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TRIX_OpenImpl( TRIX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -141453,32 +137187,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TRIX_OpenImpl( TRIX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TRIX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode TRIX_OpenAndFillImpl( TRIX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return TRIX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode TRIX_OpenAndFillInternalImpl( TRIX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return TRIX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* TRIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TRIX_Stream TRIX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TRIX_Stream sp = new TRIX_Stream(this);
-      RetCode retCode = TRIX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -141496,7 +137209,12 @@ public final class Core {
    TRIX_Stream TRIX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       TRIX_Stream sp = new TRIX_Stream(this);
-      RetCode retCode = TRIX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TRIX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -141533,22 +137251,12 @@ public final class Core {
     */
    public TRIX_Stream TRIX_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      TRIX_Stream sp = new TRIX_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("TRIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TRIX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("TRIX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("TRIX openAndFill: " + retCode, retCode);
+      return TRIX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -142045,7 +137753,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode TSF_OpenPass( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TSF_OpenImpl( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -142170,32 +137878,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TSF_OpenImpl( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TSF_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode TSF_OpenAndFillImpl( TSF_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return TSF_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode TSF_OpenAndFillInternalImpl( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return TSF_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* TSF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TSF_Stream TSF_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TSF_Stream sp = new TSF_Stream(this);
-      RetCode retCode = TSF_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TSF_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -142213,7 +137900,12 @@ public final class Core {
    TSF_Stream TSF_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       TSF_Stream sp = new TSF_Stream(this);
-      RetCode retCode = TSF_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TSF_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -142250,22 +137942,12 @@ public final class Core {
     */
    public TSF_Stream TSF_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      TSF_Stream sp = new TSF_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("TSF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSF_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("TSF openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TSF openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("TSF openAndFill: " + retCode, retCode);
+      return TSF_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -142582,7 +138264,7 @@ public final class Core {
    {
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }
-   private RetCode TYPPRICE_OpenPass( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TYPPRICE_OpenImpl( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -142610,32 +138292,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TYPPRICE_OpenImpl( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TYPPRICE_OpenPass( sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode TYPPRICE_OpenAndFillImpl( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return TYPPRICE_OpenPass( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode TYPPRICE_OpenAndFillInternalImpl( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return TYPPRICE_OpenPass(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* TYPPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TYPPRICE_Stream TYPPRICE_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
-      RetCode retCode = TYPPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TYPPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -142653,7 +138314,12 @@ public final class Core {
    TYPPRICE_Stream TYPPRICE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
-      RetCode retCode = TYPPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TYPPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -142690,22 +138356,12 @@ public final class Core {
     */
    public TYPPRICE_Stream TYPPRICE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
-      TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("TYPPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TYPPRICE_OpenAndFillImpl(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("TYPPRICE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TYPPRICE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("TYPPRICE openAndFill: " + retCode, retCode);
+      return TYPPRICE_OpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -143618,7 +139274,7 @@ public final class Core {
       /* Increment indexes */
       sp.lag1_inClose = inClose;
    }
-   private RetCode ULTOSC_OpenPass( ULTOSC_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ULTOSC_OpenImpl( ULTOSC_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -143878,32 +139534,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ULTOSC_OpenImpl( ULTOSC_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ULTOSC_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ULTOSC_OpenAndFillImpl( ULTOSC_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return ULTOSC_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ULTOSC_OpenAndFillInternalImpl( ULTOSC_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ULTOSC_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ULTOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ULTOSC_Stream ULTOSC_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ULTOSC_Stream sp = new ULTOSC_Stream(this);
-      RetCode retCode = ULTOSC_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ULTOSC_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -143921,7 +139556,12 @@ public final class Core {
    ULTOSC_Stream ULTOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
       ULTOSC_Stream sp = new ULTOSC_Stream(this);
-      RetCode retCode = ULTOSC_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ULTOSC_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -143958,22 +139598,12 @@ public final class Core {
     */
    public ULTOSC_Stream ULTOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double outReal[] )
    {
-      ULTOSC_Stream sp = new ULTOSC_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("ULTOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ULTOSC_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ULTOSC openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ULTOSC openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ULTOSC openAndFill: " + retCode, retCode);
+      return ULTOSC_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -144661,7 +140291,7 @@ public final class Core {
       sp.cur_outReal = sp.variance;
       sp.i += 1;
    }
-   private RetCode VAR_OpenPass( VAR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode VAR_OpenImpl( VAR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double tempReal = 0;
       double shift = 0;
@@ -144848,32 +140478,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode VAR_OpenImpl( VAR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = VAR_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode VAR_OpenAndFillImpl( VAR_Stream sp, double inReal[], int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return VAR_OpenPass( sp, inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode VAR_OpenAndFillInternalImpl( VAR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return VAR_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
-   }
    /* VAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    VAR_Stream VAR_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       VAR_Stream sp = new VAR_Stream(this);
-      RetCode retCode = VAR_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VAR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -144891,7 +140500,12 @@ public final class Core {
    VAR_Stream VAR_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {
       VAR_Stream sp = new VAR_Stream(this);
-      RetCode retCode = VAR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = VAR_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -144928,22 +140542,12 @@ public final class Core {
     */
    public VAR_Stream VAR_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
-      VAR_Stream sp = new VAR_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("VAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VAR_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("VAR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VAR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("VAR openAndFill: " + retCode, retCode);
+      return VAR_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -145522,7 +141126,7 @@ public final class Core {
       }
       sp.cur_outReal = sp.vwap;
    }
-   private RetCode VWAP_OpenPass( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode VWAP_OpenImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -145657,32 +141261,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode VWAP_OpenImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = VWAP_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode VWAP_OpenAndFillImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return VWAP_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode VWAP_OpenAndFillInternalImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return VWAP_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* VWAP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    VWAP_Stream VWAP_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       VWAP_Stream sp = new VWAP_Stream(this);
-      RetCode retCode = VWAP_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -145700,7 +141283,12 @@ public final class Core {
    VWAP_Stream VWAP_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
    {
       VWAP_Stream sp = new VWAP_Stream(this);
-      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -145737,22 +141325,12 @@ public final class Core {
     */
    public VWAP_Stream VWAP_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
-      VWAP_Stream sp = new VWAP_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("VWAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VWAP_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("VWAP openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWAP openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("VWAP openAndFill: " + retCode, retCode);
+      return VWAP_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -146317,7 +141895,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode VWMA_OpenPass( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode VWMA_OpenImpl( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -146459,32 +142037,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode VWMA_OpenImpl( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = VWMA_OpenPass( sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode VWMA_OpenAndFillImpl( VWMA_Stream sp, double inReal[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return VWMA_OpenPass( sp, inReal, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode VWMA_OpenAndFillInternalImpl( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return VWMA_OpenPass(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* VWMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    VWMA_Stream VWMA_OpenAndFillInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       VWMA_Stream sp = new VWMA_Stream(this);
-      RetCode retCode = VWMA_OpenAndFillInternalImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -146502,7 +142059,12 @@ public final class Core {
    VWMA_Stream VWMA_OpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       VWMA_Stream sp = new VWMA_Stream(this);
-      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = VWMA_OpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -146539,22 +142101,12 @@ public final class Core {
     */
    public VWMA_Stream VWMA_OpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      VWMA_Stream sp = new VWMA_Stream(this);
+      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("VWMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VWMA_OpenAndFillImpl(sp, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("VWMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("VWMA openAndFill: " + retCode, retCode);
+      return VWMA_OpenAndFillInternal(inReal, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -147023,7 +142575,7 @@ public final class Core {
       sp.cur_outReal = sp.sum;
       sp.prevClose = close;
    }
-   private RetCode WAD_OpenPass( WAD_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode WAD_OpenImpl( WAD_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sum = 0;
       double prevClose = 0;
@@ -147113,32 +142665,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode WAD_OpenImpl( WAD_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = WAD_OpenPass( sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode WAD_OpenAndFillImpl( WAD_Stream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return WAD_OpenPass( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode WAD_OpenAndFillInternalImpl( WAD_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return WAD_OpenPass(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* WAD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    WAD_Stream WAD_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       WAD_Stream sp = new WAD_Stream(this);
-      RetCode retCode = WAD_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WAD_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -147156,7 +142687,12 @@ public final class Core {
    WAD_Stream WAD_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       WAD_Stream sp = new WAD_Stream(this);
-      RetCode retCode = WAD_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = WAD_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -147193,22 +142729,12 @@ public final class Core {
     */
    public WAD_Stream WAD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
-      WAD_Stream sp = new WAD_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("WAD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WAD_OpenAndFillImpl(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("WAD openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WAD openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("WAD openAndFill: " + retCode, retCode);
+      return WAD_OpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -147525,7 +143051,7 @@ public final class Core {
    {
       sp.cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
    }
-   private RetCode WCLPRICE_OpenPass( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode WCLPRICE_OpenImpl( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -147553,32 +143079,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode WCLPRICE_OpenImpl( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = WCLPRICE_OpenPass( sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode WCLPRICE_OpenAndFillImpl( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return WCLPRICE_OpenPass( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode WCLPRICE_OpenAndFillInternalImpl( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return WCLPRICE_OpenPass(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* WCLPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    WCLPRICE_Stream WCLPRICE_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
-      RetCode retCode = WCLPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WCLPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -147596,7 +143101,12 @@ public final class Core {
    WCLPRICE_Stream WCLPRICE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
-      RetCode retCode = WCLPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = WCLPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -147633,22 +143143,12 @@ public final class Core {
     */
    public WCLPRICE_Stream WCLPRICE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
-      WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("WCLPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WCLPRICE_OpenAndFillImpl(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("WCLPRICE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WCLPRICE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("WCLPRICE openAndFill: " + retCode, retCode);
+      return WCLPRICE_OpenAndFillInternal(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -148409,7 +143909,7 @@ public final class Core {
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode WILLR_OpenPass( WILLR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode WILLR_OpenImpl( WILLR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -148573,32 +144073,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode WILLR_OpenImpl( WILLR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = WILLR_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode WILLR_OpenAndFillImpl( WILLR_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         return RetCode.BadParam;
-      }
-      return WILLR_OpenPass( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode WILLR_OpenAndFillInternalImpl( WILLR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return WILLR_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* WILLR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    WILLR_Stream WILLR_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       WILLR_Stream sp = new WILLR_Stream(this);
-      RetCode retCode = WILLR_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WILLR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -148616,7 +144095,12 @@ public final class Core {
    WILLR_Stream WILLR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       WILLR_Stream sp = new WILLR_Stream(this);
-      RetCode retCode = WILLR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = WILLR_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -148653,22 +144137,12 @@ public final class Core {
     */
    public WILLR_Stream WILLR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      WILLR_Stream sp = new WILLR_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+         throw new TaLibArgumentException("WILLR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WILLR_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("WILLR openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WILLR openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("WILLR openAndFill: " + retCode, retCode);
+      return WILLR_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
 /* List of contributors:
  *
@@ -149208,7 +144682,7 @@ public final class Core {
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode WMA_OpenPass( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode WMA_OpenImpl( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -149364,32 +144838,11 @@ public final class Core {
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode WMA_OpenImpl( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = WMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode WMA_OpenAndFillImpl( WMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return WMA_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode WMA_OpenAndFillInternalImpl( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return WMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* WMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    WMA_Stream WMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       WMA_Stream sp = new WMA_Stream(this);
-      RetCode retCode = WMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -149407,7 +144860,12 @@ public final class Core {
    WMA_Stream WMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       WMA_Stream sp = new WMA_Stream(this);
-      RetCode retCode = WMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = WMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -149444,22 +144902,12 @@ public final class Core {
     */
    public WMA_Stream WMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      WMA_Stream sp = new WMA_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("WMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("WMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("WMA openAndFill: " + retCode, retCode);
+      return WMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
    /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
    

@@ -670,7 +670,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::SAR_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::SAR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn SAR_OpenPass(
+    pub(crate) fn SAR_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<SAR_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
@@ -938,7 +938,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.SAR_OpenPass(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.SAR_OpenImpl(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -982,7 +982,7 @@ impl Core {
     ) -> Result<(SAR_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.SAR_OpenPass(inHigh, inLow, 0, optInAcceleration, optInMaximum, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.SAR_OpenAndFillInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -991,7 +991,7 @@ impl Core {
     pub(crate) fn SAR_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SAR_Stream, RetCode> {
-        self.SAR_OpenPass(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
+        self.SAR_OpenImpl(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

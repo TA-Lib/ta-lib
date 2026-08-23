@@ -1498,7 +1498,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_SINE_OpenPass( HT_SINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[], int outStride )
+   private RetCode HT_SINE_OpenImpl( HT_SINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1994,33 +1994,11 @@
       sp.cachedValue = new HT_SINE_Stream.Value(sp.cur_outSine, sp.cur_outLeadSine);
       return RetCode.Success;
    }
-   private RetCode HT_SINE_OpenImpl( HT_SINE_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outSine = new double[1];
-      double[] sink_outLeadSine = new double[1];
-      RetCode retCode = HT_SINE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outSine, sink_outLeadSine, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_SINE_OpenAndFillImpl( HT_SINE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
-   {
-      if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
-         return RetCode.BadParam;
-      }
-      return HT_SINE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outSine, outLeadSine, 1 );
-   }
-   private RetCode HT_SINE_OpenAndFillInternalImpl( HT_SINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
-   {
-      return HT_SINE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1);
-   }
    /* HT_SINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_SINE_Stream HT_SINE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
    {
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -2038,7 +2016,13 @@
    HT_SINE_Stream HT_SINE_OpenInternal( double inReal[], int startIdx )
    {
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outSine = new double[1];
+      double[] sink_outLeadSine = new double[1];
+      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outSine, sink_outLeadSine, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2075,20 +2059,10 @@
     */
    public HT_SINE_Stream HT_SINE_OpenAndFill( double inReal[], double outSine[], double outLeadSine[] )
    {
-      HT_SINE_Stream sp = new HT_SINE_Stream(this);
+      if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
+         throw new TaLibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_SINE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_SINE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
+      return HT_SINE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outSine, outLeadSine);
    }

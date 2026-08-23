@@ -517,7 +517,7 @@ fn emit_loop(
 }
 
 
-/// `OpenInternal`: the scalar wrapper onto `OpenCore`. One 1-element array per
+/// `OpenInternal`: the scalar wrapper onto `<N>_OpenImpl`. One 1-element array per
 /// output stands in for the caller's slice; at stride 0 every per-bar write
 /// lands on slot 0, so after the replay it holds the last history value.
 fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef, model: &StreamModel) {
@@ -545,7 +545,7 @@ fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[S
     }
     let _ = writeln!(
         o,
-        "        let handle = self.{sn}_OpenPass({args}, &mut dummyBegIdx, &mut dummyNBElement, {}, 0)?;",
+        "        let handle = self.{sn}_OpenImpl({args}, &mut dummyBegIdx, &mut dummyNBElement, {}, 0)?;",
         sinks.join(", ")
     );
     let vals: Vec<String> = outputs.iter().map(|o2| format!("sink_{o2}[0]")).collect();
@@ -554,7 +554,7 @@ fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[S
     let _ = writeln!(o, "    }}\n");
 }
 
-/// `OpenAndFill`: the fill wrapper onto `OpenCore`. It owns the output
+/// `OpenAndFill`: the fill wrapper onto `<N>_OpenImpl`. It owns the output
 /// mutual-distinctness guard (#108) — the capture epilogue reads the input tail
 /// after writing the outputs, and only this path writes caller-owned slices.
 fn emit_open_and_fill_wrapper(
@@ -584,16 +584,21 @@ fn emit_open_and_fill_wrapper(
     for opt in &opt_names {
         let _ = write!(args, ", {opt}");
     }
-    // `OpenCore` is the seam both entry points share and still reports through
+    // `<N>_OpenImpl` is the seam both entry points share and still reports through
     // out-parameters, so the pair lands in locals here and is folded into the
     // returned `OutRange` — the same shape the batch wrapper has (#179 C15).
     let _ = writeln!(
         o,
         "        let mut outBegIdx: usize = 0;\n        let mut outNBElement: usize = 0;"
     );
+    // Straight to the anchored seam at 0, not to `_OpenImpl`, so the seam has a
+    // caller for every function instead of only the sixteen something composes
+    // over. Rust needs no aliasing guard between the two frames -- `&[f64]` and
+    // `&mut [f64]` cannot overlap -- so they differ only in the anchor, and
+    // `args` already carries it as the literal 0 the numerics used to take.
     let _ = writeln!(
         o,
-        "        let handle = self.{sn}_OpenPass({args}, &mut outBegIdx, &mut outNBElement, {}, 1)?;",
+        "        let handle = self.{sn}_OpenAndFillInternal({args}, &mut outBegIdx, &mut outNBElement, {})?;",
         outs.join(", ")
     );
     let _ = writeln!(
@@ -603,7 +608,7 @@ fn emit_open_and_fill_wrapper(
     let _ = writeln!(o, "    }}\n");
 }
 
-/// `OpenAndFillInternal` for every tier that owns an `OpenCore`: the same single
+/// `OpenAndFillInternal` for every tier that owns an `<N>_OpenImpl`: the same single
 /// pass as `OpenAndFill`, at the caller's `startIdx`. See [`OutMode::FillInternal`]
 /// for why it carries no distinctness guard.
 fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
@@ -619,7 +624,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     }
     let _ = writeln!(
         o,
-        "        self.{sn}_OpenPass({args}, outBegIdx, outNBElement, {}, 1)",
+        "        self.{sn}_OpenImpl({args}, outBegIdx, outNBElement, {}, 1)",
         outs.join(", ")
     );
     let _ = writeln!(o, "    }}\n");
@@ -1346,7 +1351,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             );
             let _ = writeln!(
                 o,
-                "    pub(crate) fn {sn}_OpenPass(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs}, outStride: usize,\n    ) -> Result<{handle}, RetCode> {{"
+                "    pub(crate) fn {sn}_OpenImpl(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs}, outStride: usize,\n    ) -> Result<{handle}, RetCode> {{"
             );
         }
         // Batch parameter order: inputs, optional params, then one slice per
@@ -2779,7 +2784,7 @@ fn emit_dispatch(
     // back the last history bar's value; the two fills write the caller's arrays
     // over the whole history, the second of them anchored at the caller's startIdx —
     // the seam a composed caller fuses into (issue #192). MA is the Dispatch
-    // tier and has no OpenCore of its own, yet is the callee of most composed
+    // tier and has no OpenImpl of its own, yet is the callee of most composed
     // sub-calls, so without that variant the fusion would reach almost none of
     // them. `open` itself is the public one-liner over `open_internal`, emitted
     // next to the body it wraps; the two fills are their own public surface.

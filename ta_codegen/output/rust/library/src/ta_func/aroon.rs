@@ -438,7 +438,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::AROON_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::AROON_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn AROON_OpenPass(
+    pub(crate) fn AROON_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outAroonDown: &mut [f64], outAroonUp: &mut [f64], outStride: usize,
     ) -> Result<AROON_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
@@ -591,7 +591,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outAroonDown = [0.0_f64; 1];
         let mut sink_outAroonUp = [0.0_f64; 1];
-        let handle = self.AROON_OpenPass(inHigh, inLow, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outAroonDown, &mut sink_outAroonUp, 0)?;
+        let handle = self.AROON_OpenImpl(inHigh, inLow, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outAroonDown, &mut sink_outAroonUp, 0)?;
         Ok((handle, (sink_outAroonDown[0], sink_outAroonUp[0])))
     }
 
@@ -639,7 +639,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.AROON_OpenPass(inHigh, inLow, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outAroonDown, outAroonUp, 1)?;
+        let handle = self.AROON_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outAroonDown, outAroonUp)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -648,7 +648,7 @@ impl Core {
     pub(crate) fn AROON_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
     ) -> Result<AROON_Stream, RetCode> {
-        self.AROON_OpenPass(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1)
+        self.AROON_OpenImpl(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1)
     }
 
 }

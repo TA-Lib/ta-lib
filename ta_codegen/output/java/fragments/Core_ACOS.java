@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Vector trigonometric arc cosine: applies acos() to each input value. A
-    * Math Transform passthrough with zero lookback.
+    * Element-wise arc cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = acos(inReal[i])
@@ -130,8 +129,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector trigonometric arc cosine: applies acos() to each input value. A
-    * Math Transform passthrough with zero lookback.
+    * Element-wise arc cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = acos(inReal[i])
@@ -298,7 +296,7 @@
    {
       sp.cur_outReal = Math.acos(inReal);
    }
-   private RetCode ACOS_OpenPass( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ACOS_OpenImpl( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -324,32 +322,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ACOS_OpenImpl( ACOS_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ACOS_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ACOS_OpenAndFillImpl( ACOS_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ACOS_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ACOS_OpenAndFillInternalImpl( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ACOS_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ACOS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ACOS_Stream ACOS_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -367,7 +344,12 @@
    ACOS_Stream ACOS_OpenInternal( double inReal[], int startIdx )
    {
       ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -404,20 +386,10 @@
     */
    public ACOS_Stream ACOS_OpenAndFill( double inReal[], double outReal[] )
    {
-      ACOS_Stream sp = new ACOS_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ACOS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ACOS_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ACOS openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ACOS openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ACOS openAndFill: " + retCode, retCode);
+      return ACOS_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

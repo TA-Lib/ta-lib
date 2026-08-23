@@ -454,7 +454,8 @@ impl Core {
     }
     /// Hilbert Transform indicator that decomposes the price series into its in-phase (I) and
     /// quadrature (Q) phasor components. Shares the same detrend/Hilbert machinery as the other
-    /// HT_* cycle functions.
+    /// HT_* cycle functions. This function is meant for building your own cycle analysis on top of
+    /// the raw phasor, not as a ready-made signal.
     ///
     /// # Formula
     ///
@@ -851,7 +852,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::HT_PHASOR_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::HT_PHASOR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn HT_PHASOR_OpenPass(
+    pub(crate) fn HT_PHASOR_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64], outStride: usize,
     ) -> Result<HT_PHASOR_Stream, RetCode> {
         if inReal.is_empty() {
@@ -1267,7 +1268,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outInPhase = [0.0_f64; 1];
         let mut sink_outQuadrature = [0.0_f64; 1];
-        let handle = self.HT_PHASOR_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInPhase, &mut sink_outQuadrature, 0)?;
+        let handle = self.HT_PHASOR_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInPhase, &mut sink_outQuadrature, 0)?;
         Ok((handle, (sink_outInPhase[0], sink_outQuadrature[0])))
     }
 
@@ -1314,7 +1315,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.HT_PHASOR_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outInPhase, outQuadrature, 1)?;
+        let handle = self.HT_PHASOR_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outInPhase, outQuadrature)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1323,7 +1324,7 @@ impl Core {
     pub(crate) fn HT_PHASOR_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64],
     ) -> Result<HT_PHASOR_Stream, RetCode> {
-        self.HT_PHASOR_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
+        self.HT_PHASOR_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
     }
 
 }

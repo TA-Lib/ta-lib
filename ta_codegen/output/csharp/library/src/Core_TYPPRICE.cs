@@ -377,7 +377,7 @@ public partial class Core
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }
 
-   private RetCode TYPPRICE_OpenPass( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TYPPRICE_OpenImpl( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -408,35 +408,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode TYPPRICE_OpenImpl( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TYPPRICE_OpenPass( sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode TYPPRICE_OpenAndFillImpl( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
-         return RetCode.BadParam;
-      }
-      return TYPPRICE_OpenPass( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode TYPPRICE_OpenAndFillInternalImpl( TYPPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return TYPPRICE_OpenPass(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* TYPPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal TYPPRICE_Stream TYPPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
-      RetCode retCode = TYPPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = TYPPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -449,7 +425,10 @@ public partial class Core
    internal TYPPRICE_Stream TYPPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
-      RetCode retCode = TYPPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TYPPRICE_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -511,13 +490,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
-      RetCode retCode = TYPPRICE_OpenAndFillImpl(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+         throw StreamFailure("TYPPRICE", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("TYPPRICE", "openAndFill", retCode);
+      return TYPPRICE_OpenAndFillInternal(inHigh, inLow, inClose, 0, out _, out _, outReal);
    }
 }

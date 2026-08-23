@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Vector base-10 logarithm. Applies log10 element-wise over each input
-    * value.
+    * Element-wise base-10 logarithm of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = log10(inReal[i])
@@ -129,8 +128,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector base-10 logarithm. Applies log10 element-wise over each input
-    * value.
+    * Element-wise base-10 logarithm of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = log10(inReal[i])
@@ -296,7 +294,7 @@
    {
       sp.cur_outReal = Math.log10(inReal);
    }
-   private RetCode LOG10_OpenPass( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LOG10_OpenImpl( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -322,32 +320,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LOG10_OpenImpl( LOG10_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = LOG10_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode LOG10_OpenAndFillImpl( LOG10_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return LOG10_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode LOG10_OpenAndFillInternalImpl( LOG10_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return LOG10_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* LOG10_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LOG10_Stream LOG10_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -365,7 +342,12 @@
    LOG10_Stream LOG10_OpenInternal( double inReal[], int startIdx )
    {
       LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -402,20 +384,10 @@
     */
    public LOG10_Stream LOG10_OpenAndFill( double inReal[], double outReal[] )
    {
-      LOG10_Stream sp = new LOG10_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LOG10_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("LOG10 openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LOG10 openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("LOG10 openAndFill: " + retCode, retCode);
+      return LOG10_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

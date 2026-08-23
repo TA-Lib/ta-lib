@@ -776,7 +776,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::SMI_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::SMI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn SMI_OpenPass(
+    pub(crate) fn SMI_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSMI: &mut [f64], outSMISignal: &mut [f64], outStride: usize,
     ) -> Result<SMI_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -1124,7 +1124,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outSMI = [0.0_f64; 1];
         let mut sink_outSMISignal = [0.0_f64; 1];
-        let handle = self.SMI_OpenPass(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSMI, &mut sink_outSMISignal, 0)?;
+        let handle = self.SMI_OpenImpl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSMI, &mut sink_outSMISignal, 0)?;
         Ok((handle, (sink_outSMI[0], sink_outSMISignal[0])))
     }
 
@@ -1175,7 +1175,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.SMI_OpenPass(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outSMI, outSMISignal, 1)?;
+        let handle = self.SMI_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outSMI, outSMISignal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1184,7 +1184,7 @@ impl Core {
     pub(crate) fn SMI_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSMI: &mut [f64], outSMISignal: &mut [f64],
     ) -> Result<SMI_Stream, RetCode> {
-        self.SMI_OpenPass(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1)
+        self.SMI_OpenImpl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1)
     }
 
 }

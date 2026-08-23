@@ -513,7 +513,7 @@ public partial class Core
       sp.cur_outReal = cur_outReal;
    }
 
-   private RetCode STDDEV_OpenPass( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode STDDEV_OpenImpl( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -604,35 +604,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode STDDEV_OpenImpl( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = STDDEV_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode STDDEV_OpenAndFillImpl( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return STDDEV_OpenPass( sp, inReal, 0, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode STDDEV_OpenAndFillInternalImpl( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return STDDEV_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* STDDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal STDDEV_Stream STDDEV_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -645,7 +621,10 @@ public partial class Core
    internal STDDEV_Stream STDDEV_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
    {
       STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -706,13 +685,9 @@ public partial class Core
    public STDDEV_Stream STDDEV_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("STDDEV", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("STDDEV", "openAndFill", retCode);
+      return STDDEV_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDev, out _, out _, outReal);
    }
 }

@@ -151,7 +151,7 @@ fn out_params_sig(func: &FuncDef) -> String {
         .join(", ")
 }
 
-/// `Open` and `OpenAndFill` are ONE emission: `TA_<N>_OpenPass`, whose per-bar
+/// `Open` and `OpenAndFill` are ONE emission: `TA_<N>_OpenImpl`, whose per-bar
 /// output writes are subscripted `out[(<idx>) * outStride]`.
 ///
 /// `OpenAndFill` passes stride 1 and the caller's array, so the array is
@@ -244,7 +244,7 @@ pub fn open_and_fill_internal_signature(func: &FuncDef) -> String {
     )
 }
 
-/// The merged `OpenCore` prototype (no trailing `;`): the union of both public
+/// The merged `<N>_OpenImpl` prototype (no trailing `;`): the union of both public
 /// entry points' inputs — history arrays, `startIdx` (a parameter, as
 /// `OpenInternal` needs for sub-stream composition), the batch output triplet,
 /// and `outStride`. File-static: with two call sites the compiler decides per
@@ -258,14 +258,14 @@ fn open_core_signature(func: &FuncDef) -> String {
         let _ = write!(history, "const double {a}[], ");
     }
     format!(
-        "static TA_RetCode TA_{n}_OpenPass( struct TA_{n}_Stream **stream, {}int startIdx, int historyLen, {}int *outBegIdx, int *outNBElement, {}, int {OUT_STRIDE} )",
+        "static TA_RetCode TA_{n}_OpenImpl( struct TA_{n}_Stream **stream, {}int startIdx, int historyLen, {}int *outBegIdx, int *outNBElement, {}, int {OUT_STRIDE} )",
         history,
         opt_params_sig(func),
         out_fill_arrays_sig(func)
     )
 }
 
-/// The argument list both wrappers pass to `OpenCore`, up to (not including) the
+/// The argument list both wrappers pass to `<N>_OpenImpl`, up to (not including) the
 /// output triplet: `stream, <inputs>, <startIdx>, historyLen, <opts>`.
 fn open_core_call_head(func: &FuncDef, start_idx: &str) -> String {
     let mut s = String::from("stream, ");
@@ -305,7 +305,7 @@ pub fn open_signature(func: &FuncDef) -> String {
 }
 
 /// Internal `OpenInternal` prototype (no trailing `;`). The scalar-sink entry
-/// point onto `OpenCore`: it takes an extra `startIdx` — the bar within the
+/// point onto `<N>_OpenImpl`: it takes an extra `startIdx` — the bar within the
 /// history buffer at which warm-up begins (0 = warm from the very first bar).
 /// The public `Open` is a thin wrapper that calls this with 0; only generated
 /// functions opening a sub-stream) passes a non-zero startIdx, handing the sub
@@ -354,17 +354,17 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
 
 /// The null + range guards at the PUBLIC `Open` / `OpenAndFill` entry.
 ///
-/// `OpenCore` repeats them, so this reads like a duplicate. It is not, and the
+/// `<N>_OpenImpl` repeats them, so this reads like a duplicate. It is not, and the
 /// reason differs between the two entry points:
 ///
-/// - `Open` delegates through `OpenInternal`, which hands `OpenCore` a private
-///   `sink_outReal` and copies it out afterwards. `OpenCore`'s `!outReal` test
+/// - `Open` delegates through `OpenInternal`, which hands `<N>_OpenImpl` a private
+///   `sink_outReal` and copies it out afterwards. `<N>_OpenImpl`'s `!outReal` test
 ///   therefore never sees the CALLER's pointer, and without the check here
 ///   `TA_<N>_Open( &s, data, n, p, NULL )` would run to completion and then
 ///   dereference NULL on the copy-out. This wrapper is the only place that
 ///   pointer is checkable.
-/// - `OpenAndFill` calls `OpenCore` directly, so the null checks are genuinely
-///   repeated — but the alias guard emitted after these runs BEFORE `OpenCore`
+/// - `OpenAndFill` calls `<N>_OpenImpl` directly, so the null checks are genuinely
+///   repeated — but the alias guard emitted after these runs BEFORE `<N>_OpenImpl`
 ///   sees anything, so dropping them would let an output aliasing its input on
 ///   an over-long history report `TA_BAD_PARAM` where it reports
 ///   `TA_OUT_OF_RANGE_END_INDEX` today.
@@ -374,7 +374,7 @@ fn public_open_guards(func: &FuncDef, fail: &str) -> String {
         return String::new();
     }
     // The OUTPUT pointers are checked here too, even though this wrapper does
-    // not touch them: `OpenCore` rejects a NULL output BEFORE it range-checks
+    // not touch them: `<N>_OpenImpl` rejects a NULL output BEFORE it range-checks
     // `historyLen`, so leaving them out would make a >TA_MAX_INDEX history with
     // a NULL output report TA_OUT_OF_RANGE_END_INDEX where it used to report
     // TA_BAD_PARAM. Same set, same order, same answer.
@@ -417,7 +417,7 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "{}\n{{", open_signature(func));
     // The handle is published as NULL before anything can reject, so the
     // documented "*stream is NULL on any failure" holds on these paths too —
-    // OpenCore, which normally does it, is not reached.
+    // OpenImpl, which normally does it, is not reached.
     let _ = writeln!(o, "   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");
     o.push_str(&public_open_guards(func, "TA_BAD_PARAM"));
@@ -456,7 +456,7 @@ fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef) {
         .collect();
     let _ = writeln!(
         o,
-        "   retCode = TA_{n}_OpenPass( {}&dummyBegIdx, &dummyNBElement, {}, 0 );",
+        "   retCode = TA_{n}_OpenImpl( {}&dummyBegIdx, &dummyNBElement, {}, 0 );",
         open_core_call_head(func, "startIdx"),
         sinks.join(", ")
     );
@@ -512,16 +512,19 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
     if !alias.is_empty() {
         let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
     }
+    // Straight to the anchored seam at 0, not to `_OpenImpl`, so the seam has a
+    // caller for every function instead of only the sixteen something composes
+    // over. The guard above is the difference between the two frames.
     let _ = writeln!(
         o,
-        "   return TA_{n}_OpenPass( {}outBegIdx, outNBElement, {}, 1 );",
+        "   return TA_{n}_OpenAndFillInternal( {}outBegIdx, outNBElement, {} );",
         open_core_call_head(func, "0"),
         outs.join(", ")
     );
     let _ = writeln!(o, "}}\n");
 }
 
-/// `OpenAndFillInternal` for every tier that owns an `OpenCore`: the same single
+/// `OpenAndFillInternal` for every tier that owns an `<N>_OpenImpl`: the same single
 /// pass as the public `OpenAndFill`, at the caller's `startIdx`. See
 /// [`open_and_fill_internal_signature`] for why it carries no aliasing guard.
 fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
@@ -530,7 +533,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_and_fill_internal_signature(func));
     let _ = writeln!(
         o,
-        "   return TA_{n}_OpenPass( {}outBegIdx, outNBElement, {}, 1 );",
+        "   return TA_{n}_OpenImpl( {}outBegIdx, outNBElement, {}, 1 );",
         open_core_call_head(func, "startIdx"),
         outs.join(", ")
     );
@@ -2613,7 +2616,7 @@ fn emit_dual_mode(
     emit_step_inner(o, mb, enums, registry, helpers, counter, 6, false);
     let _ = writeln!(o, "   }}\n}}\n");
 
-    // --- OpenCore: shared head, then a predicate branch per mode ------------
+    // --- OpenImpl: shared head, then a predicate branch per mode ------------
     // The head is `emit_open_head` over the UNION circ hoist: a mode-B-only
     // CIRCBUF's locals (HMA's dRing) are declared once at function scope and
     // only the owning arm touches them. Its identity fast path leaves the whole
@@ -3059,7 +3062,7 @@ fn emit_open_head(
 }
 
 /// The whole Open family for any tier whose core is `emit_open_head` + a single
-/// `emit_open_arm`: the merged `OpenCore`, then `OpenInternal` (stride 0),
+/// `emit_open_arm`: the merged `<N>_OpenImpl`, then `OpenInternal` (stride 0),
 /// the public `Open`, and `OpenAndFill` (stride 1). `body` is the transcribed
 /// batch region — loop: `model.body`; dual-mode: `prologue ++ arm body ++
 /// epilogue`.
@@ -3940,14 +3943,14 @@ fn emit_open_validation(
 ///
 /// This is the batch prologue's `(endIdx < startIdx)` rejection, which the
 /// streaming prologue never had. It matters because only 137 of the 174
-/// transcribed `_OpenPass` bodies carry TA-Lib's "make sure there is still
+/// transcribed `_OpenImpl` bodies carry TA-Lib's "make sure there is still
 /// something to evaluate" preamble — a function with no lookback has nothing to
 /// clamp `startIdx` up to, so the transcription has no such check and the batch
 /// tier caught the case in its prologue instead. The remaining 37 compute
 /// `nbBar = endIdx - startIdx + 1` and then run `while( nbBar != 0 )`, so a
 /// negative count never reaches zero: the loop walks off the end of both the
 /// inputs and the output (an ASan stack-buffer-overflow inside
-/// `TA_AD_OpenPass`, and a `usize` underflow panic in Rust).
+/// `TA_AD_OpenImpl`, and a `usize` underflow panic in Rust).
 ///
 /// Emitting it here rather than per-body is what makes it total, and it cannot
 /// change any behaviour that was already defined: the preamble's clamp only

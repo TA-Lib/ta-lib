@@ -598,7 +598,7 @@ public partial class Core
       }
    }
 
-   private RetCode EFI_OpenPass( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode EFI_OpenImpl( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -805,35 +805,11 @@ public partial class Core
       }
    }
 
-   private RetCode EFI_OpenImpl( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = EFI_OpenPass( sp, inClose, inVolume, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode EFI_OpenAndFillImpl( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
-         return RetCode.BadParam;
-      }
-      return EFI_OpenPass( sp, inClose, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode EFI_OpenAndFillInternalImpl( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return EFI_OpenPass(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* EFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal EFI_Stream EFI_OpenAndFillInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -846,7 +822,10 @@ public partial class Core
    internal EFI_Stream EFI_OpenInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = EFI_OpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -907,13 +886,9 @@ public partial class Core
    {
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
-      EFI_Stream sp = new EFI_Stream(this);
-      RetCode retCode = EFI_OpenAndFillImpl(sp, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
+         throw StreamFailure("EFI", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("EFI", "openAndFill", retCode);
+      return EFI_OpenAndFillInternal(inClose, inVolume, 0, optInTimePeriod, out _, out _, outReal);
    }
 }

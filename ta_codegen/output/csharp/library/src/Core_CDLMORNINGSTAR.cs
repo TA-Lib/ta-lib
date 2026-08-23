@@ -689,7 +689,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLMORNINGSTAR_OpenPass( CDLMORNINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLMORNINGSTAR_OpenImpl( CDLMORNINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -849,32 +849,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLMORNINGSTAR_OpenImpl( CDLMORNINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
-   {
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLMORNINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode CDLMORNINGSTAR_OpenAndFillImpl( CDLMORNINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      return CDLMORNINGSTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1 );
-   }
-
-   private RetCode CDLMORNINGSTAR_OpenAndFillInternalImpl( CDLMORNINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      return CDLMORNINGSTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
-   }
-
    /* CDLMORNINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLMORNINGSTAR_Stream CDLMORNINGSTAR_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLMORNINGSTAR_Stream sp = new CDLMORNINGSTAR_Stream(this);
-      RetCode retCode = CDLMORNINGSTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLMORNINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -887,7 +866,10 @@ public partial class Core
    internal CDLMORNINGSTAR_Stream CDLMORNINGSTAR_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       CDLMORNINGSTAR_Stream sp = new CDLMORNINGSTAR_Stream(this);
-      RetCode retCode = CDLMORNINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLMORNINGSTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -959,13 +941,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      CDLMORNINGSTAR_Stream sp = new CDLMORNINGSTAR_Stream(this);
-      RetCode retCode = CDLMORNINGSTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      throw StreamFailure("CDLMORNINGSTAR", "openAndFill", retCode);
+      return CDLMORNINGSTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
    }
 }

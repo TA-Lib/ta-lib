@@ -251,7 +251,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MEDPRICE_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MEDPRICE_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MEDPRICE_OpenPass(
+    pub(crate) fn MEDPRICE_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<MEDPRICE_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
@@ -298,7 +298,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.MEDPRICE_OpenPass(inHigh, inLow, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.MEDPRICE_OpenImpl(inHigh, inLow, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -342,7 +342,7 @@ impl Core {
     ) -> Result<(MEDPRICE_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MEDPRICE_OpenPass(inHigh, inLow, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.MEDPRICE_OpenAndFillInternal(inHigh, inLow, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -351,7 +351,7 @@ impl Core {
     pub(crate) fn MEDPRICE_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MEDPRICE_Stream, RetCode> {
-        self.MEDPRICE_OpenPass(inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.MEDPRICE_OpenImpl(inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

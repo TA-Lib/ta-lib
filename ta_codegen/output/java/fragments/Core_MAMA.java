@@ -1467,7 +1467,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode MAMA_OpenPass( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
+   private RetCode MAMA_OpenImpl( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1928,33 +1928,11 @@
       sp.cachedValue = new MAMA_Stream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
       return RetCode.Success;
    }
-   private RetCode MAMA_OpenImpl( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outMAMA = new double[1];
-      double[] sink_outFAMA = new double[1];
-      RetCode retCode = MAMA_OpenPass( sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, sink_outMAMA, sink_outFAMA, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MAMA_OpenAndFillImpl( MAMA_Stream sp, double inReal[], double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
-   {
-      if( (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA ) {
-         return RetCode.BadParam;
-      }
-      return MAMA_OpenPass( sp, inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
-   }
-   private RetCode MAMA_OpenAndFillInternalImpl( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
-   {
-      return MAMA_OpenPass(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1);
-   }
    /* MAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MAMA_Stream MAMA_OpenAndFillInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
    {
       MAMA_Stream sp = new MAMA_Stream(this);
-      RetCode retCode = MAMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1972,7 +1950,13 @@
    MAMA_Stream MAMA_OpenInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
    {
       MAMA_Stream sp = new MAMA_Stream(this);
-      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outMAMA = new double[1];
+      double[] sink_outFAMA = new double[1];
+      RetCode retCode = MAMA_OpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, sink_outMAMA, sink_outFAMA, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2009,20 +1993,10 @@
     */
    public MAMA_Stream MAMA_OpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
    {
-      MAMA_Stream sp = new MAMA_Stream(this);
+      if( (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA ) {
+         throw new TaLibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAMA_OpenAndFillImpl(sp, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAMA openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MAMA openAndFill: " + retCode, retCode);
+      return MAMA_OpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
    }

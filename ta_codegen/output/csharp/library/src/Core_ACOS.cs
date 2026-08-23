@@ -121,8 +121,7 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Vector trigonometric arc cosine: applies acos() to each input value. A
-   /// Math Transform passthrough with zero lookback.
+   /// Element-wise arc cosine of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -178,8 +177,7 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Vector trigonometric arc cosine: applies acos() to each input value. A
-   /// Math Transform passthrough with zero lookback.
+   /// Element-wise arc cosine of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -355,7 +353,7 @@ public partial class Core
       sp.cur_outReal = Math.Acos(inReal);
    }
 
-   private RetCode ACOS_OpenPass( ACOS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode ACOS_OpenImpl( ACOS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -384,35 +382,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ACOS_OpenImpl( ACOS_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ACOS_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode ACOS_OpenAndFillImpl( ACOS_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return ACOS_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode ACOS_OpenAndFillInternalImpl( ACOS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return ACOS_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* ACOS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal ACOS_Stream ACOS_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -425,7 +399,10 @@ public partial class Core
    internal ACOS_Stream ACOS_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -478,13 +455,9 @@ public partial class Core
    public ACOS_Stream ACOS_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("ACOS", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("ACOS", "openAndFill", retCode);
+      return ACOS_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

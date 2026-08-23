@@ -333,7 +333,7 @@ static void TA_CDLGRAVESTONEDOJI_StepInternal( struct TA_CDLGRAVESTONEDOJI_Strea
    }
 }
 
-static TA_RetCode TA_CDLGRAVESTONEDOJI_OpenPass( struct TA_CDLGRAVESTONEDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
+static TA_RetCode TA_CDLGRAVESTONEDOJI_OpenImpl( struct TA_CDLGRAVESTONEDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
    struct TA_CDLGRAVESTONEDOJI_Stream *sp;
    int endIdx;
@@ -482,7 +482,7 @@ TA_RetCode TA_CDLGRAVESTONEDOJI_OpenInternal( struct TA_CDLGRAVESTONEDOJI_Stream
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    int sink_outInteger = 0;
-   retCode = TA_CDLGRAVESTONEDOJI_OpenPass( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
+   retCode = TA_CDLGRAVESTONEDOJI_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outInteger = sink_outInteger;
@@ -509,13 +509,13 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_OpenAndFill( TA_CDLGRAVESTONEDOJI_Str
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
-   return TA_CDLGRAVESTONEDOJI_OpenPass( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
+   return TA_CDLGRAVESTONEDOJI_OpenAndFillInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_CDLGRAVESTONEDOJI_OpenAndFillInternal( struct TA_CDLGRAVESTONEDOJI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
 {
-   return TA_CDLGRAVESTONEDOJI_OpenPass( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
+   return TA_CDLGRAVESTONEDOJI_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Update( TA_CDLGRAVESTONEDOJI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

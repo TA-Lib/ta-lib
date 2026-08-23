@@ -675,7 +675,7 @@
          sp.cur_outReal = sp.prevMinusDM;
       }
    }
-   private RetCode MINUS_DM_OpenPass( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MINUS_DM_OpenImpl( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -997,32 +997,11 @@
          return RetCode.Success;
       }
    }
-   private RetCode MINUS_DM_OpenImpl( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MINUS_DM_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MINUS_DM_OpenAndFillImpl( MINUS_DM_Stream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return MINUS_DM_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MINUS_DM_OpenAndFillInternalImpl( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MINUS_DM_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MINUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MINUS_DM_Stream MINUS_DM_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
-      RetCode retCode = MINUS_DM_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1040,7 +1019,12 @@
    MINUS_DM_Stream MINUS_DM_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
       MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
-      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MINUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1077,20 +1061,10 @@
     */
    public MINUS_DM_Stream MINUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("MINUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DM_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MINUS_DM openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DM openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MINUS_DM openAndFill: " + retCode, retCode);
+      return MINUS_DM_OpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }

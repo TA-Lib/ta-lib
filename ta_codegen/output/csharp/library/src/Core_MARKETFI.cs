@@ -441,7 +441,7 @@ public partial class Core
       }
    }
 
-   private RetCode MARKETFI_OpenPass( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -499,35 +499,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode MARKETFI_OpenAndFillImpl( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inVolume) ) {
-         return RetCode.BadParam;
-      }
-      return MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode MARKETFI_OpenAndFillInternalImpl( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return MARKETFI_OpenPass(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MARKETFI_Stream MARKETFI_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenAndFillInternalImpl(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -540,7 +516,10 @@ public partial class Core
    internal MARKETFI_Stream MARKETFI_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -602,13 +581,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
-      MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenAndFillImpl(sp, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inVolume) ) {
+         throw StreamFailure("MARKETFI", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("MARKETFI", "openAndFill", retCode);
+      return MARKETFI_OpenAndFillInternal(inHigh, inLow, inVolume, 0, out _, out _, outReal);
    }
 }

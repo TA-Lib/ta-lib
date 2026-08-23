@@ -575,7 +575,7 @@
       }
       sp.cur_outReal = sp.vwap;
    }
-   private RetCode VWAP_OpenPass( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode VWAP_OpenImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -710,32 +710,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode VWAP_OpenImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = VWAP_OpenPass( sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode VWAP_OpenAndFillImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return VWAP_OpenPass( sp, inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode VWAP_OpenAndFillInternalImpl( VWAP_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return VWAP_OpenPass(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* VWAP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    VWAP_Stream VWAP_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       VWAP_Stream sp = new VWAP_Stream(this);
-      RetCode retCode = VWAP_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -753,7 +732,12 @@
    VWAP_Stream VWAP_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
    {
       VWAP_Stream sp = new VWAP_Stream(this);
-      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = VWAP_OpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -790,20 +774,10 @@
     */
    public VWAP_Stream VWAP_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
-      VWAP_Stream sp = new VWAP_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("VWAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VWAP_OpenAndFillImpl(sp, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("VWAP openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWAP openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("VWAP openAndFill: " + retCode, retCode);
+      return VWAP_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

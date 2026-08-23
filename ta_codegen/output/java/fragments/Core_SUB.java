@@ -73,8 +73,7 @@
       return RetCode.Success ;
    }
    /**
-    * Element-wise vector subtraction of two input series. Outputs inReal0 minus
-    * inReal1 at each index.
+    * Element-wise subtraction of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] - inReal1[i]
@@ -132,8 +131,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise vector subtraction of two input series. Outputs inReal0 minus
-    * inReal1 at each index.
+    * Element-wise subtraction of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] - inReal1[i]
@@ -299,7 +297,7 @@
    {
       sp.cur_outReal = inReal0 - inReal1;
    }
-   private RetCode SUB_OpenPass( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SUB_OpenImpl( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -326,32 +324,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SUB_OpenImpl( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = SUB_OpenPass( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode SUB_OpenAndFillImpl( SUB_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return SUB_OpenPass( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode SUB_OpenAndFillInternalImpl( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return SUB_OpenPass(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* SUB_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SUB_Stream SUB_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SUB_Stream sp = new SUB_Stream(this);
-      RetCode retCode = SUB_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -369,7 +346,12 @@
    SUB_Stream SUB_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
       SUB_Stream sp = new SUB_Stream(this);
-      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = SUB_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -406,20 +388,10 @@
     */
    public SUB_Stream SUB_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      SUB_Stream sp = new SUB_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("SUB openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SUB_OpenAndFillImpl(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("SUB openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUB openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("SUB openAndFill: " + retCode, retCode);
+      return SUB_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }

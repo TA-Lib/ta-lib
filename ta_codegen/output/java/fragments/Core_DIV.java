@@ -72,15 +72,14 @@
       return RetCode.Success ;
    }
    /**
-    * Element-wise division of two input series. Computes the quotient of
-    * corresponding values from two real inputs.
+    * Element-wise division of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] / inReal1[i]
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error — the quotient is written as computed.</li>
+    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -135,15 +134,14 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise division of two input series. Computes the quotient of
-    * corresponding values from two real inputs.
+    * Element-wise division of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] / inReal1[i]
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error — the quotient is written as computed.</li>
+    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -306,7 +304,7 @@
    {
       sp.cur_outReal = inReal0 / inReal1;
    }
-   private RetCode DIV_OpenPass( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode DIV_OpenImpl( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -332,32 +330,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode DIV_OpenImpl( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = DIV_OpenPass( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode DIV_OpenAndFillImpl( DIV_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return DIV_OpenPass( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode DIV_OpenAndFillInternalImpl( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return DIV_OpenPass(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* DIV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    DIV_Stream DIV_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -375,7 +352,12 @@
    DIV_Stream DIV_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
       DIV_Stream sp = new DIV_Stream(this);
-      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = DIV_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -412,20 +394,10 @@
     */
    public DIV_Stream DIV_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      DIV_Stream sp = new DIV_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("DIV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DIV_OpenAndFillImpl(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("DIV openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DIV openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("DIV openAndFill: " + retCode, retCode);
+      return DIV_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }

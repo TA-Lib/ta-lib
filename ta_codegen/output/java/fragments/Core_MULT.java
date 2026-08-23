@@ -80,8 +80,7 @@
       return RetCode.Success ;
    }
    /**
-    * Element-wise multiplication of two input series. Produces outReal[i] =
-    * inReal0[i] * inReal1[i].
+    * Element-wise multiplication of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] * inReal1[i]
@@ -139,8 +138,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Element-wise multiplication of two input series. Produces outReal[i] =
-    * inReal0[i] * inReal1[i].
+    * Element-wise multiplication of two input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = inReal0[i] * inReal1[i]
@@ -306,7 +304,7 @@
    {
       sp.cur_outReal = inReal0 * inReal1;
    }
-   private RetCode MULT_OpenPass( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MULT_OpenImpl( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -336,32 +334,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MULT_OpenImpl( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MULT_OpenPass( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MULT_OpenAndFillImpl( MULT_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         return RetCode.BadParam;
-      }
-      return MULT_OpenPass( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MULT_OpenAndFillInternalImpl( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MULT_OpenPass(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MULT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MULT_Stream MULT_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MULT_Stream sp = new MULT_Stream(this);
-      RetCode retCode = MULT_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -379,7 +356,12 @@
    MULT_Stream MULT_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
       MULT_Stream sp = new MULT_Stream(this);
-      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MULT_OpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -416,20 +398,10 @@
     */
    public MULT_Stream MULT_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      MULT_Stream sp = new MULT_Stream(this);
+      if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
+         throw new TaLibArgumentException("MULT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MULT_OpenAndFillImpl(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MULT openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MULT openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MULT openAndFill: " + retCode, retCode);
+      return MULT_OpenAndFillInternal(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal);
    }

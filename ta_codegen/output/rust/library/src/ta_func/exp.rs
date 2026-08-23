@@ -104,8 +104,7 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Vector arithmetic exponential: applies the base-e exponential to each input value.
-    /// Element-wise math transform.
+    /// Element-wise base-e exponential of the input series.
     ///
     /// # Formula
     ///
@@ -158,6 +157,11 @@ impl Core {
     /// # See also
     ///
     /// [`Core::LN`] · [`Core::SQRT`]
+    ///
+    /// # References
+    ///
+    /// * Wikipedia, *Exponential function*:
+    ///   [en.wikipedia.org/wiki/Exponential_function](https://en.wikipedia.org/wiki/Exponential_function)
     ///
     /// Further reading: [ta-lib.org/functions/exp](https://ta-lib.org/functions/exp)
     #[doc(alias = "exponential")]
@@ -240,7 +244,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::EXP_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::EXP_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn EXP_OpenPass(
+    pub(crate) fn EXP_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<EXP_Stream, RetCode> {
         if inReal.is_empty() {
@@ -285,7 +289,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.EXP_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.EXP_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -328,7 +332,7 @@ impl Core {
     ) -> Result<(EXP_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.EXP_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.EXP_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -337,7 +341,7 @@ impl Core {
     pub(crate) fn EXP_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<EXP_Stream, RetCode> {
-        self.EXP_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.EXP_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

@@ -710,7 +710,7 @@ public partial class Core
       sp.cur_outMACDHist = macdValue - sp.prevSignal;
    }
 
-   private RetCode MACDFIX_OpenPass( MACDFIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist, int outStride )
+   private RetCode MACDFIX_OpenImpl( MACDFIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -901,37 +901,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MACDFIX_OpenImpl( MACDFIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod )
-   {
-      double[] sink_outMACD = new double[1];
-      double[] sink_outMACDSignal = new double[1];
-      double[] sink_outMACDHist = new double[1];
-      RetCode retCode = MACDFIX_OpenPass( sp, inReal, startIdx, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode MACDFIX_OpenAndFillImpl( MACDFIX_Stream sp, ReadOnlySpan<double> inReal, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outMACD.Overlaps(inReal) || outMACDSignal.Overlaps(inReal) || outMACDHist.Overlaps(inReal) || outMACD.Overlaps(outMACDSignal) || outMACD.Overlaps(outMACDHist) || outMACDSignal.Overlaps(outMACDHist) ) {
-         return RetCode.BadParam;
-      }
-      return MACDFIX_OpenPass( sp, inReal, 0, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
-   }
-
-   private RetCode MACDFIX_OpenAndFillInternalImpl( MACDFIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
-   {
-      return MACDFIX_OpenPass(sp, inReal, startIdx, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
-   }
-
    /* MACDFIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MACDFIX_Stream MACDFIX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       MACDFIX_Stream sp = new MACDFIX_Stream(this);
-      RetCode retCode = MACDFIX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -944,7 +918,12 @@ public partial class Core
    internal MACDFIX_Stream MACDFIX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInSignalPeriod )
    {
       MACDFIX_Stream sp = new MACDFIX_Stream(this);
-      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod);
+      double[] sink_outMACD = new double[1];
+      double[] sink_outMACDSignal = new double[1];
+      double[] sink_outMACDHist = new double[1];
+      RetCode retCode = MACDFIX_OpenImpl(sp, inReal, startIdx, optInSignalPeriod, out int outBegIdx, out int outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1005,13 +984,9 @@ public partial class Core
    public MACDFIX_Stream MACDFIX_OpenAndFill( ReadOnlySpan<double> inReal, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      MACDFIX_Stream sp = new MACDFIX_Stream(this);
-      RetCode retCode = MACDFIX_OpenAndFillImpl(sp, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outMACD.Overlaps(inReal) || outMACDSignal.Overlaps(inReal) || outMACDHist.Overlaps(inReal) || outMACD.Overlaps(outMACDSignal) || outMACD.Overlaps(outMACDHist) || outMACDSignal.Overlaps(outMACDHist) ) {
+         throw StreamFailure("MACDFIX", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("MACDFIX", "openAndFill", retCode);
+      return MACDFIX_OpenAndFillInternal(inReal, 0, optInSignalPeriod, out _, out _, outMACD, outMACDSignal, outMACDHist);
    }
 }

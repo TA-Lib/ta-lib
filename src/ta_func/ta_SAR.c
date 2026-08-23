@@ -722,7 +722,7 @@ static void TA_SAR_StepInternal( struct TA_SAR_Stream *sp, double inHigh, double
    }
 }
 
-static TA_RetCode TA_SAR_OpenPass( struct TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInAcceleration, double optInMaximum, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_SAR_OpenImpl( struct TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInAcceleration, double optInMaximum, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_SAR_Stream *sp;
    int endIdx;
@@ -1039,7 +1039,7 @@ TA_RetCode TA_SAR_OpenInternal( struct TA_SAR_Stream **stream, const double inHi
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_SAR_OpenPass( stream, inHigh, inLow, startIdx, historyLen, optInAcceleration, optInMaximum, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_SAR_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInAcceleration, optInMaximum, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -1066,13 +1066,13 @@ TA_LIB_API TA_RetCode TA_SAR_OpenAndFill( TA_SAR_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
-   return TA_SAR_OpenPass( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1 );
+   return TA_SAR_OpenAndFillInternal( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_SAR_OpenAndFillInternal( struct TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInAcceleration, double optInMaximum, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_SAR_OpenPass( stream, inHigh, inLow, startIdx, historyLen, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1 );
+   return TA_SAR_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_SAR_Update( TA_SAR_Stream *stream, double inHigh, double inLow, double *outReal )

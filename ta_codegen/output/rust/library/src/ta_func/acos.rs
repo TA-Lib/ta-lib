@@ -104,8 +104,7 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Vector trigonometric arc cosine: applies acos() to each input value. A Math Transform
-    /// passthrough with zero lookback.
+    /// Element-wise arc cosine of the input series.
     ///
     /// # Formula
     ///
@@ -163,6 +162,11 @@ impl Core {
     /// # See also
     ///
     /// [`Core::COS`] · [`Core::ASIN`] · [`Core::ATAN`]
+    ///
+    /// # References
+    ///
+    /// * Wikipedia, *Inverse trigonometric functions*:
+    ///   [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)
     ///
     /// Further reading: [ta-lib.org/functions/acos](https://ta-lib.org/functions/acos)
     #[doc(alias = "ArcCosine")]
@@ -246,7 +250,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::ACOS_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::ACOS_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn ACOS_OpenPass(
+    pub(crate) fn ACOS_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<ACOS_Stream, RetCode> {
         if inReal.is_empty() {
@@ -291,7 +295,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.ACOS_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ACOS_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -334,7 +338,7 @@ impl Core {
     ) -> Result<(ACOS_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.ACOS_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.ACOS_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -343,7 +347,7 @@ impl Core {
     pub(crate) fn ACOS_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ACOS_Stream, RetCode> {
-        self.ACOS_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.ACOS_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

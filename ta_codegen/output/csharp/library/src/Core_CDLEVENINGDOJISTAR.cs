@@ -737,7 +737,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLEVENINGDOJISTAR_OpenPass( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLEVENINGDOJISTAR_OpenImpl( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -920,32 +920,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLEVENINGDOJISTAR_OpenImpl( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
-   {
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode CDLEVENINGDOJISTAR_OpenAndFillImpl( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      return CDLEVENINGDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1 );
-   }
-
-   private RetCode CDLEVENINGDOJISTAR_OpenAndFillInternalImpl( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
-   {
-      return CDLEVENINGDOJISTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
-   }
-
    /* CDLEVENINGDOJISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -958,7 +937,10 @@ public partial class Core
    internal CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = CDLEVENINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1033,13 +1015,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      throw StreamFailure("CDLEVENINGDOJISTAR", "openAndFill", retCode);
+      return CDLEVENINGDOJISTAR_OpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration, out _, out _, outInteger);
    }
 }

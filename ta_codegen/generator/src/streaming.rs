@@ -3447,7 +3447,7 @@ pub fn analyze_period_bank<'a>(
 /// startIdx-anchored one-pass open+fill a composed caller fuses its sub-call
 /// into (issue #192).
 ///
-/// True for every tier that owns an `OpenCore` (Loop, Composed, DualMode) and
+/// True for every tier that owns an `<N>_OpenImpl` (Loop, Composed, DualMode) and
 /// for Dispatch, which hand-rolls one over its arms'. False for PeriodBank
 /// (MAVP alone): its fill is a genuinely different warm-up — seed the bank at
 /// `lookbackTotal`, then replay `Update` over the rest — with no `startIdx` to

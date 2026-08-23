@@ -121,8 +121,7 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Vector hyperbolic cosine: applies cosh element-wise to each input value. A
-   /// Math Transform primitive with no lookback.
+   /// Element-wise hyperbolic cosine of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -175,8 +174,7 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Vector hyperbolic cosine: applies cosh element-wise to each input value. A
-   /// Math Transform primitive with no lookback.
+   /// Element-wise hyperbolic cosine of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -349,7 +347,7 @@ public partial class Core
       sp.cur_outReal = Math.Cosh(inReal);
    }
 
-   private RetCode COSH_OpenPass( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode COSH_OpenImpl( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -378,35 +376,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode COSH_OpenImpl( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = COSH_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode COSH_OpenAndFillImpl( COSH_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return COSH_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode COSH_OpenAndFillInternalImpl( COSH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return COSH_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* COSH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal COSH_Stream COSH_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -419,7 +393,10 @@ public partial class Core
    internal COSH_Stream COSH_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -472,13 +449,9 @@ public partial class Core
    public COSH_Stream COSH_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("COSH", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("COSH", "openAndFill", retCode);
+      return COSH_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

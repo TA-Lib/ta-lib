@@ -290,7 +290,7 @@ static TA_RetCode TA_STDDEV_StepInternal( struct TA_STDDEV_Stream *sp, double in
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_STDDEV_OpenPass( struct TA_STDDEV_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_STDDEV_OpenImpl( struct TA_STDDEV_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_STDDEV_Stream *sp;
    int endIdx;
@@ -431,7 +431,7 @@ TA_RetCode TA_STDDEV_OpenInternal( struct TA_STDDEV_Stream **stream, const doubl
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_STDDEV_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDev, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_STDDEV_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDev, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -458,13 +458,13 @@ TA_LIB_API TA_RetCode TA_STDDEV_OpenAndFill( TA_STDDEV_Stream **stream, const do
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   return TA_STDDEV_OpenPass( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
+   return TA_STDDEV_OpenAndFillInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_STDDEV_OpenAndFillInternal( struct TA_STDDEV_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_STDDEV_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
+   return TA_STDDEV_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal, double *outReal )

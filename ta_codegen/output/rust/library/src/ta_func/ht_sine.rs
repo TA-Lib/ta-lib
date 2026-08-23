@@ -999,7 +999,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::HT_SINE_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::HT_SINE_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn HT_SINE_OpenPass(
+    pub(crate) fn HT_SINE_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outSine: &mut [f64], outLeadSine: &mut [f64], outStride: usize,
     ) -> Result<HT_SINE_Stream, RetCode> {
         if inReal.is_empty() {
@@ -1505,7 +1505,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outSine = [0.0_f64; 1];
         let mut sink_outLeadSine = [0.0_f64; 1];
-        let handle = self.HT_SINE_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSine, &mut sink_outLeadSine, 0)?;
+        let handle = self.HT_SINE_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSine, &mut sink_outLeadSine, 0)?;
         Ok((handle, (sink_outSine[0], sink_outLeadSine[0])))
     }
 
@@ -1552,7 +1552,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.HT_SINE_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outSine, outLeadSine, 1)?;
+        let handle = self.HT_SINE_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outSine, outLeadSine)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1561,7 +1561,7 @@ impl Core {
     pub(crate) fn HT_SINE_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outSine: &mut [f64], outLeadSine: &mut [f64],
     ) -> Result<HT_SINE_Stream, RetCode> {
-        self.HT_SINE_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1)
+        self.HT_SINE_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1)
     }
 
 }

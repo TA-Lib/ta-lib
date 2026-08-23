@@ -121,8 +121,7 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Vector arithmetic exponential: applies the base-e exponential to each
-   /// input value. Element-wise math transform.
+   /// Element-wise base-e exponential of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -175,8 +174,7 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Vector arithmetic exponential: applies the base-e exponential to each
-   /// input value. Element-wise math transform.
+   /// Element-wise base-e exponential of the input series.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -349,7 +347,7 @@ public partial class Core
       sp.cur_outReal = Math.Exp(inReal);
    }
 
-   private RetCode EXP_OpenPass( EXP_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode EXP_OpenImpl( EXP_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -378,35 +376,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode EXP_OpenImpl( EXP_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = EXP_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode EXP_OpenAndFillImpl( EXP_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return EXP_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode EXP_OpenAndFillInternalImpl( EXP_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return EXP_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* EXP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal EXP_Stream EXP_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -419,7 +393,10 @@ public partial class Core
    internal EXP_Stream EXP_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -472,13 +449,9 @@ public partial class Core
    public EXP_Stream EXP_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("EXP", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("EXP", "openAndFill", retCode);
+      return EXP_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

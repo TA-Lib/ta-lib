@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Vector hyperbolic cosine: applies cosh element-wise to each input value. A
-    * Math Transform primitive with no lookback.
+    * Element-wise hyperbolic cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = cosh(inReal[i]) = (e^{inReal[i]} + e^{-inReal[i]}) / 2
@@ -126,8 +125,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector hyperbolic cosine: applies cosh element-wise to each input value. A
-    * Math Transform primitive with no lookback.
+    * Element-wise hyperbolic cosine of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = cosh(inReal[i]) = (e^{inReal[i]} + e^{-inReal[i]}) / 2
@@ -290,7 +288,7 @@
    {
       sp.cur_outReal = Math.cosh(inReal);
    }
-   private RetCode COSH_OpenPass( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode COSH_OpenImpl( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -316,32 +314,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode COSH_OpenImpl( COSH_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = COSH_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode COSH_OpenAndFillImpl( COSH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return COSH_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode COSH_OpenAndFillInternalImpl( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return COSH_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* COSH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    COSH_Stream COSH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -359,7 +336,12 @@
    COSH_Stream COSH_OpenInternal( double inReal[], int startIdx )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -396,20 +378,10 @@
     */
    public COSH_Stream COSH_OpenAndFill( double inReal[], double outReal[] )
    {
-      COSH_Stream sp = new COSH_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COSH_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("COSH openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COSH openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("COSH openAndFill: " + retCode, retCode);
+      return COSH_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

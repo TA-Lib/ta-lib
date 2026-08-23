@@ -328,7 +328,7 @@ static ErrorNumber test_marketfi_zero_volume( void )
          return e;
    }
 
-   /* Streaming: OpenAndFill shares the batch loop (TA_MARKETFI_OpenPass) and
+   /* Streaming: OpenAndFill shares the batch loop (TA_MARKETFI_OpenImpl) and
     * is already covered transitively, but Update/Peek run a SEPARATE code
     * path (TA_MARKETFI_StepInternal) that carries its own copy of the guard.
     * Open warms up on bar 0 alone so bars 1-3 are driven through Update/Peek,

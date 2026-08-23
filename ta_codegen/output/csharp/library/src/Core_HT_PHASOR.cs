@@ -727,7 +727,9 @@ public partial class Core
    /// <summary>
    /// Hilbert Transform indicator that decomposes the price series into its
    /// in-phase (I) and quadrature (Q) phasor components. Shares the same
-   /// detrend/Hilbert machinery as the other HT_* cycle functions.
+   /// detrend/Hilbert machinery as the other HT_* cycle functions. This function
+   /// is meant for building your own cycle analysis on top of the raw phasor,
+   /// not as a ready-made signal.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -786,7 +788,9 @@ public partial class Core
    /// <summary>
    /// Hilbert Transform indicator that decomposes the price series into its
    /// in-phase (I) and quadrature (Q) phasor components. Shares the same
-   /// detrend/Hilbert machinery as the other HT_* cycle functions.
+   /// detrend/Hilbert machinery as the other HT_* cycle functions. This function
+   /// is meant for building your own cycle analysis on top of the raw phasor,
+   /// not as a ready-made signal.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -1333,7 +1337,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_PHASOR_OpenPass( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature, int outStride )
+   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1745,36 +1749,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outInPhase = new double[1];
-      double[] sink_outQuadrature = new double[1];
-      RetCode retCode = HT_PHASOR_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outInPhase, sink_outQuadrature, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode HT_PHASOR_OpenAndFillImpl( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outInPhase.Overlaps(inReal) || outQuadrature.Overlaps(inReal) || outInPhase.Overlaps(outQuadrature) ) {
-         return RetCode.BadParam;
-      }
-      return HT_PHASOR_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1 );
-   }
-
-   private RetCode HT_PHASOR_OpenAndFillInternalImpl( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
-   {
-      return HT_PHASOR_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1);
-   }
-
    /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1787,7 +1766,11 @@ public partial class Core
    internal HT_PHASOR_Stream HT_PHASOR_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outInPhase = new double[1];
+      double[] sink_outQuadrature = new double[1];
+      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outInPhase, sink_outQuadrature, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1844,13 +1827,9 @@ public partial class Core
    public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outInPhase, Span<double> outQuadrature )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outInPhase.Overlaps(inReal) || outQuadrature.Overlaps(inReal) || outInPhase.Overlaps(outQuadrature) ) {
+         throw StreamFailure("HT_PHASOR", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("HT_PHASOR", "openAndFill", retCode);
+      return HT_PHASOR_OpenAndFillInternal(inReal, 0, out _, out _, outInPhase, outQuadrature);
    }
 }

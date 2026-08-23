@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Vector trigonometric tangent: applies tan() element-wise to each input
-    * value.
+    * Element-wise tangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = tan(inReal[i])
@@ -127,8 +126,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector trigonometric tangent: applies tan() element-wise to each input
-    * value.
+    * Element-wise tangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = tan(inReal[i])
@@ -292,7 +290,7 @@
    {
       sp.cur_outReal = Math.tan(inReal);
    }
-   private RetCode TAN_OpenPass( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TAN_OpenImpl( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -318,32 +316,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TAN_OpenImpl( TAN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = TAN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode TAN_OpenAndFillImpl( TAN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return TAN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode TAN_OpenAndFillInternalImpl( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return TAN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* TAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TAN_Stream TAN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -361,7 +338,12 @@
    TAN_Stream TAN_OpenInternal( double inReal[], int startIdx )
    {
       TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -398,20 +380,10 @@
     */
    public TAN_Stream TAN_OpenAndFill( double inReal[], double outReal[] )
    {
-      TAN_Stream sp = new TAN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("TAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TAN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("TAN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TAN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("TAN openAndFill: " + retCode, retCode);
+      return TAN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

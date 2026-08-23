@@ -792,8 +792,7 @@
     * Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
     * degrees) of the dominant market cycle, derived from a homodyne
     * discriminator on a Hilbert-transformed, smoothed price. One real output
-    * per bar. Output is degrees, wrapped so it never exceeds 315 (can go
-    * negative).
+    * per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -851,8 +850,7 @@
     * Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
     * degrees) of the dominant market cycle, derived from a homodyne
     * discriminator on a Hilbert-transformed, smoothed price. One real output
-    * per bar. Output is degrees, wrapped so it never exceeds 315 (can go
-    * negative).
+    * per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -1458,7 +1456,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_DCPHASE_OpenPass( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1948,32 +1946,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HT_DCPHASE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_DCPHASE_OpenAndFillImpl( HT_DCPHASE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return HT_DCPHASE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode HT_DCPHASE_OpenAndFillInternalImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return HT_DCPHASE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* HT_DCPHASE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_DCPHASE_Stream HT_DCPHASE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -1991,7 +1968,12 @@
    HT_DCPHASE_Stream HT_DCPHASE_OpenInternal( double inReal[], int startIdx )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2028,20 +2010,10 @@
     */
    public HT_DCPHASE_Stream HT_DCPHASE_OpenAndFill( double inReal[], double outReal[] )
    {
-      HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_DCPHASE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPHASE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + retCode, retCode);
+      return HT_DCPHASE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

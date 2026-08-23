@@ -175,13 +175,13 @@ impl Core {
     /// # Formula
     ///
     /// ```text
-    /// outInteger[t] = argmin_{t-period+1 <= i <= t} inReal[i]  (absolute index into inReal)
+    /// outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
     /// ```
     ///
     /// # Notes
     ///
-    /// * When several bars in a window share the lowest value, which bar's index is returned is not
-    ///   guaranteed to be a specific one of the tied bars.
+    /// * When several bars in a window share the lowest value, the index of one of them is returned
+    ///   — not necessarily the first or the last.
     ///
     /// # Arguments
     ///
@@ -360,7 +360,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MININDEX_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MININDEX_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MININDEX_OpenPass(
+    pub(crate) fn MININDEX_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<MININDEX_Stream, RetCode> {
         if inReal.is_empty() {
@@ -478,7 +478,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.MININDEX_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.MININDEX_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -521,7 +521,7 @@ impl Core {
     ) -> Result<(MININDEX_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MININDEX_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
+        let handle = self.MININDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -530,7 +530,7 @@ impl Core {
     pub(crate) fn MININDEX_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<MININDEX_Stream, RetCode> {
-        self.MININDEX_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1)
+        self.MININDEX_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

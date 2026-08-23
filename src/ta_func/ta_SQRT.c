@@ -134,7 +134,7 @@ static void TA_SQRT_StepInternal( struct TA_SQRT_Stream *sp, double inReal, doub
    *outReal= sqrt(inReal);
 }
 
-static TA_RetCode TA_SQRT_OpenPass( struct TA_SQRT_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_SQRT_OpenImpl( struct TA_SQRT_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_SQRT_Stream *sp;
    int endIdx;
@@ -186,7 +186,7 @@ TA_RetCode TA_SQRT_OpenInternal( struct TA_SQRT_Stream **stream, const double in
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_SQRT_OpenPass( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_SQRT_OpenImpl( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -213,13 +213,13 @@ TA_LIB_API TA_RetCode TA_SQRT_OpenAndFill( TA_SQRT_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   return TA_SQRT_OpenPass( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_SQRT_OpenAndFillInternal( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_SQRT_OpenAndFillInternal( struct TA_SQRT_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_SQRT_OpenPass( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_SQRT_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_SQRT_Update( TA_SQRT_Stream *stream, double inReal, double *outReal )

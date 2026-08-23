@@ -578,7 +578,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MACD_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MACD_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MACD_OpenPass(
+    pub(crate) fn MACD_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
     ) -> Result<MACD_Stream, RetCode> {
         if inReal.is_empty() {
@@ -812,7 +812,7 @@ impl Core {
         let mut sink_outMACD = [0.0_f64; 1];
         let mut sink_outMACDSignal = [0.0_f64; 1];
         let mut sink_outMACDHist = [0.0_f64; 1];
-        let handle = self.MACD_OpenPass(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
+        let handle = self.MACD_OpenImpl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
         Ok((handle, (sink_outMACD[0], sink_outMACDSignal[0], sink_outMACDHist[0])))
     }
 
@@ -866,7 +866,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MACD_OpenPass(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outMACD, outMACDSignal, outMACDHist, 1)?;
+        let handle = self.MACD_OpenAndFillInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outMACD, outMACDSignal, outMACDHist)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -875,7 +875,7 @@ impl Core {
     pub(crate) fn MACD_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
     ) -> Result<MACD_Stream, RetCode> {
-        self.MACD_OpenPass(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
+        self.MACD_OpenImpl(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
 
 }

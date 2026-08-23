@@ -406,7 +406,7 @@ public partial class Core
       sp.prevReal = tempReal;
    }
 
-   private RetCode OBV_OpenPass( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode OBV_OpenImpl( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -450,35 +450,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode OBV_OpenImpl( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = OBV_OpenPass( sp, inReal, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode OBV_OpenAndFillImpl( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
-         return RetCode.BadParam;
-      }
-      return OBV_OpenPass( sp, inReal, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode OBV_OpenAndFillInternalImpl( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return OBV_OpenPass(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal OBV_Stream OBV_OpenAndFillInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenAndFillInternalImpl(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -491,7 +467,10 @@ public partial class Core
    internal OBV_Stream OBV_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -548,13 +527,9 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
-      OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenAndFillImpl(sp, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
+         throw StreamFailure("OBV", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("OBV", "openAndFill", retCode);
+      return OBV_OpenAndFillInternal(inReal, inVolume, 0, out _, out _, outReal);
    }
 }

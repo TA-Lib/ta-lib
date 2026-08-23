@@ -373,6 +373,11 @@
     * Returns both the lowest and highest values of the input over a rolling
     * window of the last optInTimePeriod bars. An overlap-study companion to MIN
     * and MAX that computes both extrema in one pass.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
+    * outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
+    * }</pre>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -435,6 +440,11 @@
     * Returns both the lowest and highest values of the input over a rolling
     * window of the last optInTimePeriod bars. An overlap-study companion to MIN
     * and MAX that computes both extrema in one pass.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
+    * outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
+    * }</pre>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -708,7 +718,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MINMAX_OpenPass( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[], int outStride )
+   private RetCode MINMAX_OpenImpl( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[], int outStride )
    {
       double highest = 0;
       double lowest = 0;
@@ -858,33 +868,11 @@
       sp.cachedValue = new MINMAX_Stream.Value(sp.cur_outMin, sp.cur_outMax);
       return RetCode.Success;
    }
-   private RetCode MINMAX_OpenImpl( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outMin = new double[1];
-      double[] sink_outMax = new double[1];
-      RetCode retCode = MINMAX_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMin, sink_outMax, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MINMAX_OpenAndFillImpl( MINMAX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
-   {
-      if( (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax ) {
-         return RetCode.BadParam;
-      }
-      return MINMAX_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1 );
-   }
-   private RetCode MINMAX_OpenAndFillInternalImpl( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
-   {
-      return MINMAX_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1);
-   }
    /* MINMAX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MINMAX_Stream MINMAX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -902,7 +890,13 @@
    MINMAX_Stream MINMAX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
-      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outMin = new double[1];
+      double[] sink_outMax = new double[1];
+      RetCode retCode = MINMAX_OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMin, sink_outMax, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -939,20 +933,10 @@
     */
    public MINMAX_Stream MINMAX_OpenAndFill( double inReal[], int optInTimePeriod, double outMin[], double outMax[] )
    {
-      MINMAX_Stream sp = new MINMAX_Stream(this);
+      if( (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax ) {
+         throw new TaLibArgumentException("MINMAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINMAX_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MINMAX openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAX openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MINMAX openAndFill: " + retCode, retCode);
+      return MINMAX_OpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
    }

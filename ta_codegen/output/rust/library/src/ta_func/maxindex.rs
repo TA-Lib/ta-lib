@@ -175,13 +175,13 @@ impl Core {
     /// # Formula
     ///
     /// ```text
-    /// outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
+    /// outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
     /// ```
     ///
     /// # Notes
     ///
-    /// * When several bars in a window share the highest value, which bar's index is returned is
-    ///   not guaranteed to be a specific one of the tied bars.
+    /// * When several bars in a window share the highest value, the index of one of them is
+    ///   returned — not necessarily the first or the last.
     ///
     /// # Arguments
     ///
@@ -360,7 +360,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MAXINDEX_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MAXINDEX_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MAXINDEX_OpenPass(
+    pub(crate) fn MAXINDEX_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<MAXINDEX_Stream, RetCode> {
         if inReal.is_empty() {
@@ -478,7 +478,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.MAXINDEX_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.MAXINDEX_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -521,7 +521,7 @@ impl Core {
     ) -> Result<(MAXINDEX_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MAXINDEX_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
+        let handle = self.MAXINDEX_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outInteger)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -530,7 +530,7 @@ impl Core {
     pub(crate) fn MAXINDEX_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<MAXINDEX_Stream, RetCode> {
-        self.MAXINDEX_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1)
+        self.MAXINDEX_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

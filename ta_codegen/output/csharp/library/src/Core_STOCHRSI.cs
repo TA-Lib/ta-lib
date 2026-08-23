@@ -651,7 +651,7 @@ public partial class Core
       sp.cur_outFastD = cur_outFastD;
    }
 
-   private RetCode STOCHRSI_OpenPass( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD, int outStride )
+   private RetCode STOCHRSI_OpenImpl( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -778,36 +778,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode STOCHRSI_OpenImpl( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
-   {
-      double[] sink_outFastK = new double[1];
-      double[] sink_outFastD = new double[1];
-      RetCode retCode = STOCHRSI_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, sink_outFastK, sink_outFastD, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode STOCHRSI_OpenAndFillImpl( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outFastK.Overlaps(inReal) || outFastD.Overlaps(inReal) || outFastK.Overlaps(outFastD) ) {
-         return RetCode.BadParam;
-      }
-      return STOCHRSI_OpenPass( sp, inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1 );
-   }
-
-   private RetCode STOCHRSI_OpenAndFillInternalImpl( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
-   {
-      return STOCHRSI_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1);
-   }
-
    /* STOCHRSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal STOCHRSI_Stream STOCHRSI_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
-      RetCode retCode = STOCHRSI_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -820,7 +795,11 @@ public partial class Core
    internal STOCHRSI_Stream STOCHRSI_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
-      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      double[] sink_outFastK = new double[1];
+      double[] sink_outFastD = new double[1];
+      RetCode retCode = STOCHRSI_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, sink_outFastK, sink_outFastD, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -894,13 +873,9 @@ public partial class Core
    public STOCHRSI_Stream STOCHRSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
-      RetCode retCode = STOCHRSI_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outFastK.Overlaps(inReal) || outFastD.Overlaps(inReal) || outFastK.Overlaps(outFastD) ) {
+         throw StreamFailure("STOCHRSI", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("STOCHRSI", "openAndFill", retCode);
+      return STOCHRSI_OpenAndFillInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, outFastK, outFastD);
    }
 }

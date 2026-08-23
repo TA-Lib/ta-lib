@@ -419,7 +419,7 @@
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode NVI_OpenPass( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode NVI_OpenImpl( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -488,32 +488,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode NVI_OpenImpl( NVI_Stream sp, double inClose[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = NVI_OpenPass( sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode NVI_OpenAndFillImpl( NVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return NVI_OpenPass( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode NVI_OpenAndFillInternalImpl( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return NVI_OpenPass(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* NVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    NVI_Stream NVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -531,7 +510,12 @@
    NVI_Stream NVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {
       NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -568,20 +552,10 @@
     */
    public NVI_Stream NVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
-      NVI_Stream sp = new NVI_Stream(this);
+      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("NVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NVI_OpenAndFillImpl(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("NVI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NVI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("NVI openAndFill: " + retCode, retCode);
+      return NVI_OpenAndFillInternal(inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

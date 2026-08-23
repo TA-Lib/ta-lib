@@ -104,7 +104,7 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Vector hyperbolic tangent: applies tanh element-wise to the input series.
+    /// Element-wise hyperbolic tangent of the input series.
     ///
     /// # Formula
     ///
@@ -157,6 +157,11 @@ impl Core {
     /// # See also
     ///
     /// [`Core::SINH`] · [`Core::COSH`] · [`Core::TAN`]
+    ///
+    /// # References
+    ///
+    /// * Wikipedia, *Hyperbolic functions*:
+    ///   [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)
     ///
     /// Further reading: [ta-lib.org/functions/tanh](https://ta-lib.org/functions/tanh)
     #[doc(alias = "HyperbolicTangent")]
@@ -238,7 +243,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::TANH_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::TANH_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn TANH_OpenPass(
+    pub(crate) fn TANH_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TANH_Stream, RetCode> {
         if inReal.is_empty() {
@@ -283,7 +288,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.TANH_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.TANH_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -326,7 +331,7 @@ impl Core {
     ) -> Result<(TANH_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.TANH_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.TANH_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -335,7 +340,7 @@ impl Core {
     pub(crate) fn TANH_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TANH_Stream, RetCode> {
-        self.TANH_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.TANH_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

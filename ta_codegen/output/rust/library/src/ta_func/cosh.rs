@@ -104,8 +104,7 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Vector hyperbolic cosine: applies cosh element-wise to each input value. A Math Transform
-    /// primitive with no lookback.
+    /// Element-wise hyperbolic cosine of the input series.
     ///
     /// # Formula
     ///
@@ -158,6 +157,11 @@ impl Core {
     /// # See also
     ///
     /// [`Core::SINH`] · [`Core::TANH`] · [`Core::COS`]
+    ///
+    /// # References
+    ///
+    /// * Wikipedia, *Hyperbolic functions*:
+    ///   [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)
     ///
     /// Further reading: [ta-lib.org/functions/cosh](https://ta-lib.org/functions/cosh)
     #[doc(alias = "HyperbolicCosine")]
@@ -239,7 +243,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::COSH_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::COSH_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn COSH_OpenPass(
+    pub(crate) fn COSH_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<COSH_Stream, RetCode> {
         if inReal.is_empty() {
@@ -284,7 +288,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.COSH_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.COSH_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -327,7 +331,7 @@ impl Core {
     ) -> Result<(COSH_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.COSH_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.COSH_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -336,7 +340,7 @@ impl Core {
     pub(crate) fn COSH_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<COSH_Stream, RetCode> {
-        self.COSH_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.COSH_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

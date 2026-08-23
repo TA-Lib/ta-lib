@@ -70,8 +70,7 @@
       return RetCode.Success ;
    }
    /**
-    * Vector arithmetic exponential: applies the base-e exponential to each
-    * input value. Element-wise math transform.
+    * Element-wise base-e exponential of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = exp(inReal[i]) = e^{inReal[i]}
@@ -125,8 +124,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector arithmetic exponential: applies the base-e exponential to each
-    * input value. Element-wise math transform.
+    * Element-wise base-e exponential of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = exp(inReal[i]) = e^{inReal[i]}
@@ -288,7 +286,7 @@
    {
       sp.cur_outReal = Math.exp(inReal);
    }
-   private RetCode EXP_OpenPass( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode EXP_OpenImpl( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -314,32 +312,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode EXP_OpenImpl( EXP_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = EXP_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode EXP_OpenAndFillImpl( EXP_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return EXP_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode EXP_OpenAndFillInternalImpl( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return EXP_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* EXP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    EXP_Stream EXP_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -357,7 +334,12 @@
    EXP_Stream EXP_OpenInternal( double inReal[], int startIdx )
    {
       EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -394,20 +376,10 @@
     */
    public EXP_Stream EXP_OpenAndFill( double inReal[], double outReal[] )
    {
-      EXP_Stream sp = new EXP_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("EXP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EXP_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("EXP openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EXP openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("EXP openAndFill: " + retCode, retCode);
+      return EXP_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

@@ -310,7 +310,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::AD_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::AD_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn AD_OpenPass(
+    pub(crate) fn AD_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<AD_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
@@ -384,7 +384,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.AD_OpenPass(inHigh, inLow, inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.AD_OpenImpl(inHigh, inLow, inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -434,7 +434,7 @@ impl Core {
     ) -> Result<(AD_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.AD_OpenPass(inHigh, inLow, inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.AD_OpenAndFillInternal(inHigh, inLow, inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -443,7 +443,7 @@ impl Core {
     pub(crate) fn AD_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AD_Stream, RetCode> {
-        self.AD_OpenPass(inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.AD_OpenImpl(inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

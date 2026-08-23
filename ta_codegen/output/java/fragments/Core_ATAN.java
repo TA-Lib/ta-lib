@@ -71,8 +71,7 @@
       return RetCode.Success ;
    }
    /**
-    * Vector trigonometric arc tangent: applies atan element-wise to each input.
-    * Pure math transform with no lookback.
+    * Element-wise arctangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
@@ -127,8 +126,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Vector trigonometric arc tangent: applies atan element-wise to each input.
-    * Pure math transform with no lookback.
+    * Element-wise arctangent of the input series.
     * <p><b>Formula</b>
     * <pre>{@code
     * outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
@@ -291,7 +289,7 @@
    {
       sp.cur_outReal = Math.atan(inReal);
    }
-   private RetCode ATAN_OpenPass( ATAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ATAN_OpenImpl( ATAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -318,32 +316,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ATAN_OpenImpl( ATAN_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = ATAN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode ATAN_OpenAndFillImpl( ATAN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return ATAN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode ATAN_OpenAndFillInternalImpl( ATAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return ATAN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* ATAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ATAN_Stream ATAN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ATAN_Stream sp = new ATAN_Stream(this);
-      RetCode retCode = ATAN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ATAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -361,7 +338,12 @@
    ATAN_Stream ATAN_OpenInternal( double inReal[], int startIdx )
    {
       ATAN_Stream sp = new ATAN_Stream(this);
-      RetCode retCode = ATAN_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = ATAN_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -398,20 +380,10 @@
     */
    public ATAN_Stream ATAN_OpenAndFill( double inReal[], double outReal[] )
    {
-      ATAN_Stream sp = new ATAN_Stream(this);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ATAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ATAN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("ATAN openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATAN openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("ATAN openAndFill: " + retCode, retCode);
+      return ATAN_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
    }

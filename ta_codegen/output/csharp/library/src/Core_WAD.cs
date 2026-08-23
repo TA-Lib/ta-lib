@@ -524,7 +524,7 @@ public partial class Core
       sp.prevClose = close;
    }
 
-   private RetCode WAD_OpenPass( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode WAD_OpenImpl( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -617,35 +617,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode WAD_OpenImpl( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = WAD_OpenPass( sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode WAD_OpenAndFillImpl( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
-         return RetCode.BadParam;
-      }
-      return WAD_OpenPass( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode WAD_OpenAndFillInternalImpl( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return WAD_OpenPass(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* WAD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal WAD_Stream WAD_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       WAD_Stream sp = new WAD_Stream(this);
-      RetCode retCode = WAD_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = WAD_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -658,7 +634,10 @@ public partial class Core
    internal WAD_Stream WAD_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       WAD_Stream sp = new WAD_Stream(this);
-      RetCode retCode = WAD_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = WAD_OpenImpl(sp, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -719,13 +698,9 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
-      WAD_Stream sp = new WAD_Stream(this);
-      RetCode retCode = WAD_OpenAndFillImpl(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+         throw StreamFailure("WAD", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("WAD", "openAndFill", retCode);
+      return WAD_OpenAndFillInternal(inHigh, inLow, inClose, 0, out _, out _, outReal);
    }
 }

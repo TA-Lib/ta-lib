@@ -937,10 +937,10 @@
       return RetCode.Success ;
    }
    /**
-    * Hilbert Transform classifier that labels each bar as trending (1) or
-    * cycling (0). Reuses the MAMA dominant-cycle/phase DSP plus a
-    * SineWave/trendline test to decide the market mode. 1 = trending market
-    * (favor trend-following); 0 = cycle/mean-reverting mode.
+    * Hilbert Transform classifier that labels each bar 1 (trending — favor
+    * trend-following) or 0 (cycling — favor mean-reversion). Built from the
+    * same MAMA dominant-cycle/phase DSP plus a SineWave/trendline test used
+    * across the other HT_* functions.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -993,10 +993,10 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Hilbert Transform classifier that labels each bar as trending (1) or
-    * cycling (0). Reuses the MAMA dominant-cycle/phase DSP plus a
-    * SineWave/trendline test to decide the market mode. 1 = trending market
-    * (favor trend-following); 0 = cycle/mean-reverting mode.
+    * Hilbert Transform classifier that labels each bar 1 (trending — favor
+    * trend-following) or 0 (cycling — favor mean-reversion). Built from the
+    * same MAMA dominant-cycle/phase DSP plus a SineWave/trendline test used
+    * across the other HT_* functions.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -1710,7 +1710,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_TRENDMODE_OpenPass( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode HT_TRENDMODE_OpenImpl( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -2301,32 +2301,11 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_TRENDMODE_OpenImpl( HT_TRENDMODE_Stream sp, double inReal[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = HT_TRENDMODE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode HT_TRENDMODE_OpenAndFillImpl( HT_TRENDMODE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      if( (Object)outInteger == (Object)inReal ) {
-         return RetCode.BadParam;
-      }
-      return HT_TRENDMODE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outInteger, 1 );
-   }
-   private RetCode HT_TRENDMODE_OpenAndFillInternalImpl( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
-   {
-      return HT_TRENDMODE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
-   }
    /* HT_TRENDMODE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
-      RetCode retCode = HT_TRENDMODE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -2344,7 +2323,12 @@
    HT_TRENDMODE_Stream HT_TRENDMODE_OpenInternal( double inReal[], int startIdx )
    {
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
-      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2381,20 +2365,10 @@
     */
    public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( double inReal[], int outInteger[] )
    {
-      HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
+      if( (Object)outInteger == (Object)inReal ) {
+         throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDMODE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outInteger);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("HT_TRENDMODE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDMODE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + retCode, retCode);
+      return HT_TRENDMODE_OpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outInteger);
    }

@@ -331,7 +331,7 @@ static void TA_CDLHIGHWAVE_StepInternal( struct TA_CDLHIGHWAVE_Stream *sp, doubl
    }
 }
 
-static TA_RetCode TA_CDLHIGHWAVE_OpenPass( struct TA_CDLHIGHWAVE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
+static TA_RetCode TA_CDLHIGHWAVE_OpenImpl( struct TA_CDLHIGHWAVE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
    struct TA_CDLHIGHWAVE_Stream *sp;
    int endIdx;
@@ -478,7 +478,7 @@ TA_RetCode TA_CDLHIGHWAVE_OpenInternal( struct TA_CDLHIGHWAVE_Stream **stream, c
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    int sink_outInteger = 0;
-   retCode = TA_CDLHIGHWAVE_OpenPass( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
+   retCode = TA_CDLHIGHWAVE_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outInteger = sink_outInteger;
@@ -505,13 +505,13 @@ TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_OpenAndFill( TA_CDLHIGHWAVE_Stream **stream
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
-   return TA_CDLHIGHWAVE_OpenPass( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
+   return TA_CDLHIGHWAVE_OpenAndFillInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_CDLHIGHWAVE_OpenAndFillInternal( struct TA_CDLHIGHWAVE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
 {
-   return TA_CDLHIGHWAVE_OpenPass( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
+   return TA_CDLHIGHWAVE_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_Update( TA_CDLHIGHWAVE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

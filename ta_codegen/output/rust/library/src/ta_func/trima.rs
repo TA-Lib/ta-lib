@@ -623,7 +623,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::TRIMA_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::TRIMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn TRIMA_OpenPass(
+    pub(crate) fn TRIMA_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TRIMA_Stream, RetCode> {
         if inReal.is_empty() {
@@ -1094,7 +1094,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.TRIMA_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.TRIMA_OpenImpl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -1137,7 +1137,7 @@ impl Core {
     ) -> Result<(TRIMA_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.TRIMA_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.TRIMA_OpenAndFillInternal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1146,7 +1146,7 @@ impl Core {
     pub(crate) fn TRIMA_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TRIMA_Stream, RetCode> {
-        self.TRIMA_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.TRIMA_OpenImpl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

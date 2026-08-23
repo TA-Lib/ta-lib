@@ -419,7 +419,7 @@
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode PVI_OpenPass( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode PVI_OpenImpl( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -488,32 +488,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode PVI_OpenImpl( PVI_Stream sp, double inClose[], double inVolume[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = PVI_OpenPass( sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode PVI_OpenAndFillImpl( PVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         return RetCode.BadParam;
-      }
-      return PVI_OpenPass( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode PVI_OpenAndFillInternalImpl( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return PVI_OpenPass(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* PVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PVI_Stream PVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       PVI_Stream sp = new PVI_Stream(this);
-      RetCode retCode = PVI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -531,7 +510,12 @@
    PVI_Stream PVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {
       PVI_Stream sp = new PVI_Stream(this);
-      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = PVI_OpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -568,20 +552,10 @@
     */
    public PVI_Stream PVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
-      PVI_Stream sp = new PVI_Stream(this);
+      if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+         throw new TaLibArgumentException("PVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PVI_OpenAndFillImpl(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("PVI openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVI openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("PVI openAndFill: " + retCode, retCode);
+      return PVI_OpenAndFillInternal(inClose, inVolume, 0, outBegIdx, outNBElement, outReal);
    }

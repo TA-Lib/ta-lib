@@ -372,7 +372,7 @@ public partial class Core
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }
 
-   private RetCode MEDPRICE_OpenPass( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MEDPRICE_OpenImpl( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -408,35 +408,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MEDPRICE_OpenImpl( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MEDPRICE_OpenPass( sp, inHigh, inLow, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode MEDPRICE_OpenAndFillImpl( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
-         return RetCode.BadParam;
-      }
-      return MEDPRICE_OpenPass( sp, inHigh, inLow, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode MEDPRICE_OpenAndFillInternalImpl( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return MEDPRICE_OpenPass(sp, inHigh, inLow, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* MEDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MEDPRICE_Stream MEDPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -449,7 +425,10 @@ public partial class Core
    internal MEDPRICE_Stream MEDPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -507,13 +486,9 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
-      MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenAndFillImpl(sp, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
+         throw StreamFailure("MEDPRICE", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("MEDPRICE", "openAndFill", retCode);
+      return MEDPRICE_OpenAndFillInternal(inHigh, inLow, 0, out _, out _, outReal);
    }
 }

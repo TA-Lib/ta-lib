@@ -535,11 +535,11 @@ fn render_init_expr(expr: &Expr) -> String {
 
 /// Name of the implementation tier: the transcribed numerics, and nothing else.
 ///
-/// Suffixed `_Impl`, matching the streaming tiers (`_OpenImpl`,
-/// `_OpenAndFillImpl`). `Internal` is deliberately NOT reused: in these two
-/// backends it names a *variant* (`_OpenAndFillInternal` is the composed-open
-/// fusion seam), and until #236 step 5 it named the deleted C-shaped tier, so
-/// one word would carry three meanings across the history.
+/// Suffixed `_Impl`, matching the streaming numerics (`<N>_OpenImpl`).
+/// `Internal` is deliberately NOT reused: it names a *variant* of an entry
+/// point (`_OpenInternal` / `_OpenAndFillInternal` are the `startIdx`-anchored
+/// seams), and until #236 step 5 it named the deleted C-shaped tier, so one
+/// word would carry three meanings across the history.
 ///
 /// C# distinguishes its two PUBLIC-facing tiers by overload — `internal RetCode
 /// <N>(…, out int, out int, …)` beside `public OutRange <N>(…)` — but a third

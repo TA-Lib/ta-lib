@@ -522,8 +522,8 @@ impl Core {
     }
     /// Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of the dominant
     /// market cycle, derived from a homodyne discriminator on a Hilbert-transformed, smoothed
-    /// price. One real output per bar. Output is degrees, wrapped so it never exceeds 315 (can go
-    /// negative).
+    /// price. One real output per bar. Output is degrees, in the range −45 to 315 (a full 360°
+    /// span).
     ///
     /// # Arguments
     ///
@@ -981,7 +981,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::HT_DCPHASE_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::HT_DCPHASE_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn HT_DCPHASE_OpenPass(
+    pub(crate) fn HT_DCPHASE_OpenImpl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<HT_DCPHASE_Stream, RetCode> {
         if inReal.is_empty() {
@@ -1482,7 +1482,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.HT_DCPHASE_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.HT_DCPHASE_OpenImpl(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -1525,7 +1525,7 @@ impl Core {
     ) -> Result<(HT_DCPHASE_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.HT_DCPHASE_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.HT_DCPHASE_OpenAndFillInternal(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1534,7 +1534,7 @@ impl Core {
     pub(crate) fn HT_DCPHASE_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<HT_DCPHASE_Stream, RetCode> {
-        self.HT_DCPHASE_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.HT_DCPHASE_OpenImpl(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

@@ -301,7 +301,7 @@ static void TA_LINEARREG_SLOPE_StepInternal( struct TA_LINEARREG_SLOPE_Stream *s
    }
 }
 
-static TA_RetCode TA_LINEARREG_SLOPE_OpenPass( struct TA_LINEARREG_SLOPE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_LINEARREG_SLOPE_OpenImpl( struct TA_LINEARREG_SLOPE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_LINEARREG_SLOPE_Stream *sp;
    int endIdx;
@@ -448,7 +448,7 @@ TA_RetCode TA_LINEARREG_SLOPE_OpenInternal( struct TA_LINEARREG_SLOPE_Stream **s
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_LINEARREG_SLOPE_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_LINEARREG_SLOPE_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -475,13 +475,13 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_OpenAndFill( TA_LINEARREG_SLOPE_Stream 
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   return TA_LINEARREG_SLOPE_OpenPass( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_LINEARREG_SLOPE_OpenAndFillInternal( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_LINEARREG_SLOPE_OpenAndFillInternal( struct TA_LINEARREG_SLOPE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_LINEARREG_SLOPE_OpenPass( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_LINEARREG_SLOPE_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Update( TA_LINEARREG_SLOPE_Stream *stream, double inReal, double *outReal )

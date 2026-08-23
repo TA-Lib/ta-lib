@@ -844,8 +844,7 @@ public partial class Core
    /// Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
    /// degrees) of the dominant market cycle, derived from a homodyne
    /// discriminator on a Hilbert-transformed, smoothed price. One real output
-   /// per bar. Output is degrees, wrapped so it never exceeds 315 (can go
-   /// negative).
+   /// per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
    /// </summary>
    /// <remarks>
    /// <para>
@@ -897,8 +896,7 @@ public partial class Core
    /// Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
    /// degrees) of the dominant market cycle, derived from a homodyne
    /// discriminator on a Hilbert-transformed, smoothed price. One real output
-   /// per bar. Output is degrees, wrapped so it never exceeds 315 (can go
-   /// negative).
+   /// per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
    /// </summary>
    /// <remarks>
    /// <para>
@@ -1509,7 +1507,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_DCPHASE_OpenPass( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -2002,35 +2000,11 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
-   {
-      double[] sink_outReal = new double[1];
-      RetCode retCode = HT_DCPHASE_OpenPass( sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      return retCode;
-   }
-
-   private RetCode HT_DCPHASE_OpenAndFillImpl( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      outBegIdx = 0;
-      outNBElement = 0;
-      if( outReal.Overlaps(inReal) ) {
-         return RetCode.BadParam;
-      }
-      return HT_DCPHASE_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
-   }
-
-   private RetCode HT_DCPHASE_OpenAndFillInternalImpl( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
-   {
-      return HT_DCPHASE_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
-   }
-
    /* HT_DCPHASE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal HT_DCPHASE_Stream HT_DCPHASE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -2043,7 +2017,10 @@ public partial class Core
    internal HT_DCPHASE_Stream HT_DCPHASE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx);
+      double[] sink_outReal = new double[1];
+      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx;
+      sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2098,13 +2075,9 @@ public partial class Core
    public HT_DCPHASE_Stream HT_DCPHASE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
-      HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
-      if( retCode == RetCode.Success ) {
-         return sp;
+      if( outReal.Overlaps(inReal) ) {
+         throw StreamFailure("HT_DCPHASE", "openAndFill", RetCode.BadParam);
       }
-      throw StreamFailure("HT_DCPHASE", "openAndFill", retCode);
+      return HT_DCPHASE_OpenAndFillInternal(inReal, 0, out _, out _, outReal);
    }
 }

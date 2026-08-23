@@ -312,7 +312,7 @@
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }
-   private RetCode MEDPRICE_OpenPass( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MEDPRICE_OpenImpl( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -345,32 +345,11 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MEDPRICE_OpenImpl( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx )
-   {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      RetCode retCode = MEDPRICE_OpenPass( sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      return retCode;
-   }
-   private RetCode MEDPRICE_OpenAndFillImpl( MEDPRICE_Stream sp, double inHigh[], double inLow[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         return RetCode.BadParam;
-      }
-      return MEDPRICE_OpenPass( sp, inHigh, inLow, 0, outBegIdx, outNBElement, outReal, 1 );
-   }
-   private RetCode MEDPRICE_OpenAndFillInternalImpl( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      return MEDPRICE_OpenPass(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1);
-   }
    /* MEDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MEDPRICE_Stream MEDPRICE_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -388,7 +367,12 @@
    MEDPRICE_Stream MEDPRICE_OpenInternal( double inHigh[], double inLow[], int startIdx )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -425,20 +409,10 @@
     */
    public MEDPRICE_Stream MEDPRICE_OpenAndFill( double inHigh[], double inLow[], double outReal[] )
    {
-      MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         throw new TaLibArgumentException("MEDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MEDPRICE_OpenAndFillImpl(sp, inHigh, inLow, outBegIdx, outNBElement, outReal);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
-         return sp;
-      }
-      if( retCode == RetCode.InsufficientHistory ) {
-         throw new InsufficientHistoryException("MEDPRICE openAndFill: history shorter than lookback + 1");
-      }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MEDPRICE openAndFill: internal error", retCode);
-      }
-      throw new TaLibArgumentException("MEDPRICE openAndFill: " + retCode, retCode);
+      return MEDPRICE_OpenAndFillInternal(inHigh, inLow, 0, outBegIdx, outNBElement, outReal);
    }

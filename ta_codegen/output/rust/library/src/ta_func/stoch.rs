@@ -667,7 +667,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::STOCH_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::STOCH_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn STOCH_OpenPass(
+    pub(crate) fn STOCH_OpenImpl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outSlowK: &mut [f64], outSlowD: &mut [f64], outStride: usize,
     ) -> Result<STOCH_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
@@ -979,7 +979,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outSlowK = [0.0_f64; 1];
         let mut sink_outSlowD = [0.0_f64; 1];
-        let handle = self.STOCH_OpenPass(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSlowK, &mut sink_outSlowD, 0)?;
+        let handle = self.STOCH_OpenImpl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSlowK, &mut sink_outSlowD, 0)?;
         Ok((handle, (sink_outSlowK[0], sink_outSlowD[0])))
     }
 
@@ -1030,7 +1030,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.STOCH_OpenPass(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut outBegIdx, &mut outNBElement, outSlowK, outSlowD, 1)?;
+        let handle = self.STOCH_OpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut outBegIdx, &mut outNBElement, outSlowK, outSlowD)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1039,7 +1039,7 @@ impl Core {
     pub(crate) fn STOCH_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outSlowK: &mut [f64], outSlowD: &mut [f64],
     ) -> Result<STOCH_Stream, RetCode> {
-        self.STOCH_OpenPass(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1)
+        self.STOCH_OpenImpl(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1)
     }
 
 }
