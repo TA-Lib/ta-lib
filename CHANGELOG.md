@@ -67,7 +67,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 
 ### Fixed
 - (#130) In-place calls (same buffer as input and output) returned wrong values for STOCH, STOCHF and MAVP. Regular (separate-buffer) calls were always correct.
-- (#118) VAR, STDDEV and BBANDS more precise and faster.
+- (#118,#242) VAR, CORREL, STDDEV and BBANDS more precise and faster.
 - (#33) Float overflow in the single-precision (`TA_S_*`) functions. Thanks @iglesias !
 - (#64) Website docs mixing up CDL3LINESTRIKE with CDL3OUTSIDE's description. Thanks @mw66 !
 - (#7) CCI returned a spurious value when all prices over the period were identical; Thanks @trufanov-nok for identifying and resolving this!
