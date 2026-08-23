@@ -2,7 +2,11 @@
 
 ## Summary
 
-Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of the dominant market cycle, derived from a homodyne discriminator on a Hilbert-transformed, smoothed price. One real output per bar. Output is degrees, wrapped so it never exceeds 315 (can go negative).
+Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of the dominant market cycle, derived from a homodyne discriminator on a Hilbert-transformed, smoothed price. One real output per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
+
+## Interpretation
+
+DCPhase is a rotating angle: it locates the current bar within the dominant price cycle the Hilbert-transform model has locked onto. One full lap of that cycle is the same −45°-to-315° span described above — Ehlers' original algorithm cuts the circle at 315° instead of the more common 0°. `HT_TRENDMODE` separately flags bars where the market isn't cycling at all.
 
 ## Inputs
 

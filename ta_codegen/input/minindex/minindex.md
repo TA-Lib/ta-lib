@@ -6,11 +6,11 @@ Returns the absolute index of the lowest value within a rolling window of the gi
 
 ## Formula
 
-outInteger[t] = argmin_{t-period+1 <= i <= t} inReal[i]  (absolute index into inReal)
+outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
 
 ## Notes
 
-- When several bars in a window share the lowest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.
+- When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.
 
 ## Inputs
 

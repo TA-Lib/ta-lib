@@ -2,7 +2,7 @@
 
 ## Summary
 
-Element-wise multiplication of two input series. Produces outReal[i] = inReal0[i] * inReal1[i].
+Element-wise multiplication of two input series.
 
 ## Formula
 

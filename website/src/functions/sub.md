@@ -1,11 +1,11 @@
 ---
 title: "Vector Arithmetic Subtraction (SUB)"
-description: "Element-wise vector subtraction of two input series. Outputs inReal0 minus inReal1 at each index."
+description: "Element-wise subtraction of two input series."
 ---
 
 ## Summary
 
-Element-wise vector subtraction of two input series. Outputs inReal0 minus inReal1 at each index.
+Element-wise subtraction of two input series.
 
 ## Formula
 

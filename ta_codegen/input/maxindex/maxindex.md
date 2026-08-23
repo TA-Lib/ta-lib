@@ -6,11 +6,11 @@ Returns the index of the highest input value within a rolling window of optInTim
 
 ## Formula
 
-outInteger[i] = argmax_{j in [i-optInTimePeriod+1, i]} inReal[j]
+outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
 
 ## Notes
 
-- When several bars in a window share the highest value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.
+- When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.
 
 ## Inputs
 

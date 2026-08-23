@@ -1,11 +1,11 @@
 ---
 title: "Vector Arithmetic Add (ADD)"
-description: "Vector arithmetic addition. Outputs the element-wise sum of two input series."
+description: "Element-wise addition of two input series."
 ---
 
 ## Summary
 
-Vector arithmetic addition. Outputs the element-wise sum of two input series.
+Element-wise addition of two input series.
 
 ## Formula
 

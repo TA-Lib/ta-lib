@@ -1,11 +1,11 @@
 ---
 title: "Vector Arithmetic Mult (MULT)"
-description: "Element-wise multiplication of two input series. Produces outReal[i] = inReal0[i] * inReal1[i]."
+description: "Element-wise multiplication of two input series."
 ---
 
 ## Summary
 
-Element-wise multiplication of two input series. Produces outReal[i] = inReal0[i] * inReal1[i].
+Element-wise multiplication of two input series.
 
 ## Formula
 

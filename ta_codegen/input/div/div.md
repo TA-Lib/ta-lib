@@ -2,7 +2,7 @@
 
 ## Summary
 
-Element-wise division of two input series. Computes the quotient of corresponding values from two real inputs.
+Element-wise division of two input series.
 
 ## Formula
 
@@ -10,7 +10,7 @@ outReal[i] = inReal0[i] / inReal1[i]
 
 ## Notes
 
-- Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error — the quotient is written as computed.
+- Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.
 
 ## Inputs
 

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Vector arithmetic addition. Outputs the element-wise sum of two input series.
+Element-wise addition of two input series.
 
 ## Formula
 

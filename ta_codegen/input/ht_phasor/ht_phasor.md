@@ -4,9 +4,15 @@
 
 Hilbert Transform indicator that decomposes the price series into its in-phase (I) and quadrature (Q) phasor components. Shares the same detrend/Hilbert machinery as the other HT_* cycle functions.
 
+This function is meant for building your own cycle analysis on top of the raw phasor, not as a ready-made signal.
+
 ## Formula
 
 Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
+
+## Interpretation
+
+I and Q are the Cartesian coordinates of the rotating cycle vector — the same phasor `HT_DCPHASE` reports as an angle (`atan(Q/I)`), exposed here raw and unsmoothed, one step before that estimate. There's no standalone I/Q trading rule from Ehlers; the practical signals sit downstream, in `HT_DCPERIOD`, `HT_DCPHASE`, `HT_SINE`, and `HT_TRENDMODE`, which each smooth this same decomposition into a usable period, phase, or trend/cycle read.
 
 ## Inputs
 

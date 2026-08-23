@@ -6,11 +6,12 @@ Returns the absolute input indices of the lowest and highest values within each 
 
 ## Formula
 
-For each t: outMaxIdx[t] = argmax_{i in [t-N+1, t]} inReal[i]; outMinIdx[t] = argmin over the same window (N = optInTimePeriod).
+outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])  
+outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
 
 ## Notes
 
-- When several bars in a window share the extreme value, which bar's index is returned is not guaranteed to be a specific one of the tied bars.
+- When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.
 
 ## Inputs
 

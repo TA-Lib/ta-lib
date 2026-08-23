@@ -2,7 +2,11 @@
 
 ## Summary
 
-Hilbert Transform classifier that labels each bar as trending (1) or cycling (0). Reuses the MAMA dominant-cycle/phase DSP plus a SineWave/trendline test to decide the market mode. 1 = trending market (favor trend-following); 0 = cycle/mean-reverting mode.
+Hilbert Transform classifier that labels each bar 1 (trending — favor trend-following) or 0 (cycling — favor mean-reversion). Built from the same MAMA dominant-cycle/phase DSP plus a SineWave/trendline test used across the other HT_* functions.
+
+## Interpretation
+
+Mean-reversion is the trading assumption that price will swing back toward its recent average rather than keep moving in one direction — instead of chasing a breakout, it buys near the low end of the range and sells near the high end, betting on a reversal rather than continuation. A 0 reading is HT_TRENDMODE's signal that this bar fits that regime: price is oscillating rather than trending, so fading the extremes is expected to hold up better than following the move.
 
 ## Inputs
 
