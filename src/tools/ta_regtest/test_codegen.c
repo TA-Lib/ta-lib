@@ -4867,6 +4867,7 @@ typedef struct {
     double       maxFmaRel;   /* largest FMA-tolerated relative divergence observed (evidence vs the 1e-9 contract) */
     long long    stochRsiSkipped; /* STOCHRSI cases skipped: intentionally diverges from 0.6.4 (issue #107) */
     long long    varianceSkipped; /* VAR/STDDEV/BBANDS cases skipped: cancellation-free variance re-baseline (issue #118) */
+    long long    xySkipped;      /* CORREL/BETA cases skipped: same re-baseline over two series (issue #242) */
     int          reportedThisFunc;
     int          funcsWithFailures, funcsBenign, funcsSkipped;
     int          serverRestarts;
@@ -5246,6 +5247,12 @@ static const TA_Fuzz064Tol FUZZ_064_TOL[] = {
     { "VAR",                 TOL_REL_OUT, 1e-9, 0.0 }, /* #118 */
     { "STDDEV",              TOL_REL_OUT, 1e-9, 0.0 }, /* #118 */
     { "BBANDS",              TOL_REL_OUT, 1e-9, 0.0 }, /* #118 */
+    /* #242 the same treatment for the two-series forms. Output-relative: CORREL
+     * is a coefficient in [-1,1] and BETA a ratio of return scales, so neither
+     * is commensurate with the input magnitude. Only well-conditioned windows
+     * reach here -- see fuzz_correl_condition() / fuzz_beta_condition(). */
+    { "CORREL",              TOL_REL_OUT, 4e-9, 0.0 },  /* #242  measured 1.12e-09            */
+    { "BETA",                TOL_REL_OUT, 1e-9, 0.0 },  /* #242  measured 3.08e-10            */
     { "LINEARREG",           TOL_REL_IN, 1e-9, 0.0 },  /* #103 O(1) sliding-sum recurrence   */
     { "LINEARREG_SLOPE",     TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
     { "LINEARREG_INTERCEPT", TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
@@ -5344,6 +5351,147 @@ static double fuzz_variance_condition( const double *x, int n, int period, int s
     if( !(minVar > 0.0) || !(maxAbs > 0.0) ) return HUGE_VAL;
 
     return (maxAbs * maxAbs) / minVar;
+}
+
+/* Conditioning of v0.6.4's one-pass CORREL/BETA form over the windows a case
+ * evaluates (issue #242). Same measure, same reasoning and the same caveat as
+ * fuzz_variance_condition() above: v0.6.4 extracts each sum of squares as
+ * S2 - (S*S)/n, a difference of two ~n*mean^2 quantities, and its running
+ * accumulators carry rounding from every value they ever absorbed -- so the
+ * severity is a property of the CASE, not of any one window. Hence
+ *
+ *     kappa = max|v|^2 / min(window variance)
+ *
+ * over the values the accumulators actually read.
+ *
+ * HUGE_VAL (always skip) is returned for the windows where v0.6.4 does not
+ * merely lose digits but has no answer at all: a flat window, where its
+ * subtraction lands either side of zero, and any window its ABSOLUTE epsilon
+ * guard zeroes. Those are categorical divergences -- v0.6.4 returns exactly 0,
+ * or a correlation outside [-1,1] -- and no numeric tolerance can express them.
+ * They are precisely what #242 fixed, so v0.6.4 is not an oracle there.
+ *
+ * Two-pass on purpose: the test must not reuse either implementation to decide
+ * whether to trust the oracle. */
+#define FUZZ_XY_MAX_KAPPA 1.0e5
+
+/* Shared core: kappa of one series over the windows [first..e], plus the
+ * smallest sum-of-squared-deviations any window reaches (the quantity v0.6.4's
+ * epsilon guard is applied to). Returns 0 when there is nothing to judge. */
+static double fuzz_series_condition(const double *v, int n, int period,
+                                    int first, int e, double *outMinSS)
+{
+    double maxAbs = 0.0, minVar = HUGE_VAL, minSS = HUGE_VAL;
+    int t, j;
+
+    if( outMinSS ) *outMinSS = 0.0;
+    if( period < 2 ) return 0.0;
+    if( first > e || first >= n ) return 0.0;
+
+    for( j = first - period + 1; j <= e && j < n; j++ )
+    {
+        double m = fabs(v[j]);
+        if( m > maxAbs ) maxAbs = m;
+    }
+
+    for( t = first; t <= e && t < n; t++ )
+    {
+        double sum = 0.0, mean, ss = 0.0;
+        for( j = t - period + 1; j <= t; j++ ) sum += v[j];
+        mean = sum / (double)period;
+        for( j = t - period + 1; j <= t; j++ ) { double d = v[j] - mean; ss += d * d; }
+        if( !(ss > 0.0) ) { if( outMinSS ) *outMinSS = 0.0; return HUGE_VAL; }
+        if( ss < minSS ) minSS = ss;
+        if( ss / (double)period < minVar ) minVar = ss / (double)period;
+    }
+    if( !(minVar > 0.0) || !(maxAbs > 0.0) ) return HUGE_VAL;
+    if( outMinSS ) *outMinSS = minSS;
+    return (maxAbs * maxAbs) / minVar;
+}
+
+/* CORREL: v0.6.4 guards the PRODUCT of the two sums of squares against a fixed
+ * TA_EPSILON, so the pair is what decides whether it returns a number at all. */
+static double fuzz_correl_condition(const double *x, const double *y,
+                                    int n, int period, int s, int e)
+{
+    double kx, ky, ssx = 0.0, ssy = 0.0;
+    int first = (s > period - 1) ? s : period - 1;
+
+    kx = fuzz_series_condition(x, n, period, first, e, &ssx);
+    if( kx == HUGE_VAL ) return HUGE_VAL;
+    ky = fuzz_series_condition(y, n, period, first, e, &ssy);
+    if( ky == HUGE_VAL ) return HUGE_VAL;
+    if( kx == 0.0 && ky == 0.0 ) return 0.0;
+    /* v0.6.4: if( !TA_IS_ZERO_OR_NEG(ssX*ssY) ) ... else 0.0 */
+    if( ssx * ssy < 1e-14 ) return HUGE_VAL;
+    return (kx > ky) ? kx : ky;
+}
+
+/* BETA: same, over the RETURNS (its regressor), with BETA's own zero-price
+ * guard, and against its own absolute guard on n*S_xx - S_x*S_x. Both series
+ * matter: the denominator cancels on x, the numerator on x and y alike. */
+static double fuzz_beta_condition(const double *p0, const double *p1,
+                                  int n, int period, int s, int e)
+{
+    static double rx[MAX_NB_TEST_ELEMENT], ry[MAX_NB_TEST_ELEMENT];
+    double kx, ky, ssx = 0.0, ssy = 0.0;
+    int first, j;
+
+    if( n > MAX_NB_TEST_ELEMENT || n < 2 ) return HUGE_VAL;
+    /* BETA's lookback is optInTimePeriod: the first output at bar t reads the
+     * `period` returns ending at t, and a return needs its predecessor. */
+    rx[0] = ry[0] = 0.0;
+    for( j = 1; j < n; j++ )
+    {
+        rx[j] = ( p0[j-1] > 1e-14 || p0[j-1] < -1e-14 )
+                ? ( p0[j] - p0[j-1] ) / p0[j-1] : 0.0;
+        ry[j] = ( p1[j-1] > 1e-14 || p1[j-1] < -1e-14 )
+                ? ( p1[j] - p1[j-1] ) / p1[j-1] : 0.0;
+    }
+    first = (s > period) ? s : period;
+    if( first > e || first >= n ) return 0.0;
+
+    kx = fuzz_series_condition(rx, n, period, first, e, &ssx);
+    if( kx == HUGE_VAL ) return HUGE_VAL;
+    ky = fuzz_series_condition(ry, n, period, first, e, &ssy);
+    if( ky == HUGE_VAL ) return HUGE_VAL;
+    if( kx == 0.0 && ky == 0.0 ) return 0.0;
+    /* v0.6.4: if( !TA_IS_ZERO(n*S_xx - S_x*S_x) ) ... else 0.0, and that
+     * quantity is exactly period * ssx. */
+    if( (double)period * ssx < 1e-14 ) return HUGE_VAL;
+    if( ky > kx ) kx = ky;
+
+    /* The NUMERATOR cancels on its own axis, and the denominator measure above
+     * is blind to it: a window where the two return series are uncorrelated has
+     * a perfectly well-conditioned S_xx and a slope that is pure residue --
+     * 1e-16 against a natural scale of order 1, with the two versions disagreeing
+     * on its SIGN. Judging that as a relative divergence is meaningless.
+     *
+     * The measure is the Cauchy-Schwarz ceiling over what survives, which is
+     * exactly 1/|correlation| on the window: 1 when the returns move together,
+     * unbounded as they decouple. So this reads "skip where the two series are
+     * essentially uncorrelated", and at the shared 1e5 threshold that is
+     * |r| < 1e-5. CORREL needs no such term -- its OUTPUT is r, so a window
+     * this measure would reject is one its own epsilon-guard check already has.
+     */
+    for( j = first; j <= e && j < n; j++ )
+    {
+        double mx = 0.0, my = 0.0, sxx = 0.0, syy = 0.0, sxy = 0.0, ceil_, kn;
+        int t;
+        for( t = j - period + 1; t <= j; t++ ) { mx += rx[t]; my += ry[t]; }
+        mx /= (double)period; my /= (double)period;
+        for( t = j - period + 1; t <= j; t++ )
+        {
+            double dx = rx[t] - mx, dy = ry[t] - my;
+            sxx += dx * dx; syy += dy * dy; sxy += dx * dy;
+        }
+        if( sxx <= 0.0 || syy <= 0.0 ) return HUGE_VAL;
+        ceil_ = sqrt( sxx * syy );
+        if( !(fabs(sxy) > 0.0) ) return HUGE_VAL;
+        kn = ceil_ / fabs(sxy);
+        if( kn > kx ) kx = kn;
+    }
+    return kx;
 }
 
 /* Returns 0 if a REAL divergence, 1 if benign (+0.0 vs -0.0), 2 if tolerated
@@ -5551,6 +5699,20 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                            strcmp(funcInfo->name, "STDDEV") == 0 ||
                            strcmp(funcInfo->name, "BBANDS") == 0 );
 
+    /* CORREL/BETA intentionally diverge from 0.6.4 (issue #242), for the same
+     * reason and by the same remedy as #118 above: their sums moved off the
+     * cancelling one-pass form onto shifted data with a reseed, and their fixed
+     * TA_EPSILON guards became scale-relative. On an ILL-CONDITIONED window
+     * 0.6.4 does not merely round differently -- it returned exactly 0, or a
+     * correlation outside [-1,1] -- so it is the wrong oracle there. Skipped
+     * per-case below on fuzz_correl_condition()/fuzz_beta_condition(); every
+     * better-conditioned case IS compared, at the manifest's output-relative
+     * bound. The new behaviour is pinned by test_correl.c / test_beta.c against
+     * oracles sharing no code with either version, stays bitwise cross-language
+     * (--xlang-hash) and batch==stream (stream_verify). */
+    int isCorrelFunc = ( strcmp(funcInfo->name, "CORREL") == 0 );
+    int isBetaFunc   = ( strcmp(funcInfo->name, "BETA")   == 0 );
+
     for( i = 0; i < funcInfo->nbInput; i++ )
     {
         const TA_InputParameterInfo *ii;
@@ -5674,6 +5836,17 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 {
                     double kappa = fuzz_variance_condition( g_fzBuf[3], n, (int)vec[k][0], s, e );
                     if( kappa > FUZZ_VAR_MAX_KAPPA ) { ctx->varianceSkipped++; continue; }
+                }
+
+                /* #242: the same carve-out over two series. Both take
+                 * (inReal0, inReal1) = (close, volume) per setup_inputs, and
+                 * optInTimePeriod is opt 0 for both. */
+                if( isCorrelFunc || isBetaFunc )
+                {
+                    double kappa = isCorrelFunc
+                        ? fuzz_correl_condition( g_fzBuf[3], g_fzBuf[4], n, (int)vec[k][0], s, e )
+                        : fuzz_beta_condition  ( g_fzBuf[3], g_fzBuf[4], n, (int)vec[k][0], s, e );
+                    if( kappa > FUZZ_XY_MAX_KAPPA ) { ctx->xySkipped++; continue; }
                 }
 
                 TA_Integer curBeg = 0, curNb = 0;
@@ -5821,6 +5994,9 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     if( ctx.varianceSkipped > 0 )
         printf("variance-skipped: %lld VAR/STDDEV/BBANDS case(s) ill-conditioned for 0.6.4 (kappa > %.0e, issue #118); every better-conditioned case was compared\n",
                ctx.varianceSkipped, (double)FUZZ_VAR_MAX_KAPPA);
+    if( ctx.xySkipped > 0 )
+        printf("correl/beta-skipped: %lld CORREL/BETA case(s) ill-conditioned for 0.6.4 (kappa > %.0e, issue #242); every better-conditioned case was compared\n",
+               ctx.xySkipped, (double)FUZZ_XY_MAX_KAPPA);
     if( ctx.serverRestarts )
         printf("oracle restarts (recovered crashes): %d\n", ctx.serverRestarts);
     if( ctx.comparisons == 0 )
