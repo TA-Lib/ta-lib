@@ -748,6 +748,7 @@ static ErrorNumber testTAFunction_ALL( void )
    /* CORREL numerical robustness (#242). Separate from the per_hl group so the
     * probes can be reached on their own; --function=CORREL matches both. */
    DO_TEST( test_func_correl,   "CORREL/NUMERICS" );
+   DO_TEST( test_func_beta,     "BETA/NUMERICS" );
    DO_TEST( test_func_avgdev,   "AVGDEV" );
    DO_TEST( test_func_bbands,   "BBANDS" );
    DO_TEST( test_func_period_boundary, "PERIOD1/BOUNDARY" );
