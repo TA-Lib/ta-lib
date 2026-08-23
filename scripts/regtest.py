@@ -494,6 +494,50 @@ def main():
             if direct_rc != 0 and rc == 0:
                 rc = direct_rc
 
+    # Name what this pipeline did NOT run.
+    #
+    # CI decomposes the cross-language legs into their own jobs, so this script
+    # is not a superset of CI even when every step above passes. A run that says
+    # nothing here reads exactly like one that ran everything and agreed -- the
+    # same failure mode the codegen leg avoids by naming its skips ("no
+    # frozen-reference baseline (post-cutover): ...") instead of omitting them
+    # silently.
+    #
+    # Scope: only the legs THIS pipeline can run and didn't. Enumerating every
+    # nightly job here would go stale the first time one is added, so point at
+    # the workflow for the full list rather than copying it.
+    if not no_regtest:
+        skipped = []
+        if not any(a.startswith("--xlang-hash") for a in passthrough):
+            skipped.append((
+                "--xlang-hash",
+                "every language server bitwise vs the in-process C library "
+                "(zero tolerance, all shapes)",
+                "scripts/build.py xlang-hash",
+                "~3 min, 176 functions",
+            ))
+        if not any(a.startswith("--fuzz-064") for a in passthrough):
+            skipped.append((
+                "--fuzz-064",
+                "differential against the frozen v0.6.4 oracle",
+                "scripts/build.py fuzz-064",
+                "",
+            ))
+        if skipped or func_filter or lang_filter:
+            print("\n" + "=" * 60)
+            print("NOT RUN BY THIS PIPELINE (CI runs each as its own job)")
+            print("=" * 60)
+            for flag, what, how, cost in skipped:
+                print(f"  {flag}  --  {what}")
+                print(f"      {how}" + (f"   ({cost})" if cost else ""))
+            if func_filter:
+                print(f"  --function={func_filter} narrowed every step above; "
+                      "CI runs the full corpus.")
+            if lang_filter:
+                print(f"  --language={lang_filter} narrowed every step above; "
+                      "CI runs all four backends.")
+            print("  Full nightly job list: .github/workflows/dev-nightly-tests.yml")
+
     sys.exit(rc)
 
 
