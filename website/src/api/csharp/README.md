@@ -1,16 +1,16 @@
 ---
-title: .NET Core API
-description: "TALib for .NET: a native C# port with no P/Invoke, indicators as methods on a Core instance taking spans, bit-identical to the reference C library."
+title: C# Core API
+description: "TALib: a native C# port with no P/Invoke, indicators as methods on a Core instance taking spans, bit-identical to the reference C library."
 toc: false
 ---
 
 ::: warning Not yet released
-The .NET API is not yet released. Estimated release: **Q1 2027**.
+The C# API is not yet released. Estimated release: **Q1 2027**.
 :::
 
 The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs.
 
-To process a live feed one bar at a time instead of a whole array, see the companion [.NET Streaming API](/api/csharp/stream/).
+To process a live feed one bar at a time instead of a whole array, see the companion [C# Streaming API](/api/csharp/stream/).
 
 ## Calling a function
 
