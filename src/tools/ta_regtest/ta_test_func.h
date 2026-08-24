@@ -30,6 +30,7 @@ ErrorNumber test_func_1in_2out( TA_History *history );
 ErrorNumber test_func_avgdev  ( TA_History *history );
 ErrorNumber test_func_imi     ( TA_History *history );
 ErrorNumber test_func_period_boundary( TA_History *history );
+ErrorNumber test_func_quote_unit( TA_History *history );
 ErrorNumber test_func_mavp    ( TA_History *history );
 ErrorNumber test_func_s_overflow( TA_History *history );
 ErrorNumber test_func_div_zero( TA_History *history );

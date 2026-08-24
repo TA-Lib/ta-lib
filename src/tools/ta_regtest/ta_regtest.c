@@ -785,6 +785,10 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_avgdev,   "AVGDEV" );
    DO_TEST( test_func_bbands,   "BBANDS" );
    DO_TEST( test_func_period_boundary, "PERIOD1/BOUNDARY" );
+   /* Corpus-wide, like the sweep above, so the tag names the property rather
+    * than a function list: changing the quote unit by a power of two must not
+    * change any answer (#253). */
+   DO_TEST( test_func_quote_unit, "QUOTE-UNIT/SCALE" );
    DO_TEST( test_func_mavp,     "MAVP/GROUPING" );
    DO_TEST( test_func_s_overflow, "MATH,ADD,SUB,MULT,DIV" );
    DO_TEST( test_func_div_zero, "DIV,DIVZERO" );

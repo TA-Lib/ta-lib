@@ -43,6 +43,8 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  071626 MF,CC  First version. CMOU (Chande Momentum Oscillator, Unsmoothed).
+ *  082326 MF,CC  Empty-window leg: a window that has gone flat reports 0, not
+ *                the residue its running sums are left holding (#253).
  */
 
 /* Description:
@@ -77,6 +79,7 @@
 #include <math.h>
 
 #include "ta_test_priv.h"
+#include "ta_test_reference.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
 #include "server_verify.h"
@@ -125,6 +128,7 @@ static ErrorNumber test_cmou_oracle( const TA_History *history );
 static ErrorNumber test_cmou_edges( void );
 static ErrorNumber test_cmou_no_unstable_period( const TA_History *history );
 static ErrorNumber test_cmou_range( const TA_History *history );
+static ErrorNumber test_cmou_empty_window( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_cmou( TA_History *history )
@@ -145,6 +149,9 @@ ErrorNumber test_func_cmou( TA_History *history )
    if( retValue != TA_TEST_PASS ) return retValue;
 
    retValue = test_cmou_range( history );
+   if( retValue != TA_TEST_PASS ) return retValue;
+
+   retValue = test_cmou_empty_window();
    if( retValue != TA_TEST_PASS ) return retValue;
 
    return TA_TEST_PASS;
@@ -399,4 +406,82 @@ static ErrorNumber test_cmou_range( const TA_History *history )
    return doRangeTestEx( cmouRangeTestFunction,
                          TA_STABLE_EPSILON, TA_TEST_UNST_NONE,
                          (void *)&param, 1, 0 );
+}
+
+/* A window that has gone completely flat: Su and Sd are both zero, the ratio is
+ * 0/0, and CMOU reports the neutral 0.0.
+ *
+ * The sums cannot recognize that themselves. They are maintained by
+ * add-then-subtract, so once the last real change has rolled out they hold
+ * rounding residue -- of arbitrary sign, and sized by the LARGEST change that
+ * ever passed through rather than by anything current. Su+Sd is then a small
+ * positive number, the guard lets the divide through, and 100*(Su-Sd)/(Su+Sd)
+ * is a ratio of two residues: measured at -400, -120 and +120 on the series
+ * below with the emptiness count removed, against a documented range of
+ * [-100,100]. #253 replaced the old absolute band (which hid this by firing on
+ * anything under 1e-14) with an exact count of flat bars, so this leg is what
+ * holds the count in place.
+ *
+ * One bar of the head is multiplied, because that is what creates the residue:
+ * at x1 every magnitude in the sum is comparable and the additions cancel
+ * exactly, leaving nothing to detect. The sweep covers three magnitudes, two
+ * spike positions and every period from 2 to 30 rather than one tuned cell --
+ * which of them leaves residue is not predictable, and a single cell would be
+ * one rounding accident away from vacuous.
+ */
+static ErrorNumber test_cmou_empty_window( void )
+{
+   enum { N = 260, FLAT_FROM = 140 };
+   static TA_Real close[N], out[N];
+   static const double spike[3] = { 1.0e1, 1.0e3, 1.0e5 };
+   static const int spikeBar[2] = { 40, 60 };
+   TA_Integer begIdx, nbElement;
+   TA_RetCode retCode;
+   int e, b, period, i, k, checks = 0;
+   double p;
+
+   for( e = 0; e < 3; e++ )
+      for( b = 0; b < 2; b++ )
+      {
+         ta_test_ref_lcg_seed( 0x2530C303u );
+         p = 100.0;
+         for( i = 0; i < N; i++ )
+         {
+            if( i < FLAT_FROM )
+               p *= 1.0 + 0.02 * ta_test_ref_lcg_sym();
+            close[i] = ( i == spikeBar[b] ) ? p * spike[e] : p;
+         }
+
+         for( period = 2; period <= 30; period++ )
+         {
+            retCode = TA_CMOU( 0, N-1, close, period, &begIdx, &nbElement, out );
+            if( retCode != TA_SUCCESS || nbElement <= 0 )
+            {
+               printf( "CMOU empty window: retCode = %d, %d output(s) at period %d\n",
+                       (int)retCode, nbElement, period );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+            /* Every bar whose whole window sits inside the flat tail. */
+            for( k = 0; k < nbElement; k++ )
+            {
+               if( begIdx + k - period < FLAT_FROM )
+                  continue;
+               if( out[k] != 0.0 )
+               {
+                  printf( "CMOU empty window: bar %d at period %d reports %.17g."
+                          " Every change in its window is exactly zero, so Su+Sd"
+                          " is zero and the answer is 0.0 -- this is the residue"
+                          " the running sums were left holding (issue #253).\n"
+                          "      (spike x%.0e at bar %d)\n",
+                          begIdx + k, period, out[k], spike[e], spikeBar[b] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+               checks++;
+            }
+         }
+      }
+
+   printf( "  CMOU empty window: %d bar(s) over 6 spike shapes x periods 2..30 report"
+           " 0.0 rather than accumulator residue (issue #253)\n", checks );
+   return TA_TEST_PASS;
 }

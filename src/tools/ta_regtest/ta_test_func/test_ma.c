@@ -36,14 +36,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  112400 MF   First version.
- *  031707 MF   Add TA_MAVP tests.
+ *  112400 MF    First version.
+ *  031707 MF    Add TA_MAVP tests.
+ *  082326 MF,CC KAMA's flat-window efficiency ratio, pinned (#253).
  */
 
 /* Description:
@@ -54,8 +55,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <math.h>
+
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
+#include "ta_test_reference.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
 #include "server_verify.h"
@@ -363,6 +367,69 @@ static TA_Test tableTest[] =
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
 
 /**** Global functions definitions.   ****/
+/* KAMA's efficiency ratio on a window that has stopped moving.
+ *
+ * The ratio is |price(t)-price(t-n)| / (sum of the |1-day changes|), a 0/0 when
+ * nothing moved, and TA-Lib has always answered 1 there -- the fastest
+ * adaptation, so a market that has gone quiet is caught up to rather than
+ * tracked from a distance. It used to reach that answer through TA_IS_ZERO on
+ * the denominator, an absolute band on a sum of price changes, which #253
+ * replaced with an exact count of flat bars.
+ *
+ * Nothing else in the suite can see the difference: the two answers only differ
+ * on a window that is EXACTLY flat, and the sum cannot recognize one itself --
+ * it is maintained by add-then-subtract, so an emptied window leaves it holding
+ * residue whose size is set by the LARGEST change that ever passed through, not
+ * by the current price. That is what the spike below is for. Its magnitude is
+ * load-bearing and was chosen by measurement: at 1e5 the emptied sum holds
+ * residue, the ratio silently becomes 0 -- the SLOWEST adaptation -- and KAMA
+ * ends at 148266 against a price of 91. At 1e4, 1e6 and 1e8 the same series
+ * cancels exactly and dropping the reseed is invisible. A test of this shape is
+ * only as good as the residue it manages to create.
+ */
+static ErrorNumber test_kama_flat_window( void )
+{
+   enum { N = 260, TAIL = 120, PERIOD = 30 };
+   static TA_Real close[N], out[N];
+   TA_Integer begIdx, nbElement;
+   TA_RetCode retCode;
+   double p = 100.0, gap;
+   int i;
+
+   ta_test_ref_lcg_seed( 0x2530A3A4u );
+   for( i = 0; i < N; i++ )
+   {
+      if( i < N - TAIL )
+         p *= 1.0 + 0.02 * ta_test_ref_lcg_sym();
+      close[i] = ( i == 60 ) ? p * 1.0e5 : p;   /* the spike, one bar wide */
+   }
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_KAMA, 0 );
+   retCode = TA_KAMA( 0, N-1, close, PERIOD, &begIdx, &nbElement, out );
+   if( retCode != TA_SUCCESS || nbElement < TAIL )
+   {
+      printf( "KAMA flat window: retCode = %d, %d output(s)\n", (int)retCode, nbElement );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   /* The last TAIL bars are exactly flat, so from the bar where the window has
+    * been flat for a full period the ratio is 1 and the gap to the price closes
+    * by 1-(2/3)^2 each bar: ~90 such bars leave nothing. At the slow ratio it
+    * closes by 1-(2/31)^2 instead, and the spike is still visible at the end. */
+   gap = fabs( out[nbElement-1] - close[N-1] ) / fabs( close[N-1] );
+   if( gap > 1.0e-9 )
+   {
+      printf( "KAMA flat window: after %d exactly flat bars KAMA is %.17g and the"
+              " price is %.17g (gap %.3g of the price).\n"
+              "      A window that has stopped moving must give an efficiency ratio"
+              " of 1, not the residue-dependent answer the running sum holds"
+              " (issue #253).\n",
+              TAIL, out[nbElement-1], close[N-1], gap );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_func_ma( TA_History *history )
 {
    unsigned int i;
@@ -399,6 +466,10 @@ ErrorNumber test_func_ma( TA_History *history )
 	     }
 	  }
    }
+
+   retValue = test_kama_flat_window();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
 
    /* Re-initialize all the unstable period to zero. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );

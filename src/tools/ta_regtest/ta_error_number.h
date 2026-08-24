@@ -447,6 +447,14 @@ typedef enum
   TA_DIVZERO_FLAG_MISSING            = 1613,
   TA_DIVZERO_VACUOUS                 = 1614,
 
+  /* Quote-unit (power-of-two rescale) invariance, corpus-wide (#253). */
+  TA_QUOTE_UNIT_NOT_INVARIANT        = 1620,
+  TA_QUOTE_UNIT_NO_DEGREE            = 1621,
+  TA_QUOTE_UNIT_SHAPE_MOVED          = 1622,
+  TA_QUOTE_UNIT_CALL_FAILED          = 1623,
+  TA_QUOTE_UNIT_OUT_OF_RANGE         = 1624,
+  TA_QUOTE_UNIT_VACUOUS              = 1625,
+
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,
