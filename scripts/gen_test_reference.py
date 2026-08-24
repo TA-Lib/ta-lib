@@ -177,6 +177,18 @@ def linreg_window(y, s, n):
             float(ybar + slope * Fraction(n + 1, 2)))
 
 
+def wma_window(y, s, n):
+    """TA_WMA over y[s .. s+n-1], exactly, then rounded once to double.
+
+    The OLDEST bar of the window carries weight 1 and the newest weight n --
+    read the shipped body rather than guessing, because the opposite convention
+    is equally common in the literature and produces a plausible wrong answer
+    rather than an obviously wrong one. Divider is 1+2+...+n."""
+    fy = [Fraction(v) for v in y[s:s + n]]
+    acc = sum(Fraction(k + 1) * v for k, v in enumerate(fy))
+    return float(acc / Fraction(n * (n + 1), 2))
+
+
 def shifted(v, off):
     return [a + off for a in v]
 
@@ -261,6 +273,20 @@ def build(ds):
         add("ta_test_ref_golden_ladder_p%d_sigma" % p,
             [sigma_window(lad, s, p) for s in range(len(lad) - p + 1)],
             "sliding-sum ladder population sigma, period %d" % p)
+
+    # --- TA_WMA (#255) ------------------------------------------------------
+    # Same three corpora the LINEARREG family is pinned on, because WMA carries
+    # the same never-rebuilt weighted running total and fails on the same
+    # shapes: Wilkinson for conditioning, the ladder for a large print followed
+    # by a level shift.
+    for i, w in enumerate(wnames):
+        add("ta_test_ref_golden_wilkinson_wma_" + w,
+            [wma_window(wseries[i], s, 9) for s in range(len(wseries[i]) - 8)],
+            "TA_WMA over Wilkinson nasty.dat column %s, period 9" % w.upper())
+    for p in LADDER_PERIODS:
+        add("ta_test_ref_golden_ladder_p%d_wma" % p,
+            [wma_window(lad, s, p) for s in range(len(lad) - p + 1)],
+            "TA_WMA over the sliding-sum ladder, period %d" % p)
 
     # --- NIST StRD Norris, exact for the TRANSCRIBED DOUBLES ----------------
     # NIST certifies the fit of the exact decimal data. The doubles this

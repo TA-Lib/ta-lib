@@ -54,8 +54,8 @@ Examples:
 ## The shared numerical-reference battery (issue #251)
 
 `ta_test_reference.{h,c}` holds what `test_stddev.c`, `test_correl.c`,
-`test_beta.c`, `test_bbands.c` and `test_linearreg.c` used to carry a private
-copy of each: the external datasets (NIST StRD Norris and NumAcc1-4,
+`test_beta.c`, `test_bbands.c`, `test_linearreg.c` and `test_wma.c` used to
+carry a private copy of each: the external datasets (NIST StRD Norris and NumAcc1-4,
 Wilkinson's "nasty.dat", the pandas rolling-window adversarial arrays), the
 trusted oracles, and one random-number generator. `test_reference.c`
 (`--function=REFERENCE`) is the battery checking itself and belongs to no
@@ -95,6 +95,7 @@ library mutation cannot reach an oracle-vs-golden comparison):
 | suite | resolution | first leg to fire |
 |---|---|---|
 | `LINEARREG` | 1e-15 | #251 Wilkinson |
+| `WMA` | 1e-12 | #255 Wilkinson goldens (W1) |
 | `CORREL` | 1e-15 | #242 range invariant, then the #251 goldens at 1e-14 |
 | `BBANDS` | 1e-15 | #117 SMA fast-path equivalence |
 | `STDDEV`/`VAR` | 1e-12 | #118 NIST NumAcc1 |

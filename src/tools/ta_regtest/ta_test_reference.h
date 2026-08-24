@@ -122,6 +122,22 @@ void ta_test_ref_linreg( const double *y, int s, int period,
                          double *outSlope, double *outIntercept,
                          double *outFit, double *outForecast );
 
+/* TA_WMA over y[s .. s+period-1], accumulated in double-double.
+ *
+ * The OLDEST bar of the window carries weight 1 and the NEWEST weight `period`
+ * -- taken from the shipped body, not from the literature, where the opposite
+ * convention is equally common and would produce a plausible wrong answer
+ * rather than an obviously wrong one. The divider is 1+2+...+period.
+ *
+ * Every weight is a small exact integer, so k*y is exact through two_prod and
+ * all the conditioning lives in the sum. That is the whole reason this is worth
+ * having: the shipped function carries that sum in a running total which is
+ * never rebuilt (#255), and a same-lineage comparison cannot see the drift.
+ *
+ * period <= 0 returns 0.0. period == 1 returns y[s], matching the shipped
+ * function's documented period-1 arm. */
+double ta_test_ref_wma( const double *y, int s, int period );
+
 /* 1 when every value of the window is bit-identical. Such a window makes a
  * correlation, a slope and an angle undefined, so it is evidence for nothing
  * and callers skip it. */

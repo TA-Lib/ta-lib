@@ -4089,9 +4089,34 @@ fn classify_or_extrema(
         Ok(st) => Ok((None, st)),
         Err(StreamError::Unsupported(ref msg)) if msg.contains("index bookkeeping") => {
             if window_count > 0 || !circs.is_empty() || ctx.counter.is_some() {
-                return Err(StreamError::Unsupported(
-                    "extrema automaton mixed with other buffer forms".into(),
-                ));
+                // Name what actually forced the retry, which of the three
+                // conditions blocks it, and the one authoring mistake that
+                // produces this without being visible in the message.
+                //
+                // "mixed with other buffer forms" alone points at the ring,
+                // and the cause is usually elsewhere: a rescan loop whose
+                // start is read from a NAMED LOCAL rather than written inline.
+                // `match_cursor_anchored_loop` matches `for( j = cursor - E;
+                // j <= cursor; j++ )` and nothing else, so
+                //     windowStart = today - lookbackTotal;
+                //     for( j = windowStart; j <= today; j++ )
+                // is not recognised as a window at all. It still streams for a
+                // body with no CIRCBUF and no counter -- it falls to the
+                // extrema automaton -- so the two spellings are
+                // indistinguishable until a body owning a CIRCBUF (HMA) is
+                // refused here, pointing at the ring it did not cause.
+                return Err(StreamError::Unsupported(format!(
+                    "extrema automaton mixed with other buffer forms \
+                     (windows={window_count}, circbufs={}, counter={}); \
+                     the cached-index pass first failed with: {msg}. \
+                     If this body has a rescan loop, write its start INLINE \
+                     (`for( j = {cursor} - <lookback>; j <= {cursor}; j++ )`) \
+                     rather than through a named local -- only the inline form \
+                     is recognised as a window.",
+                    circs.len(),
+                    ctx.counter.is_some(),
+                    cursor = ctx.cursor,
+                )));
             }
             let ex = build_extrema(
                 ctx.steady_stmts,

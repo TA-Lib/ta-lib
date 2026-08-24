@@ -111,6 +111,45 @@ arithmetic (`+ - * /`), comparison (`< <= > >= == !=`), and boolean (`&& || !`)
 operators; C-style casts (`(double)x`, `(size_t)(n - 1)`); and array indexing. Follow
 the bracing/spacing style of the existing input files.
 
+## Rescan loops: write the window start INLINE
+
+A body that rebuilds a window sum -- the periodic re-anchor `TA_VAR`,
+`TA_CORREL`, `TA_BETA`, the `TA_LINEARREG` family, `TA_WMA` and `TA_HMA` all
+carry -- must name the window start **in the loop init**, not through a local:
+
+```c
+/* YES -- recognised as a rescan window */
+for( j = today - lookbackTotal; j <= today; j++ )
+   periodTotal += inReal[j];
+
+/* NO -- reads well, and is not recognised */
+windowStart = today - lookbackTotal;
+for( j = windowStart; j <= today; j++ )
+   periodTotal += inReal[j];
+```
+
+`streaming.rs`'s `match_cursor_anchored_loop` matches `for( v = <cursor> - E;
+v <= <cursor>; v++ )` and nothing else, and that match is what puts the rescan on
+the stream classifier's primary path. The named form is not recognised as a
+window at all: its index bookkeeping reads a non-index symbol, the classifier
+retries in absolute-index (extrema) mode, and the loop is lowered through a
+synthesised mask ring instead.
+
+**Both spellings work for most functions, which is exactly the problem.** The
+extrema fallback is refused when the body also owns a CIRCBUF, a counter, or
+another window -- so a body that streams today stops streaming the moment one is
+added, and the refusal names the ring rather than the spelling that caused it.
+`TA_HMA` is the live instance: it keeps a CIRCBUF for its de-lagged series, so
+its three fused WMA stages could only be given a re-anchor once their rescans
+were written inline.
+
+The refusal message now says this, and names the cursor for you. If you see
+`extrema automaton mixed with other buffer forms`, check the loop init first.
+
+One case cannot be written inline, and is the reason this is a convention rather
+than a check: `TA_VAR` reads `inReal[windowStart]` later in the same loop, so the
+local is load-bearing there and the function keeps the extrema path deliberately.
+
 ## `ta_defs.h` vocabulary
 
 Beyond plain C, the input files use a small set of TA-Lib macros/functions that the

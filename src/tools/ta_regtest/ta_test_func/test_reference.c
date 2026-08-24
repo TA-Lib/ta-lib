@@ -121,7 +121,8 @@
    TA_TEST_REF_GOLDEN_VAR47721_N + \
    TA_TEST_REF_GOLDEN_VAR52407_N + \
    4 * TA_TEST_REF_WILKINSON_NB_SERIES + \
-   5 * ( TA_TEST_REF_GOLDEN_LADDER_P2_SLOPE_N + \
+   TA_TEST_REF_WILKINSON_NB_SERIES * TA_TEST_REF_GOLDEN_WILKINSON_WMA_X_N + \
+   6 * ( TA_TEST_REF_GOLDEN_LADDER_P2_SLOPE_N + \
          TA_TEST_REF_GOLDEN_LADDER_P5_SLOPE_N + \
          TA_TEST_REF_GOLDEN_LADDER_P14_SLOPE_N + \
          TA_TEST_REF_GOLDEN_LADDER_P30_SLOPE_N ) )
@@ -293,6 +294,9 @@ static ErrorNumber test_reference_goldens( void )
       static const double *const gSig[4] = {
          ta_test_ref_golden_ladder_p2_sigma,  ta_test_ref_golden_ladder_p5_sigma,
          ta_test_ref_golden_ladder_p14_sigma, ta_test_ref_golden_ladder_p30_sigma };
+      static const double *const gWma[4] = {
+         ta_test_ref_golden_ladder_p2_wma,  ta_test_ref_golden_ladder_p5_wma,
+         ta_test_ref_golden_ladder_p14_wma, ta_test_ref_golden_ladder_p30_wma };
 
       for( t = 0; t < TA_TEST_REF_GOLDEN_LADDER_PERIODS_N; t++ )
       {
@@ -316,7 +320,28 @@ static ErrorNumber test_reference_goldens( void )
                          ta_test_ref_stddev( ta_test_ref_ladder, k, period, NULL ),
                          gSig[t][k] );
             if( e != TA_TEST_PASS ) return e;
+            e = ref_cmp( "ladder wma",       k,
+                         ta_test_ref_wma( ta_test_ref_ladder, k, period ),
+                         gWma[t][k] );
+            if( e != TA_TEST_PASS ) return e;
          }
+      }
+   }
+
+   /* --- TA_WMA: Wilkinson (#255) ----------------------------------------- */
+   for( i = 0; i < TA_TEST_REF_WILKINSON_NB_SERIES; i++ )
+   {
+      static const double *const gW[TA_TEST_REF_WILKINSON_NB_SERIES] = {
+         ta_test_ref_golden_wilkinson_wma_x,      ta_test_ref_golden_wilkinson_wma_round,
+         ta_test_ref_golden_wilkinson_wma_big,    ta_test_ref_golden_wilkinson_wma_little,
+         ta_test_ref_golden_wilkinson_wma_huge,   ta_test_ref_golden_wilkinson_wma_tiny,
+         ta_test_ref_golden_wilkinson_wma_zero };
+      for( k = 0; k + 9 <= TA_TEST_REF_WILKINSON_N; k++ )
+      {
+         e = ref_cmp( "wilkinson wma", k,
+                      ta_test_ref_wma( ta_test_ref_wilkinson_series[i], k, 9 ),
+                      gW[i][k] );
+         if( e != TA_TEST_PASS ) return e;
       }
    }
    return TA_TEST_PASS;

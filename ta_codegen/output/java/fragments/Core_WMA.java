@@ -11,6 +11,8 @@
  *  -------------------------------------------------------------------
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  082426 MF,CC Fix #255. Re-anchor the running sums: every 32*period bars,
+ *               and on the bar a large value leaves the window.
  */
 
    /**
@@ -46,6 +48,10 @@
       int outIdx = 0;
       int i = 0;
       int trailingIdx = 0;
+      int j = 0;
+      int rw = 0;
+      int lookbackWin = 0;
+      int barsSinceReseed = 0;
       double periodSum = 0;
       double periodSub = 0;
       double tempReal = 0;
@@ -128,36 +134,97 @@
       outIdx = 0;
       trailingIdx = startIdx - lookbackTotal;
       /* Evaluate the initial periodSum/periodSub and trailingValue. */
+      lookbackWin = optInTimePeriod - 1;
       periodSub = (double)0.0;
       periodSum = periodSub;
       inIdx = trailingIdx;
       i = 1;
       while( inIdx < startIdx ) {
-         tempReal = inReal[inIdx++];
+         tempReal = inReal[inIdx];
+         inIdx += 1;
          periodSub += tempReal;
          periodSum += tempReal * i;
          i += 1;
       }
+      barsSinceReseed = 8 * optInTimePeriod;
       trailingValue = 0.0;
       /* Tight loop for the requested range. */
       while( inIdx <= endIdx ) {
          /* Add the current price bar to the sum
           * who are carried through the iterations.
           */
-         tempReal = inReal[inIdx++];
+         tempReal = inReal[inIdx];
          periodSub += tempReal;
          periodSub -= trailingValue;
          periodSum += tempReal * optInTimePeriod;
+         /* Re-anchor: rebuild both totals from the window itself.
+          *
+          * periodSum and periodSub were running totals that were never
+          * recomputed, so each bar's rounding joined a residue no later bar
+          * could subtract, and its size was set by the largest value the totals
+          * had ever held rather than by the current window. That is the defect
+          * #254 fixed in the LINEARREG family, and `periodSum -= periodSub`
+          * below is the same weight-shifting identity as that family's
+          * `SumXY = SumXY + SumY - period*trailingValue` -- which is why WMA has
+          * it and TA_SMA, whose output lives at its own sum's scale, does not.
+          * Measured before the fix: worst range disagreement 1.41e-08 at 200000
+          * bars against a 1e-10 tier, over the tier from ~10000 bars on ordinary
+          * closes or ~1000 with one large print. After: 1.79e-12, flat in call
+          * length.
+          *
+          * ONE TRIGGER, NOT TWO, AND THE INTERVAL IS 8*period NOT 32. The
+          * LINEARREG family also carries an OUTLIER trigger (rebuild when the
+          * departing value outweighs the window) because for a slope the
+          * interval alone FAILS the tier outright, at 2.38e-10. WMA is not in
+          * that position: its weights are bounded by `period` and its divider is
+          * period*(period+1)/2, which dilutes the residue enough that the
+          * interval alone holds. Swept over periods 2, 3, 4, 14, 50, 200, 1000,
+          * 5000 and 20000 on 60000 bars, clean and with a 1000x print, the worst
+          * is 2.2e-11 -- 4.6x inside the band, and the margin does not thin at
+          * either end of the period range. Measured, the trigger bought 1.4e-11 -> 7e-12 and cost 1.17x
+          * here and 1.65x in TA_HMA, whose three fused stages each pay it. The
+          * shorter interval buys most of the accuracy for ~1.1x instead.
+          *
+          * The rebuild walks the window OLDEST FIRST with the weight counting UP
+          * from 1 -- the priming scan's own order and weighting -- so a
+          * re-anchored bar is bit-identical to the same bar computed by a call
+          * that started there. That identity is what the range-stability
+          * contract measures, and what test_wma.c W2/W3 assert.
+          *
+          * The loop start is written INLINE rather than through a `windowStart`
+          * local: only that form is recognised as a rescan window, which is what
+          * keeps this on the stream classifier's primary path. See
+          * docs/ta_codegen_input_code.md.
+          *
+          * Reading the window is safe when outReal aliases inReal: the outputs
+          * written so far occupy [0, outIdx-1], and the window starts at
+          * startIdx-lookbackTotal+outIdx, which is >= outIdx.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 ) {
+            barsSinceReseed = 8 * optInTimePeriod;
+            periodSub = (double)0.0;
+            periodSum = (double)0.0;
+            rw = 1;
+            for( j = inIdx - lookbackWin; j <= inIdx; j += 1 ) {
+               tempReal = inReal[j];
+               periodSub += tempReal;
+               periodSum += tempReal * rw;
+               rw += 1;
+            }
+         }
          /* Save the trailing value for being substract at
           * the next iteration.
           * (must be saved here just in case outReal and
           *  inReal are the same buffer).
           */
-         trailingValue = inReal[trailingIdx++];
+         trailingValue = inReal[trailingIdx];
+         trailingIdx += 1;
          /* Calculate the WMA for this price bar. */
          outReal[outIdx++] = periodSum / divider;
          /* Prepare the periodSum for the next iteration. */
          periodSum -= periodSub;
+         inIdx += 1;
       }
       /* Set output limits. */
       outNBElement.value = outIdx;
@@ -176,6 +243,10 @@
       int outIdx = 0;
       int i = 0;
       int trailingIdx = 0;
+      int j = 0;
+      int rw = 0;
+      int lookbackWin = 0;
+      int barsSinceReseed = 0;
       double periodSum = 0;
       double periodSub = 0;
       double tempReal = 0;
@@ -214,25 +285,43 @@
       divider = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
       outIdx = 0;
       trailingIdx = startIdx - lookbackTotal;
+      lookbackWin = optInTimePeriod - 1;
       periodSub = (double)0.0;
       periodSum = periodSub;
       inIdx = trailingIdx;
       i = 1;
       while( inIdx < startIdx ) {
-         tempReal = (double)inReal[inIdx++];
+         tempReal = (double)inReal[inIdx];
+         inIdx += 1;
          periodSub += tempReal;
          periodSum += tempReal * i;
          i += 1;
       }
+      barsSinceReseed = 8 * optInTimePeriod;
       trailingValue = 0.0;
       while( inIdx <= endIdx ) {
-         tempReal = (double)inReal[inIdx++];
+         tempReal = (double)inReal[inIdx];
          periodSub += tempReal;
          periodSub -= trailingValue;
          periodSum += tempReal * optInTimePeriod;
-         trailingValue = (double)inReal[trailingIdx++];
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 ) {
+            barsSinceReseed = 8 * optInTimePeriod;
+            periodSub = (double)0.0;
+            periodSum = (double)0.0;
+            rw = 1;
+            for( j = inIdx - lookbackWin; j <= inIdx; j += 1 ) {
+               tempReal = (double)inReal[j];
+               periodSub += tempReal;
+               periodSum += tempReal * rw;
+               rw += 1;
+            }
+         }
+         trailingValue = (double)inReal[trailingIdx];
+         trailingIdx += 1;
          outReal[outIdx++] = periodSum / divider;
          periodSum -= periodSub;
+         inIdx += 1;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
@@ -392,6 +481,8 @@
    public static final class WMA_Stream {
       Core core;
       int optInTimePeriod;
+      int lookbackWin;
+      int barsSinceReseed;
       double periodSum;
       double periodSub;
       double trailingValue;
@@ -399,6 +490,9 @@
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
       double[] ring_trailingIdx_inReal;
+      int winPos_j;
+      int winCap_j;
+      double[] win_j_inReal;
       double cur_outReal;
       int outRangeBegIdx;
       int outRangeCount;
@@ -420,6 +514,8 @@
       WMA_Stream( WMA_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.lookbackWin = other.lookbackWin;
+         this.barsSinceReseed = other.barsSinceReseed;
          this.periodSum = other.periodSum;
          this.periodSub = other.periodSub;
          this.trailingValue = other.trailingValue;
@@ -427,6 +523,9 @@
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
+         this.winPos_j = other.winPos_j;
+         this.winCap_j = other.winCap_j;
+         this.win_j_inReal = other.win_j_inReal.clone();
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -435,6 +534,8 @@
       void copyFrom( WMA_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.lookbackWin = other.lookbackWin;
+         this.barsSinceReseed = other.barsSinceReseed;
          this.periodSum = other.periodSum;
          this.periodSub = other.periodSub;
          this.trailingValue = other.trailingValue;
@@ -446,10 +547,20 @@
          } else {
             this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
          }
+         this.winPos_j = other.winPos_j;
+         this.winCap_j = other.winCap_j;
+         if( this.win_j_inReal != null && this.win_j_inReal.length == other.win_j_inReal.length ) {
+            System.arraycopy( other.win_j_inReal, 0, this.win_j_inReal, 0, other.win_j_inReal.length );
+         } else {
+            this.win_j_inReal = other.win_j_inReal.clone();
+         }
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<WMA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -500,13 +611,21 @@
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("WMA peek: BadParam", RetCode.BadParam);
-         WMA_Stream scratch = new WMA_Stream(this);
+         WMA_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new WMA_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.WMA_StepImpl(scratch, inReal);
          return scratch.cur_outReal;
       }
@@ -530,6 +649,8 @@
    }
    void WMA_StepImpl( WMA_Stream sp, double inReal )
    {
+      int j = 0;
+      int rw = 0;
       double tempReal = 0.0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -538,6 +659,7 @@
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
       }
+      sp.win_j_inReal[sp.winPos_j] = inReal;
       /* Add the current price bar to the sum
        * who are carried through the iterations.
        */
@@ -545,6 +667,62 @@
       sp.periodSub += tempReal;
       sp.periodSub -= sp.trailingValue;
       sp.periodSum += tempReal * sp.optInTimePeriod;
+      /* Re-anchor: rebuild both totals from the window itself.
+       *
+       * periodSum and periodSub were running totals that were never
+       * recomputed, so each bar's rounding joined a residue no later bar
+       * could subtract, and its size was set by the largest value the totals
+       * had ever held rather than by the current window. That is the defect
+       * #254 fixed in the LINEARREG family, and `periodSum -= periodSub`
+       * below is the same weight-shifting identity as that family's
+       * `SumXY = SumXY + SumY - period*trailingValue` -- which is why WMA has
+       * it and TA_SMA, whose output lives at its own sum's scale, does not.
+       * Measured before the fix: worst range disagreement 1.41e-08 at 200000
+       * bars against a 1e-10 tier, over the tier from ~10000 bars on ordinary
+       * closes or ~1000 with one large print. After: 1.79e-12, flat in call
+       * length.
+       *
+       * ONE TRIGGER, NOT TWO, AND THE INTERVAL IS 8*period NOT 32. The
+       * LINEARREG family also carries an OUTLIER trigger (rebuild when the
+       * departing value outweighs the window) because for a slope the
+       * interval alone FAILS the tier outright, at 2.38e-10. WMA is not in
+       * that position: its weights are bounded by `period` and its divider is
+       * period*(period+1)/2, which dilutes the residue enough that the
+       * interval alone holds. Swept over periods 2, 3, 4, 14, 50, 200, 1000,
+       * 5000 and 20000 on 60000 bars, clean and with a 1000x print, the worst
+       * is 2.2e-11 -- 4.6x inside the band, and the margin does not thin at
+       * either end of the period range. Measured, the trigger bought 1.4e-11 -> 7e-12 and cost 1.17x
+       * here and 1.65x in TA_HMA, whose three fused stages each pay it. The
+       * shorter interval buys most of the accuracy for ~1.1x instead.
+       *
+       * The rebuild walks the window OLDEST FIRST with the weight counting UP
+       * from 1 -- the priming scan's own order and weighting -- so a
+       * re-anchored bar is bit-identical to the same bar computed by a call
+       * that started there. That identity is what the range-stability
+       * contract measures, and what test_wma.c W2/W3 assert.
+       *
+       * The loop start is written INLINE rather than through a `windowStart`
+       * local: only that form is recognised as a rescan window, which is what
+       * keeps this on the stream classifier's primary path. See
+       * docs/ta_codegen_input_code.md.
+       *
+       * Reading the window is safe when outReal aliases inReal: the outputs
+       * written so far occupy [0, outIdx-1], and the window starts at
+       * startIdx-lookbackTotal+outIdx, which is >= outIdx.
+       */
+      sp.barsSinceReseed -= 1;
+      if( sp.barsSinceReseed <= 0 ) {
+         sp.barsSinceReseed = 8 * sp.optInTimePeriod;
+         sp.periodSub = (double)0.0;
+         sp.periodSum = (double)0.0;
+         rw = 1;
+         for( j = sp.lookbackWin; j >= 0; j -= 1 ) {
+            tempReal = sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j];
+            sp.periodSub += tempReal;
+            sp.periodSum += tempReal * rw;
+            rw += 1;
+         }
+      }
       /* Save the trailing value for being substract at
        * the next iteration.
        * (must be saved here just in case outReal and
@@ -560,6 +738,10 @@
       if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
       }
+      sp.winPos_j = sp.winPos_j + 1;
+      if( sp.winPos_j >= sp.winCap_j ) {
+         sp.winPos_j = 0;
+      }
    }
    private RetCode WMA_OpenImpl( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
@@ -567,6 +749,10 @@
       int outIdx = 0;
       int i = 0;
       int trailingIdx = 0;
+      int j = 0;
+      int rw = 0;
+      int lookbackWin = 0;
+      int barsSinceReseed = 0;
       double periodSum = 0;
       double periodSub = 0;
       double tempReal = 0;
@@ -598,6 +784,8 @@
             return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
+         sp.lookbackWin = 0;
+         sp.barsSinceReseed = 0;
          sp.periodSum = 0.0;
          sp.periodSub = 0.0;
          sp.trailingValue = 0.0;
@@ -605,6 +793,9 @@
          sp.ringPos_trailingIdx = 0;
          sp.ringCap_trailingIdx = 0;
          sp.ring_trailingIdx_inReal = new double[1];
+         sp.winPos_j = 0;
+         sp.winCap_j = 1;
+         sp.win_j_inReal = new double[1];
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          if( outStride == 0 ) {
@@ -664,36 +855,97 @@
       outIdx = 0;
       trailingIdx = startIdx - lookbackTotal;
       /* Evaluate the initial periodSum/periodSub and trailingValue. */
+      lookbackWin = optInTimePeriod - 1;
       periodSub = (double)0.0;
       periodSum = periodSub;
       inIdx = trailingIdx;
       i = 1;
       while( inIdx < startIdx ) {
-         tempReal = inReal[inIdx++];
+         tempReal = inReal[inIdx];
+         inIdx += 1;
          periodSub += tempReal;
          periodSum += tempReal * i;
          i += 1;
       }
+      barsSinceReseed = 8 * optInTimePeriod;
       trailingValue = 0.0;
       /* Tight loop for the requested range. */
       while( inIdx <= endIdx ) {
          /* Add the current price bar to the sum
           * who are carried through the iterations.
           */
-         tempReal = inReal[inIdx++];
+         tempReal = inReal[inIdx];
          periodSub += tempReal;
          periodSub -= trailingValue;
          periodSum += tempReal * optInTimePeriod;
+         /* Re-anchor: rebuild both totals from the window itself.
+          *
+          * periodSum and periodSub were running totals that were never
+          * recomputed, so each bar's rounding joined a residue no later bar
+          * could subtract, and its size was set by the largest value the totals
+          * had ever held rather than by the current window. That is the defect
+          * #254 fixed in the LINEARREG family, and `periodSum -= periodSub`
+          * below is the same weight-shifting identity as that family's
+          * `SumXY = SumXY + SumY - period*trailingValue` -- which is why WMA has
+          * it and TA_SMA, whose output lives at its own sum's scale, does not.
+          * Measured before the fix: worst range disagreement 1.41e-08 at 200000
+          * bars against a 1e-10 tier, over the tier from ~10000 bars on ordinary
+          * closes or ~1000 with one large print. After: 1.79e-12, flat in call
+          * length.
+          *
+          * ONE TRIGGER, NOT TWO, AND THE INTERVAL IS 8*period NOT 32. The
+          * LINEARREG family also carries an OUTLIER trigger (rebuild when the
+          * departing value outweighs the window) because for a slope the
+          * interval alone FAILS the tier outright, at 2.38e-10. WMA is not in
+          * that position: its weights are bounded by `period` and its divider is
+          * period*(period+1)/2, which dilutes the residue enough that the
+          * interval alone holds. Swept over periods 2, 3, 4, 14, 50, 200, 1000,
+          * 5000 and 20000 on 60000 bars, clean and with a 1000x print, the worst
+          * is 2.2e-11 -- 4.6x inside the band, and the margin does not thin at
+          * either end of the period range. Measured, the trigger bought 1.4e-11 -> 7e-12 and cost 1.17x
+          * here and 1.65x in TA_HMA, whose three fused stages each pay it. The
+          * shorter interval buys most of the accuracy for ~1.1x instead.
+          *
+          * The rebuild walks the window OLDEST FIRST with the weight counting UP
+          * from 1 -- the priming scan's own order and weighting -- so a
+          * re-anchored bar is bit-identical to the same bar computed by a call
+          * that started there. That identity is what the range-stability
+          * contract measures, and what test_wma.c W2/W3 assert.
+          *
+          * The loop start is written INLINE rather than through a `windowStart`
+          * local: only that form is recognised as a rescan window, which is what
+          * keeps this on the stream classifier's primary path. See
+          * docs/ta_codegen_input_code.md.
+          *
+          * Reading the window is safe when outReal aliases inReal: the outputs
+          * written so far occupy [0, outIdx-1], and the window starts at
+          * startIdx-lookbackTotal+outIdx, which is >= outIdx.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 ) {
+            barsSinceReseed = 8 * optInTimePeriod;
+            periodSub = (double)0.0;
+            periodSum = (double)0.0;
+            rw = 1;
+            for( j = inIdx - lookbackWin; j <= inIdx; j += 1 ) {
+               tempReal = inReal[j];
+               periodSub += tempReal;
+               periodSum += tempReal * rw;
+               rw += 1;
+            }
+         }
          /* Save the trailing value for being substract at
           * the next iteration.
           * (must be saved here just in case outReal and
           *  inReal are the same buffer).
           */
-         trailingValue = inReal[trailingIdx++];
+         trailingValue = inReal[trailingIdx];
+         trailingIdx += 1;
          /* Calculate the WMA for this price bar. */
          outReal[outIdx++ * outStride] = periodSum / divider;
          /* Prepare the periodSum for the next iteration. */
          periodSum -= periodSub;
+         inIdx += 1;
       }
       /* Set output limits. */
       outNBElement.value = outIdx;
@@ -706,7 +958,15 @@
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
       System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+      int cap_j = (int)(lookbackWin + 1);
+      if( cap_j < 1 || cap_j > historyLen ) {
+         return RetCode.InternalError;
+      }
+      double[] capWin_j_inReal = new double[cap_j];
+      System.arraycopy(inReal, historyLen - cap_j, capWin_j_inReal, 0, cap_j);
       sp.optInTimePeriod = optInTimePeriod;
+      sp.lookbackWin = lookbackWin;
+      sp.barsSinceReseed = barsSinceReseed;
       sp.periodSum = periodSum;
       sp.periodSub = periodSub;
       sp.trailingValue = trailingValue;
@@ -714,6 +974,9 @@
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+      sp.winPos_j = 0;
+      sp.winCap_j = cap_j;
+      sp.win_j_inReal = capWin_j_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }

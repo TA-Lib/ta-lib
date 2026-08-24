@@ -32,6 +32,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_correl.c \
 	ta_test_func/test_beta.c \
 	ta_test_func/test_linearreg.c \
+	ta_test_func/test_wma.c \
 	ta_test_func/test_reference.c \
 	ta_test_func/test_bbands.c \
 	ta_test_func/test_ma.c \

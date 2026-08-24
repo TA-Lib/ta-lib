@@ -3302,8 +3302,11 @@ static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_St
    if( sv_xtier_ne(a->periodSubFull, b->periodSubFull, z) ) { *w = "periodSubFull"; return 1; }
    if( sv_xtier_ne(a->periodSumFull, b->periodSumFull, z) ) { *w = "periodSumFull"; return 1; }
    if( sv_xtier_ne(a->trailingFull, b->trailingFull, z) ) { *w = "trailingFull"; return 1; }
+   if( a->lookbackFull != b->lookbackFull ) { *w = "lookbackFull"; return 1; }
+   if( a->barsSinceReseedFull != b->barsSinceReseedFull ) { *w = "barsSinceReseedFull"; return 1; }
    if( a->halfPeriod != b->halfPeriod ) { *w = "halfPeriod"; return 1; }
    if( a->sqrtPeriod != b->sqrtPeriod ) { *w = "sqrtPeriod"; return 1; }
+   if( a->ringSize != b->ringSize ) { *w = "ringSize"; return 1; }
    if( sv_xtier_ne(a->dividerHalf, b->dividerHalf, z) ) { *w = "dividerHalf"; return 1; }
    if( sv_xtier_ne(a->dividerSqrt, b->dividerSqrt, z) ) { *w = "dividerSqrt"; return 1; }
    if( sv_xtier_ne(a->periodSubHalf, b->periodSubHalf, z) ) { *w = "periodSubHalf"; return 1; }
@@ -3312,6 +3315,9 @@ static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_St
    if( sv_xtier_ne(a->periodSubSqrt, b->periodSubSqrt, z) ) { *w = "periodSubSqrt"; return 1; }
    if( sv_xtier_ne(a->periodSumSqrt, b->periodSumSqrt, z) ) { *w = "periodSumSqrt"; return 1; }
    if( sv_xtier_ne(a->trailingSqrt, b->trailingSqrt, z) ) { *w = "trailingSqrt"; return 1; }
+   if( a->lookbackHalf != b->lookbackHalf ) { *w = "lookbackHalf"; return 1; }
+   if( a->barsSinceReseedHalf != b->barsSinceReseedHalf ) { *w = "barsSinceReseedHalf"; return 1; }
+   if( a->barsSinceReseedSqrt != b->barsSinceReseedSqrt ) { *w = "barsSinceReseedSqrt"; return 1; }
    if( a->dRing_Idx != b->dRing_Idx ) { *w = "dRing_Idx"; return 1; }
    if( a->maxIdx_dRing != b->maxIdx_dRing ) { *w = "maxIdx_dRing"; return 1; }
    if( a->ringCap_trailingIdxFull != b->ringCap_trailingIdxFull ) { *w = "ringCap_trailingIdxFull"; return 1; }
@@ -3322,6 +3328,14 @@ static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_St
       ib = (b->ringPos_trailingIdxFull + k) % b->ringCap_trailingIdxFull;
       if( sv_xtier_ne(a->ring_trailingIdxFull_inReal[ia], b->ring_trailingIdxFull_inReal[ib], z) ) { *w = "ring_trailingIdxFull_inReal"; return 1; }
    }
+   if( a->winCap_jFull != b->winCap_jFull ) { *w = "winCap_jFull"; return 1; }
+   if( (a->win_jFull_inReal == NULL) != (b->win_jFull_inReal == NULL) ) { *w = "win_jFull_inReal"; return 1; }
+   if( a->win_jFull_inReal ) for( k = 0; k < a->winCap_jFull; k++ )
+   {
+      ia = (a->winPos_jFull + k) % a->winCap_jFull;
+      ib = (b->winPos_jFull + k) % b->winCap_jFull;
+      if( sv_xtier_ne(a->win_jFull_inReal[ia], b->win_jFull_inReal[ib], z) ) { *w = "win_jFull_inReal"; return 1; }
+   }
    if( a->ringCap_trailingIdxHalf != b->ringCap_trailingIdxHalf ) { *w = "ringCap_trailingIdxHalf"; return 1; }
    if( (a->ring_trailingIdxHalf_inReal == NULL) != (b->ring_trailingIdxHalf_inReal == NULL) ) { *w = "ring_trailingIdxHalf_inReal"; return 1; }
    if( a->ring_trailingIdxHalf_inReal ) for( k = 0; k < a->ringCap_trailingIdxHalf; k++ )
@@ -3329,6 +3343,14 @@ static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_St
       ia = (a->ringPos_trailingIdxHalf + k) % a->ringCap_trailingIdxHalf;
       ib = (b->ringPos_trailingIdxHalf + k) % b->ringCap_trailingIdxHalf;
       if( sv_xtier_ne(a->ring_trailingIdxHalf_inReal[ia], b->ring_trailingIdxHalf_inReal[ib], z) ) { *w = "ring_trailingIdxHalf_inReal"; return 1; }
+   }
+   if( a->winCap_jHalf != b->winCap_jHalf ) { *w = "winCap_jHalf"; return 1; }
+   if( (a->win_jHalf_inReal == NULL) != (b->win_jHalf_inReal == NULL) ) { *w = "win_jHalf_inReal"; return 1; }
+   if( a->win_jHalf_inReal ) for( k = 0; k < a->winCap_jHalf; k++ )
+   {
+      ia = (a->winPos_jHalf + k) % a->winCap_jHalf;
+      ib = (b->winPos_jHalf + k) % b->winCap_jHalf;
+      if( sv_xtier_ne(a->win_jHalf_inReal[ia], b->win_jHalf_inReal[ib], z) ) { *w = "win_jHalf_inReal"; return 1; }
    }
    if( a->cbSize_dRing != b->cbSize_dRing ) { *w = "cbSize_dRing"; return 1; }
    if( (a->cb_dRing == NULL) != (b->cb_dRing == NULL) ) { *w = "cb_dRing"; return 1; }
@@ -5227,6 +5249,8 @@ static int sv_steq_TA_WMA( const struct TA_WMA_Stream *a, const struct TA_WMA_St
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->lookbackWin != b->lookbackWin ) { *w = "lookbackWin"; return 1; }
+   if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
    if( sv_xtier_ne(a->periodSum, b->periodSum, z) ) { *w = "periodSum"; return 1; }
    if( sv_xtier_ne(a->periodSub, b->periodSub, z) ) { *w = "periodSub"; return 1; }
    if( sv_xtier_ne(a->trailingValue, b->trailingValue, z) ) { *w = "trailingValue"; return 1; }
@@ -5238,6 +5262,14 @@ static int sv_steq_TA_WMA( const struct TA_WMA_Stream *a, const struct TA_WMA_St
       ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
       ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
       if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   }
+   if( a->winCap_j != b->winCap_j ) { *w = "winCap_j"; return 1; }
+   if( (a->win_j_inReal == NULL) != (b->win_j_inReal == NULL) ) { *w = "win_j_inReal"; return 1; }
+   if( a->win_j_inReal ) for( k = 0; k < a->winCap_j; k++ )
+   {
+      ia = (a->winPos_j + k) % a->winCap_j;
+      ib = (b->winPos_j + k) % b->winCap_j;
+      if( sv_xtier_ne(a->win_j_inReal[ia], b->win_j_inReal[ib], z) ) { *w = "win_j_inReal"; return 1; }
    }
    return 0;
 }

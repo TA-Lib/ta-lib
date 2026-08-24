@@ -5318,6 +5318,15 @@ static const TA_Fuzz064Tol FUZZ_064_TOL[] = {
     { "LINEARREG_INTERCEPT", TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
     { "LINEARREG_ANGLE",     TOL_REL_IN, 1e-9, 0.5 },  /* #103 bounded degrees -> capped 0.5 */
     { "TSF",                 TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
+    /* #255 TA_WMA's weighted running totals are re-anchored every 8*period
+     * bars. Input-relative, like the LINEARREG family and for the same reason:
+     * WMA's output is a convex combination of the window, so it lives on the
+     * input's magnitude. STOCH and STOCHF are here only because they DISPATCH
+     * to it -- their %K/%D smoothing runs TA_MAType_WMA in the fuzz vectors --
+     * which is the same way APO and PPO acquired rows in ta_test_legacy.c. */
+    { "WMA",                 TOL_REL_IN, 1e-9, 0.0 },  /* #255                               */
+    { "STOCH",               TOL_REL_IN, 1e-9, 0.0 },  /* #255  via TA_MAType_WMA            */
+    { "STOCHF",              TOL_REL_IN, 1e-9, 0.0 },  /* #255  via TA_MAType_WMA            */
     { "IMI",                 TOL_NAN_TO, 50.0, 0.0 },  /* #112 all-flat window 0/0 -> NaN, now 50.0 */
 };
 

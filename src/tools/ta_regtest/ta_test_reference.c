@@ -351,6 +351,28 @@ static ta_dd dd_sqrt( ta_dd a )
  * than relying on either.)
  * ========================================================================= */
 
+double ta_test_ref_wma( const double *y, int s, int period )
+{
+   ta_dd acc;
+   double divider;
+   int j;
+
+   if( period <= 0 ) return 0.0;
+   if( period == 1 ) return y[s];
+
+   /* 1+2+...+period. Formed in double because the int product overflows
+    * int32 at period >= 46341 -- the same trap #142 found in the shipped
+    * body, and an oracle that hit it would be wrong in exactly the way it
+    * exists to catch. */
+   divider = (double)period * ( (double)period + 1.0 ) / 2.0;
+
+   acc = dd_zero();
+   for( j = 0; j < period; j++ )
+      acc = dd_add( acc, dd_two_prod( y[s+j], (double)( j + 1 ) ) );
+
+   return dd_div_d( acc, divider ).hi;
+}
+
 int ta_test_ref_window_is_constant( const double *v, int s, int period )
 {
    int j;

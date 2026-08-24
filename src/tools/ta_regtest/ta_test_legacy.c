@@ -91,8 +91,11 @@
  *
  *   (b) an algorithm deliberately changed after v0.6.4 and pinned elsewhere:
  *       the cancellation-free variance form (#118: VAR, STDDEV, BBANDS), the
- *       same treatment applied to CORREL and BETA (#242), and the O(1)
- *       sliding-sum LINEARREG family (#103: LINEARREG*, TSF).
+ *       same treatment applied to CORREL and BETA (#242), the O(1)
+ *       sliding-sum LINEARREG family (#103: LINEARREG*, TSF), and TA_WMA's
+ *       re-anchored weighted totals (#255), which APO and PPO inherit through
+ *       TA_MA(TA_MAType_WMA) -- they are the only two rows here that move for a
+ *       change to a function they merely dispatch to.
  *
  * Note what is NOT here and would be under a blanket contract bound: CCI (#7),
  * IMI (#112), KAMA, MACD, MACDEXT, APO, PPO, STOCHF and the rest of the
@@ -142,6 +145,8 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "TSF",                 2e-11 },  /* #103  measured 3.42e-12             */
    { "LINEARREG",           1e-11 },  /* #103  measured 3.07e-12             */
    { "LINEARREG_INTERCEPT", 1e-11 },  /* #103  measured 3.21e-12             */
+   { "APO",                 1e-13 },  /* #255  measured 4.26e-14            */
+   { "PPO",                 1e-13 },  /* #255  measured 3.90e-14            */
    { "LINEARREG_SLOPE",     2e-12 },  /* #103  measured 3.49e-13             */
 
    /* --- (a) explicit fma() adoption, PR #96 ------------------------------

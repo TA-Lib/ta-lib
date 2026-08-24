@@ -122,6 +122,17 @@ public partial class Core
       double fullOut = 0;
       double halfOut = 0;
       double diffReal = 0;
+      int jFull = 0;
+      int jHalf = 0;
+      int q = 0;
+      int rw = 0;
+      int ringWalk = 0;
+      int lookbackFull = 0;
+      int lookbackHalf = 0;
+      int barsSinceReseedFull = 0;
+      int barsSinceReseedHalf = 0;
+      int barsSinceReseedSqrt = 0;
+      double tempReal2 = 0;
       double[] dRing;
       int dRing_Idx = 0;
       int maxIdx_dRing = (50)-1;
@@ -198,17 +209,20 @@ public partial class Core
       /* Prime the full-period WMA over the optInTimePeriod-1 bars before
        * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
        */
+      lookbackFull = optInTimePeriod - 1;
       periodSubFull = 0.0;
       periodSumFull = 0.0;
-      trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+      trailingIdxFull = wmaStartIdx - lookbackFull;
       i = trailingIdxFull;
       w = 1;
       while( i < wmaStartIdx ) {
-         tempReal = inReal[i++];
+         tempReal = inReal[i];
+         i += 1;
          periodSubFull += tempReal;
          periodSumFull += tempReal * w;
          w += 1;
       }
+      barsSinceReseedFull = 8 * optInTimePeriod;
       trailingFull = 0.0;
       outIdx = 0;
       /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
@@ -228,7 +242,21 @@ public partial class Core
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
             periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = inReal[trailingIdxFull++];
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
+                  tempReal2 = inReal[jFull];
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = inReal[trailingIdxFull];
+            trailingIdxFull += 1;
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
             outReal[outIdx++] = 2.0 * tempReal - fullOut;
@@ -240,17 +268,20 @@ public partial class Core
          dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
          dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
          /* Prime the half-period WMA the same way. */
+         lookbackHalf = halfPeriod - 1;
          periodSubHalf = 0.0;
          periodSumHalf = 0.0;
-         trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+         trailingIdxHalf = wmaStartIdx - lookbackHalf;
          i = trailingIdxHalf;
          w = 1;
          while( i < wmaStartIdx ) {
-            tempReal = inReal[i++];
+            tempReal = inReal[i];
+            i += 1;
             periodSubHalf += tempReal;
             periodSumHalf += tempReal * w;
             w += 1;
          }
+         barsSinceReseedHalf = 8 * halfPeriod;
          trailingHalf = 0.0;
          /* The de-lagged value computed at bar t is consumed as the outer WMA's
           * trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
@@ -274,13 +305,41 @@ public partial class Core
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
             periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = inReal[trailingIdxFull++];
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
+                  tempReal2 = inReal[jFull];
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = inReal[trailingIdxFull];
+            trailingIdxFull += 1;
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
             periodSubHalf += tempReal;
             periodSubHalf -= trailingHalf;
             periodSumHalf += tempReal * halfPeriod;
-            trailingHalf = inReal[trailingIdxHalf++];
+            barsSinceReseedHalf -= 1;
+            if( barsSinceReseedHalf <= 0 ) {
+               barsSinceReseedHalf = 8 * halfPeriod;
+               periodSubHalf = 0.0;
+               periodSumHalf = 0.0;
+               rw = 1;
+               for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
+                  tempReal2 = inReal[jHalf];
+                  periodSubHalf += tempReal2;
+                  periodSumHalf += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingHalf = inReal[trailingIdxHalf];
+            trailingIdxHalf += 1;
             halfOut = periodSumHalf / dividerHalf;
             periodSumHalf -= periodSubHalf;
             diffReal = 2.0 * halfOut - fullOut;
@@ -291,6 +350,7 @@ public partial class Core
             dRing_Idx++;
             if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
          }
+         barsSinceReseedSqrt = 8 * sqrtPeriod;
          /* Steady state: one pass, three rolling WMAs. Writes trail every read by
           * at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
           * stays safe.
@@ -300,19 +360,73 @@ public partial class Core
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
             periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = inReal[trailingIdxFull++];
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
+                  tempReal2 = inReal[jFull];
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = inReal[trailingIdxFull];
+            trailingIdxFull += 1;
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
             periodSubHalf += tempReal;
             periodSubHalf -= trailingHalf;
             periodSumHalf += tempReal * halfPeriod;
-            trailingHalf = inReal[trailingIdxHalf++];
+            barsSinceReseedHalf -= 1;
+            if( barsSinceReseedHalf <= 0 ) {
+               barsSinceReseedHalf = 8 * halfPeriod;
+               periodSubHalf = 0.0;
+               periodSumHalf = 0.0;
+               rw = 1;
+               for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
+                  tempReal2 = inReal[jHalf];
+                  periodSubHalf += tempReal2;
+                  periodSumHalf += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingHalf = inReal[trailingIdxHalf];
+            trailingIdxHalf += 1;
             halfOut = periodSumHalf / dividerHalf;
             periodSumHalf -= periodSubHalf;
             diffReal = 2.0 * halfOut - fullOut;
             periodSubSqrt += diffReal;
             periodSubSqrt -= trailingSqrt;
             periodSumSqrt += diffReal * sqrtPeriod;
+            /* The outer WMA consumes a DERIVED series that is never
+             * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+             * the oldest slot (the one about to expire) and diffReal is the
+             * newest value, which together are the whole window. Oldest first,
+             * weight counting up from 1 -- the priming order above.
+             */
+            barsSinceReseedSqrt -= 1;
+            if( barsSinceReseedSqrt <= 0 ) {
+               barsSinceReseedSqrt = 8 * sqrtPeriod;
+               periodSubSqrt = 0.0;
+               periodSumSqrt = 0.0;
+               rw = 1;
+               ringWalk = dRing_Idx;
+               for( q = 0; q < ringSize; q += 1 ) {
+                  tempReal2 = dRing[ringWalk];
+                  periodSubSqrt += tempReal2;
+                  periodSumSqrt += tempReal2 * rw;
+                  rw += 1;
+                  ringWalk += 1;
+                  if( ringWalk >= ringSize ) {
+                     ringWalk = 0;
+                  }
+               }
+               periodSubSqrt += diffReal;
+               periodSumSqrt += diffReal * sqrtPeriod;
+            }
             trailingSqrt = dRing[dRing_Idx];
             dRing[dRing_Idx] = diffReal;
             dRing_Idx++;
@@ -363,6 +477,17 @@ public partial class Core
       double fullOut = 0;
       double halfOut = 0;
       double diffReal = 0;
+      int jFull = 0;
+      int jHalf = 0;
+      int q = 0;
+      int rw = 0;
+      int ringWalk = 0;
+      int lookbackFull = 0;
+      int lookbackHalf = 0;
+      int barsSinceReseedFull = 0;
+      int barsSinceReseedHalf = 0;
+      int barsSinceReseedSqrt = 0;
+      double tempReal2 = 0;
       double[] dRing;
       int dRing_Idx = 0;
       int maxIdx_dRing = (50)-1;
@@ -401,17 +526,20 @@ public partial class Core
       }
       wmaStartIdx = startIdx - lookbackSqrt;
       dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
+      lookbackFull = optInTimePeriod - 1;
       periodSubFull = 0.0;
       periodSumFull = 0.0;
-      trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+      trailingIdxFull = wmaStartIdx - lookbackFull;
       i = trailingIdxFull;
       w = 1;
       while( i < wmaStartIdx ) {
-         tempReal = (double)inReal[i++];
+         tempReal = (double)inReal[i];
+         i += 1;
          periodSubFull += tempReal;
          periodSumFull += tempReal * w;
          w += 1;
       }
+      barsSinceReseedFull = 8 * optInTimePeriod;
       trailingFull = 0.0;
       outIdx = 0;
       if( optInTimePeriod == 2 || optInTimePeriod == 3 ) {
@@ -420,7 +548,21 @@ public partial class Core
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
             periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = (double)inReal[trailingIdxFull++];
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
+                  tempReal2 = (double)inReal[jFull];
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = (double)inReal[trailingIdxFull];
+            trailingIdxFull += 1;
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
             outReal[outIdx++] = 2.0 * tempReal - fullOut;
@@ -428,17 +570,20 @@ public partial class Core
       } else {
          dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
          dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
+         lookbackHalf = halfPeriod - 1;
          periodSubHalf = 0.0;
          periodSumHalf = 0.0;
-         trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+         trailingIdxHalf = wmaStartIdx - lookbackHalf;
          i = trailingIdxHalf;
          w = 1;
          while( i < wmaStartIdx ) {
-            tempReal = (double)inReal[i++];
+            tempReal = (double)inReal[i];
+            i += 1;
             periodSubHalf += tempReal;
             periodSumHalf += tempReal * w;
             w += 1;
          }
+         barsSinceReseedHalf = 8 * halfPeriod;
          trailingHalf = 0.0;
          ringSize = sqrtPeriod - 1;
          if( ringSize < 1 ) return RetCode.InternalError;
@@ -454,13 +599,41 @@ public partial class Core
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
             periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = (double)inReal[trailingIdxFull++];
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
+                  tempReal2 = (double)inReal[jFull];
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = (double)inReal[trailingIdxFull];
+            trailingIdxFull += 1;
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
             periodSubHalf += tempReal;
             periodSubHalf -= trailingHalf;
             periodSumHalf += tempReal * halfPeriod;
-            trailingHalf = (double)inReal[trailingIdxHalf++];
+            barsSinceReseedHalf -= 1;
+            if( barsSinceReseedHalf <= 0 ) {
+               barsSinceReseedHalf = 8 * halfPeriod;
+               periodSubHalf = 0.0;
+               periodSumHalf = 0.0;
+               rw = 1;
+               for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
+                  tempReal2 = (double)inReal[jHalf];
+                  periodSubHalf += tempReal2;
+                  periodSumHalf += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingHalf = (double)inReal[trailingIdxHalf];
+            trailingIdxHalf += 1;
             halfOut = periodSumHalf / dividerHalf;
             periodSumHalf -= periodSubHalf;
             diffReal = 2.0 * halfOut - fullOut;
@@ -471,24 +644,73 @@ public partial class Core
             dRing_Idx++;
             if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
          }
+         barsSinceReseedSqrt = 8 * sqrtPeriod;
          for( today = startIdx; today <= endIdx; today += 1 ) {
             tempReal = (double)inReal[today];
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
             periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = (double)inReal[trailingIdxFull++];
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
+                  tempReal2 = (double)inReal[jFull];
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = (double)inReal[trailingIdxFull];
+            trailingIdxFull += 1;
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
             periodSubHalf += tempReal;
             periodSubHalf -= trailingHalf;
             periodSumHalf += tempReal * halfPeriod;
-            trailingHalf = (double)inReal[trailingIdxHalf++];
+            barsSinceReseedHalf -= 1;
+            if( barsSinceReseedHalf <= 0 ) {
+               barsSinceReseedHalf = 8 * halfPeriod;
+               periodSubHalf = 0.0;
+               periodSumHalf = 0.0;
+               rw = 1;
+               for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
+                  tempReal2 = (double)inReal[jHalf];
+                  periodSubHalf += tempReal2;
+                  periodSumHalf += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingHalf = (double)inReal[trailingIdxHalf];
+            trailingIdxHalf += 1;
             halfOut = periodSumHalf / dividerHalf;
             periodSumHalf -= periodSubHalf;
             diffReal = 2.0 * halfOut - fullOut;
             periodSubSqrt += diffReal;
             periodSubSqrt -= trailingSqrt;
             periodSumSqrt += diffReal * sqrtPeriod;
+            barsSinceReseedSqrt -= 1;
+            if( barsSinceReseedSqrt <= 0 ) {
+               barsSinceReseedSqrt = 8 * sqrtPeriod;
+               periodSubSqrt = 0.0;
+               periodSumSqrt = 0.0;
+               rw = 1;
+               ringWalk = dRing_Idx;
+               for( q = 0; q < ringSize; q += 1 ) {
+                  tempReal2 = dRing[ringWalk];
+                  periodSubSqrt += tempReal2;
+                  periodSumSqrt += tempReal2 * rw;
+                  rw += 1;
+                  ringWalk += 1;
+                  if( ringWalk >= ringSize ) {
+                     ringWalk = 0;
+                  }
+               }
+               periodSubSqrt += diffReal;
+               periodSumSqrt += diffReal * sqrtPeriod;
+            }
             trailingSqrt = dRing[dRing_Idx];
             dRing[dRing_Idx] = diffReal;
             dRing_Idx++;
@@ -681,8 +903,11 @@ public partial class Core
       internal double periodSubFull;
       internal double periodSumFull;
       internal double trailingFull;
+      internal int lookbackFull;
+      internal int barsSinceReseedFull;
       internal int halfPeriod;
       internal int sqrtPeriod;
+      internal int ringSize;
       internal double dividerHalf;
       internal double dividerSqrt;
       internal double periodSubHalf;
@@ -691,15 +916,24 @@ public partial class Core
       internal double periodSubSqrt;
       internal double periodSumSqrt;
       internal double trailingSqrt;
+      internal int lookbackHalf;
+      internal int barsSinceReseedHalf;
+      internal int barsSinceReseedSqrt;
       internal int dRing_Idx;
       internal int maxIdx_dRing;
       internal int ringPos_trailingIdxFull;
       internal int ringCap_trailingIdxFull;
       internal double[] ring_trailingIdxFull_inReal = [];
+      internal int winPos_jFull;
+      internal int winCap_jFull;
+      internal double[] win_jFull_inReal = [];
       internal double cur_outReal;
       internal int ringPos_trailingIdxHalf;
       internal int ringCap_trailingIdxHalf;
       internal double[] ring_trailingIdxHalf_inReal = [];
+      internal int winPos_jHalf;
+      internal int winCap_jHalf;
+      internal double[] win_jHalf_inReal = [];
       internal int cbSize_dRing;
       internal double[] cb_dRing = [];
       internal int outRangeBegIdx;
@@ -726,8 +960,11 @@ public partial class Core
          this.periodSubFull = other.periodSubFull;
          this.periodSumFull = other.periodSumFull;
          this.trailingFull = other.trailingFull;
+         this.lookbackFull = other.lookbackFull;
+         this.barsSinceReseedFull = other.barsSinceReseedFull;
          this.halfPeriod = other.halfPeriod;
          this.sqrtPeriod = other.sqrtPeriod;
+         this.ringSize = other.ringSize;
          this.dividerHalf = other.dividerHalf;
          this.dividerSqrt = other.dividerSqrt;
          this.periodSubHalf = other.periodSubHalf;
@@ -736,17 +973,28 @@ public partial class Core
          this.periodSubSqrt = other.periodSubSqrt;
          this.periodSumSqrt = other.periodSumSqrt;
          this.trailingSqrt = other.trailingSqrt;
+         this.lookbackHalf = other.lookbackHalf;
+         this.barsSinceReseedHalf = other.barsSinceReseedHalf;
+         this.barsSinceReseedSqrt = other.barsSinceReseedSqrt;
          this.dRing_Idx = other.dRing_Idx;
          this.maxIdx_dRing = other.maxIdx_dRing;
          this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
          this.ringCap_trailingIdxFull = other.ringCap_trailingIdxFull;
          this.ring_trailingIdxFull_inReal = new double[other.ring_trailingIdxFull_inReal.Length];
          Array.Copy( other.ring_trailingIdxFull_inReal, this.ring_trailingIdxFull_inReal, other.ring_trailingIdxFull_inReal.Length );
+         this.winPos_jFull = other.winPos_jFull;
+         this.winCap_jFull = other.winCap_jFull;
+         this.win_jFull_inReal = new double[other.win_jFull_inReal.Length];
+         Array.Copy( other.win_jFull_inReal, this.win_jFull_inReal, other.win_jFull_inReal.Length );
          this.cur_outReal = other.cur_outReal;
          this.ringPos_trailingIdxHalf = other.ringPos_trailingIdxHalf;
          this.ringCap_trailingIdxHalf = other.ringCap_trailingIdxHalf;
          this.ring_trailingIdxHalf_inReal = new double[other.ring_trailingIdxHalf_inReal.Length];
          Array.Copy( other.ring_trailingIdxHalf_inReal, this.ring_trailingIdxHalf_inReal, other.ring_trailingIdxHalf_inReal.Length );
+         this.winPos_jHalf = other.winPos_jHalf;
+         this.winCap_jHalf = other.winCap_jHalf;
+         this.win_jHalf_inReal = new double[other.win_jHalf_inReal.Length];
+         Array.Copy( other.win_jHalf_inReal, this.win_jHalf_inReal, other.win_jHalf_inReal.Length );
          this.cbSize_dRing = other.cbSize_dRing;
          this.cb_dRing = new double[other.cb_dRing.Length];
          Array.Copy( other.cb_dRing, this.cb_dRing, other.cb_dRing.Length );
@@ -762,8 +1010,11 @@ public partial class Core
          this.periodSubFull = other.periodSubFull;
          this.periodSumFull = other.periodSumFull;
          this.trailingFull = other.trailingFull;
+         this.lookbackFull = other.lookbackFull;
+         this.barsSinceReseedFull = other.barsSinceReseedFull;
          this.halfPeriod = other.halfPeriod;
          this.sqrtPeriod = other.sqrtPeriod;
+         this.ringSize = other.ringSize;
          this.dividerHalf = other.dividerHalf;
          this.dividerSqrt = other.dividerSqrt;
          this.periodSubHalf = other.periodSubHalf;
@@ -772,6 +1023,9 @@ public partial class Core
          this.periodSubSqrt = other.periodSubSqrt;
          this.periodSumSqrt = other.periodSumSqrt;
          this.trailingSqrt = other.trailingSqrt;
+         this.lookbackHalf = other.lookbackHalf;
+         this.barsSinceReseedHalf = other.barsSinceReseedHalf;
+         this.barsSinceReseedSqrt = other.barsSinceReseedSqrt;
          this.dRing_Idx = other.dRing_Idx;
          this.maxIdx_dRing = other.maxIdx_dRing;
          this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
@@ -780,6 +1034,12 @@ public partial class Core
             this.ring_trailingIdxFull_inReal = new double[other.ring_trailingIdxFull_inReal.Length];
          }
          Array.Copy( other.ring_trailingIdxFull_inReal, this.ring_trailingIdxFull_inReal, other.ring_trailingIdxFull_inReal.Length );
+         this.winPos_jFull = other.winPos_jFull;
+         this.winCap_jFull = other.winCap_jFull;
+         if( this.win_jFull_inReal.Length != other.win_jFull_inReal.Length ) {
+            this.win_jFull_inReal = new double[other.win_jFull_inReal.Length];
+         }
+         Array.Copy( other.win_jFull_inReal, this.win_jFull_inReal, other.win_jFull_inReal.Length );
          this.cur_outReal = other.cur_outReal;
          this.ringPos_trailingIdxHalf = other.ringPos_trailingIdxHalf;
          this.ringCap_trailingIdxHalf = other.ringCap_trailingIdxHalf;
@@ -787,6 +1047,12 @@ public partial class Core
             this.ring_trailingIdxHalf_inReal = new double[other.ring_trailingIdxHalf_inReal.Length];
          }
          Array.Copy( other.ring_trailingIdxHalf_inReal, this.ring_trailingIdxHalf_inReal, other.ring_trailingIdxHalf_inReal.Length );
+         this.winPos_jHalf = other.winPos_jHalf;
+         this.winCap_jHalf = other.winCap_jHalf;
+         if( this.win_jHalf_inReal.Length != other.win_jHalf_inReal.Length ) {
+            this.win_jHalf_inReal = new double[other.win_jHalf_inReal.Length];
+         }
+         Array.Copy( other.win_jHalf_inReal, this.win_jHalf_inReal, other.win_jHalf_inReal.Length );
          this.cbSize_dRing = other.cbSize_dRing;
          if( this.cb_dRing.Length != other.cb_dRing.Length ) {
             this.cb_dRing = new double[other.cb_dRing.Length];
@@ -896,13 +1162,30 @@ public partial class Core
       if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
          double tempReal = 0.0;
          double fullOut = 0.0;
+         int jFull = 0;
+         int rw = 0;
+         double tempReal2 = 0.0;
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
+         sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
          tempReal = inReal;
          sp.periodSubFull += tempReal;
          sp.periodSubFull -= sp.trailingFull;
          sp.periodSumFull += tempReal * sp.optInTimePeriod;
+         sp.barsSinceReseedFull -= 1;
+         if( sp.barsSinceReseedFull <= 0 ) {
+            sp.barsSinceReseedFull = 8 * sp.optInTimePeriod;
+            sp.periodSubFull = 0.0;
+            sp.periodSumFull = 0.0;
+            rw = 1;
+            for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+               tempReal2 = sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull];
+               sp.periodSubFull += tempReal2;
+               sp.periodSumFull += tempReal2 * rw;
+               rw += 1;
+            }
+         }
          sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
          fullOut = sp.periodSumFull / sp.dividerFull;
          sp.periodSumFull -= sp.periodSubFull;
@@ -912,27 +1195,65 @@ public partial class Core
          if( sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
             sp.ringPos_trailingIdxFull = 0;
          }
+         sp.winPos_jFull = sp.winPos_jFull + 1;
+         if( sp.winPos_jFull >= sp.winCap_jFull ) {
+            sp.winPos_jFull = 0;
+         }
       } else {
          double tempReal = 0.0;
          double fullOut = 0.0;
          double halfOut = 0.0;
          double diffReal = 0.0;
+         int jFull = 0;
+         int jHalf = 0;
+         int q = 0;
+         int rw = 0;
+         int ringWalk = 0;
+         double tempReal2 = 0.0;
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
          if( sp.ringCap_trailingIdxHalf == 0 ) {
             sp.ring_trailingIdxHalf_inReal[0] = inReal;
          }
+         sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
+         sp.win_jHalf_inReal[sp.winPos_jHalf] = inReal;
          tempReal = inReal;
          sp.periodSubFull += tempReal;
          sp.periodSubFull -= sp.trailingFull;
          sp.periodSumFull += tempReal * sp.optInTimePeriod;
+         sp.barsSinceReseedFull -= 1;
+         if( sp.barsSinceReseedFull <= 0 ) {
+            sp.barsSinceReseedFull = 8 * sp.optInTimePeriod;
+            sp.periodSubFull = 0.0;
+            sp.periodSumFull = 0.0;
+            rw = 1;
+            for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+               tempReal2 = sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull];
+               sp.periodSubFull += tempReal2;
+               sp.periodSumFull += tempReal2 * rw;
+               rw += 1;
+            }
+         }
          sp.trailingFull = sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull];
          fullOut = sp.periodSumFull / sp.dividerFull;
          sp.periodSumFull -= sp.periodSubFull;
          sp.periodSubHalf += tempReal;
          sp.periodSubHalf -= sp.trailingHalf;
          sp.periodSumHalf += tempReal * sp.halfPeriod;
+         sp.barsSinceReseedHalf -= 1;
+         if( sp.barsSinceReseedHalf <= 0 ) {
+            sp.barsSinceReseedHalf = 8 * sp.halfPeriod;
+            sp.periodSubHalf = 0.0;
+            sp.periodSumHalf = 0.0;
+            rw = 1;
+            for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
+               tempReal2 = sp.win_jHalf_inReal[(sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf];
+               sp.periodSubHalf += tempReal2;
+               sp.periodSumHalf += tempReal2 * rw;
+               rw += 1;
+            }
+         }
          sp.trailingHalf = sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf];
          halfOut = sp.periodSumHalf / sp.dividerHalf;
          sp.periodSumHalf -= sp.periodSubHalf;
@@ -940,6 +1261,32 @@ public partial class Core
          sp.periodSubSqrt += diffReal;
          sp.periodSubSqrt -= sp.trailingSqrt;
          sp.periodSumSqrt += diffReal * sp.sqrtPeriod;
+         /* The outer WMA consumes a DERIVED series that is never
+          * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+          * the oldest slot (the one about to expire) and diffReal is the
+          * newest value, which together are the whole window. Oldest first,
+          * weight counting up from 1 -- the priming order above.
+          */
+         sp.barsSinceReseedSqrt -= 1;
+         if( sp.barsSinceReseedSqrt <= 0 ) {
+            sp.barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
+            sp.periodSubSqrt = 0.0;
+            sp.periodSumSqrt = 0.0;
+            rw = 1;
+            ringWalk = sp.dRing_Idx;
+            for( q = 0; q < sp.ringSize; q += 1 ) {
+               tempReal2 = sp.cb_dRing[ringWalk];
+               sp.periodSubSqrt += tempReal2;
+               sp.periodSumSqrt += tempReal2 * rw;
+               rw += 1;
+               ringWalk += 1;
+               if( ringWalk >= sp.ringSize ) {
+                  ringWalk = 0;
+               }
+            }
+            sp.periodSubSqrt += diffReal;
+            sp.periodSumSqrt += diffReal * sp.sqrtPeriod;
+         }
          sp.trailingSqrt = sp.cb_dRing[sp.dRing_Idx];
          sp.cb_dRing[sp.dRing_Idx] = diffReal;
          sp.dRing_Idx = sp.dRing_Idx + 1;
@@ -957,6 +1304,14 @@ public partial class Core
          sp.ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf + 1;
          if( sp.ringPos_trailingIdxHalf >= sp.ringCap_trailingIdxHalf ) {
             sp.ringPos_trailingIdxHalf = 0;
+         }
+         sp.winPos_jFull = sp.winPos_jFull + 1;
+         if( sp.winPos_jFull >= sp.winCap_jFull ) {
+            sp.winPos_jFull = 0;
+         }
+         sp.winPos_jHalf = sp.winPos_jHalf + 1;
+         if( sp.winPos_jHalf >= sp.winCap_jHalf ) {
+            sp.winPos_jHalf = 0;
          }
       }
    }
@@ -989,8 +1344,11 @@ public partial class Core
          sp.periodSubFull = 0.0;
          sp.periodSumFull = 0.0;
          sp.trailingFull = 0.0;
+         sp.lookbackFull = 0;
+         sp.barsSinceReseedFull = 0;
          sp.halfPeriod = 0;
          sp.sqrtPeriod = 0;
+         sp.ringSize = 0;
          sp.dividerHalf = 0.0;
          sp.dividerSqrt = 0.0;
          sp.periodSubHalf = 0.0;
@@ -999,14 +1357,23 @@ public partial class Core
          sp.periodSubSqrt = 0.0;
          sp.periodSumSqrt = 0.0;
          sp.trailingSqrt = 0.0;
+         sp.lookbackHalf = 0;
+         sp.barsSinceReseedHalf = 0;
+         sp.barsSinceReseedSqrt = 0;
          sp.dRing_Idx = 0;
          sp.maxIdx_dRing = 0;
          sp.ringPos_trailingIdxFull = 0;
          sp.ringCap_trailingIdxFull = 0;
          sp.ring_trailingIdxFull_inReal = new double[1];
+         sp.winPos_jFull = 0;
+         sp.winCap_jFull = 1;
+         sp.win_jFull_inReal = new double[1];
          sp.ringPos_trailingIdxHalf = 0;
          sp.ringCap_trailingIdxHalf = 0;
          sp.ring_trailingIdxHalf_inReal = new double[1];
+         sp.winPos_jHalf = 0;
+         sp.winCap_jHalf = 1;
+         sp.win_jHalf_inReal = new double[1];
          sp.cbSize_dRing = 0;
          sp.cb_dRing = new double[1];
          outBegIdx = fillLb;
@@ -1050,6 +1417,17 @@ public partial class Core
          double fullOut = 0;
          double halfOut = 0;
          double diffReal = 0;
+         int jFull = 0;
+         int jHalf = 0;
+         int q = 0;
+         int rw = 0;
+         int ringWalk = 0;
+         int lookbackFull = 0;
+         int lookbackHalf = 0;
+         int barsSinceReseedFull = 0;
+         int barsSinceReseedHalf = 0;
+         int barsSinceReseedSqrt = 0;
+         double tempReal2 = 0;
          double[] dRing = [];
          int dRing_Idx = 0;
          int maxIdx_dRing = (50)-1;
@@ -1097,17 +1475,20 @@ public partial class Core
          /* Prime the full-period WMA over the optInTimePeriod-1 bars before
           * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
           */
+         lookbackFull = optInTimePeriod - 1;
          periodSubFull = 0.0;
          periodSumFull = 0.0;
-         trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+         trailingIdxFull = wmaStartIdx - lookbackFull;
          i = trailingIdxFull;
          w = 1;
          while( i < wmaStartIdx ) {
-            tempReal = inReal[i++];
+            tempReal = inReal[i];
+            i += 1;
             periodSubFull += tempReal;
             periodSumFull += tempReal * w;
             w += 1;
          }
+         barsSinceReseedFull = 8 * optInTimePeriod;
          trailingFull = 0.0;
          outIdx = 0;
          /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
@@ -1126,7 +1507,21 @@ public partial class Core
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
             periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = inReal[trailingIdxFull++];
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
+                  tempReal2 = inReal[jFull];
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = inReal[trailingIdxFull];
+            trailingIdxFull += 1;
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
             outReal[outIdx++ * outStride] = 2.0 * tempReal - fullOut;
@@ -1141,13 +1536,22 @@ public partial class Core
          int allocN_trailingIdxFull = (cap_trailingIdxFull > 0)? cap_trailingIdxFull : 1;
          double[] capRing_trailingIdxFull_inReal = new double[allocN_trailingIdxFull];
          inReal.Slice(historyLen - cap_trailingIdxFull, cap_trailingIdxFull).CopyTo(capRing_trailingIdxFull_inReal);
+         int cap_jFull = (int)(lookbackFull + 1);
+         if( cap_jFull < 1 || cap_jFull > historyLen ) {
+            return RetCode.InternalError;
+         }
+         double[] capWin_jFull_inReal = new double[cap_jFull];
+         inReal.Slice(historyLen - cap_jFull, cap_jFull).CopyTo(capWin_jFull_inReal);
          sp.optInTimePeriod = optInTimePeriod;
          sp.dividerFull = dividerFull;
          sp.periodSubFull = periodSubFull;
          sp.periodSumFull = periodSumFull;
          sp.trailingFull = trailingFull;
+         sp.lookbackFull = lookbackFull;
+         sp.barsSinceReseedFull = barsSinceReseedFull;
          sp.halfPeriod = halfPeriod;
          sp.sqrtPeriod = sqrtPeriod;
+         sp.ringSize = ringSize;
          sp.dividerHalf = dividerHalf;
          sp.dividerSqrt = dividerSqrt;
          sp.periodSubHalf = periodSubHalf;
@@ -1156,12 +1560,19 @@ public partial class Core
          sp.periodSubSqrt = periodSubSqrt;
          sp.periodSumSqrt = periodSumSqrt;
          sp.trailingSqrt = trailingSqrt;
+         sp.lookbackHalf = lookbackHalf;
+         sp.barsSinceReseedHalf = barsSinceReseedHalf;
+         sp.barsSinceReseedSqrt = barsSinceReseedSqrt;
          sp.dRing_Idx = dRing_Idx;
          sp.maxIdx_dRing = maxIdx_dRing;
          sp.ringPos_trailingIdxFull = 0;
          sp.ringCap_trailingIdxFull = cap_trailingIdxFull;
          sp.ring_trailingIdxFull_inReal = capRing_trailingIdxFull_inReal;
+         sp.winPos_jFull = 0;
+         sp.winCap_jFull = cap_jFull;
+         sp.win_jFull_inReal = capWin_jFull_inReal;
          sp.ring_trailingIdxHalf_inReal = new double[1];
+         sp.win_jHalf_inReal = new double[1];
          sp.cb_dRing = new double[1];
          sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
          return RetCode.Success;
@@ -1194,6 +1605,17 @@ public partial class Core
          double fullOut = 0;
          double halfOut = 0;
          double diffReal = 0;
+         int jFull = 0;
+         int jHalf = 0;
+         int q = 0;
+         int rw = 0;
+         int ringWalk = 0;
+         int lookbackFull = 0;
+         int lookbackHalf = 0;
+         int barsSinceReseedFull = 0;
+         int barsSinceReseedHalf = 0;
+         int barsSinceReseedSqrt = 0;
+         double tempReal2 = 0;
          double[] dRing = [];
          int dRing_Idx = 0;
          int maxIdx_dRing = (50)-1;
@@ -1241,17 +1663,20 @@ public partial class Core
          /* Prime the full-period WMA over the optInTimePeriod-1 bars before
           * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
           */
+         lookbackFull = optInTimePeriod - 1;
          periodSubFull = 0.0;
          periodSumFull = 0.0;
-         trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
+         trailingIdxFull = wmaStartIdx - lookbackFull;
          i = trailingIdxFull;
          w = 1;
          while( i < wmaStartIdx ) {
-            tempReal = inReal[i++];
+            tempReal = inReal[i];
+            i += 1;
             periodSubFull += tempReal;
             periodSumFull += tempReal * w;
             w += 1;
          }
+         barsSinceReseedFull = 8 * optInTimePeriod;
          trailingFull = 0.0;
          outIdx = 0;
          /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
@@ -1263,17 +1688,20 @@ public partial class Core
          dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
          dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
          /* Prime the half-period WMA the same way. */
+         lookbackHalf = halfPeriod - 1;
          periodSubHalf = 0.0;
          periodSumHalf = 0.0;
-         trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
+         trailingIdxHalf = wmaStartIdx - lookbackHalf;
          i = trailingIdxHalf;
          w = 1;
          while( i < wmaStartIdx ) {
-            tempReal = inReal[i++];
+            tempReal = inReal[i];
+            i += 1;
             periodSubHalf += tempReal;
             periodSumHalf += tempReal * w;
             w += 1;
          }
+         barsSinceReseedHalf = 8 * halfPeriod;
          trailingHalf = 0.0;
          /* The de-lagged value computed at bar t is consumed as the outer WMA's
           * trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
@@ -1297,13 +1725,41 @@ public partial class Core
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
             periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = inReal[trailingIdxFull++];
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
+                  tempReal2 = inReal[jFull];
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = inReal[trailingIdxFull];
+            trailingIdxFull += 1;
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
             periodSubHalf += tempReal;
             periodSubHalf -= trailingHalf;
             periodSumHalf += tempReal * halfPeriod;
-            trailingHalf = inReal[trailingIdxHalf++];
+            barsSinceReseedHalf -= 1;
+            if( barsSinceReseedHalf <= 0 ) {
+               barsSinceReseedHalf = 8 * halfPeriod;
+               periodSubHalf = 0.0;
+               periodSumHalf = 0.0;
+               rw = 1;
+               for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
+                  tempReal2 = inReal[jHalf];
+                  periodSubHalf += tempReal2;
+                  periodSumHalf += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingHalf = inReal[trailingIdxHalf];
+            trailingIdxHalf += 1;
             halfOut = periodSumHalf / dividerHalf;
             periodSumHalf -= periodSubHalf;
             diffReal = 2.0 * halfOut - fullOut;
@@ -1314,6 +1770,7 @@ public partial class Core
             dRing_Idx++;
             if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
          }
+         barsSinceReseedSqrt = 8 * sqrtPeriod;
          /* Steady state: one pass, three rolling WMAs. Writes trail every read by
           * at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
           * stays safe.
@@ -1323,19 +1780,73 @@ public partial class Core
             periodSubFull += tempReal;
             periodSubFull -= trailingFull;
             periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = inReal[trailingIdxFull++];
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
+                  tempReal2 = inReal[jFull];
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = inReal[trailingIdxFull];
+            trailingIdxFull += 1;
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
             periodSubHalf += tempReal;
             periodSubHalf -= trailingHalf;
             periodSumHalf += tempReal * halfPeriod;
-            trailingHalf = inReal[trailingIdxHalf++];
+            barsSinceReseedHalf -= 1;
+            if( barsSinceReseedHalf <= 0 ) {
+               barsSinceReseedHalf = 8 * halfPeriod;
+               periodSubHalf = 0.0;
+               periodSumHalf = 0.0;
+               rw = 1;
+               for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
+                  tempReal2 = inReal[jHalf];
+                  periodSubHalf += tempReal2;
+                  periodSumHalf += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingHalf = inReal[trailingIdxHalf];
+            trailingIdxHalf += 1;
             halfOut = periodSumHalf / dividerHalf;
             periodSumHalf -= periodSubHalf;
             diffReal = 2.0 * halfOut - fullOut;
             periodSubSqrt += diffReal;
             periodSubSqrt -= trailingSqrt;
             periodSumSqrt += diffReal * sqrtPeriod;
+            /* The outer WMA consumes a DERIVED series that is never
+             * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+             * the oldest slot (the one about to expire) and diffReal is the
+             * newest value, which together are the whole window. Oldest first,
+             * weight counting up from 1 -- the priming order above.
+             */
+            barsSinceReseedSqrt -= 1;
+            if( barsSinceReseedSqrt <= 0 ) {
+               barsSinceReseedSqrt = 8 * sqrtPeriod;
+               periodSubSqrt = 0.0;
+               periodSumSqrt = 0.0;
+               rw = 1;
+               ringWalk = dRing_Idx;
+               for( q = 0; q < ringSize; q += 1 ) {
+                  tempReal2 = dRing[ringWalk];
+                  periodSubSqrt += tempReal2;
+                  periodSumSqrt += tempReal2 * rw;
+                  rw += 1;
+                  ringWalk += 1;
+                  if( ringWalk >= ringSize ) {
+                     ringWalk = 0;
+                  }
+               }
+               periodSubSqrt += diffReal;
+               periodSumSqrt += diffReal * sqrtPeriod;
+            }
             trailingSqrt = dRing[dRing_Idx];
             dRing[dRing_Idx] = diffReal;
             dRing_Idx++;
@@ -1360,6 +1871,18 @@ public partial class Core
          int allocN_trailingIdxHalf = (cap_trailingIdxHalf > 0)? cap_trailingIdxHalf : 1;
          double[] capRing_trailingIdxHalf_inReal = new double[allocN_trailingIdxHalf];
          inReal.Slice(historyLen - cap_trailingIdxHalf, cap_trailingIdxHalf).CopyTo(capRing_trailingIdxHalf_inReal);
+         int cap_jFull = (int)(lookbackFull + 1);
+         if( cap_jFull < 1 || cap_jFull > historyLen ) {
+            return RetCode.InternalError;
+         }
+         double[] capWin_jFull_inReal = new double[cap_jFull];
+         inReal.Slice(historyLen - cap_jFull, cap_jFull).CopyTo(capWin_jFull_inReal);
+         int cap_jHalf = (int)(lookbackHalf + 1);
+         if( cap_jHalf < 1 || cap_jHalf > historyLen ) {
+            return RetCode.InternalError;
+         }
+         double[] capWin_jHalf_inReal = new double[cap_jHalf];
+         inReal.Slice(historyLen - cap_jHalf, cap_jHalf).CopyTo(capWin_jHalf_inReal);
          int capCb_dRing = maxIdx_dRing + 1;
          if( capCb_dRing > historyLen + 1 ) {
             return RetCode.InternalError;
@@ -1369,8 +1892,11 @@ public partial class Core
          sp.periodSubFull = periodSubFull;
          sp.periodSumFull = periodSumFull;
          sp.trailingFull = trailingFull;
+         sp.lookbackFull = lookbackFull;
+         sp.barsSinceReseedFull = barsSinceReseedFull;
          sp.halfPeriod = halfPeriod;
          sp.sqrtPeriod = sqrtPeriod;
+         sp.ringSize = ringSize;
          sp.dividerHalf = dividerHalf;
          sp.dividerSqrt = dividerSqrt;
          sp.periodSubHalf = periodSubHalf;
@@ -1379,6 +1905,9 @@ public partial class Core
          sp.periodSubSqrt = periodSubSqrt;
          sp.periodSumSqrt = periodSumSqrt;
          sp.trailingSqrt = trailingSqrt;
+         sp.lookbackHalf = lookbackHalf;
+         sp.barsSinceReseedHalf = barsSinceReseedHalf;
+         sp.barsSinceReseedSqrt = barsSinceReseedSqrt;
          sp.dRing_Idx = dRing_Idx;
          sp.maxIdx_dRing = maxIdx_dRing;
          sp.ringPos_trailingIdxFull = 0;
@@ -1387,6 +1916,12 @@ public partial class Core
          sp.ringPos_trailingIdxHalf = 0;
          sp.ringCap_trailingIdxHalf = cap_trailingIdxHalf;
          sp.ring_trailingIdxHalf_inReal = capRing_trailingIdxHalf_inReal;
+         sp.winPos_jFull = 0;
+         sp.winCap_jFull = cap_jFull;
+         sp.win_jFull_inReal = capWin_jFull_inReal;
+         sp.winPos_jHalf = 0;
+         sp.winCap_jHalf = cap_jHalf;
+         sp.win_jHalf_inReal = capWin_jHalf_inReal;
          sp.cbSize_dRing = capCb_dRing;
          sp.cb_dRing = dRing;
          sp.cur_outReal = outReal[(outNBElement - 1) * outStride];

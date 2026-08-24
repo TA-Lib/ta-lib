@@ -156,4 +156,48 @@ extern const double ta_test_ref_golden_ladder_p30_tsf[TA_TEST_REF_GOLDEN_LADDER_
 #define TA_TEST_REF_GOLDEN_LADDER_P30_SIGMA_N 11
 extern const double ta_test_ref_golden_ladder_p30_sigma[TA_TEST_REF_GOLDEN_LADDER_P30_SIGMA_N];
 
+/* TA_WMA over Wilkinson nasty.dat column X, period 9 */
+#define TA_TEST_REF_GOLDEN_WILKINSON_WMA_X_N 1
+extern const double ta_test_ref_golden_wilkinson_wma_x[TA_TEST_REF_GOLDEN_WILKINSON_WMA_X_N];
+
+/* TA_WMA over Wilkinson nasty.dat column ROUND, period 9 */
+#define TA_TEST_REF_GOLDEN_WILKINSON_WMA_ROUND_N 1
+extern const double ta_test_ref_golden_wilkinson_wma_round[TA_TEST_REF_GOLDEN_WILKINSON_WMA_ROUND_N];
+
+/* TA_WMA over Wilkinson nasty.dat column BIG, period 9 */
+#define TA_TEST_REF_GOLDEN_WILKINSON_WMA_BIG_N 1
+extern const double ta_test_ref_golden_wilkinson_wma_big[TA_TEST_REF_GOLDEN_WILKINSON_WMA_BIG_N];
+
+/* TA_WMA over Wilkinson nasty.dat column LITTLE, period 9 */
+#define TA_TEST_REF_GOLDEN_WILKINSON_WMA_LITTLE_N 1
+extern const double ta_test_ref_golden_wilkinson_wma_little[TA_TEST_REF_GOLDEN_WILKINSON_WMA_LITTLE_N];
+
+/* TA_WMA over Wilkinson nasty.dat column HUGE, period 9 */
+#define TA_TEST_REF_GOLDEN_WILKINSON_WMA_HUGE_N 1
+extern const double ta_test_ref_golden_wilkinson_wma_huge[TA_TEST_REF_GOLDEN_WILKINSON_WMA_HUGE_N];
+
+/* TA_WMA over Wilkinson nasty.dat column TINY, period 9 */
+#define TA_TEST_REF_GOLDEN_WILKINSON_WMA_TINY_N 1
+extern const double ta_test_ref_golden_wilkinson_wma_tiny[TA_TEST_REF_GOLDEN_WILKINSON_WMA_TINY_N];
+
+/* TA_WMA over Wilkinson nasty.dat column ZERO, period 9 */
+#define TA_TEST_REF_GOLDEN_WILKINSON_WMA_ZERO_N 1
+extern const double ta_test_ref_golden_wilkinson_wma_zero[TA_TEST_REF_GOLDEN_WILKINSON_WMA_ZERO_N];
+
+/* TA_WMA over the sliding-sum ladder, period 2 */
+#define TA_TEST_REF_GOLDEN_LADDER_P2_WMA_N 39
+extern const double ta_test_ref_golden_ladder_p2_wma[TA_TEST_REF_GOLDEN_LADDER_P2_WMA_N];
+
+/* TA_WMA over the sliding-sum ladder, period 5 */
+#define TA_TEST_REF_GOLDEN_LADDER_P5_WMA_N 36
+extern const double ta_test_ref_golden_ladder_p5_wma[TA_TEST_REF_GOLDEN_LADDER_P5_WMA_N];
+
+/* TA_WMA over the sliding-sum ladder, period 14 */
+#define TA_TEST_REF_GOLDEN_LADDER_P14_WMA_N 27
+extern const double ta_test_ref_golden_ladder_p14_wma[TA_TEST_REF_GOLDEN_LADDER_P14_WMA_N];
+
+/* TA_WMA over the sliding-sum ladder, period 30 */
+#define TA_TEST_REF_GOLDEN_LADDER_P30_WMA_N 11
+extern const double ta_test_ref_golden_ladder_p30_wma[TA_TEST_REF_GOLDEN_LADDER_P30_WMA_N];
+
 #endif /* TA_TEST_REFERENCE_GOLDEN_H */

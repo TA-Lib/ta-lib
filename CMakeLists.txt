@@ -617,6 +617,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_correl.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_beta.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_linearreg.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_wma.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_reference.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_stoch.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_trange.c"
