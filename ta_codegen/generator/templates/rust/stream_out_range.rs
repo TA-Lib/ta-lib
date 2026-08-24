@@ -114,7 +114,7 @@ fn every_tier_reports_the_batch_range() {
     let batch = core.SMA(0, N - 1, &close, 14, &mut out0).expect("batch SMA");
     range_tracks_batch(
         "SMA (loop)",
-        core.SMA_Lookback(14),
+        core.SMA_Lookback(14).expect("valid params"),
         batch,
         |w| core.SMA_Open(&close[..w], 14).map(|(h, _)| h),
         |h| h.out_range(),
@@ -130,7 +130,7 @@ fn every_tier_reports_the_batch_range() {
     let batch = core.MINUS_DI(0, N - 1, &high, &low, &close, 14, &mut out0).expect("batch MINUS_DI");
     range_tracks_batch(
         "MINUS_DI (dual-mode)",
-        core.MINUS_DI_Lookback(14),
+        core.MINUS_DI_Lookback(14).expect("valid params"),
         batch,
         |w| core.MINUS_DI_Open(&high[..w], &low[..w], &close[..w], 14).map(|(h, _)| h),
         |h| h.out_range(),
@@ -146,7 +146,7 @@ fn every_tier_reports_the_batch_range() {
     let batch = core.MA(0, N - 1, &close, 14, MAType::EMA, &mut out0).expect("batch MA");
     range_tracks_batch(
         "MA (dispatch, EMA arm)",
-        core.MA_Lookback(14, MAType::EMA),
+        core.MA_Lookback(14, MAType::EMA).expect("valid params"),
         batch,
         |w| core.MA_Open(&close[..w], 14, MAType::EMA).map(|(h, _)| h),
         |h| h.out_range(),
@@ -163,7 +163,7 @@ fn every_tier_reports_the_batch_range() {
     let batch = core.MA(0, N - 1, &close, 1, MAType::SMA, &mut out0).expect("batch MA(1)");
     range_tracks_batch(
         "MA (dispatch, identity arm)",
-        core.MA_Lookback(1, MAType::SMA),
+        core.MA_Lookback(1, MAType::SMA).expect("valid params"),
         batch,
         |w| core.MA_Open(&close[..w], 1, MAType::SMA).map(|(h, _)| h),
         |h| h.out_range(),
@@ -181,7 +181,7 @@ fn every_tier_reports_the_batch_range() {
         .expect("batch MAVP");
     range_tracks_batch(
         "MAVP (period bank)",
-        core.MAVP_Lookback(2, 30, MAType::SMA),
+        core.MAVP_Lookback(2, 30, MAType::SMA).expect("valid params"),
         batch,
         |w| core.MAVP_Open(&close[..w], &periods[..w], 2, 30, MAType::SMA).map(|(h, _)| h),
         |h| h.out_range(),
@@ -199,7 +199,7 @@ fn every_tier_reports_the_batch_range() {
         .expect("batch BBANDS");
     range_tracks_batch(
         "BBANDS (composed)",
-        core.BBANDS_Lookback(20, 2.0, 2.0, MAType::SMA),
+        core.BBANDS_Lookback(20, 2.0, 2.0, MAType::SMA).expect("valid params"),
         batch,
         |w| core.BBANDS_Open(&close[..w], 20, 2.0, 2.0, MAType::SMA).map(|(h, _)| h),
         |h| h.out_range(),
@@ -325,7 +325,7 @@ fn an_anchor_past_the_history_is_insufficient_history() {
 
     // The positive half, so this is not just a rejection sweep: a legitimate
     // anchor reports max(startIdx, lookback) and the count that follows from it.
-    let lb = core.MA_Lookback(1, MAType::SMA);
+    let lb = core.MA_Lookback(1, MAType::SMA).expect("valid params");
     assert_eq!(lb, 0, "the identity arm's lookback is 0, which is what makes startIdx the anchor");
     let (h, _) = core.MA_OpenInternal(&close, 5, 1, MAType::SMA).expect("a reachable anchor");
     assert_eq!(

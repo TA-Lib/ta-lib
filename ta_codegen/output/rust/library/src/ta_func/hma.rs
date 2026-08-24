@@ -76,18 +76,20 @@ impl Core {
     /// * `optInTimePeriod` — Number of bars in the full-period WMA; the half and square-root
     ///   periods derive from it (default 20, range 1..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn HMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn HMA_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         let mut sqrtPeriod: usize = 0_usize;
         sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
-        return (self.WMA_Lookback(optInTimePeriod) + self.WMA_Lookback((sqrtPeriod) as i32)) as usize;
+        return Ok((self.WMA_Lookback(optInTimePeriod)? + self.WMA_Lookback((sqrtPeriod) as i32)?) as usize);
     }
     /// C-shaped body behind [`Core::HMA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -112,7 +114,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.HMA_Lookback(optInTimePeriod);
+        let _assertLb = self.HMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -184,8 +186,8 @@ impl Core {
         }
         halfPeriod = (optInTimePeriod / 2) as usize;
         sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
-        lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
-        lookbackTotal = self.WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+        lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32).unwrap_or(usize::MAX);
+        lookbackTotal = self.WMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX) + lookbackSqrt;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -653,7 +655,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            let fillLb: usize = self.HMA_Lookback(optInTimePeriod);
+            let fillLb: usize = self.HMA_Lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
@@ -749,8 +751,8 @@ impl Core {
             // differential in test_composite.c holds it to that, memcmp-exact.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
-            lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
-            lookbackTotal = self.WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+            lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32)?;
+            lookbackTotal = self.WMA_Lookback(optInTimePeriod)? + lookbackSqrt;
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {
@@ -893,8 +895,8 @@ impl Core {
             // differential in test_composite.c holds it to that, memcmp-exact.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
-            lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
-            lookbackTotal = self.WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+            lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32)?;
+            lookbackTotal = self.WMA_Lookback(optInTimePeriod)? + lookbackSqrt;
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {

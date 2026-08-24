@@ -196,7 +196,9 @@ pub fn lookback_docs(func: &FuncDef, snake: &str, enums: &HashMap<String, EnumDe
             d.bullet(&param_doc(opt, doc, enums));
         }
         d.blank();
-        let mut sentence = String::from("Returns `usize::MAX` when a parameter is out of range.");
+        d.paragraph("# Errors");
+        d.blank();
+        let mut sentence = String::from("[`RetCode::BadParam`] when a parameter is out of range.");
         if let Some(extra) = default_sentinel_sentence(func) {
             sentence.push(' ');
             sentence.push_str(extra);

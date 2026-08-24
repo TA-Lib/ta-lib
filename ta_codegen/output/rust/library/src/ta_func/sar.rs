@@ -75,23 +75,25 @@ impl Core {
     ///   (default 0.02, minimum 0)
     /// * `optInMaximum` — Ceiling on the acceleration factor (default 0.2, minimum 0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
     #[inline]
-    pub fn SAR_Lookback(&self, mut optInAcceleration: f64, mut optInMaximum: f64) -> usize {
+    pub fn SAR_Lookback(&self, mut optInAcceleration: f64, mut optInMaximum: f64) -> Result<usize, RetCode> {
         if optInAcceleration == Self::REAL_DEFAULT {
             optInAcceleration = 2e-2;
         } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInMaximum == Self::REAL_DEFAULT {
             optInMaximum = 2e-1;
         } else if !((optInMaximum >= 0e0) && (optInMaximum <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         // SAR always sacrify one price bar to establish the
         // initial extreme price.
-        return (1) as usize;
+        return Ok((1) as usize);
     }
     /// C-shaped body behind [`Core::SAR`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -157,7 +159,7 @@ impl Core {
         } else if !((optInMaximum >= 0e0) && (optInMaximum <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.SAR_Lookback(optInAcceleration, optInMaximum);
+        let _assertLb = self.SAR_Lookback(optInAcceleration, optInMaximum).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());

@@ -71,20 +71,22 @@ impl Core {
     /// * `optInTimePeriod` — EMA period applied to the force series (default 13, range
     ///   1..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn EFI_Lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn EFI_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 13;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         // One bar is consumed forming the first close-to-close change, then the
         // EMA's own warm-up on top:
         //    1 + ema_lookback(optInTimePeriod)
         //  = 1 + (optInTimePeriod - 1) + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)
-        return (optInTimePeriod + self.unstable_period[FuncUnstId::EMA as usize]) as usize;
+        return Ok((optInTimePeriod + self.unstable_period[FuncUnstId::EMA as usize]) as usize);
     }
     /// C-shaped body behind [`Core::EFI`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -142,7 +144,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.EFI_Lookback(optInTimePeriod);
+        let _assertLb = self.EFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
@@ -185,7 +187,7 @@ impl Core {
         // reason.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.EFI_Lookback(optInTimePeriod);
+        lookbackTotal = self.EFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -509,7 +511,7 @@ impl Core {
             // reason.
             // Identify the minimum number of price bar needed
             // to calculate at least one output.
-            lookbackTotal = self.EFI_Lookback(optInTimePeriod);
+            lookbackTotal = self.EFI_Lookback(optInTimePeriod)?;
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {
@@ -586,7 +588,7 @@ impl Core {
             // reason.
             // Identify the minimum number of price bar needed
             // to calculate at least one output.
-            lookbackTotal = self.EFI_Lookback(optInTimePeriod);
+            lookbackTotal = self.EFI_Lookback(optInTimePeriod)?;
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {

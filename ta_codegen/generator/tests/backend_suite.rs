@@ -4739,8 +4739,8 @@ fn rust_lookback_none() {
 
     let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn TEST_Impl(");
     assert!(
-        lookback_section.contains("return 0"),
-        "None lookback should return 0: {lookback_section}"
+        lookback_section.contains("return Ok(0)"),
+        "None lookback should return Ok(0): {lookback_section}"
     );
 }
 

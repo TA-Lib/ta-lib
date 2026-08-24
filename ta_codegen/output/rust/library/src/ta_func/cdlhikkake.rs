@@ -72,8 +72,8 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLHIKKAKE`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn CDLHIKKAKE_Lookback(&self) -> usize {
-        return (5) as usize;
+    pub fn CDLHIKKAKE_Lookback(&self) -> Result<usize, RetCode> {
+        return Ok((5) as usize);
     }
     /// C-shaped body behind [`Core::CDLHIKKAKE`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -95,7 +95,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDLHIKKAKE_Lookback();
+        let _assertLb = self.CDLHIKKAKE_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -113,7 +113,7 @@ impl Core {
         // state carried without an absolute bar index.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLHIKKAKE_Lookback();
+        lookbackTotal = self.CDLHIKKAKE_Lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -420,7 +420,7 @@ impl Core {
         // state carried without an absolute bar index.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLHIKKAKE_Lookback();
+        lookbackTotal = self.CDLHIKKAKE_Lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

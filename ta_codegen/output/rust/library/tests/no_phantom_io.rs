@@ -350,8 +350,7 @@ const V_AC: &[(&str, i32, i32, i32)] = &[
 fn sub_AC(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) in V_AC {
-        let lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { continue; };
         r.control("AC", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -373,8 +372,7 @@ fn legs_AC(r: &mut Report) {
     let optInFastPeriod = i32::MIN;
     let optInSlowPeriod = i32::MIN;
     let optInSignalPeriod = i32::MIN;
-    let lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
-    if lb == usize::MAX { r.no_legs("AC"); return; }
+    let Ok(lb) = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { r.no_legs("AC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -399,8 +397,7 @@ const V_ACCBANDS: &[(&str, i32)] = &[
 fn sub_ACCBANDS(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_ACCBANDS {
-        let lb = core.ACCBANDS_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ACCBANDS_Lookback(optInTimePeriod) else { continue; };
         r.control("ACCBANDS", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -426,8 +423,7 @@ fn sub_ACCBANDS(r: &mut Report) {
 fn legs_ACCBANDS(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.ACCBANDS_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("ACCBANDS"); return; }
+    let Ok(lb) = core.ACCBANDS_Lookback(optInTimePeriod) else { r.no_legs("ACCBANDS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -466,8 +462,7 @@ const V_ACOS: &[&str] = &[
 fn sub_ACOS(r: &mut Report) {
     let core = Core::new();
     for &label in V_ACOS {
-        let lb = core.ACOS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ACOS_Lookback() else { continue; };
         r.control("ACOS", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -484,8 +479,7 @@ fn sub_ACOS(r: &mut Report) {
 
 fn legs_ACOS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.ACOS_Lookback();
-    if lb == usize::MAX { r.no_legs("ACOS"); return; }
+    let Ok(lb) = core.ACOS_Lookback() else { r.no_legs("ACOS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -502,8 +496,7 @@ const V_AD: &[&str] = &[
 fn sub_AD(r: &mut Report) {
     let core = Core::new();
     for &label in V_AD {
-        let lb = core.AD_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.AD_Lookback() else { continue; };
         r.control("AD", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -526,8 +519,7 @@ fn sub_AD(r: &mut Report) {
 
 fn legs_AD(r: &mut Report) {
     let core = Core::new();
-    let lb = core.AD_Lookback();
-    if lb == usize::MAX { r.no_legs("AD"); return; }
+    let Ok(lb) = core.AD_Lookback() else { r.no_legs("AD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -571,8 +563,7 @@ const V_ADD: &[&str] = &[
 fn sub_ADD(r: &mut Report) {
     let core = Core::new();
     for &label in V_ADD {
-        let lb = core.ADD_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ADD_Lookback() else { continue; };
         r.control("ADD", label, run(|| {
             let inReal0: Vec<f64> = Vec::with_capacity(1);
             let inReal1: Vec<f64> = Vec::with_capacity(1);
@@ -591,8 +582,7 @@ fn sub_ADD(r: &mut Report) {
 
 fn legs_ADD(r: &mut Report) {
     let core = Core::new();
-    let lb = core.ADD_Lookback();
-    if lb == usize::MAX { r.no_legs("ADD"); return; }
+    let Ok(lb) = core.ADD_Lookback() else { r.no_legs("ADD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
@@ -617,8 +607,7 @@ const V_ADOSC: &[(&str, i32, i32)] = &[
 fn sub_ADOSC(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastPeriod, optInSlowPeriod) in V_ADOSC {
-        let lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod) else { continue; };
         r.control("ADOSC", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -643,8 +632,7 @@ fn legs_ADOSC(r: &mut Report) {
     let core = Core::new();
     let optInFastPeriod = i32::MIN;
     let optInSlowPeriod = i32::MIN;
-    let lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
-    if lb == usize::MAX { r.no_legs("ADOSC"); return; }
+    let Ok(lb) = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod) else { r.no_legs("ADOSC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -689,8 +677,7 @@ const V_ADX: &[(&str, i32)] = &[
 fn sub_ADX(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_ADX {
-        let lb = core.ADX_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ADX_Lookback(optInTimePeriod) else { continue; };
         r.control("ADX", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -712,8 +699,7 @@ fn sub_ADX(r: &mut Report) {
 fn legs_ADX(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.ADX_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("ADX"); return; }
+    let Ok(lb) = core.ADX_Lookback(optInTimePeriod) else { r.no_legs("ADX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -747,8 +733,7 @@ const V_ADXR: &[(&str, i32)] = &[
 fn sub_ADXR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_ADXR {
-        let lb = core.ADXR_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ADXR_Lookback(optInTimePeriod) else { continue; };
         r.control("ADXR", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -770,8 +755,7 @@ fn sub_ADXR(r: &mut Report) {
 fn legs_ADXR(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.ADXR_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("ADXR"); return; }
+    let Ok(lb) = core.ADXR_Lookback(optInTimePeriod) else { r.no_legs("ADXR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -805,8 +789,7 @@ const V_AO: &[(&str, i32, i32)] = &[
 fn sub_AO(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastPeriod, optInSlowPeriod) in V_AO {
-        let lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.AO_Lookback(optInFastPeriod, optInSlowPeriod) else { continue; };
         r.control("AO", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -827,8 +810,7 @@ fn legs_AO(r: &mut Report) {
     let core = Core::new();
     let optInFastPeriod = i32::MIN;
     let optInSlowPeriod = i32::MIN;
-    let lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod);
-    if lb == usize::MAX { r.no_legs("AO"); return; }
+    let Ok(lb) = core.AO_Lookback(optInFastPeriod, optInSlowPeriod) else { r.no_legs("AO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -877,8 +859,7 @@ const V_APO: &[(&str, i32, i32, MAType)] = &[
 fn sub_APO(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastPeriod, optInSlowPeriod, optInMAType) in V_APO {
-        let lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) else { continue; };
         r.control("APO", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -898,8 +879,7 @@ fn legs_APO(r: &mut Report) {
     let optInFastPeriod = i32::MIN;
     let optInSlowPeriod = i32::MIN;
     let optInMAType = MAType::DEFAULT;
-    let lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-    if lb == usize::MAX { r.no_legs("APO"); return; }
+    let Ok(lb) = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) else { r.no_legs("APO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -917,8 +897,7 @@ const V_AROON: &[(&str, i32)] = &[
 fn sub_AROON(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_AROON {
-        let lb = core.AROON_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.AROON_Lookback(optInTimePeriod) else { continue; };
         r.control("AROON", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -940,8 +919,7 @@ fn sub_AROON(r: &mut Report) {
 fn legs_AROON(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.AROON_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("AROON"); return; }
+    let Ok(lb) = core.AROON_Lookback(optInTimePeriod) else { r.no_legs("AROON"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -968,8 +946,7 @@ const V_AROONOSC: &[(&str, i32)] = &[
 fn sub_AROONOSC(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_AROONOSC {
-        let lb = core.AROONOSC_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.AROONOSC_Lookback(optInTimePeriod) else { continue; };
         r.control("AROONOSC", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -989,8 +966,7 @@ fn sub_AROONOSC(r: &mut Report) {
 fn legs_AROONOSC(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.AROONOSC_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("AROONOSC"); return; }
+    let Ok(lb) = core.AROONOSC_Lookback(optInTimePeriod) else { r.no_legs("AROONOSC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1014,8 +990,7 @@ const V_ASIN: &[&str] = &[
 fn sub_ASIN(r: &mut Report) {
     let core = Core::new();
     for &label in V_ASIN {
-        let lb = core.ASIN_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ASIN_Lookback() else { continue; };
         r.control("ASIN", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -1032,8 +1007,7 @@ fn sub_ASIN(r: &mut Report) {
 
 fn legs_ASIN(r: &mut Report) {
     let core = Core::new();
-    let lb = core.ASIN_Lookback();
-    if lb == usize::MAX { r.no_legs("ASIN"); return; }
+    let Ok(lb) = core.ASIN_Lookback() else { r.no_legs("ASIN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -1050,8 +1024,7 @@ const V_ATAN: &[&str] = &[
 fn sub_ATAN(r: &mut Report) {
     let core = Core::new();
     for &label in V_ATAN {
-        let lb = core.ATAN_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ATAN_Lookback() else { continue; };
         r.control("ATAN", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -1068,8 +1041,7 @@ fn sub_ATAN(r: &mut Report) {
 
 fn legs_ATAN(r: &mut Report) {
     let core = Core::new();
-    let lb = core.ATAN_Lookback();
-    if lb == usize::MAX { r.no_legs("ATAN"); return; }
+    let Ok(lb) = core.ATAN_Lookback() else { r.no_legs("ATAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -1087,8 +1059,7 @@ const V_ATR: &[(&str, i32)] = &[
 fn sub_ATR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_ATR {
-        let lb = core.ATR_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ATR_Lookback(optInTimePeriod) else { continue; };
         r.control("ATR", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -1110,8 +1081,7 @@ fn sub_ATR(r: &mut Report) {
 fn legs_ATR(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.ATR_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("ATR"); return; }
+    let Ok(lb) = core.ATR_Lookback(optInTimePeriod) else { r.no_legs("ATR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1145,8 +1115,7 @@ const V_AVGDEV: &[(&str, i32)] = &[
 fn sub_AVGDEV(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_AVGDEV {
-        let lb = core.AVGDEV_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.AVGDEV_Lookback(optInTimePeriod) else { continue; };
         r.control("AVGDEV", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -1164,8 +1133,7 @@ fn sub_AVGDEV(r: &mut Report) {
 fn legs_AVGDEV(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.AVGDEV_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("AVGDEV"); return; }
+    let Ok(lb) = core.AVGDEV_Lookback(optInTimePeriod) else { r.no_legs("AVGDEV"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -1182,8 +1150,7 @@ const V_AVGPRICE: &[&str] = &[
 fn sub_AVGPRICE(r: &mut Report) {
     let core = Core::new();
     for &label in V_AVGPRICE {
-        let lb = core.AVGPRICE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.AVGPRICE_Lookback() else { continue; };
         r.control("AVGPRICE", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1206,8 +1173,7 @@ fn sub_AVGPRICE(r: &mut Report) {
 
 fn legs_AVGPRICE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.AVGPRICE_Lookback();
-    if lb == usize::MAX { r.no_legs("AVGPRICE"); return; }
+    let Ok(lb) = core.AVGPRICE_Lookback() else { r.no_legs("AVGPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -1276,8 +1242,7 @@ const V_BBANDS: &[(&str, i32, f64, f64, MAType)] = &[
 fn sub_BBANDS(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) in V_BBANDS {
-        let lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) else { continue; };
         r.control("BBANDS", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outRealUpperBand: Vec<f64> = Vec::with_capacity(1);
@@ -1302,8 +1267,7 @@ fn legs_BBANDS(r: &mut Report) {
     let optInNbDevUp = Core::REAL_DEFAULT;
     let optInNbDevDn = Core::REAL_DEFAULT;
     let optInMAType = MAType::DEFAULT;
-    let lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
-    if lb == usize::MAX { r.no_legs("BBANDS"); return; }
+    let Ok(lb) = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) else { r.no_legs("BBANDS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -1323,8 +1287,7 @@ const V_BETA: &[(&str, i32)] = &[
 fn sub_BETA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_BETA {
-        let lb = core.BETA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.BETA_Lookback(optInTimePeriod) else { continue; };
         r.control("BETA", label, run(|| {
             let inReal0: Vec<f64> = Vec::with_capacity(1);
             let inReal1: Vec<f64> = Vec::with_capacity(1);
@@ -1344,8 +1307,7 @@ fn sub_BETA(r: &mut Report) {
 fn legs_BETA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.BETA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("BETA"); return; }
+    let Ok(lb) = core.BETA_Lookback(optInTimePeriod) else { r.no_legs("BETA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
@@ -1369,8 +1331,7 @@ const V_BOP: &[&str] = &[
 fn sub_BOP(r: &mut Report) {
     let core = Core::new();
     for &label in V_BOP {
-        let lb = core.BOP_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.BOP_Lookback() else { continue; };
         r.control("BOP", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1393,8 +1354,7 @@ fn sub_BOP(r: &mut Report) {
 
 fn legs_BOP(r: &mut Report) {
     let core = Core::new();
-    let lb = core.BOP_Lookback();
-    if lb == usize::MAX { r.no_legs("BOP"); return; }
+    let Ok(lb) = core.BOP_Lookback() else { r.no_legs("BOP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -1439,8 +1399,7 @@ const V_CCI: &[(&str, i32)] = &[
 fn sub_CCI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_CCI {
-        let lb = core.CCI_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CCI_Lookback(optInTimePeriod) else { continue; };
         r.control("CCI", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -1462,8 +1421,7 @@ fn sub_CCI(r: &mut Report) {
 fn legs_CCI(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.CCI_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("CCI"); return; }
+    let Ok(lb) = core.CCI_Lookback(optInTimePeriod) else { r.no_legs("CCI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1496,8 +1454,7 @@ const V_CDL2CROWS: &[&str] = &[
 fn sub_CDL2CROWS(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDL2CROWS {
-        let lb = core.CDL2CROWS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDL2CROWS_Lookback() else { continue; };
         r.control("CDL2CROWS", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1520,8 +1477,7 @@ fn sub_CDL2CROWS(r: &mut Report) {
 
 fn legs_CDL2CROWS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDL2CROWS_Lookback();
-    if lb == usize::MAX { r.no_legs("CDL2CROWS"); return; }
+    let Ok(lb) = core.CDL2CROWS_Lookback() else { r.no_legs("CDL2CROWS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -1565,8 +1521,7 @@ const V_CDL3BLACKCROWS: &[&str] = &[
 fn sub_CDL3BLACKCROWS(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDL3BLACKCROWS {
-        let lb = core.CDL3BLACKCROWS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDL3BLACKCROWS_Lookback() else { continue; };
         r.control("CDL3BLACKCROWS", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1589,8 +1544,7 @@ fn sub_CDL3BLACKCROWS(r: &mut Report) {
 
 fn legs_CDL3BLACKCROWS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDL3BLACKCROWS_Lookback();
-    if lb == usize::MAX { r.no_legs("CDL3BLACKCROWS"); return; }
+    let Ok(lb) = core.CDL3BLACKCROWS_Lookback() else { r.no_legs("CDL3BLACKCROWS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -1634,8 +1588,7 @@ const V_CDL3INSIDE: &[&str] = &[
 fn sub_CDL3INSIDE(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDL3INSIDE {
-        let lb = core.CDL3INSIDE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDL3INSIDE_Lookback() else { continue; };
         r.control("CDL3INSIDE", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1658,8 +1611,7 @@ fn sub_CDL3INSIDE(r: &mut Report) {
 
 fn legs_CDL3INSIDE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDL3INSIDE_Lookback();
-    if lb == usize::MAX { r.no_legs("CDL3INSIDE"); return; }
+    let Ok(lb) = core.CDL3INSIDE_Lookback() else { r.no_legs("CDL3INSIDE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -1703,8 +1655,7 @@ const V_CDL3LINESTRIKE: &[&str] = &[
 fn sub_CDL3LINESTRIKE(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDL3LINESTRIKE {
-        let lb = core.CDL3LINESTRIKE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDL3LINESTRIKE_Lookback() else { continue; };
         r.control("CDL3LINESTRIKE", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1727,8 +1678,7 @@ fn sub_CDL3LINESTRIKE(r: &mut Report) {
 
 fn legs_CDL3LINESTRIKE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDL3LINESTRIKE_Lookback();
-    if lb == usize::MAX { r.no_legs("CDL3LINESTRIKE"); return; }
+    let Ok(lb) = core.CDL3LINESTRIKE_Lookback() else { r.no_legs("CDL3LINESTRIKE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -1772,8 +1722,7 @@ const V_CDL3OUTSIDE: &[&str] = &[
 fn sub_CDL3OUTSIDE(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDL3OUTSIDE {
-        let lb = core.CDL3OUTSIDE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDL3OUTSIDE_Lookback() else { continue; };
         r.control("CDL3OUTSIDE", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1796,8 +1745,7 @@ fn sub_CDL3OUTSIDE(r: &mut Report) {
 
 fn legs_CDL3OUTSIDE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDL3OUTSIDE_Lookback();
-    if lb == usize::MAX { r.no_legs("CDL3OUTSIDE"); return; }
+    let Ok(lb) = core.CDL3OUTSIDE_Lookback() else { r.no_legs("CDL3OUTSIDE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -1841,8 +1789,7 @@ const V_CDL3STARSINSOUTH: &[&str] = &[
 fn sub_CDL3STARSINSOUTH(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDL3STARSINSOUTH {
-        let lb = core.CDL3STARSINSOUTH_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDL3STARSINSOUTH_Lookback() else { continue; };
         r.control("CDL3STARSINSOUTH", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1865,8 +1812,7 @@ fn sub_CDL3STARSINSOUTH(r: &mut Report) {
 
 fn legs_CDL3STARSINSOUTH(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDL3STARSINSOUTH_Lookback();
-    if lb == usize::MAX { r.no_legs("CDL3STARSINSOUTH"); return; }
+    let Ok(lb) = core.CDL3STARSINSOUTH_Lookback() else { r.no_legs("CDL3STARSINSOUTH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -1910,8 +1856,7 @@ const V_CDL3WHITESOLDIERS: &[&str] = &[
 fn sub_CDL3WHITESOLDIERS(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDL3WHITESOLDIERS {
-        let lb = core.CDL3WHITESOLDIERS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDL3WHITESOLDIERS_Lookback() else { continue; };
         r.control("CDL3WHITESOLDIERS", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -1934,8 +1879,7 @@ fn sub_CDL3WHITESOLDIERS(r: &mut Report) {
 
 fn legs_CDL3WHITESOLDIERS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDL3WHITESOLDIERS_Lookback();
-    if lb == usize::MAX { r.no_legs("CDL3WHITESOLDIERS"); return; }
+    let Ok(lb) = core.CDL3WHITESOLDIERS_Lookback() else { r.no_legs("CDL3WHITESOLDIERS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -1980,8 +1924,7 @@ const V_CDLABANDONEDBABY: &[(&str, f64)] = &[
 fn sub_CDLABANDONEDBABY(r: &mut Report) {
     let core = Core::new();
     for &(label, optInPenetration) in V_CDLABANDONEDBABY {
-        let lb = core.CDLABANDONEDBABY_Lookback(optInPenetration);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLABANDONEDBABY_Lookback(optInPenetration) else { continue; };
         r.control("CDLABANDONEDBABY", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2005,8 +1948,7 @@ fn sub_CDLABANDONEDBABY(r: &mut Report) {
 fn legs_CDLABANDONEDBABY(r: &mut Report) {
     let core = Core::new();
     let optInPenetration = Core::REAL_DEFAULT;
-    let lb = core.CDLABANDONEDBABY_Lookback(optInPenetration);
-    if lb == usize::MAX { r.no_legs("CDLABANDONEDBABY"); return; }
+    let Ok(lb) = core.CDLABANDONEDBABY_Lookback(optInPenetration) else { r.no_legs("CDLABANDONEDBABY"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2050,8 +1992,7 @@ const V_CDLADVANCEBLOCK: &[&str] = &[
 fn sub_CDLADVANCEBLOCK(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLADVANCEBLOCK {
-        let lb = core.CDLADVANCEBLOCK_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLADVANCEBLOCK_Lookback() else { continue; };
         r.control("CDLADVANCEBLOCK", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2074,8 +2015,7 @@ fn sub_CDLADVANCEBLOCK(r: &mut Report) {
 
 fn legs_CDLADVANCEBLOCK(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLADVANCEBLOCK_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLADVANCEBLOCK"); return; }
+    let Ok(lb) = core.CDLADVANCEBLOCK_Lookback() else { r.no_legs("CDLADVANCEBLOCK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2119,8 +2059,7 @@ const V_CDLBELTHOLD: &[&str] = &[
 fn sub_CDLBELTHOLD(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLBELTHOLD {
-        let lb = core.CDLBELTHOLD_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLBELTHOLD_Lookback() else { continue; };
         r.control("CDLBELTHOLD", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2143,8 +2082,7 @@ fn sub_CDLBELTHOLD(r: &mut Report) {
 
 fn legs_CDLBELTHOLD(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLBELTHOLD_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLBELTHOLD"); return; }
+    let Ok(lb) = core.CDLBELTHOLD_Lookback() else { r.no_legs("CDLBELTHOLD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2188,8 +2126,7 @@ const V_CDLBREAKAWAY: &[&str] = &[
 fn sub_CDLBREAKAWAY(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLBREAKAWAY {
-        let lb = core.CDLBREAKAWAY_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLBREAKAWAY_Lookback() else { continue; };
         r.control("CDLBREAKAWAY", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2212,8 +2149,7 @@ fn sub_CDLBREAKAWAY(r: &mut Report) {
 
 fn legs_CDLBREAKAWAY(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLBREAKAWAY_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLBREAKAWAY"); return; }
+    let Ok(lb) = core.CDLBREAKAWAY_Lookback() else { r.no_legs("CDLBREAKAWAY"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2257,8 +2193,7 @@ const V_CDLCLOSINGMARUBOZU: &[&str] = &[
 fn sub_CDLCLOSINGMARUBOZU(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLCLOSINGMARUBOZU {
-        let lb = core.CDLCLOSINGMARUBOZU_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLCLOSINGMARUBOZU_Lookback() else { continue; };
         r.control("CDLCLOSINGMARUBOZU", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2281,8 +2216,7 @@ fn sub_CDLCLOSINGMARUBOZU(r: &mut Report) {
 
 fn legs_CDLCLOSINGMARUBOZU(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLCLOSINGMARUBOZU_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLCLOSINGMARUBOZU"); return; }
+    let Ok(lb) = core.CDLCLOSINGMARUBOZU_Lookback() else { r.no_legs("CDLCLOSINGMARUBOZU"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2326,8 +2260,7 @@ const V_CDLCONCEALBABYSWALL: &[&str] = &[
 fn sub_CDLCONCEALBABYSWALL(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLCONCEALBABYSWALL {
-        let lb = core.CDLCONCEALBABYSWALL_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLCONCEALBABYSWALL_Lookback() else { continue; };
         r.control("CDLCONCEALBABYSWALL", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2350,8 +2283,7 @@ fn sub_CDLCONCEALBABYSWALL(r: &mut Report) {
 
 fn legs_CDLCONCEALBABYSWALL(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLCONCEALBABYSWALL_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLCONCEALBABYSWALL"); return; }
+    let Ok(lb) = core.CDLCONCEALBABYSWALL_Lookback() else { r.no_legs("CDLCONCEALBABYSWALL"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2395,8 +2327,7 @@ const V_CDLCOUNTERATTACK: &[&str] = &[
 fn sub_CDLCOUNTERATTACK(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLCOUNTERATTACK {
-        let lb = core.CDLCOUNTERATTACK_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLCOUNTERATTACK_Lookback() else { continue; };
         r.control("CDLCOUNTERATTACK", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2419,8 +2350,7 @@ fn sub_CDLCOUNTERATTACK(r: &mut Report) {
 
 fn legs_CDLCOUNTERATTACK(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLCOUNTERATTACK_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLCOUNTERATTACK"); return; }
+    let Ok(lb) = core.CDLCOUNTERATTACK_Lookback() else { r.no_legs("CDLCOUNTERATTACK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2465,8 +2395,7 @@ const V_CDLDARKCLOUDCOVER: &[(&str, f64)] = &[
 fn sub_CDLDARKCLOUDCOVER(r: &mut Report) {
     let core = Core::new();
     for &(label, optInPenetration) in V_CDLDARKCLOUDCOVER {
-        let lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration) else { continue; };
         r.control("CDLDARKCLOUDCOVER", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2490,8 +2419,7 @@ fn sub_CDLDARKCLOUDCOVER(r: &mut Report) {
 fn legs_CDLDARKCLOUDCOVER(r: &mut Report) {
     let core = Core::new();
     let optInPenetration = Core::REAL_DEFAULT;
-    let lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
-    if lb == usize::MAX { r.no_legs("CDLDARKCLOUDCOVER"); return; }
+    let Ok(lb) = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration) else { r.no_legs("CDLDARKCLOUDCOVER"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2535,8 +2463,7 @@ const V_CDLDOJI: &[&str] = &[
 fn sub_CDLDOJI(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLDOJI {
-        let lb = core.CDLDOJI_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLDOJI_Lookback() else { continue; };
         r.control("CDLDOJI", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2559,8 +2486,7 @@ fn sub_CDLDOJI(r: &mut Report) {
 
 fn legs_CDLDOJI(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLDOJI_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLDOJI"); return; }
+    let Ok(lb) = core.CDLDOJI_Lookback() else { r.no_legs("CDLDOJI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2604,8 +2530,7 @@ const V_CDLDOJISTAR: &[&str] = &[
 fn sub_CDLDOJISTAR(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLDOJISTAR {
-        let lb = core.CDLDOJISTAR_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLDOJISTAR_Lookback() else { continue; };
         r.control("CDLDOJISTAR", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2628,8 +2553,7 @@ fn sub_CDLDOJISTAR(r: &mut Report) {
 
 fn legs_CDLDOJISTAR(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLDOJISTAR_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLDOJISTAR"); return; }
+    let Ok(lb) = core.CDLDOJISTAR_Lookback() else { r.no_legs("CDLDOJISTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2673,8 +2597,7 @@ const V_CDLDRAGONFLYDOJI: &[&str] = &[
 fn sub_CDLDRAGONFLYDOJI(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLDRAGONFLYDOJI {
-        let lb = core.CDLDRAGONFLYDOJI_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLDRAGONFLYDOJI_Lookback() else { continue; };
         r.control("CDLDRAGONFLYDOJI", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2697,8 +2620,7 @@ fn sub_CDLDRAGONFLYDOJI(r: &mut Report) {
 
 fn legs_CDLDRAGONFLYDOJI(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLDRAGONFLYDOJI_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLDRAGONFLYDOJI"); return; }
+    let Ok(lb) = core.CDLDRAGONFLYDOJI_Lookback() else { r.no_legs("CDLDRAGONFLYDOJI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2742,8 +2664,7 @@ const V_CDLENGULFING: &[&str] = &[
 fn sub_CDLENGULFING(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLENGULFING {
-        let lb = core.CDLENGULFING_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLENGULFING_Lookback() else { continue; };
         r.control("CDLENGULFING", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2766,8 +2687,7 @@ fn sub_CDLENGULFING(r: &mut Report) {
 
 fn legs_CDLENGULFING(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLENGULFING_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLENGULFING"); return; }
+    let Ok(lb) = core.CDLENGULFING_Lookback() else { r.no_legs("CDLENGULFING"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2812,8 +2732,7 @@ const V_CDLEVENINGDOJISTAR: &[(&str, f64)] = &[
 fn sub_CDLEVENINGDOJISTAR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInPenetration) in V_CDLEVENINGDOJISTAR {
-        let lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration) else { continue; };
         r.control("CDLEVENINGDOJISTAR", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2837,8 +2756,7 @@ fn sub_CDLEVENINGDOJISTAR(r: &mut Report) {
 fn legs_CDLEVENINGDOJISTAR(r: &mut Report) {
     let core = Core::new();
     let optInPenetration = Core::REAL_DEFAULT;
-    let lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
-    if lb == usize::MAX { r.no_legs("CDLEVENINGDOJISTAR"); return; }
+    let Ok(lb) = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration) else { r.no_legs("CDLEVENINGDOJISTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2883,8 +2801,7 @@ const V_CDLEVENINGSTAR: &[(&str, f64)] = &[
 fn sub_CDLEVENINGSTAR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInPenetration) in V_CDLEVENINGSTAR {
-        let lb = core.CDLEVENINGSTAR_Lookback(optInPenetration);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLEVENINGSTAR_Lookback(optInPenetration) else { continue; };
         r.control("CDLEVENINGSTAR", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2908,8 +2825,7 @@ fn sub_CDLEVENINGSTAR(r: &mut Report) {
 fn legs_CDLEVENINGSTAR(r: &mut Report) {
     let core = Core::new();
     let optInPenetration = Core::REAL_DEFAULT;
-    let lb = core.CDLEVENINGSTAR_Lookback(optInPenetration);
-    if lb == usize::MAX { r.no_legs("CDLEVENINGSTAR"); return; }
+    let Ok(lb) = core.CDLEVENINGSTAR_Lookback(optInPenetration) else { r.no_legs("CDLEVENINGSTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -2953,8 +2869,7 @@ const V_CDLGAPSIDESIDEWHITE: &[&str] = &[
 fn sub_CDLGAPSIDESIDEWHITE(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLGAPSIDESIDEWHITE {
-        let lb = core.CDLGAPSIDESIDEWHITE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLGAPSIDESIDEWHITE_Lookback() else { continue; };
         r.control("CDLGAPSIDESIDEWHITE", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -2977,8 +2892,7 @@ fn sub_CDLGAPSIDESIDEWHITE(r: &mut Report) {
 
 fn legs_CDLGAPSIDESIDEWHITE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLGAPSIDESIDEWHITE_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLGAPSIDESIDEWHITE"); return; }
+    let Ok(lb) = core.CDLGAPSIDESIDEWHITE_Lookback() else { r.no_legs("CDLGAPSIDESIDEWHITE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3022,8 +2936,7 @@ const V_CDLGRAVESTONEDOJI: &[&str] = &[
 fn sub_CDLGRAVESTONEDOJI(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLGRAVESTONEDOJI {
-        let lb = core.CDLGRAVESTONEDOJI_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLGRAVESTONEDOJI_Lookback() else { continue; };
         r.control("CDLGRAVESTONEDOJI", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3046,8 +2959,7 @@ fn sub_CDLGRAVESTONEDOJI(r: &mut Report) {
 
 fn legs_CDLGRAVESTONEDOJI(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLGRAVESTONEDOJI_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLGRAVESTONEDOJI"); return; }
+    let Ok(lb) = core.CDLGRAVESTONEDOJI_Lookback() else { r.no_legs("CDLGRAVESTONEDOJI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3091,8 +3003,7 @@ const V_CDLHAMMER: &[&str] = &[
 fn sub_CDLHAMMER(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLHAMMER {
-        let lb = core.CDLHAMMER_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLHAMMER_Lookback() else { continue; };
         r.control("CDLHAMMER", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3115,8 +3026,7 @@ fn sub_CDLHAMMER(r: &mut Report) {
 
 fn legs_CDLHAMMER(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLHAMMER_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLHAMMER"); return; }
+    let Ok(lb) = core.CDLHAMMER_Lookback() else { r.no_legs("CDLHAMMER"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3160,8 +3070,7 @@ const V_CDLHANGINGMAN: &[&str] = &[
 fn sub_CDLHANGINGMAN(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLHANGINGMAN {
-        let lb = core.CDLHANGINGMAN_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLHANGINGMAN_Lookback() else { continue; };
         r.control("CDLHANGINGMAN", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3184,8 +3093,7 @@ fn sub_CDLHANGINGMAN(r: &mut Report) {
 
 fn legs_CDLHANGINGMAN(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLHANGINGMAN_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLHANGINGMAN"); return; }
+    let Ok(lb) = core.CDLHANGINGMAN_Lookback() else { r.no_legs("CDLHANGINGMAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3229,8 +3137,7 @@ const V_CDLHARAMI: &[&str] = &[
 fn sub_CDLHARAMI(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLHARAMI {
-        let lb = core.CDLHARAMI_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLHARAMI_Lookback() else { continue; };
         r.control("CDLHARAMI", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3253,8 +3160,7 @@ fn sub_CDLHARAMI(r: &mut Report) {
 
 fn legs_CDLHARAMI(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLHARAMI_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLHARAMI"); return; }
+    let Ok(lb) = core.CDLHARAMI_Lookback() else { r.no_legs("CDLHARAMI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3298,8 +3204,7 @@ const V_CDLHARAMICROSS: &[&str] = &[
 fn sub_CDLHARAMICROSS(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLHARAMICROSS {
-        let lb = core.CDLHARAMICROSS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLHARAMICROSS_Lookback() else { continue; };
         r.control("CDLHARAMICROSS", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3322,8 +3227,7 @@ fn sub_CDLHARAMICROSS(r: &mut Report) {
 
 fn legs_CDLHARAMICROSS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLHARAMICROSS_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLHARAMICROSS"); return; }
+    let Ok(lb) = core.CDLHARAMICROSS_Lookback() else { r.no_legs("CDLHARAMICROSS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3367,8 +3271,7 @@ const V_CDLHIGHWAVE: &[&str] = &[
 fn sub_CDLHIGHWAVE(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLHIGHWAVE {
-        let lb = core.CDLHIGHWAVE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLHIGHWAVE_Lookback() else { continue; };
         r.control("CDLHIGHWAVE", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3391,8 +3294,7 @@ fn sub_CDLHIGHWAVE(r: &mut Report) {
 
 fn legs_CDLHIGHWAVE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLHIGHWAVE_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLHIGHWAVE"); return; }
+    let Ok(lb) = core.CDLHIGHWAVE_Lookback() else { r.no_legs("CDLHIGHWAVE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3436,8 +3338,7 @@ const V_CDLHIKKAKE: &[&str] = &[
 fn sub_CDLHIKKAKE(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLHIKKAKE {
-        let lb = core.CDLHIKKAKE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLHIKKAKE_Lookback() else { continue; };
         r.control("CDLHIKKAKE", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3460,8 +3361,7 @@ fn sub_CDLHIKKAKE(r: &mut Report) {
 
 fn legs_CDLHIKKAKE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLHIKKAKE_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLHIKKAKE"); return; }
+    let Ok(lb) = core.CDLHIKKAKE_Lookback() else { r.no_legs("CDLHIKKAKE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3505,8 +3405,7 @@ const V_CDLHIKKAKEMOD: &[&str] = &[
 fn sub_CDLHIKKAKEMOD(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLHIKKAKEMOD {
-        let lb = core.CDLHIKKAKEMOD_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLHIKKAKEMOD_Lookback() else { continue; };
         r.control("CDLHIKKAKEMOD", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3529,8 +3428,7 @@ fn sub_CDLHIKKAKEMOD(r: &mut Report) {
 
 fn legs_CDLHIKKAKEMOD(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLHIKKAKEMOD_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLHIKKAKEMOD"); return; }
+    let Ok(lb) = core.CDLHIKKAKEMOD_Lookback() else { r.no_legs("CDLHIKKAKEMOD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3574,8 +3472,7 @@ const V_CDLHOMINGPIGEON: &[&str] = &[
 fn sub_CDLHOMINGPIGEON(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLHOMINGPIGEON {
-        let lb = core.CDLHOMINGPIGEON_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLHOMINGPIGEON_Lookback() else { continue; };
         r.control("CDLHOMINGPIGEON", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3598,8 +3495,7 @@ fn sub_CDLHOMINGPIGEON(r: &mut Report) {
 
 fn legs_CDLHOMINGPIGEON(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLHOMINGPIGEON_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLHOMINGPIGEON"); return; }
+    let Ok(lb) = core.CDLHOMINGPIGEON_Lookback() else { r.no_legs("CDLHOMINGPIGEON"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3643,8 +3539,7 @@ const V_CDLIDENTICAL3CROWS: &[&str] = &[
 fn sub_CDLIDENTICAL3CROWS(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLIDENTICAL3CROWS {
-        let lb = core.CDLIDENTICAL3CROWS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLIDENTICAL3CROWS_Lookback() else { continue; };
         r.control("CDLIDENTICAL3CROWS", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3667,8 +3562,7 @@ fn sub_CDLIDENTICAL3CROWS(r: &mut Report) {
 
 fn legs_CDLIDENTICAL3CROWS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLIDENTICAL3CROWS_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLIDENTICAL3CROWS"); return; }
+    let Ok(lb) = core.CDLIDENTICAL3CROWS_Lookback() else { r.no_legs("CDLIDENTICAL3CROWS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3712,8 +3606,7 @@ const V_CDLINNECK: &[&str] = &[
 fn sub_CDLINNECK(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLINNECK {
-        let lb = core.CDLINNECK_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLINNECK_Lookback() else { continue; };
         r.control("CDLINNECK", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3736,8 +3629,7 @@ fn sub_CDLINNECK(r: &mut Report) {
 
 fn legs_CDLINNECK(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLINNECK_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLINNECK"); return; }
+    let Ok(lb) = core.CDLINNECK_Lookback() else { r.no_legs("CDLINNECK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3781,8 +3673,7 @@ const V_CDLINVERTEDHAMMER: &[&str] = &[
 fn sub_CDLINVERTEDHAMMER(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLINVERTEDHAMMER {
-        let lb = core.CDLINVERTEDHAMMER_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLINVERTEDHAMMER_Lookback() else { continue; };
         r.control("CDLINVERTEDHAMMER", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3805,8 +3696,7 @@ fn sub_CDLINVERTEDHAMMER(r: &mut Report) {
 
 fn legs_CDLINVERTEDHAMMER(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLINVERTEDHAMMER_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLINVERTEDHAMMER"); return; }
+    let Ok(lb) = core.CDLINVERTEDHAMMER_Lookback() else { r.no_legs("CDLINVERTEDHAMMER"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3850,8 +3740,7 @@ const V_CDLKICKING: &[&str] = &[
 fn sub_CDLKICKING(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLKICKING {
-        let lb = core.CDLKICKING_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLKICKING_Lookback() else { continue; };
         r.control("CDLKICKING", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3874,8 +3763,7 @@ fn sub_CDLKICKING(r: &mut Report) {
 
 fn legs_CDLKICKING(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLKICKING_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLKICKING"); return; }
+    let Ok(lb) = core.CDLKICKING_Lookback() else { r.no_legs("CDLKICKING"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3919,8 +3807,7 @@ const V_CDLKICKINGBYLENGTH: &[&str] = &[
 fn sub_CDLKICKINGBYLENGTH(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLKICKINGBYLENGTH {
-        let lb = core.CDLKICKINGBYLENGTH_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLKICKINGBYLENGTH_Lookback() else { continue; };
         r.control("CDLKICKINGBYLENGTH", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -3943,8 +3830,7 @@ fn sub_CDLKICKINGBYLENGTH(r: &mut Report) {
 
 fn legs_CDLKICKINGBYLENGTH(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLKICKINGBYLENGTH_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLKICKINGBYLENGTH"); return; }
+    let Ok(lb) = core.CDLKICKINGBYLENGTH_Lookback() else { r.no_legs("CDLKICKINGBYLENGTH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -3988,8 +3874,7 @@ const V_CDLLADDERBOTTOM: &[&str] = &[
 fn sub_CDLLADDERBOTTOM(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLLADDERBOTTOM {
-        let lb = core.CDLLADDERBOTTOM_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLLADDERBOTTOM_Lookback() else { continue; };
         r.control("CDLLADDERBOTTOM", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4012,8 +3897,7 @@ fn sub_CDLLADDERBOTTOM(r: &mut Report) {
 
 fn legs_CDLLADDERBOTTOM(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLLADDERBOTTOM_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLLADDERBOTTOM"); return; }
+    let Ok(lb) = core.CDLLADDERBOTTOM_Lookback() else { r.no_legs("CDLLADDERBOTTOM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4057,8 +3941,7 @@ const V_CDLLONGLEGGEDDOJI: &[&str] = &[
 fn sub_CDLLONGLEGGEDDOJI(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLLONGLEGGEDDOJI {
-        let lb = core.CDLLONGLEGGEDDOJI_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLLONGLEGGEDDOJI_Lookback() else { continue; };
         r.control("CDLLONGLEGGEDDOJI", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4081,8 +3964,7 @@ fn sub_CDLLONGLEGGEDDOJI(r: &mut Report) {
 
 fn legs_CDLLONGLEGGEDDOJI(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLLONGLEGGEDDOJI_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLLONGLEGGEDDOJI"); return; }
+    let Ok(lb) = core.CDLLONGLEGGEDDOJI_Lookback() else { r.no_legs("CDLLONGLEGGEDDOJI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4126,8 +4008,7 @@ const V_CDLLONGLINE: &[&str] = &[
 fn sub_CDLLONGLINE(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLLONGLINE {
-        let lb = core.CDLLONGLINE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLLONGLINE_Lookback() else { continue; };
         r.control("CDLLONGLINE", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4150,8 +4031,7 @@ fn sub_CDLLONGLINE(r: &mut Report) {
 
 fn legs_CDLLONGLINE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLLONGLINE_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLLONGLINE"); return; }
+    let Ok(lb) = core.CDLLONGLINE_Lookback() else { r.no_legs("CDLLONGLINE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4195,8 +4075,7 @@ const V_CDLMARUBOZU: &[&str] = &[
 fn sub_CDLMARUBOZU(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLMARUBOZU {
-        let lb = core.CDLMARUBOZU_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLMARUBOZU_Lookback() else { continue; };
         r.control("CDLMARUBOZU", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4219,8 +4098,7 @@ fn sub_CDLMARUBOZU(r: &mut Report) {
 
 fn legs_CDLMARUBOZU(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLMARUBOZU_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLMARUBOZU"); return; }
+    let Ok(lb) = core.CDLMARUBOZU_Lookback() else { r.no_legs("CDLMARUBOZU"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4264,8 +4142,7 @@ const V_CDLMATCHINGLOW: &[&str] = &[
 fn sub_CDLMATCHINGLOW(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLMATCHINGLOW {
-        let lb = core.CDLMATCHINGLOW_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLMATCHINGLOW_Lookback() else { continue; };
         r.control("CDLMATCHINGLOW", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4288,8 +4165,7 @@ fn sub_CDLMATCHINGLOW(r: &mut Report) {
 
 fn legs_CDLMATCHINGLOW(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLMATCHINGLOW_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLMATCHINGLOW"); return; }
+    let Ok(lb) = core.CDLMATCHINGLOW_Lookback() else { r.no_legs("CDLMATCHINGLOW"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4334,8 +4210,7 @@ const V_CDLMATHOLD: &[(&str, f64)] = &[
 fn sub_CDLMATHOLD(r: &mut Report) {
     let core = Core::new();
     for &(label, optInPenetration) in V_CDLMATHOLD {
-        let lb = core.CDLMATHOLD_Lookback(optInPenetration);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLMATHOLD_Lookback(optInPenetration) else { continue; };
         r.control("CDLMATHOLD", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4359,8 +4234,7 @@ fn sub_CDLMATHOLD(r: &mut Report) {
 fn legs_CDLMATHOLD(r: &mut Report) {
     let core = Core::new();
     let optInPenetration = Core::REAL_DEFAULT;
-    let lb = core.CDLMATHOLD_Lookback(optInPenetration);
-    if lb == usize::MAX { r.no_legs("CDLMATHOLD"); return; }
+    let Ok(lb) = core.CDLMATHOLD_Lookback(optInPenetration) else { r.no_legs("CDLMATHOLD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4405,8 +4279,7 @@ const V_CDLMORNINGDOJISTAR: &[(&str, f64)] = &[
 fn sub_CDLMORNINGDOJISTAR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInPenetration) in V_CDLMORNINGDOJISTAR {
-        let lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration) else { continue; };
         r.control("CDLMORNINGDOJISTAR", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4430,8 +4303,7 @@ fn sub_CDLMORNINGDOJISTAR(r: &mut Report) {
 fn legs_CDLMORNINGDOJISTAR(r: &mut Report) {
     let core = Core::new();
     let optInPenetration = Core::REAL_DEFAULT;
-    let lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
-    if lb == usize::MAX { r.no_legs("CDLMORNINGDOJISTAR"); return; }
+    let Ok(lb) = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration) else { r.no_legs("CDLMORNINGDOJISTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4476,8 +4348,7 @@ const V_CDLMORNINGSTAR: &[(&str, f64)] = &[
 fn sub_CDLMORNINGSTAR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInPenetration) in V_CDLMORNINGSTAR {
-        let lb = core.CDLMORNINGSTAR_Lookback(optInPenetration);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLMORNINGSTAR_Lookback(optInPenetration) else { continue; };
         r.control("CDLMORNINGSTAR", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4501,8 +4372,7 @@ fn sub_CDLMORNINGSTAR(r: &mut Report) {
 fn legs_CDLMORNINGSTAR(r: &mut Report) {
     let core = Core::new();
     let optInPenetration = Core::REAL_DEFAULT;
-    let lb = core.CDLMORNINGSTAR_Lookback(optInPenetration);
-    if lb == usize::MAX { r.no_legs("CDLMORNINGSTAR"); return; }
+    let Ok(lb) = core.CDLMORNINGSTAR_Lookback(optInPenetration) else { r.no_legs("CDLMORNINGSTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4546,8 +4416,7 @@ const V_CDLONNECK: &[&str] = &[
 fn sub_CDLONNECK(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLONNECK {
-        let lb = core.CDLONNECK_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLONNECK_Lookback() else { continue; };
         r.control("CDLONNECK", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4570,8 +4439,7 @@ fn sub_CDLONNECK(r: &mut Report) {
 
 fn legs_CDLONNECK(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLONNECK_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLONNECK"); return; }
+    let Ok(lb) = core.CDLONNECK_Lookback() else { r.no_legs("CDLONNECK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4615,8 +4483,7 @@ const V_CDLPIERCING: &[&str] = &[
 fn sub_CDLPIERCING(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLPIERCING {
-        let lb = core.CDLPIERCING_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLPIERCING_Lookback() else { continue; };
         r.control("CDLPIERCING", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4639,8 +4506,7 @@ fn sub_CDLPIERCING(r: &mut Report) {
 
 fn legs_CDLPIERCING(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLPIERCING_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLPIERCING"); return; }
+    let Ok(lb) = core.CDLPIERCING_Lookback() else { r.no_legs("CDLPIERCING"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4684,8 +4550,7 @@ const V_CDLRICKSHAWMAN: &[&str] = &[
 fn sub_CDLRICKSHAWMAN(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLRICKSHAWMAN {
-        let lb = core.CDLRICKSHAWMAN_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLRICKSHAWMAN_Lookback() else { continue; };
         r.control("CDLRICKSHAWMAN", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4708,8 +4573,7 @@ fn sub_CDLRICKSHAWMAN(r: &mut Report) {
 
 fn legs_CDLRICKSHAWMAN(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLRICKSHAWMAN_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLRICKSHAWMAN"); return; }
+    let Ok(lb) = core.CDLRICKSHAWMAN_Lookback() else { r.no_legs("CDLRICKSHAWMAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4753,8 +4617,7 @@ const V_CDLRISEFALL3METHODS: &[&str] = &[
 fn sub_CDLRISEFALL3METHODS(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLRISEFALL3METHODS {
-        let lb = core.CDLRISEFALL3METHODS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLRISEFALL3METHODS_Lookback() else { continue; };
         r.control("CDLRISEFALL3METHODS", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4777,8 +4640,7 @@ fn sub_CDLRISEFALL3METHODS(r: &mut Report) {
 
 fn legs_CDLRISEFALL3METHODS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLRISEFALL3METHODS_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLRISEFALL3METHODS"); return; }
+    let Ok(lb) = core.CDLRISEFALL3METHODS_Lookback() else { r.no_legs("CDLRISEFALL3METHODS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4822,8 +4684,7 @@ const V_CDLSEPARATINGLINES: &[&str] = &[
 fn sub_CDLSEPARATINGLINES(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLSEPARATINGLINES {
-        let lb = core.CDLSEPARATINGLINES_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLSEPARATINGLINES_Lookback() else { continue; };
         r.control("CDLSEPARATINGLINES", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4846,8 +4707,7 @@ fn sub_CDLSEPARATINGLINES(r: &mut Report) {
 
 fn legs_CDLSEPARATINGLINES(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLSEPARATINGLINES_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLSEPARATINGLINES"); return; }
+    let Ok(lb) = core.CDLSEPARATINGLINES_Lookback() else { r.no_legs("CDLSEPARATINGLINES"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4891,8 +4751,7 @@ const V_CDLSHOOTINGSTAR: &[&str] = &[
 fn sub_CDLSHOOTINGSTAR(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLSHOOTINGSTAR {
-        let lb = core.CDLSHOOTINGSTAR_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLSHOOTINGSTAR_Lookback() else { continue; };
         r.control("CDLSHOOTINGSTAR", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4915,8 +4774,7 @@ fn sub_CDLSHOOTINGSTAR(r: &mut Report) {
 
 fn legs_CDLSHOOTINGSTAR(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLSHOOTINGSTAR_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLSHOOTINGSTAR"); return; }
+    let Ok(lb) = core.CDLSHOOTINGSTAR_Lookback() else { r.no_legs("CDLSHOOTINGSTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -4960,8 +4818,7 @@ const V_CDLSHORTLINE: &[&str] = &[
 fn sub_CDLSHORTLINE(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLSHORTLINE {
-        let lb = core.CDLSHORTLINE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLSHORTLINE_Lookback() else { continue; };
         r.control("CDLSHORTLINE", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -4984,8 +4841,7 @@ fn sub_CDLSHORTLINE(r: &mut Report) {
 
 fn legs_CDLSHORTLINE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLSHORTLINE_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLSHORTLINE"); return; }
+    let Ok(lb) = core.CDLSHORTLINE_Lookback() else { r.no_legs("CDLSHORTLINE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5029,8 +4885,7 @@ const V_CDLSPINNINGTOP: &[&str] = &[
 fn sub_CDLSPINNINGTOP(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLSPINNINGTOP {
-        let lb = core.CDLSPINNINGTOP_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLSPINNINGTOP_Lookback() else { continue; };
         r.control("CDLSPINNINGTOP", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5053,8 +4908,7 @@ fn sub_CDLSPINNINGTOP(r: &mut Report) {
 
 fn legs_CDLSPINNINGTOP(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLSPINNINGTOP_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLSPINNINGTOP"); return; }
+    let Ok(lb) = core.CDLSPINNINGTOP_Lookback() else { r.no_legs("CDLSPINNINGTOP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5098,8 +4952,7 @@ const V_CDLSTALLEDPATTERN: &[&str] = &[
 fn sub_CDLSTALLEDPATTERN(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLSTALLEDPATTERN {
-        let lb = core.CDLSTALLEDPATTERN_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLSTALLEDPATTERN_Lookback() else { continue; };
         r.control("CDLSTALLEDPATTERN", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5122,8 +4975,7 @@ fn sub_CDLSTALLEDPATTERN(r: &mut Report) {
 
 fn legs_CDLSTALLEDPATTERN(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLSTALLEDPATTERN_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLSTALLEDPATTERN"); return; }
+    let Ok(lb) = core.CDLSTALLEDPATTERN_Lookback() else { r.no_legs("CDLSTALLEDPATTERN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5167,8 +5019,7 @@ const V_CDLSTICKSANDWICH: &[&str] = &[
 fn sub_CDLSTICKSANDWICH(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLSTICKSANDWICH {
-        let lb = core.CDLSTICKSANDWICH_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLSTICKSANDWICH_Lookback() else { continue; };
         r.control("CDLSTICKSANDWICH", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5191,8 +5042,7 @@ fn sub_CDLSTICKSANDWICH(r: &mut Report) {
 
 fn legs_CDLSTICKSANDWICH(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLSTICKSANDWICH_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLSTICKSANDWICH"); return; }
+    let Ok(lb) = core.CDLSTICKSANDWICH_Lookback() else { r.no_legs("CDLSTICKSANDWICH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5236,8 +5086,7 @@ const V_CDLTAKURI: &[&str] = &[
 fn sub_CDLTAKURI(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLTAKURI {
-        let lb = core.CDLTAKURI_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLTAKURI_Lookback() else { continue; };
         r.control("CDLTAKURI", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5260,8 +5109,7 @@ fn sub_CDLTAKURI(r: &mut Report) {
 
 fn legs_CDLTAKURI(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLTAKURI_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLTAKURI"); return; }
+    let Ok(lb) = core.CDLTAKURI_Lookback() else { r.no_legs("CDLTAKURI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5305,8 +5153,7 @@ const V_CDLTASUKIGAP: &[&str] = &[
 fn sub_CDLTASUKIGAP(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLTASUKIGAP {
-        let lb = core.CDLTASUKIGAP_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLTASUKIGAP_Lookback() else { continue; };
         r.control("CDLTASUKIGAP", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5329,8 +5176,7 @@ fn sub_CDLTASUKIGAP(r: &mut Report) {
 
 fn legs_CDLTASUKIGAP(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLTASUKIGAP_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLTASUKIGAP"); return; }
+    let Ok(lb) = core.CDLTASUKIGAP_Lookback() else { r.no_legs("CDLTASUKIGAP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5374,8 +5220,7 @@ const V_CDLTHRUSTING: &[&str] = &[
 fn sub_CDLTHRUSTING(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLTHRUSTING {
-        let lb = core.CDLTHRUSTING_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLTHRUSTING_Lookback() else { continue; };
         r.control("CDLTHRUSTING", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5398,8 +5243,7 @@ fn sub_CDLTHRUSTING(r: &mut Report) {
 
 fn legs_CDLTHRUSTING(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLTHRUSTING_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLTHRUSTING"); return; }
+    let Ok(lb) = core.CDLTHRUSTING_Lookback() else { r.no_legs("CDLTHRUSTING"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5443,8 +5287,7 @@ const V_CDLTRISTAR: &[&str] = &[
 fn sub_CDLTRISTAR(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLTRISTAR {
-        let lb = core.CDLTRISTAR_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLTRISTAR_Lookback() else { continue; };
         r.control("CDLTRISTAR", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5467,8 +5310,7 @@ fn sub_CDLTRISTAR(r: &mut Report) {
 
 fn legs_CDLTRISTAR(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLTRISTAR_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLTRISTAR"); return; }
+    let Ok(lb) = core.CDLTRISTAR_Lookback() else { r.no_legs("CDLTRISTAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5512,8 +5354,7 @@ const V_CDLUNIQUE3RIVER: &[&str] = &[
 fn sub_CDLUNIQUE3RIVER(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLUNIQUE3RIVER {
-        let lb = core.CDLUNIQUE3RIVER_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLUNIQUE3RIVER_Lookback() else { continue; };
         r.control("CDLUNIQUE3RIVER", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5536,8 +5377,7 @@ fn sub_CDLUNIQUE3RIVER(r: &mut Report) {
 
 fn legs_CDLUNIQUE3RIVER(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLUNIQUE3RIVER_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLUNIQUE3RIVER"); return; }
+    let Ok(lb) = core.CDLUNIQUE3RIVER_Lookback() else { r.no_legs("CDLUNIQUE3RIVER"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5581,8 +5421,7 @@ const V_CDLUPSIDEGAP2CROWS: &[&str] = &[
 fn sub_CDLUPSIDEGAP2CROWS(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLUPSIDEGAP2CROWS {
-        let lb = core.CDLUPSIDEGAP2CROWS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLUPSIDEGAP2CROWS_Lookback() else { continue; };
         r.control("CDLUPSIDEGAP2CROWS", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5605,8 +5444,7 @@ fn sub_CDLUPSIDEGAP2CROWS(r: &mut Report) {
 
 fn legs_CDLUPSIDEGAP2CROWS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLUPSIDEGAP2CROWS_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLUPSIDEGAP2CROWS"); return; }
+    let Ok(lb) = core.CDLUPSIDEGAP2CROWS_Lookback() else { r.no_legs("CDLUPSIDEGAP2CROWS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5650,8 +5488,7 @@ const V_CDLXSIDEGAP3METHODS: &[&str] = &[
 fn sub_CDLXSIDEGAP3METHODS(r: &mut Report) {
     let core = Core::new();
     for &label in V_CDLXSIDEGAP3METHODS {
-        let lb = core.CDLXSIDEGAP3METHODS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CDLXSIDEGAP3METHODS_Lookback() else { continue; };
         r.control("CDLXSIDEGAP3METHODS", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5674,8 +5511,7 @@ fn sub_CDLXSIDEGAP3METHODS(r: &mut Report) {
 
 fn legs_CDLXSIDEGAP3METHODS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CDLXSIDEGAP3METHODS_Lookback();
-    if lb == usize::MAX { r.no_legs("CDLXSIDEGAP3METHODS"); return; }
+    let Ok(lb) = core.CDLXSIDEGAP3METHODS_Lookback() else { r.no_legs("CDLXSIDEGAP3METHODS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -5719,8 +5555,7 @@ const V_CEIL: &[&str] = &[
 fn sub_CEIL(r: &mut Report) {
     let core = Core::new();
     for &label in V_CEIL {
-        let lb = core.CEIL_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CEIL_Lookback() else { continue; };
         r.control("CEIL", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -5737,8 +5572,7 @@ fn sub_CEIL(r: &mut Report) {
 
 fn legs_CEIL(r: &mut Report) {
     let core = Core::new();
-    let lb = core.CEIL_Lookback();
-    if lb == usize::MAX { r.no_legs("CEIL"); return; }
+    let Ok(lb) = core.CEIL_Lookback() else { r.no_legs("CEIL"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -5756,8 +5590,7 @@ const V_CMF: &[(&str, i32)] = &[
 fn sub_CMF(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_CMF {
-        let lb = core.CMF_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CMF_Lookback(optInTimePeriod) else { continue; };
         r.control("CMF", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -5781,8 +5614,7 @@ fn sub_CMF(r: &mut Report) {
 fn legs_CMF(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.CMF_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("CMF"); return; }
+    let Ok(lb) = core.CMF_Lookback(optInTimePeriod) else { r.no_legs("CMF"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -5827,8 +5659,7 @@ const V_CMO: &[(&str, i32)] = &[
 fn sub_CMO(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_CMO {
-        let lb = core.CMO_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CMO_Lookback(optInTimePeriod) else { continue; };
         r.control("CMO", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -5846,8 +5677,7 @@ fn sub_CMO(r: &mut Report) {
 fn legs_CMO(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.CMO_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("CMO"); return; }
+    let Ok(lb) = core.CMO_Lookback(optInTimePeriod) else { r.no_legs("CMO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -5865,8 +5695,7 @@ const V_CMOU: &[(&str, i32)] = &[
 fn sub_CMOU(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_CMOU {
-        let lb = core.CMOU_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CMOU_Lookback(optInTimePeriod) else { continue; };
         r.control("CMOU", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -5884,8 +5713,7 @@ fn sub_CMOU(r: &mut Report) {
 fn legs_CMOU(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.CMOU_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("CMOU"); return; }
+    let Ok(lb) = core.CMOU_Lookback(optInTimePeriod) else { r.no_legs("CMOU"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -5903,8 +5731,7 @@ const V_CORREL: &[(&str, i32)] = &[
 fn sub_CORREL(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_CORREL {
-        let lb = core.CORREL_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.CORREL_Lookback(optInTimePeriod) else { continue; };
         r.control("CORREL", label, run(|| {
             let inReal0: Vec<f64> = Vec::with_capacity(1);
             let inReal1: Vec<f64> = Vec::with_capacity(1);
@@ -5924,8 +5751,7 @@ fn sub_CORREL(r: &mut Report) {
 fn legs_CORREL(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.CORREL_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("CORREL"); return; }
+    let Ok(lb) = core.CORREL_Lookback(optInTimePeriod) else { r.no_legs("CORREL"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
@@ -5949,8 +5775,7 @@ const V_COS: &[&str] = &[
 fn sub_COS(r: &mut Report) {
     let core = Core::new();
     for &label in V_COS {
-        let lb = core.COS_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.COS_Lookback() else { continue; };
         r.control("COS", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -5967,8 +5792,7 @@ fn sub_COS(r: &mut Report) {
 
 fn legs_COS(r: &mut Report) {
     let core = Core::new();
-    let lb = core.COS_Lookback();
-    if lb == usize::MAX { r.no_legs("COS"); return; }
+    let Ok(lb) = core.COS_Lookback() else { r.no_legs("COS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -5985,8 +5809,7 @@ const V_COSH: &[&str] = &[
 fn sub_COSH(r: &mut Report) {
     let core = Core::new();
     for &label in V_COSH {
-        let lb = core.COSH_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.COSH_Lookback() else { continue; };
         r.control("COSH", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6003,8 +5826,7 @@ fn sub_COSH(r: &mut Report) {
 
 fn legs_COSH(r: &mut Report) {
     let core = Core::new();
-    let lb = core.COSH_Lookback();
-    if lb == usize::MAX { r.no_legs("COSH"); return; }
+    let Ok(lb) = core.COSH_Lookback() else { r.no_legs("COSH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6022,8 +5844,7 @@ const V_DEMA: &[(&str, i32)] = &[
 fn sub_DEMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_DEMA {
-        let lb = core.DEMA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.DEMA_Lookback(optInTimePeriod) else { continue; };
         r.control("DEMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6041,8 +5862,7 @@ fn sub_DEMA(r: &mut Report) {
 fn legs_DEMA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.DEMA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("DEMA"); return; }
+    let Ok(lb) = core.DEMA_Lookback(optInTimePeriod) else { r.no_legs("DEMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6059,8 +5879,7 @@ const V_DIV: &[&str] = &[
 fn sub_DIV(r: &mut Report) {
     let core = Core::new();
     for &label in V_DIV {
-        let lb = core.DIV_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.DIV_Lookback() else { continue; };
         r.control("DIV", label, run(|| {
             let inReal0: Vec<f64> = Vec::with_capacity(1);
             let inReal1: Vec<f64> = Vec::with_capacity(1);
@@ -6079,8 +5898,7 @@ fn sub_DIV(r: &mut Report) {
 
 fn legs_DIV(r: &mut Report) {
     let core = Core::new();
-    let lb = core.DIV_Lookback();
-    if lb == usize::MAX { r.no_legs("DIV"); return; }
+    let Ok(lb) = core.DIV_Lookback() else { r.no_legs("DIV"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
@@ -6105,8 +5923,7 @@ const V_DX: &[(&str, i32)] = &[
 fn sub_DX(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_DX {
-        let lb = core.DX_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.DX_Lookback(optInTimePeriod) else { continue; };
         r.control("DX", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -6128,8 +5945,7 @@ fn sub_DX(r: &mut Report) {
 fn legs_DX(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.DX_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("DX"); return; }
+    let Ok(lb) = core.DX_Lookback(optInTimePeriod) else { r.no_legs("DX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -6163,8 +5979,7 @@ const V_EFI: &[(&str, i32)] = &[
 fn sub_EFI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_EFI {
-        let lb = core.EFI_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.EFI_Lookback(optInTimePeriod) else { continue; };
         r.control("EFI", label, run(|| {
             let inClose: Vec<f64> = Vec::with_capacity(1);
             let inVolume: Vec<f64> = Vec::with_capacity(1);
@@ -6184,8 +5999,7 @@ fn sub_EFI(r: &mut Report) {
 fn legs_EFI(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.EFI_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("EFI"); return; }
+    let Ok(lb) = core.EFI_Lookback(optInTimePeriod) else { r.no_legs("EFI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inClose: Vec<f64> = Vec::with_capacity(1);
@@ -6210,8 +6024,7 @@ const V_EMA: &[(&str, i32)] = &[
 fn sub_EMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_EMA {
-        let lb = core.EMA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.EMA_Lookback(optInTimePeriod) else { continue; };
         r.control("EMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6229,8 +6042,7 @@ fn sub_EMA(r: &mut Report) {
 fn legs_EMA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.EMA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("EMA"); return; }
+    let Ok(lb) = core.EMA_Lookback(optInTimePeriod) else { r.no_legs("EMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6247,8 +6059,7 @@ const V_EXP: &[&str] = &[
 fn sub_EXP(r: &mut Report) {
     let core = Core::new();
     for &label in V_EXP {
-        let lb = core.EXP_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.EXP_Lookback() else { continue; };
         r.control("EXP", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6265,8 +6076,7 @@ fn sub_EXP(r: &mut Report) {
 
 fn legs_EXP(r: &mut Report) {
     let core = Core::new();
-    let lb = core.EXP_Lookback();
-    if lb == usize::MAX { r.no_legs("EXP"); return; }
+    let Ok(lb) = core.EXP_Lookback() else { r.no_legs("EXP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6283,8 +6093,7 @@ const V_FLOOR: &[&str] = &[
 fn sub_FLOOR(r: &mut Report) {
     let core = Core::new();
     for &label in V_FLOOR {
-        let lb = core.FLOOR_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.FLOOR_Lookback() else { continue; };
         r.control("FLOOR", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6301,8 +6110,7 @@ fn sub_FLOOR(r: &mut Report) {
 
 fn legs_FLOOR(r: &mut Report) {
     let core = Core::new();
-    let lb = core.FLOOR_Lookback();
-    if lb == usize::MAX { r.no_legs("FLOOR"); return; }
+    let Ok(lb) = core.FLOOR_Lookback() else { r.no_legs("FLOOR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6320,8 +6128,7 @@ const V_HMA: &[(&str, i32)] = &[
 fn sub_HMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_HMA {
-        let lb = core.HMA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.HMA_Lookback(optInTimePeriod) else { continue; };
         r.control("HMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6339,8 +6146,7 @@ fn sub_HMA(r: &mut Report) {
 fn legs_HMA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.HMA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("HMA"); return; }
+    let Ok(lb) = core.HMA_Lookback(optInTimePeriod) else { r.no_legs("HMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6357,8 +6163,7 @@ const V_HT_DCPERIOD: &[&str] = &[
 fn sub_HT_DCPERIOD(r: &mut Report) {
     let core = Core::new();
     for &label in V_HT_DCPERIOD {
-        let lb = core.HT_DCPERIOD_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.HT_DCPERIOD_Lookback() else { continue; };
         r.control("HT_DCPERIOD", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6375,8 +6180,7 @@ fn sub_HT_DCPERIOD(r: &mut Report) {
 
 fn legs_HT_DCPERIOD(r: &mut Report) {
     let core = Core::new();
-    let lb = core.HT_DCPERIOD_Lookback();
-    if lb == usize::MAX { r.no_legs("HT_DCPERIOD"); return; }
+    let Ok(lb) = core.HT_DCPERIOD_Lookback() else { r.no_legs("HT_DCPERIOD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6393,8 +6197,7 @@ const V_HT_DCPHASE: &[&str] = &[
 fn sub_HT_DCPHASE(r: &mut Report) {
     let core = Core::new();
     for &label in V_HT_DCPHASE {
-        let lb = core.HT_DCPHASE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.HT_DCPHASE_Lookback() else { continue; };
         r.control("HT_DCPHASE", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6411,8 +6214,7 @@ fn sub_HT_DCPHASE(r: &mut Report) {
 
 fn legs_HT_DCPHASE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.HT_DCPHASE_Lookback();
-    if lb == usize::MAX { r.no_legs("HT_DCPHASE"); return; }
+    let Ok(lb) = core.HT_DCPHASE_Lookback() else { r.no_legs("HT_DCPHASE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6429,8 +6231,7 @@ const V_HT_PHASOR: &[&str] = &[
 fn sub_HT_PHASOR(r: &mut Report) {
     let core = Core::new();
     for &label in V_HT_PHASOR {
-        let lb = core.HT_PHASOR_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.HT_PHASOR_Lookback() else { continue; };
         r.control("HT_PHASOR", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outInPhase: Vec<f64> = Vec::with_capacity(1);
@@ -6449,8 +6250,7 @@ fn sub_HT_PHASOR(r: &mut Report) {
 
 fn legs_HT_PHASOR(r: &mut Report) {
     let core = Core::new();
-    let lb = core.HT_PHASOR_Lookback();
-    if lb == usize::MAX { r.no_legs("HT_PHASOR"); return; }
+    let Ok(lb) = core.HT_PHASOR_Lookback() else { r.no_legs("HT_PHASOR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6468,8 +6268,7 @@ const V_HT_SINE: &[&str] = &[
 fn sub_HT_SINE(r: &mut Report) {
     let core = Core::new();
     for &label in V_HT_SINE {
-        let lb = core.HT_SINE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.HT_SINE_Lookback() else { continue; };
         r.control("HT_SINE", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outSine: Vec<f64> = Vec::with_capacity(1);
@@ -6488,8 +6287,7 @@ fn sub_HT_SINE(r: &mut Report) {
 
 fn legs_HT_SINE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.HT_SINE_Lookback();
-    if lb == usize::MAX { r.no_legs("HT_SINE"); return; }
+    let Ok(lb) = core.HT_SINE_Lookback() else { r.no_legs("HT_SINE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6507,8 +6305,7 @@ const V_HT_TRENDLINE: &[&str] = &[
 fn sub_HT_TRENDLINE(r: &mut Report) {
     let core = Core::new();
     for &label in V_HT_TRENDLINE {
-        let lb = core.HT_TRENDLINE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.HT_TRENDLINE_Lookback() else { continue; };
         r.control("HT_TRENDLINE", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6525,8 +6322,7 @@ fn sub_HT_TRENDLINE(r: &mut Report) {
 
 fn legs_HT_TRENDLINE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.HT_TRENDLINE_Lookback();
-    if lb == usize::MAX { r.no_legs("HT_TRENDLINE"); return; }
+    let Ok(lb) = core.HT_TRENDLINE_Lookback() else { r.no_legs("HT_TRENDLINE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6543,8 +6339,7 @@ const V_HT_TRENDMODE: &[&str] = &[
 fn sub_HT_TRENDMODE(r: &mut Report) {
     let core = Core::new();
     for &label in V_HT_TRENDMODE {
-        let lb = core.HT_TRENDMODE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.HT_TRENDMODE_Lookback() else { continue; };
         r.control("HT_TRENDMODE", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outInteger: Vec<i32> = Vec::with_capacity(1);
@@ -6561,8 +6356,7 @@ fn sub_HT_TRENDMODE(r: &mut Report) {
 
 fn legs_HT_TRENDMODE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.HT_TRENDMODE_Lookback();
-    if lb == usize::MAX { r.no_legs("HT_TRENDMODE"); return; }
+    let Ok(lb) = core.HT_TRENDMODE_Lookback() else { r.no_legs("HT_TRENDMODE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6580,8 +6374,7 @@ const V_IMI: &[(&str, i32)] = &[
 fn sub_IMI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_IMI {
-        let lb = core.IMI_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.IMI_Lookback(optInTimePeriod) else { continue; };
         r.control("IMI", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inClose: Vec<f64> = Vec::with_capacity(1);
@@ -6601,8 +6394,7 @@ fn sub_IMI(r: &mut Report) {
 fn legs_IMI(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.IMI_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("IMI"); return; }
+    let Ok(lb) = core.IMI_Lookback(optInTimePeriod) else { r.no_legs("IMI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -6627,8 +6419,7 @@ const V_KAMA: &[(&str, i32)] = &[
 fn sub_KAMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_KAMA {
-        let lb = core.KAMA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.KAMA_Lookback(optInTimePeriod) else { continue; };
         r.control("KAMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6646,8 +6437,7 @@ fn sub_KAMA(r: &mut Report) {
 fn legs_KAMA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.KAMA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("KAMA"); return; }
+    let Ok(lb) = core.KAMA_Lookback(optInTimePeriod) else { r.no_legs("KAMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6665,8 +6455,7 @@ const V_LINEARREG: &[(&str, i32)] = &[
 fn sub_LINEARREG(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_LINEARREG {
-        let lb = core.LINEARREG_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.LINEARREG_Lookback(optInTimePeriod) else { continue; };
         r.control("LINEARREG", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6684,8 +6473,7 @@ fn sub_LINEARREG(r: &mut Report) {
 fn legs_LINEARREG(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.LINEARREG_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("LINEARREG"); return; }
+    let Ok(lb) = core.LINEARREG_Lookback(optInTimePeriod) else { r.no_legs("LINEARREG"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6703,8 +6491,7 @@ const V_LINEARREG_ANGLE: &[(&str, i32)] = &[
 fn sub_LINEARREG_ANGLE(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_LINEARREG_ANGLE {
-        let lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.LINEARREG_ANGLE_Lookback(optInTimePeriod) else { continue; };
         r.control("LINEARREG_ANGLE", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6722,8 +6509,7 @@ fn sub_LINEARREG_ANGLE(r: &mut Report) {
 fn legs_LINEARREG_ANGLE(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("LINEARREG_ANGLE"); return; }
+    let Ok(lb) = core.LINEARREG_ANGLE_Lookback(optInTimePeriod) else { r.no_legs("LINEARREG_ANGLE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6741,8 +6527,7 @@ const V_LINEARREG_INTERCEPT: &[(&str, i32)] = &[
 fn sub_LINEARREG_INTERCEPT(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_LINEARREG_INTERCEPT {
-        let lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod) else { continue; };
         r.control("LINEARREG_INTERCEPT", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6760,8 +6545,7 @@ fn sub_LINEARREG_INTERCEPT(r: &mut Report) {
 fn legs_LINEARREG_INTERCEPT(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("LINEARREG_INTERCEPT"); return; }
+    let Ok(lb) = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod) else { r.no_legs("LINEARREG_INTERCEPT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6779,8 +6563,7 @@ const V_LINEARREG_SLOPE: &[(&str, i32)] = &[
 fn sub_LINEARREG_SLOPE(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_LINEARREG_SLOPE {
-        let lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.LINEARREG_SLOPE_Lookback(optInTimePeriod) else { continue; };
         r.control("LINEARREG_SLOPE", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6798,8 +6581,7 @@ fn sub_LINEARREG_SLOPE(r: &mut Report) {
 fn legs_LINEARREG_SLOPE(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("LINEARREG_SLOPE"); return; }
+    let Ok(lb) = core.LINEARREG_SLOPE_Lookback(optInTimePeriod) else { r.no_legs("LINEARREG_SLOPE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6816,8 +6598,7 @@ const V_LN: &[&str] = &[
 fn sub_LN(r: &mut Report) {
     let core = Core::new();
     for &label in V_LN {
-        let lb = core.LN_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.LN_Lookback() else { continue; };
         r.control("LN", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6834,8 +6615,7 @@ fn sub_LN(r: &mut Report) {
 
 fn legs_LN(r: &mut Report) {
     let core = Core::new();
-    let lb = core.LN_Lookback();
-    if lb == usize::MAX { r.no_legs("LN"); return; }
+    let Ok(lb) = core.LN_Lookback() else { r.no_legs("LN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6852,8 +6632,7 @@ const V_LOG10: &[&str] = &[
 fn sub_LOG10(r: &mut Report) {
     let core = Core::new();
     for &label in V_LOG10 {
-        let lb = core.LOG10_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.LOG10_Lookback() else { continue; };
         r.control("LOG10", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6870,8 +6649,7 @@ fn sub_LOG10(r: &mut Report) {
 
 fn legs_LOG10(r: &mut Report) {
     let core = Core::new();
-    let lb = core.LOG10_Lookback();
-    if lb == usize::MAX { r.no_legs("LOG10"); return; }
+    let Ok(lb) = core.LOG10_Lookback() else { r.no_legs("LOG10"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6913,8 +6691,7 @@ const V_MA: &[(&str, i32, MAType)] = &[
 fn sub_MA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod, optInMAType) in V_MA {
-        let lb = core.MA_Lookback(optInTimePeriod, optInMAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MA_Lookback(optInTimePeriod, optInMAType) else { continue; };
         r.control("MA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -6933,8 +6710,7 @@ fn legs_MA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
     let optInMAType = MAType::DEFAULT;
-    let lb = core.MA_Lookback(optInTimePeriod, optInMAType);
-    if lb == usize::MAX { r.no_legs("MA"); return; }
+    let Ok(lb) = core.MA_Lookback(optInTimePeriod, optInMAType) else { r.no_legs("MA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -6952,8 +6728,7 @@ const V_MACD: &[(&str, i32, i32, i32)] = &[
 fn sub_MACD(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) in V_MACD {
-        let lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { continue; };
         r.control("MACD", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outMACD: Vec<f64> = Vec::with_capacity(1);
@@ -6977,8 +6752,7 @@ fn legs_MACD(r: &mut Report) {
     let optInFastPeriod = i32::MIN;
     let optInSlowPeriod = i32::MIN;
     let optInSignalPeriod = i32::MIN;
-    let lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
-    if lb == usize::MAX { r.no_legs("MACD"); return; }
+    let Ok(lb) = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { r.no_legs("MACD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7070,8 +6844,7 @@ const V_MACDEXT: &[(&str, i32, MAType, i32, MAType, i32, MAType)] = &[
 fn sub_MACDEXT(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) in V_MACDEXT {
-        let lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) else { continue; };
         r.control("MACDEXT", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outMACD: Vec<f64> = Vec::with_capacity(1);
@@ -7098,8 +6871,7 @@ fn legs_MACDEXT(r: &mut Report) {
     let optInSlowMAType = MAType::DEFAULT;
     let optInSignalPeriod = i32::MIN;
     let optInSignalMAType = MAType::DEFAULT;
-    let lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
-    if lb == usize::MAX { r.no_legs("MACDEXT"); return; }
+    let Ok(lb) = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) else { r.no_legs("MACDEXT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7119,8 +6891,7 @@ const V_MACDFIX: &[(&str, i32)] = &[
 fn sub_MACDFIX(r: &mut Report) {
     let core = Core::new();
     for &(label, optInSignalPeriod) in V_MACDFIX {
-        let lb = core.MACDFIX_Lookback(optInSignalPeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MACDFIX_Lookback(optInSignalPeriod) else { continue; };
         r.control("MACDFIX", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outMACD: Vec<f64> = Vec::with_capacity(1);
@@ -7142,8 +6913,7 @@ fn sub_MACDFIX(r: &mut Report) {
 fn legs_MACDFIX(r: &mut Report) {
     let core = Core::new();
     let optInSignalPeriod = i32::MIN;
-    let lb = core.MACDFIX_Lookback(optInSignalPeriod);
-    if lb == usize::MAX { r.no_legs("MACDFIX"); return; }
+    let Ok(lb) = core.MACDFIX_Lookback(optInSignalPeriod) else { r.no_legs("MACDFIX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7163,8 +6933,7 @@ const V_MAMA: &[(&str, f64, f64)] = &[
 fn sub_MAMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastLimit, optInSlowLimit) in V_MAMA {
-        let lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MAMA_Lookback(optInFastLimit, optInSlowLimit) else { continue; };
         r.control("MAMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outMAMA: Vec<f64> = Vec::with_capacity(1);
@@ -7185,8 +6954,7 @@ fn legs_MAMA(r: &mut Report) {
     let core = Core::new();
     let optInFastLimit = Core::REAL_DEFAULT;
     let optInSlowLimit = Core::REAL_DEFAULT;
-    let lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit);
-    if lb == usize::MAX { r.no_legs("MAMA"); return; }
+    let Ok(lb) = core.MAMA_Lookback(optInFastLimit, optInSlowLimit) else { r.no_legs("MAMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7204,8 +6972,7 @@ const V_MARKETFI: &[&str] = &[
 fn sub_MARKETFI(r: &mut Report) {
     let core = Core::new();
     for &label in V_MARKETFI {
-        let lb = core.MARKETFI_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MARKETFI_Lookback() else { continue; };
         r.control("MARKETFI", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -7226,8 +6993,7 @@ fn sub_MARKETFI(r: &mut Report) {
 
 fn legs_MARKETFI(r: &mut Report) {
     let core = Core::new();
-    let lb = core.MARKETFI_Lookback();
-    if lb == usize::MAX { r.no_legs("MARKETFI"); return; }
+    let Ok(lb) = core.MARKETFI_Lookback() else { r.no_legs("MARKETFI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -7285,8 +7051,7 @@ const V_MAVP: &[(&str, i32, i32, MAType)] = &[
 fn sub_MAVP(r: &mut Report) {
     let core = Core::new();
     for &(label, optInMinPeriod, optInMaxPeriod, optInMAType) in V_MAVP {
-        let lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) else { continue; };
         r.control("MAVP", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let inPeriods: Vec<f64> = Vec::with_capacity(1);
@@ -7308,8 +7073,7 @@ fn legs_MAVP(r: &mut Report) {
     let optInMinPeriod = i32::MIN;
     let optInMaxPeriod = i32::MIN;
     let optInMAType = MAType::DEFAULT;
-    let lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
-    if lb == usize::MAX { r.no_legs("MAVP"); return; }
+    let Ok(lb) = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) else { r.no_legs("MAVP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7334,8 +7098,7 @@ const V_MAX: &[(&str, i32)] = &[
 fn sub_MAX(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MAX {
-        let lb = core.MAX_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MAX_Lookback(optInTimePeriod) else { continue; };
         r.control("MAX", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -7353,8 +7116,7 @@ fn sub_MAX(r: &mut Report) {
 fn legs_MAX(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MAX_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MAX"); return; }
+    let Ok(lb) = core.MAX_Lookback(optInTimePeriod) else { r.no_legs("MAX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7372,8 +7134,7 @@ const V_MAXINDEX: &[(&str, i32)] = &[
 fn sub_MAXINDEX(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MAXINDEX {
-        let lb = core.MAXINDEX_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MAXINDEX_Lookback(optInTimePeriod) else { continue; };
         r.control("MAXINDEX", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outInteger: Vec<i32> = Vec::with_capacity(1);
@@ -7391,8 +7152,7 @@ fn sub_MAXINDEX(r: &mut Report) {
 fn legs_MAXINDEX(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MAXINDEX_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MAXINDEX"); return; }
+    let Ok(lb) = core.MAXINDEX_Lookback(optInTimePeriod) else { r.no_legs("MAXINDEX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7409,8 +7169,7 @@ const V_MEDPRICE: &[&str] = &[
 fn sub_MEDPRICE(r: &mut Report) {
     let core = Core::new();
     for &label in V_MEDPRICE {
-        let lb = core.MEDPRICE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MEDPRICE_Lookback() else { continue; };
         r.control("MEDPRICE", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -7429,8 +7188,7 @@ fn sub_MEDPRICE(r: &mut Report) {
 
 fn legs_MEDPRICE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.MEDPRICE_Lookback();
-    if lb == usize::MAX { r.no_legs("MEDPRICE"); return; }
+    let Ok(lb) = core.MEDPRICE_Lookback() else { r.no_legs("MEDPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -7455,8 +7213,7 @@ const V_MFI: &[(&str, i32)] = &[
 fn sub_MFI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MFI {
-        let lb = core.MFI_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MFI_Lookback(optInTimePeriod) else { continue; };
         r.control("MFI", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -7480,8 +7237,7 @@ fn sub_MFI(r: &mut Report) {
 fn legs_MFI(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MFI_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MFI"); return; }
+    let Ok(lb) = core.MFI_Lookback(optInTimePeriod) else { r.no_legs("MFI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -7526,8 +7282,7 @@ const V_MIDPOINT: &[(&str, i32)] = &[
 fn sub_MIDPOINT(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MIDPOINT {
-        let lb = core.MIDPOINT_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MIDPOINT_Lookback(optInTimePeriod) else { continue; };
         r.control("MIDPOINT", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -7545,8 +7300,7 @@ fn sub_MIDPOINT(r: &mut Report) {
 fn legs_MIDPOINT(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MIDPOINT_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MIDPOINT"); return; }
+    let Ok(lb) = core.MIDPOINT_Lookback(optInTimePeriod) else { r.no_legs("MIDPOINT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7564,8 +7318,7 @@ const V_MIDPRICE: &[(&str, i32)] = &[
 fn sub_MIDPRICE(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MIDPRICE {
-        let lb = core.MIDPRICE_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MIDPRICE_Lookback(optInTimePeriod) else { continue; };
         r.control("MIDPRICE", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -7585,8 +7338,7 @@ fn sub_MIDPRICE(r: &mut Report) {
 fn legs_MIDPRICE(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MIDPRICE_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MIDPRICE"); return; }
+    let Ok(lb) = core.MIDPRICE_Lookback(optInTimePeriod) else { r.no_legs("MIDPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -7611,8 +7363,7 @@ const V_MIN: &[(&str, i32)] = &[
 fn sub_MIN(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MIN {
-        let lb = core.MIN_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MIN_Lookback(optInTimePeriod) else { continue; };
         r.control("MIN", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -7630,8 +7381,7 @@ fn sub_MIN(r: &mut Report) {
 fn legs_MIN(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MIN_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MIN"); return; }
+    let Ok(lb) = core.MIN_Lookback(optInTimePeriod) else { r.no_legs("MIN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7649,8 +7399,7 @@ const V_MININDEX: &[(&str, i32)] = &[
 fn sub_MININDEX(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MININDEX {
-        let lb = core.MININDEX_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MININDEX_Lookback(optInTimePeriod) else { continue; };
         r.control("MININDEX", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outInteger: Vec<i32> = Vec::with_capacity(1);
@@ -7668,8 +7417,7 @@ fn sub_MININDEX(r: &mut Report) {
 fn legs_MININDEX(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MININDEX_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MININDEX"); return; }
+    let Ok(lb) = core.MININDEX_Lookback(optInTimePeriod) else { r.no_legs("MININDEX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7687,8 +7435,7 @@ const V_MINMAX: &[(&str, i32)] = &[
 fn sub_MINMAX(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MINMAX {
-        let lb = core.MINMAX_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MINMAX_Lookback(optInTimePeriod) else { continue; };
         r.control("MINMAX", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outMin: Vec<f64> = Vec::with_capacity(1);
@@ -7708,8 +7455,7 @@ fn sub_MINMAX(r: &mut Report) {
 fn legs_MINMAX(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MINMAX_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MINMAX"); return; }
+    let Ok(lb) = core.MINMAX_Lookback(optInTimePeriod) else { r.no_legs("MINMAX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7728,8 +7474,7 @@ const V_MINMAXINDEX: &[(&str, i32)] = &[
 fn sub_MINMAXINDEX(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MINMAXINDEX {
-        let lb = core.MINMAXINDEX_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MINMAXINDEX_Lookback(optInTimePeriod) else { continue; };
         r.control("MINMAXINDEX", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outMinIdx: Vec<i32> = Vec::with_capacity(1);
@@ -7749,8 +7494,7 @@ fn sub_MINMAXINDEX(r: &mut Report) {
 fn legs_MINMAXINDEX(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MINMAXINDEX_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MINMAXINDEX"); return; }
+    let Ok(lb) = core.MINMAXINDEX_Lookback(optInTimePeriod) else { r.no_legs("MINMAXINDEX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7769,8 +7513,7 @@ const V_MINUS_DI: &[(&str, i32)] = &[
 fn sub_MINUS_DI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MINUS_DI {
-        let lb = core.MINUS_DI_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MINUS_DI_Lookback(optInTimePeriod) else { continue; };
         r.control("MINUS_DI", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -7792,8 +7535,7 @@ fn sub_MINUS_DI(r: &mut Report) {
 fn legs_MINUS_DI(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MINUS_DI_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MINUS_DI"); return; }
+    let Ok(lb) = core.MINUS_DI_Lookback(optInTimePeriod) else { r.no_legs("MINUS_DI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -7827,8 +7569,7 @@ const V_MINUS_DM: &[(&str, i32)] = &[
 fn sub_MINUS_DM(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MINUS_DM {
-        let lb = core.MINUS_DM_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MINUS_DM_Lookback(optInTimePeriod) else { continue; };
         r.control("MINUS_DM", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -7848,8 +7589,7 @@ fn sub_MINUS_DM(r: &mut Report) {
 fn legs_MINUS_DM(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MINUS_DM_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MINUS_DM"); return; }
+    let Ok(lb) = core.MINUS_DM_Lookback(optInTimePeriod) else { r.no_legs("MINUS_DM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -7874,8 +7614,7 @@ const V_MOM: &[(&str, i32)] = &[
 fn sub_MOM(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MOM {
-        let lb = core.MOM_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MOM_Lookback(optInTimePeriod) else { continue; };
         r.control("MOM", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -7893,8 +7632,7 @@ fn sub_MOM(r: &mut Report) {
 fn legs_MOM(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.MOM_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("MOM"); return; }
+    let Ok(lb) = core.MOM_Lookback(optInTimePeriod) else { r.no_legs("MOM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -7911,8 +7649,7 @@ const V_MULT: &[&str] = &[
 fn sub_MULT(r: &mut Report) {
     let core = Core::new();
     for &label in V_MULT {
-        let lb = core.MULT_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.MULT_Lookback() else { continue; };
         r.control("MULT", label, run(|| {
             let inReal0: Vec<f64> = Vec::with_capacity(1);
             let inReal1: Vec<f64> = Vec::with_capacity(1);
@@ -7931,8 +7668,7 @@ fn sub_MULT(r: &mut Report) {
 
 fn legs_MULT(r: &mut Report) {
     let core = Core::new();
-    let lb = core.MULT_Lookback();
-    if lb == usize::MAX { r.no_legs("MULT"); return; }
+    let Ok(lb) = core.MULT_Lookback() else { r.no_legs("MULT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
@@ -7957,8 +7693,7 @@ const V_NATR: &[(&str, i32)] = &[
 fn sub_NATR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_NATR {
-        let lb = core.NATR_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.NATR_Lookback(optInTimePeriod) else { continue; };
         r.control("NATR", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -7980,8 +7715,7 @@ fn sub_NATR(r: &mut Report) {
 fn legs_NATR(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.NATR_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("NATR"); return; }
+    let Ok(lb) = core.NATR_Lookback(optInTimePeriod) else { r.no_legs("NATR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -8014,8 +7748,7 @@ const V_NVI: &[&str] = &[
 fn sub_NVI(r: &mut Report) {
     let core = Core::new();
     for &label in V_NVI {
-        let lb = core.NVI_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.NVI_Lookback() else { continue; };
         r.control("NVI", label, run(|| {
             let inClose: Vec<f64> = Vec::with_capacity(1);
             let inVolume: Vec<f64> = Vec::with_capacity(1);
@@ -8034,8 +7767,7 @@ fn sub_NVI(r: &mut Report) {
 
 fn legs_NVI(r: &mut Report) {
     let core = Core::new();
-    let lb = core.NVI_Lookback();
-    if lb == usize::MAX { r.no_legs("NVI"); return; }
+    let Ok(lb) = core.NVI_Lookback() else { r.no_legs("NVI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inClose: Vec<f64> = Vec::with_capacity(1);
@@ -8059,8 +7791,7 @@ const V_OBV: &[&str] = &[
 fn sub_OBV(r: &mut Report) {
     let core = Core::new();
     for &label in V_OBV {
-        let lb = core.OBV_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.OBV_Lookback() else { continue; };
         r.control("OBV", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let inVolume: Vec<f64> = Vec::with_capacity(1);
@@ -8079,8 +7810,7 @@ fn sub_OBV(r: &mut Report) {
 
 fn legs_OBV(r: &mut Report) {
     let core = Core::new();
-    let lb = core.OBV_Lookback();
-    if lb == usize::MAX { r.no_legs("OBV"); return; }
+    let Ok(lb) = core.OBV_Lookback() else { r.no_legs("OBV"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8105,8 +7835,7 @@ const V_PLUS_DI: &[(&str, i32)] = &[
 fn sub_PLUS_DI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_PLUS_DI {
-        let lb = core.PLUS_DI_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.PLUS_DI_Lookback(optInTimePeriod) else { continue; };
         r.control("PLUS_DI", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -8128,8 +7857,7 @@ fn sub_PLUS_DI(r: &mut Report) {
 fn legs_PLUS_DI(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.PLUS_DI_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("PLUS_DI"); return; }
+    let Ok(lb) = core.PLUS_DI_Lookback(optInTimePeriod) else { r.no_legs("PLUS_DI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -8163,8 +7891,7 @@ const V_PLUS_DM: &[(&str, i32)] = &[
 fn sub_PLUS_DM(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_PLUS_DM {
-        let lb = core.PLUS_DM_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.PLUS_DM_Lookback(optInTimePeriod) else { continue; };
         r.control("PLUS_DM", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -8184,8 +7911,7 @@ fn sub_PLUS_DM(r: &mut Report) {
 fn legs_PLUS_DM(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.PLUS_DM_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("PLUS_DM"); return; }
+    let Ok(lb) = core.PLUS_DM_Lookback(optInTimePeriod) else { r.no_legs("PLUS_DM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -8234,8 +7960,7 @@ const V_PPO: &[(&str, i32, i32, MAType)] = &[
 fn sub_PPO(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastPeriod, optInSlowPeriod, optInMAType) in V_PPO {
-        let lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) else { continue; };
         r.control("PPO", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8255,8 +7980,7 @@ fn legs_PPO(r: &mut Report) {
     let optInFastPeriod = i32::MIN;
     let optInSlowPeriod = i32::MIN;
     let optInMAType = MAType::DEFAULT;
-    let lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-    if lb == usize::MAX { r.no_legs("PPO"); return; }
+    let Ok(lb) = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) else { r.no_legs("PPO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8273,8 +7997,7 @@ const V_PVI: &[&str] = &[
 fn sub_PVI(r: &mut Report) {
     let core = Core::new();
     for &label in V_PVI {
-        let lb = core.PVI_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.PVI_Lookback() else { continue; };
         r.control("PVI", label, run(|| {
             let inClose: Vec<f64> = Vec::with_capacity(1);
             let inVolume: Vec<f64> = Vec::with_capacity(1);
@@ -8293,8 +8016,7 @@ fn sub_PVI(r: &mut Report) {
 
 fn legs_PVI(r: &mut Report) {
     let core = Core::new();
-    let lb = core.PVI_Lookback();
-    if lb == usize::MAX { r.no_legs("PVI"); return; }
+    let Ok(lb) = core.PVI_Lookback() else { r.no_legs("PVI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inClose: Vec<f64> = Vec::with_capacity(1);
@@ -8343,8 +8065,7 @@ const V_PVO: &[(&str, i32, i32, MAType)] = &[
 fn sub_PVO(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastPeriod, optInSlowPeriod, optInMAType) in V_PVO {
-        let lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) else { continue; };
         r.control("PVO", label, run(|| {
             let inVolume: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8364,8 +8085,7 @@ fn legs_PVO(r: &mut Report) {
     let optInFastPeriod = i32::MIN;
     let optInSlowPeriod = i32::MIN;
     let optInMAType = MAType::DEFAULT;
-    let lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
-    if lb == usize::MAX { r.no_legs("PVO"); return; }
+    let Ok(lb) = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) else { r.no_legs("PVO"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inVolume: Vec<f64> = Vec::with_capacity(1);
@@ -8383,8 +8103,7 @@ const V_QSTICK: &[(&str, i32)] = &[
 fn sub_QSTICK(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_QSTICK {
-        let lb = core.QSTICK_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.QSTICK_Lookback(optInTimePeriod) else { continue; };
         r.control("QSTICK", label, run(|| {
             let inOpen: Vec<f64> = Vec::with_capacity(1);
             let inClose: Vec<f64> = Vec::with_capacity(1);
@@ -8404,8 +8123,7 @@ fn sub_QSTICK(r: &mut Report) {
 fn legs_QSTICK(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.QSTICK_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("QSTICK"); return; }
+    let Ok(lb) = core.QSTICK_Lookback(optInTimePeriod) else { r.no_legs("QSTICK"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inOpen: Vec<f64> = Vec::with_capacity(1);
@@ -8430,8 +8148,7 @@ const V_ROC: &[(&str, i32)] = &[
 fn sub_ROC(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_ROC {
-        let lb = core.ROC_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ROC_Lookback(optInTimePeriod) else { continue; };
         r.control("ROC", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8449,8 +8166,7 @@ fn sub_ROC(r: &mut Report) {
 fn legs_ROC(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.ROC_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("ROC"); return; }
+    let Ok(lb) = core.ROC_Lookback(optInTimePeriod) else { r.no_legs("ROC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8468,8 +8184,7 @@ const V_ROCP: &[(&str, i32)] = &[
 fn sub_ROCP(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_ROCP {
-        let lb = core.ROCP_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ROCP_Lookback(optInTimePeriod) else { continue; };
         r.control("ROCP", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8487,8 +8202,7 @@ fn sub_ROCP(r: &mut Report) {
 fn legs_ROCP(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.ROCP_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("ROCP"); return; }
+    let Ok(lb) = core.ROCP_Lookback(optInTimePeriod) else { r.no_legs("ROCP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8506,8 +8220,7 @@ const V_ROCR: &[(&str, i32)] = &[
 fn sub_ROCR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_ROCR {
-        let lb = core.ROCR_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ROCR_Lookback(optInTimePeriod) else { continue; };
         r.control("ROCR", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8525,8 +8238,7 @@ fn sub_ROCR(r: &mut Report) {
 fn legs_ROCR(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.ROCR_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("ROCR"); return; }
+    let Ok(lb) = core.ROCR_Lookback(optInTimePeriod) else { r.no_legs("ROCR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8544,8 +8256,7 @@ const V_ROCR100: &[(&str, i32)] = &[
 fn sub_ROCR100(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_ROCR100 {
-        let lb = core.ROCR100_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ROCR100_Lookback(optInTimePeriod) else { continue; };
         r.control("ROCR100", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8563,8 +8274,7 @@ fn sub_ROCR100(r: &mut Report) {
 fn legs_ROCR100(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.ROCR100_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("ROCR100"); return; }
+    let Ok(lb) = core.ROCR100_Lookback(optInTimePeriod) else { r.no_legs("ROCR100"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8582,8 +8292,7 @@ const V_RSI: &[(&str, i32)] = &[
 fn sub_RSI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_RSI {
-        let lb = core.RSI_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.RSI_Lookback(optInTimePeriod) else { continue; };
         r.control("RSI", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8601,8 +8310,7 @@ fn sub_RSI(r: &mut Report) {
 fn legs_RSI(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.RSI_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("RSI"); return; }
+    let Ok(lb) = core.RSI_Lookback(optInTimePeriod) else { r.no_legs("RSI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8620,8 +8328,7 @@ const V_SAR: &[(&str, f64, f64)] = &[
 fn sub_SAR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInAcceleration, optInMaximum) in V_SAR {
-        let lb = core.SAR_Lookback(optInAcceleration, optInMaximum);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.SAR_Lookback(optInAcceleration, optInMaximum) else { continue; };
         r.control("SAR", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -8642,8 +8349,7 @@ fn legs_SAR(r: &mut Report) {
     let core = Core::new();
     let optInAcceleration = Core::REAL_DEFAULT;
     let optInMaximum = Core::REAL_DEFAULT;
-    let lb = core.SAR_Lookback(optInAcceleration, optInMaximum);
-    if lb == usize::MAX { r.no_legs("SAR"); return; }
+    let Ok(lb) = core.SAR_Lookback(optInAcceleration, optInMaximum) else { r.no_legs("SAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -8668,8 +8374,7 @@ const V_SAREXT: &[(&str, f64, f64, f64, f64, f64, f64, f64, f64)] = &[
 fn sub_SAREXT(r: &mut Report) {
     let core = Core::new();
     for &(label, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) in V_SAREXT {
-        let lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) else { continue; };
         r.control("SAREXT", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -8696,8 +8401,7 @@ fn legs_SAREXT(r: &mut Report) {
     let optInAccelerationInitShort = Core::REAL_DEFAULT;
     let optInAccelerationShort = Core::REAL_DEFAULT;
     let optInAccelerationMaxShort = Core::REAL_DEFAULT;
-    let lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
-    if lb == usize::MAX { r.no_legs("SAREXT"); return; }
+    let Ok(lb) = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) else { r.no_legs("SAREXT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -8721,8 +8425,7 @@ const V_SIN: &[&str] = &[
 fn sub_SIN(r: &mut Report) {
     let core = Core::new();
     for &label in V_SIN {
-        let lb = core.SIN_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.SIN_Lookback() else { continue; };
         r.control("SIN", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8739,8 +8442,7 @@ fn sub_SIN(r: &mut Report) {
 
 fn legs_SIN(r: &mut Report) {
     let core = Core::new();
-    let lb = core.SIN_Lookback();
-    if lb == usize::MAX { r.no_legs("SIN"); return; }
+    let Ok(lb) = core.SIN_Lookback() else { r.no_legs("SIN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8757,8 +8459,7 @@ const V_SINH: &[&str] = &[
 fn sub_SINH(r: &mut Report) {
     let core = Core::new();
     for &label in V_SINH {
-        let lb = core.SINH_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.SINH_Lookback() else { continue; };
         r.control("SINH", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8775,8 +8476,7 @@ fn sub_SINH(r: &mut Report) {
 
 fn legs_SINH(r: &mut Report) {
     let core = Core::new();
-    let lb = core.SINH_Lookback();
-    if lb == usize::MAX { r.no_legs("SINH"); return; }
+    let Ok(lb) = core.SINH_Lookback() else { r.no_legs("SINH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8794,8 +8494,7 @@ const V_SMA: &[(&str, i32)] = &[
 fn sub_SMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_SMA {
-        let lb = core.SMA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.SMA_Lookback(optInTimePeriod) else { continue; };
         r.control("SMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8813,8 +8512,7 @@ fn sub_SMA(r: &mut Report) {
 fn legs_SMA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.SMA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("SMA"); return; }
+    let Ok(lb) = core.SMA_Lookback(optInTimePeriod) else { r.no_legs("SMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8832,8 +8530,7 @@ const V_SMI: &[(&str, i32, i32, i32, i32)] = &[
 fn sub_SMI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) in V_SMI {
-        let lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { continue; };
         r.control("SMI", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -8860,8 +8557,7 @@ fn legs_SMI(r: &mut Report) {
     let optInFastPeriod = i32::MIN;
     let optInSlowPeriod = i32::MIN;
     let optInSignalPeriod = i32::MIN;
-    let lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
-    if lb == usize::MAX { r.no_legs("SMI"); return; }
+    let Ok(lb) = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { r.no_legs("SMI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -8897,8 +8593,7 @@ const V_SQRT: &[&str] = &[
 fn sub_SQRT(r: &mut Report) {
     let core = Core::new();
     for &label in V_SQRT {
-        let lb = core.SQRT_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.SQRT_Lookback() else { continue; };
         r.control("SQRT", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8915,8 +8610,7 @@ fn sub_SQRT(r: &mut Report) {
 
 fn legs_SQRT(r: &mut Report) {
     let core = Core::new();
-    let lb = core.SQRT_Lookback();
-    if lb == usize::MAX { r.no_legs("SQRT"); return; }
+    let Ok(lb) = core.SQRT_Lookback() else { r.no_legs("SQRT"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -8934,8 +8628,7 @@ const V_STDDEV: &[(&str, i32, f64)] = &[
 fn sub_STDDEV(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod, optInNbDev) in V_STDDEV {
-        let lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.STDDEV_Lookback(optInTimePeriod, optInNbDev) else { continue; };
         r.control("STDDEV", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -8954,8 +8647,7 @@ fn legs_STDDEV(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
     let optInNbDev = Core::REAL_DEFAULT;
-    let lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev);
-    if lb == usize::MAX { r.no_legs("STDDEV"); return; }
+    let Ok(lb) = core.STDDEV_Lookback(optInTimePeriod, optInNbDev) else { r.no_legs("STDDEV"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9021,8 +8713,7 @@ const V_STOCH: &[(&str, i32, i32, MAType, i32, MAType)] = &[
 fn sub_STOCH(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) in V_STOCH {
-        let lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) else { continue; };
         r.control("STOCH", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -9050,8 +8741,7 @@ fn legs_STOCH(r: &mut Report) {
     let optInSlowK_MAType = MAType::DEFAULT;
     let optInSlowD_Period = i32::MIN;
     let optInSlowD_MAType = MAType::DEFAULT;
-    let lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
-    if lb == usize::MAX { r.no_legs("STOCH"); return; }
+    let Ok(lb) = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) else { r.no_legs("STOCH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -9112,8 +8802,7 @@ const V_STOCHF: &[(&str, i32, i32, MAType)] = &[
 fn sub_STOCHF(r: &mut Report) {
     let core = Core::new();
     for &(label, optInFastK_Period, optInFastD_Period, optInFastD_MAType) in V_STOCHF {
-        let lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) else { continue; };
         r.control("STOCHF", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -9139,8 +8828,7 @@ fn legs_STOCHF(r: &mut Report) {
     let optInFastK_Period = i32::MIN;
     let optInFastD_Period = i32::MIN;
     let optInFastD_MAType = MAType::DEFAULT;
-    let lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-    if lb == usize::MAX { r.no_legs("STOCHF"); return; }
+    let Ok(lb) = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) else { r.no_legs("STOCHF"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -9201,8 +8889,7 @@ const V_STOCHRSI: &[(&str, i32, i32, i32, MAType)] = &[
 fn sub_STOCHRSI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) in V_STOCHRSI {
-        let lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) else { continue; };
         r.control("STOCHRSI", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outFastK: Vec<f64> = Vec::with_capacity(1);
@@ -9225,8 +8912,7 @@ fn legs_STOCHRSI(r: &mut Report) {
     let optInFastK_Period = i32::MIN;
     let optInFastD_Period = i32::MIN;
     let optInFastD_MAType = MAType::DEFAULT;
-    let lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-    if lb == usize::MAX { r.no_legs("STOCHRSI"); return; }
+    let Ok(lb) = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) else { r.no_legs("STOCHRSI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9244,8 +8930,7 @@ const V_SUB: &[&str] = &[
 fn sub_SUB(r: &mut Report) {
     let core = Core::new();
     for &label in V_SUB {
-        let lb = core.SUB_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.SUB_Lookback() else { continue; };
         r.control("SUB", label, run(|| {
             let inReal0: Vec<f64> = Vec::with_capacity(1);
             let inReal1: Vec<f64> = Vec::with_capacity(1);
@@ -9264,8 +8949,7 @@ fn sub_SUB(r: &mut Report) {
 
 fn legs_SUB(r: &mut Report) {
     let core = Core::new();
-    let lb = core.SUB_Lookback();
-    if lb == usize::MAX { r.no_legs("SUB"); return; }
+    let Ok(lb) = core.SUB_Lookback() else { r.no_legs("SUB"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal0: Vec<f64> = Vec::with_capacity(1);
@@ -9290,8 +8974,7 @@ const V_SUM: &[(&str, i32)] = &[
 fn sub_SUM(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_SUM {
-        let lb = core.SUM_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.SUM_Lookback(optInTimePeriod) else { continue; };
         r.control("SUM", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -9309,8 +8992,7 @@ fn sub_SUM(r: &mut Report) {
 fn legs_SUM(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.SUM_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("SUM"); return; }
+    let Ok(lb) = core.SUM_Lookback(optInTimePeriod) else { r.no_legs("SUM"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9328,8 +9010,7 @@ const V_T3: &[(&str, i32, f64)] = &[
 fn sub_T3(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod, optInVFactor) in V_T3 {
-        let lb = core.T3_Lookback(optInTimePeriod, optInVFactor);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.T3_Lookback(optInTimePeriod, optInVFactor) else { continue; };
         r.control("T3", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -9348,8 +9029,7 @@ fn legs_T3(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
     let optInVFactor = Core::REAL_DEFAULT;
-    let lb = core.T3_Lookback(optInTimePeriod, optInVFactor);
-    if lb == usize::MAX { r.no_legs("T3"); return; }
+    let Ok(lb) = core.T3_Lookback(optInTimePeriod, optInVFactor) else { r.no_legs("T3"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9366,8 +9046,7 @@ const V_TAN: &[&str] = &[
 fn sub_TAN(r: &mut Report) {
     let core = Core::new();
     for &label in V_TAN {
-        let lb = core.TAN_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.TAN_Lookback() else { continue; };
         r.control("TAN", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -9384,8 +9063,7 @@ fn sub_TAN(r: &mut Report) {
 
 fn legs_TAN(r: &mut Report) {
     let core = Core::new();
-    let lb = core.TAN_Lookback();
-    if lb == usize::MAX { r.no_legs("TAN"); return; }
+    let Ok(lb) = core.TAN_Lookback() else { r.no_legs("TAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9402,8 +9080,7 @@ const V_TANH: &[&str] = &[
 fn sub_TANH(r: &mut Report) {
     let core = Core::new();
     for &label in V_TANH {
-        let lb = core.TANH_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.TANH_Lookback() else { continue; };
         r.control("TANH", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -9420,8 +9097,7 @@ fn sub_TANH(r: &mut Report) {
 
 fn legs_TANH(r: &mut Report) {
     let core = Core::new();
-    let lb = core.TANH_Lookback();
-    if lb == usize::MAX { r.no_legs("TANH"); return; }
+    let Ok(lb) = core.TANH_Lookback() else { r.no_legs("TANH"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9439,8 +9115,7 @@ const V_TEMA: &[(&str, i32)] = &[
 fn sub_TEMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_TEMA {
-        let lb = core.TEMA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.TEMA_Lookback(optInTimePeriod) else { continue; };
         r.control("TEMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -9458,8 +9133,7 @@ fn sub_TEMA(r: &mut Report) {
 fn legs_TEMA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.TEMA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("TEMA"); return; }
+    let Ok(lb) = core.TEMA_Lookback(optInTimePeriod) else { r.no_legs("TEMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9476,8 +9150,7 @@ const V_TRANGE: &[&str] = &[
 fn sub_TRANGE(r: &mut Report) {
     let core = Core::new();
     for &label in V_TRANGE {
-        let lb = core.TRANGE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.TRANGE_Lookback() else { continue; };
         r.control("TRANGE", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -9498,8 +9171,7 @@ fn sub_TRANGE(r: &mut Report) {
 
 fn legs_TRANGE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.TRANGE_Lookback();
-    if lb == usize::MAX { r.no_legs("TRANGE"); return; }
+    let Ok(lb) = core.TRANGE_Lookback() else { r.no_legs("TRANGE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -9533,8 +9205,7 @@ const V_TRIMA: &[(&str, i32)] = &[
 fn sub_TRIMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_TRIMA {
-        let lb = core.TRIMA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.TRIMA_Lookback(optInTimePeriod) else { continue; };
         r.control("TRIMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -9552,8 +9223,7 @@ fn sub_TRIMA(r: &mut Report) {
 fn legs_TRIMA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.TRIMA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("TRIMA"); return; }
+    let Ok(lb) = core.TRIMA_Lookback(optInTimePeriod) else { r.no_legs("TRIMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9571,8 +9241,7 @@ const V_TRIX: &[(&str, i32)] = &[
 fn sub_TRIX(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_TRIX {
-        let lb = core.TRIX_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.TRIX_Lookback(optInTimePeriod) else { continue; };
         r.control("TRIX", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -9590,8 +9259,7 @@ fn sub_TRIX(r: &mut Report) {
 fn legs_TRIX(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.TRIX_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("TRIX"); return; }
+    let Ok(lb) = core.TRIX_Lookback(optInTimePeriod) else { r.no_legs("TRIX"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9609,8 +9277,7 @@ const V_TSF: &[(&str, i32)] = &[
 fn sub_TSF(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_TSF {
-        let lb = core.TSF_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.TSF_Lookback(optInTimePeriod) else { continue; };
         r.control("TSF", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -9628,8 +9295,7 @@ fn sub_TSF(r: &mut Report) {
 fn legs_TSF(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.TSF_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("TSF"); return; }
+    let Ok(lb) = core.TSF_Lookback(optInTimePeriod) else { r.no_legs("TSF"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9646,8 +9312,7 @@ const V_TYPPRICE: &[&str] = &[
 fn sub_TYPPRICE(r: &mut Report) {
     let core = Core::new();
     for &label in V_TYPPRICE {
-        let lb = core.TYPPRICE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.TYPPRICE_Lookback() else { continue; };
         r.control("TYPPRICE", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -9668,8 +9333,7 @@ fn sub_TYPPRICE(r: &mut Report) {
 
 fn legs_TYPPRICE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.TYPPRICE_Lookback();
-    if lb == usize::MAX { r.no_legs("TYPPRICE"); return; }
+    let Ok(lb) = core.TYPPRICE_Lookback() else { r.no_legs("TYPPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -9703,8 +9367,7 @@ const V_ULTOSC: &[(&str, i32, i32, i32)] = &[
 fn sub_ULTOSC(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) in V_ULTOSC {
-        let lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) else { continue; };
         r.control("ULTOSC", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -9728,8 +9391,7 @@ fn legs_ULTOSC(r: &mut Report) {
     let optInTimePeriod1 = i32::MIN;
     let optInTimePeriod2 = i32::MIN;
     let optInTimePeriod3 = i32::MIN;
-    let lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
-    if lb == usize::MAX { r.no_legs("ULTOSC"); return; }
+    let Ok(lb) = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) else { r.no_legs("ULTOSC"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -9763,8 +9425,7 @@ const V_VAR: &[(&str, i32, f64)] = &[
 fn sub_VAR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod, optInNbDev) in V_VAR {
-        let lb = core.VAR_Lookback(optInTimePeriod, optInNbDev);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.VAR_Lookback(optInTimePeriod, optInNbDev) else { continue; };
         r.control("VAR", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -9783,8 +9444,7 @@ fn legs_VAR(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
     let optInNbDev = Core::REAL_DEFAULT;
-    let lb = core.VAR_Lookback(optInTimePeriod, optInNbDev);
-    if lb == usize::MAX { r.no_legs("VAR"); return; }
+    let Ok(lb) = core.VAR_Lookback(optInTimePeriod, optInNbDev) else { r.no_legs("VAR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9801,8 +9461,7 @@ const V_VWAP: &[&str] = &[
 fn sub_VWAP(r: &mut Report) {
     let core = Core::new();
     for &label in V_VWAP {
-        let lb = core.VWAP_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.VWAP_Lookback() else { continue; };
         r.control("VWAP", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -9825,8 +9484,7 @@ fn sub_VWAP(r: &mut Report) {
 
 fn legs_VWAP(r: &mut Report) {
     let core = Core::new();
-    let lb = core.VWAP_Lookback();
-    if lb == usize::MAX { r.no_legs("VWAP"); return; }
+    let Ok(lb) = core.VWAP_Lookback() else { r.no_legs("VWAP"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -9871,8 +9529,7 @@ const V_VWMA: &[(&str, i32)] = &[
 fn sub_VWMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_VWMA {
-        let lb = core.VWMA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.VWMA_Lookback(optInTimePeriod) else { continue; };
         r.control("VWMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let inVolume: Vec<f64> = Vec::with_capacity(1);
@@ -9892,8 +9549,7 @@ fn sub_VWMA(r: &mut Report) {
 fn legs_VWMA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.VWMA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("VWMA"); return; }
+    let Ok(lb) = core.VWMA_Lookback(optInTimePeriod) else { r.no_legs("VWMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);
@@ -9917,8 +9573,7 @@ const V_WAD: &[&str] = &[
 fn sub_WAD(r: &mut Report) {
     let core = Core::new();
     for &label in V_WAD {
-        let lb = core.WAD_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.WAD_Lookback() else { continue; };
         r.control("WAD", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -9939,8 +9594,7 @@ fn sub_WAD(r: &mut Report) {
 
 fn legs_WAD(r: &mut Report) {
     let core = Core::new();
-    let lb = core.WAD_Lookback();
-    if lb == usize::MAX { r.no_legs("WAD"); return; }
+    let Ok(lb) = core.WAD_Lookback() else { r.no_legs("WAD"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -9973,8 +9627,7 @@ const V_WCLPRICE: &[&str] = &[
 fn sub_WCLPRICE(r: &mut Report) {
     let core = Core::new();
     for &label in V_WCLPRICE {
-        let lb = core.WCLPRICE_Lookback();
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.WCLPRICE_Lookback() else { continue; };
         r.control("WCLPRICE", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -9995,8 +9648,7 @@ fn sub_WCLPRICE(r: &mut Report) {
 
 fn legs_WCLPRICE(r: &mut Report) {
     let core = Core::new();
-    let lb = core.WCLPRICE_Lookback();
-    if lb == usize::MAX { r.no_legs("WCLPRICE"); return; }
+    let Ok(lb) = core.WCLPRICE_Lookback() else { r.no_legs("WCLPRICE"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -10030,8 +9682,7 @@ const V_WILLR: &[(&str, i32)] = &[
 fn sub_WILLR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_WILLR {
-        let lb = core.WILLR_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.WILLR_Lookback(optInTimePeriod) else { continue; };
         r.control("WILLR", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -10053,8 +9704,7 @@ fn sub_WILLR(r: &mut Report) {
 fn legs_WILLR(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.WILLR_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("WILLR"); return; }
+    let Ok(lb) = core.WILLR_Lookback(optInTimePeriod) else { r.no_legs("WILLR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
@@ -10088,8 +9738,7 @@ const V_WMA: &[(&str, i32)] = &[
 fn sub_WMA(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_WMA {
-        let lb = core.WMA_Lookback(optInTimePeriod);
-        if lb == usize::MAX { continue; }
+        let Ok(lb) = core.WMA_Lookback(optInTimePeriod) else { continue; };
         r.control("WMA", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
@@ -10107,8 +9756,7 @@ fn sub_WMA(r: &mut Report) {
 fn legs_WMA(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let lb = core.WMA_Lookback(optInTimePeriod);
-    if lb == usize::MAX { r.no_legs("WMA"); return; }
+    let Ok(lb) = core.WMA_Lookback(optInTimePeriod) else { r.no_legs("WMA"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = Vec::with_capacity(1);

@@ -91,19 +91,21 @@ impl Core {
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn STOCH_Lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType) -> usize {
+    pub fn STOCH_Lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
             optInFastK_Period = 5;
         } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSlowK_Period) as i32) == (i32::MIN) {
             optInSlowK_Period = 3;
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInSlowK_MAType == MAType::DEFAULT {
             optInSlowK_MAType = MAType::SMA;
@@ -111,7 +113,7 @@ impl Core {
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
             optInSlowD_Period = 3;
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInSlowD_MAType == MAType::DEFAULT {
             optInSlowD_MAType = MAType::SMA;
@@ -120,10 +122,10 @@ impl Core {
         // Account for the initial data needed for Fast-K.
         retValue = (optInFastK_Period - 1) as usize;
         // Add the smoothing being done for %K slow
-        retValue += self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
+        retValue += self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType)?;
         // Add the smoothing being done for %D slow.
-        retValue += self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
-        return retValue;
+        retValue += self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType)?;
+        return Ok(retValue);
     }
     /// C-shaped body behind [`Core::STOCH`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -174,7 +176,7 @@ impl Core {
         if outSlowK.as_ptr() == outSlowD.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+        let _assertLb = self.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -230,8 +232,8 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackKSlow = self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
-        lookbackDSlow = self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
+        lookbackKSlow = self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType).unwrap_or(usize::MAX);
+        lookbackDSlow = self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
         lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
         // Move up the start index if there is not
         // enough initial data.
@@ -774,8 +776,8 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackKSlow = self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
-        lookbackDSlow = self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
+        lookbackKSlow = self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType)?;
+        lookbackDSlow = self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType)?;
         lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
         // Move up the start index if there is not
         // enough initial data.

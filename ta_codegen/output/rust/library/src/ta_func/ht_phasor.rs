@@ -67,9 +67,9 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::HT_PHASOR`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn HT_PHASOR_Lookback(&self) -> usize {
+    pub fn HT_PHASOR_Lookback(&self) -> Result<usize, RetCode> {
         // See mama_lookback for an explanation of these
-        return (32 + self.unstable_period[FuncUnstId::HT_PHASOR as usize]) as usize;
+        return Ok((32 + self.unstable_period[FuncUnstId::HT_PHASOR as usize]) as usize);
     }
     /// C-shaped body behind [`Core::HT_PHASOR`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -122,7 +122,7 @@ impl Core {
         if outInPhase.as_ptr() == outQuadrature.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.HT_PHASOR_Lookback();
+        let _assertLb = self.HT_PHASOR_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInPhase.len());

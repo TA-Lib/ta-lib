@@ -76,19 +76,21 @@ impl Core {
     /// * `optInSlowLimit` — Lower bound on the adaptive smoothing factor (default 0.05, range
     ///   0.01..=0.99)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
     #[inline]
-    pub fn MAMA_Lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> usize {
+    pub fn MAMA_Lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> Result<usize, RetCode> {
         if optInFastLimit == Self::REAL_DEFAULT {
             optInFastLimit = 5e-1;
         } else if !((optInFastLimit >= 1e-2) && (optInFastLimit <= 9.9e-1)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInSlowLimit == Self::REAL_DEFAULT {
             optInSlowLimit = 5e-2;
         } else if !((optInSlowLimit >= 1e-2) && (optInSlowLimit <= 9.9e-1)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         // The two parameters are not a factor to determine
         // the lookback, but are still requested for
@@ -108,7 +110,7 @@ impl Core {
         //          1 price bar for the Delta Phase
         //        -------
         //         32 Total
-        return (32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize;
+        return Ok((32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize);
     }
     /// C-shaped body behind [`Core::MAMA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -177,7 +179,7 @@ impl Core {
         if outMAMA.as_ptr() == outFAMA.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.MAMA_Lookback(optInFastLimit, optInSlowLimit);
+        let _assertLb = self.MAMA_Lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMAMA.len());

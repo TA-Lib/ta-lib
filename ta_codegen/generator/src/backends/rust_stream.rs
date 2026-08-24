@@ -1668,7 +1668,7 @@ fn emit_identity_fast_path(
         .collect();
     let cond = render_expr(&idp.condition, &typing.ctx, &opt_real_params, registry, helpers);
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let lb_call = format!("self.{sn}_Lookback({})", lb_args.join(", "));
+    let lb_call = format!("self.{sn}_Lookback({})?", lb_args.join(", "));
     let _ = writeln!(o, "        if {cond} {{");
     // batch( startIdx, .. ) begins at max(startIdx, lookback), and the anchored
     // `_Open*Internal` variants are the batch call over that same range. The
@@ -2768,7 +2768,7 @@ fn emit_dispatch(
         .collect::<Vec<_>>()
         .join(", ");
     let lb_args = params_join.clone();
-    let lb_call = format!("self.{sn}_Lookback({lb_args})");
+    let lb_call = format!("self.{sn}_Lookback({lb_args})?");
 
     // --- structs + sub enum -------------------------------------------------
     emit_handle_struct(o, func);
@@ -3215,7 +3215,7 @@ fn emit_period_bank(
         o,
         "        // Seed EVERY sub-MA at the SHARED max-period lookback, exactly as the\n        // batch does: it clamps startIdx up to lookback(maxPeriod) and calls the\n        // callee with that same start for every period. Seeding each sub at its\n        // OWN (smaller) lookback would seed the recurrence from a different bar\n        // and diverge for every period < maxPeriod (order-1 for recursive MAs,\n        // running-sum residue for stable ones)."
     );
-    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_Lookback({lb_args});");
+    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_Lookback({lb_args})?;");
     let _ = writeln!(
         o,
         "        let subStart: usize = if startIdx < lookbackTotal {{ lookbackTotal }} else {{ startIdx }};"
@@ -3260,7 +3260,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        // An inverted [min, max] period window is invalid (batch rejects).");
     let _ = writeln!(o, "        if {min} > {max} {{\n            return Err(RetCode::BadParam);\n        }}");
     let _ = writeln!(o, "        let historyLen: usize = {price}.len();");
-    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_Lookback({lb_args});");
+    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_Lookback({lb_args})?;");
     let _ = writeln!(
         o,
         "        if historyLen < lookbackTotal + 1 {{\n            return Err(RetCode::InsufficientHistory);\n        }}"

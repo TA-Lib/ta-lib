@@ -89,53 +89,55 @@ impl Core {
     /// * `optInAccelerationMaxShort` — Cap on the short acceleration factor (default 0.2, minimum
     ///   0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
     #[inline]
-    pub fn SAREXT_Lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> usize {
+    pub fn SAREXT_Lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> Result<usize, RetCode> {
         if optInStartValue == Self::REAL_DEFAULT {
             optInStartValue = 0e0;
         } else if !((optInStartValue >= Self::REAL_MIN) && (optInStartValue <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInOffsetOnReverse == Self::REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
         } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInAccelerationInitLong == Self::REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
         } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInAccelerationLong == Self::REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
         } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInAccelerationMaxLong == Self::REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
         } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInAccelerationInitShort == Self::REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
         } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInAccelerationShort == Self::REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
         } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInAccelerationMaxShort == Self::REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
         } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         // SAR always sacrifices one price bar to establish the
         // initial extreme price.
-        return (1) as usize;
+        return Ok((1) as usize);
     }
     /// C-shaped body behind [`Core::SAREXT`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -249,7 +251,7 @@ impl Core {
         } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+        let _assertLb = self.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());

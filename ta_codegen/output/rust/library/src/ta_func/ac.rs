@@ -76,29 +76,31 @@ impl Core {
     /// * `optInSignalPeriod` — Number of bars in the moving average taken over the oscillator.
     ///   (default 5, range 2..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn AC_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> usize {
+    pub fn AC_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 5;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 34;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 5;
         } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         // The oscillator's own window, plus the simple moving average taken over
         // the oscillator itself. Both terms are exactly the lookback of the
         // function they come from, so neither is restated here.
-        return (self.AO_Lookback(optInFastPeriod, optInSlowPeriod) + self.SMA_Lookback(optInSignalPeriod)) as usize;
+        return Ok((self.AO_Lookback(optInFastPeriod, optInSlowPeriod)? + self.SMA_Lookback(optInSignalPeriod)?) as usize);
     }
     /// C-shaped body behind [`Core::AC`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -136,7 +138,7 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        let _assertLb = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -185,7 +187,7 @@ impl Core {
         // "optInSignalPeriod" element.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        lookbackTotal = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -630,7 +632,7 @@ impl Core {
         // "optInSignalPeriod" element.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        lookbackTotal = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

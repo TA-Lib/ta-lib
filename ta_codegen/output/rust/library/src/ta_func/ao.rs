@@ -74,24 +74,26 @@ impl Core {
     /// * `optInSlowPeriod` — Number of bars in the long moving average. (default 34, range
     ///   2..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn AO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32) -> usize {
+    pub fn AO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 5;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 34;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         // The longer of the two windows drives the lookback, and it is the lookback
         // of that window's SMA. There is no swap of an inverted pair, so the max is
         // taken over the periods exactly as the caller gave them.
-        return self.SMA_Lookback((optInFastPeriod).max(optInSlowPeriod));
+        return Ok(self.SMA_Lookback((optInFastPeriod).max(optInSlowPeriod))?);
     }
     /// C-shaped body behind [`Core::AO`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -123,7 +125,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.AO_Lookback(optInFastPeriod, optInSlowPeriod);
+        let _assertLb = self.AO_Lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -166,7 +168,7 @@ impl Core {
         // swap would buy nothing and would have to be duplicated in ao_lookback.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.AO_Lookback(optInFastPeriod, optInSlowPeriod) as usize;
+        lookbackTotal = self.AO_Lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -520,7 +522,7 @@ impl Core {
         // swap would buy nothing and would have to be duplicated in ao_lookback.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.AO_Lookback(optInFastPeriod, optInSlowPeriod) as usize;
+        lookbackTotal = self.AO_Lookback(optInFastPeriod, optInSlowPeriod)? as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

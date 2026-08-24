@@ -2753,7 +2753,7 @@ impl<'a> ParamHolder<'a> {
     /// # Errors
     /// [`RetCode::BadParam`] if a bound optional parameter is out of range.
     pub fn lookback(&self) -> Result<usize, RetCode> {
-        let lb = match self.func {
+        match self.func {
             FuncId::AC => self.core.AC_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::ACCBANDS => self.core.ACCBANDS_Lookback(self.int_opt[0]),
             FuncId::ACOS => self.core.ACOS_Lookback(),
@@ -2930,9 +2930,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::WCLPRICE => self.core.WCLPRICE_Lookback(),
             FuncId::WILLR => self.core.WILLR_Lookback(self.int_opt[0]),
             FuncId::WMA => self.core.WMA_Lookback(self.int_opt[0]),
-        };
-        // The generated lookbacks report a rejected parameter as usize::MAX.
-        if lb == usize::MAX { Err(RetCode::BadParam) } else { Ok(lb) }
+        }
     }
 
     /// Run the function over `[start_idx, end_idx]`.

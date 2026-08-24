@@ -72,14 +72,16 @@ impl Core {
     /// * `optInPenetration` — Fraction of the 1st candle's body the 3rd close must exceed above
     ///   the 1st close; larger = deeper penetration required (default 0.3, minimum 0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
     #[inline]
-    pub fn CDLMORNINGSTAR_Lookback(&self, mut optInPenetration: f64) -> usize {
+    pub fn CDLMORNINGSTAR_Lookback(&self, mut optInPenetration: f64) -> Result<usize, RetCode> {
         if optInPenetration == Self::REAL_DEFAULT {
             optInPenetration = 3e-1;
         } else if !((optInPenetration >= 0e0) && (optInPenetration <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -93,7 +95,7 @@ impl Core {
         let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
         #[allow(non_snake_case)]
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
-        return ((BodyShort_avgPeriod).max(BodyLong_avgPeriod) + 2) as usize;
+        return Ok(((BodyShort_avgPeriod).max(BodyLong_avgPeriod) + 2) as usize);
     }
     /// C-shaped body behind [`Core::CDLMORNINGSTAR`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -157,7 +159,7 @@ impl Core {
         } else if !((optInPenetration >= 0e0) && (optInPenetration <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.CDLMORNINGSTAR_Lookback(optInPenetration);
+        let _assertLb = self.CDLMORNINGSTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -187,7 +189,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLMORNINGSTAR_Lookback(optInPenetration);
+        lookbackTotal = self.CDLMORNINGSTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -788,7 +790,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLMORNINGSTAR_Lookback(optInPenetration);
+        lookbackTotal = self.CDLMORNINGSTAR_Lookback(optInPenetration)?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

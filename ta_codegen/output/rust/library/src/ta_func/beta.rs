@@ -83,16 +83,18 @@ impl Core {
     /// * `optInTimePeriod` — Rolling window length (number of returns) for the regression sums
     ///   (default 5, range 1..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn BETA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn BETA_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
-        return (optInTimePeriod) as usize;
+        return Ok((optInTimePeriod) as usize);
     }
     /// C-shaped body behind [`Core::BETA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -118,7 +120,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.BETA_Lookback(optInTimePeriod);
+        let _assertLb = self.BETA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal0.len());
         assert!(_assertStart > endIdx || endIdx < inReal1.len());

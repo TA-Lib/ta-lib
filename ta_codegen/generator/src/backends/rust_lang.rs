@@ -662,16 +662,16 @@ fn gen_lookback(
     // no-params signatures.
     let emit_lookback_return = |out: &mut String| match &func.lookback {
         Some(LookbackExpr::Literal(n)) => {
-            out.push_str(&format!("        return {n};\n"));
+            out.push_str(&format!("        return Ok({n});\n"));
         }
         Some(LookbackExpr::ParamMinus(param, offset)) => {
-            out.push_str(&format!("        return ({param} - {offset}) as usize;\n"));
+            out.push_str(&format!("        return Ok(({param} - {offset}) as usize);\n"));
         }
         Some(LookbackExpr::Code(stmts)) => {
             out.push_str(&render_lookback_code(stmts, func, enums, registry, helpers));
         }
         None => {
-            out.push_str("        return 0;\n");
+            out.push_str("        return Ok(0);\n");
         }
     };
 
@@ -685,7 +685,7 @@ fn gen_lookback(
 
         out.push_str("    #[inline]\n");
         out.push_str(&format!(
-            "    pub fn {}_Lookback(&self, {}) -> usize {{\n",
+            "    pub fn {}_Lookback(&self, {}) -> Result<usize, RetCode> {{\n",
             snake,
             params.join(", ")
         ));
@@ -698,7 +698,7 @@ fn gen_lookback(
         // Return lookback expression
         emit_lookback_return(&mut out);
     } else {
-        out.push_str(&format!("    pub fn {snake}_Lookback(&self) -> usize {{\n"));
+        out.push_str(&format!("    pub fn {snake}_Lookback(&self) -> Result<usize, RetCode> {{\n"));
         emit_lookback_return(&mut out);
     }
 
@@ -1190,7 +1190,7 @@ fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> 
         let lb_args: Vec<String> =
             func.optional_inputs.iter().map(|o| o.name.clone()).collect();
         out.push_str(&format!(
-            "        let _assertLb = self.{snake}_Lookback({});\n",
+            "        let _assertLb = self.{snake}_Lookback({}).unwrap_or(usize::MAX);\n",
             lb_args.join(", ")
         ));
         out.push_str(
@@ -1489,7 +1489,7 @@ fn gen_generic_output_params(func: &FuncDef) -> String {
 /// Generate optional parameter validation code.
 fn gen_opt_param_validation(opt: &OptInput, pad: &str, is_lookback: bool, enums: &HashMap<String, EnumDef>) -> String {
     let err_return = if is_lookback {
-        "return usize::MAX;"
+        "return Err(RetCode::BadParam);"
     } else {
         "return RetCode::BadParam;"
     };
@@ -3153,14 +3153,9 @@ impl StatementEmitter for RustStmt<'_, '_> {
         match value {
             Some(expr) if self.ctx.is_lookback && is_negative_one(expr) => {
                 // The lookback bad-param contract: -1 in C, Java and C#; Rust's
-                // lookback returns `usize`, whose sentinel is usize::MAX.
-                // The parser desugars the unary minus to `0 - 1`, and in a usize
-                // return position that is a deny-by-default `arithmetic_overflow`
-                // ERROR in every profile -- the crate compiles at all only
-                // because lib.rs allows that lint crate-wide, and under the allow
-                // it wraps in release and panics in debug. Translate the contract
-                // here rather than leave it as arithmetic riding on the allow.
-                format!("{pad}return usize::MAX;\n")
+                // lookback returns `Result<usize, RetCode>`, so the same C-side
+                // `return -1;` becomes an `Err` here rather than a sentinel value.
+                format!("{pad}return Err(RetCode::BadParam);\n")
             }
             Some(expr) => {
                 let rendered = render_return_expr(expr, self.ctx, self.opt_real_params, self.registry, self.helpers);
@@ -3168,12 +3163,13 @@ impl StatementEmitter for RustStmt<'_, '_> {
                 let is_already_usize = matches!(expr, Expr::Var(ref n) if n == "retValue" || n == "lookbackTotal" || n == "emaLookback")
                     || expr_is_known_usize_ctx(expr, self.ctx)
                     || expr_returns_usize(expr);
-                if self.ctx.is_lookback && !is_already_usize
-                    && !matches!(expr, Expr::Var(ref n) if n == "SUCCESS" || n == "BadParam" || n.starts_with("RetCode"))
-                {
-                    format!("{pad}return ({rendered}) as usize;\n")
+                let needs_cast = self.ctx.is_lookback && !is_already_usize
+                    && !matches!(expr, Expr::Var(ref n) if n == "SUCCESS" || n == "BadParam" || n.starts_with("RetCode"));
+                let inner = if needs_cast { format!("({rendered}) as usize") } else { rendered };
+                if self.ctx.is_lookback {
+                    format!("{pad}return Ok({inner});\n")
                 } else {
-                    format!("{pad}return {rendered};\n")
+                    format!("{pad}return {inner};\n")
                 }
             }
             None => format!("{pad}return;\n"),
@@ -4666,7 +4662,22 @@ fn render_func_call(
                 }
             })
             .collect();
-        format!("self.{}({})", rust_name, rendered_args.join(", "))
+        let call = format!("self.{}({})", rust_name, rendered_args.join(", "));
+        // The callee now returns `Result<usize, RetCode>`. Inside another
+        // Result-returning body (a lookback body composing a callee's lookback,
+        // or the stream tier) the failure genuinely propagates with `?`.
+        // Inside the plain batch/`_Impl` tier (bare `RetCode`, no `?` available)
+        // the call sits at a point where the same parameters were already
+        // validated by this function's own prologue against an identical
+        // range — so `Err` here is unreachable in practice — but rather than
+        // assert that per call site, `unwrap_or(usize::MAX)` reproduces
+        // exactly the sentinel this call used to return directly, so behavior
+        // is unchanged if that ever turns out not to hold.
+        if ctx.is_lookback || ctx.result_error_returns {
+            format!("{call}?")
+        } else {
+            format!("{call}.unwrap_or(usize::MAX)")
+        }
     } else if let Some(mf) = MathFn::from_name(fname) {
         // Math functions take priority over the indicator registry.
         // `atan(x)` in source means the C math function, not a cross-indicator call.

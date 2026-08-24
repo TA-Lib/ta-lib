@@ -79,19 +79,21 @@ impl Core {
     ///
     /// * `optInTimePeriod` — EMA period used for all three passes (default 30, range 1..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn TEMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn TEMA_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         let mut retValue: usize = 0_usize;
         // Get lookack for one EMA.
-        retValue = self.EMA_Lookback(optInTimePeriod);
-        return retValue * 3;
+        retValue = self.EMA_Lookback(optInTimePeriod)?;
+        return Ok(retValue * 3);
     }
     /// C-shaped body behind [`Core::TEMA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -146,7 +148,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.TEMA_Lookback(optInTimePeriod);
+        let _assertLb = self.TEMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -187,7 +189,7 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         lookbackTotal = lookbackEMA * 3;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -508,7 +510,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            let fillLb: usize = self.TEMA_Lookback(optInTimePeriod);
+            let fillLb: usize = self.TEMA_Lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
@@ -569,7 +571,7 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod)?;
         lookbackTotal = lookbackEMA * 3;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;

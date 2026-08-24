@@ -66,14 +66,14 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLDOJI`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn CDLDOJI_Lookback(&self) -> usize {
+    pub fn CDLDOJI_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;
         #[allow(non_snake_case)]
         let BodyDoji_avgPeriod: i32 = self.candle_settings.body_doji.avg_period;
         #[allow(non_snake_case)]
         let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
-        return (BodyDoji_avgPeriod) as usize;
+        return Ok((BodyDoji_avgPeriod) as usize);
     }
     /// C-shaped body behind [`Core::CDLDOJI`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -95,7 +95,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDLDOJI_Lookback();
+        let _assertLb = self.CDLDOJI_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -116,7 +116,7 @@ impl Core {
         let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLDOJI_Lookback();
+        lookbackTotal = self.CDLDOJI_Lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -467,7 +467,7 @@ impl Core {
         let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLDOJI_Lookback();
+        lookbackTotal = self.CDLDOJI_Lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

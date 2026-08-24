@@ -98,25 +98,27 @@ impl Core {
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to select their
     /// default value.
     #[inline]
-    pub fn BBANDS_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType) -> usize {
+    pub fn BBANDS_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInNbDevUp == Self::REAL_DEFAULT {
             optInNbDevUp = 2e0;
         } else if !((optInNbDevUp >= Self::REAL_MIN) && (optInNbDevUp <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInNbDevDn == Self::REAL_DEFAULT {
             optInNbDevDn = 2e0;
         } else if !((optInNbDevDn >= Self::REAL_MIN) && (optInNbDevDn <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::SMA;
@@ -134,9 +136,9 @@ impl Core {
         // under-reported those cases (outBegIdx > lookback) and broke streaming, whose
         // Open is tied to lookback+1. The middle band still begins at the MA's earlier
         // begIdx internally and is realigned to this later bar in bbands() below.
-        maLookback = self.MA_Lookback(optInTimePeriod, optInMAType);
-        stddevLookback = self.STDDEV_Lookback(optInTimePeriod, 1.0);
-        return ((if maLookback > stddevLookback { maLookback } else { stddevLookback })) as usize;
+        maLookback = self.MA_Lookback(optInTimePeriod, optInMAType)?;
+        stddevLookback = self.STDDEV_Lookback(optInTimePeriod, 1.0)?;
+        return Ok(((if maLookback > stddevLookback { maLookback } else { stddevLookback })) as usize);
     }
     /// C-shaped body behind [`Core::BBANDS`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -222,7 +224,7 @@ impl Core {
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+        let _assertLb = self.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outRealUpperBand.len());
@@ -412,7 +414,7 @@ impl Core {
         // The SMA fast path above needs no such guard - its own lookback IS the
         // deviation's, so its clamp already covers it. Pinned by the zero-length
         // no-I/O probe over every guarded core, at every MA type.
-        if self.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx {
+        if self.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX) > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::Success;
@@ -773,7 +775,7 @@ impl Core {
         // The SMA fast path above needs no such guard - its own lookback IS the
         // deviation's, so its clamp already covers it. Pinned by the zero-length
         // no-I/O probe over every guarded core, at every MA type.
-        if self.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx {
+        if self.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType)? > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);

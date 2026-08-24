@@ -645,7 +645,7 @@ mod tests {
     #[test]
     fn a_short_history_open_reports_insufficient_history() {
         let core = Core::new();
-        let lookback = core.SMA_Lookback(30);
+        let lookback = core.SMA_Lookback(30).expect("valid params");
         assert!(lookback > 0, "the probe needs a function that consumes bars");
 
         let one_short = vec![1.0_f64; lookback];
@@ -1055,7 +1055,7 @@ mod tests {
                 )
                 .build()
                 .expect("every avg_period in this sweep is inside the bound");
-            let lookback = core.CDLDOJI_Lookback();
+            let lookback = core.CDLDOJI_Lookback().expect("valid params");
             assert!(lookback <= Core::MAX_INDEX, "avg_period {avg_period} gave lookback {lookback}");
 
             let mut out = vec![0_i32; n];
@@ -1178,7 +1178,10 @@ mod tests {
         let base = Core::new();
         let tuned = Core::builder().unstable_period(FuncUnstId::EMA, 5).build().unwrap();
         // The unstable period is added to the function's lookback.
-        assert_eq!(tuned.EMA_Lookback(10), base.EMA_Lookback(10) + 5);
+        assert_eq!(
+            tuned.EMA_Lookback(10).expect("valid params"),
+            base.EMA_Lookback(10).expect("valid params") + 5
+        );
     }
 
     #[test]

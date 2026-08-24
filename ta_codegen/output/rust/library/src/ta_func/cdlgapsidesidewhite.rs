@@ -66,7 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLGAPSIDESIDEWHITE`]: the number of leading input values
     /// consumed before the first output value can be produced.
-    pub fn CDLGAPSIDESIDEWHITE_Lookback(&self) -> usize {
+    pub fn CDLGAPSIDESIDEWHITE_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
         #[allow(non_snake_case)]
@@ -79,7 +79,7 @@ impl Core {
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
-        return ((Near_avgPeriod).max(Equal_avgPeriod) + 2) as usize;
+        return Ok(((Near_avgPeriod).max(Equal_avgPeriod) + 2) as usize);
     }
     /// C-shaped body behind [`Core::CDLGAPSIDESIDEWHITE`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -101,7 +101,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDLGAPSIDESIDEWHITE_Lookback();
+        let _assertLb = self.CDLGAPSIDESIDEWHITE_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -130,7 +130,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLGAPSIDESIDEWHITE_Lookback();
+        lookbackTotal = self.CDLGAPSIDESIDEWHITE_Lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -627,7 +627,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLGAPSIDESIDEWHITE_Lookback();
+        lookbackTotal = self.CDLGAPSIDESIDEWHITE_Lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

@@ -79,36 +79,38 @@ impl Core {
     ///   25, range 2..=100000)
     /// * `optInSignalPeriod` — Smoothing period of the signal line (default 9, range 2..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn SMI_Lookback(&self, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> usize {
+    pub fn SMI_Lookback(&self, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 13;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 2;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 25;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         // One high/low window, then the three EMA warm-ups the pipeline stacks on
         // top of it: slow smooths the raw momentum, fast smooths that, and signal
         // smooths the finished SMI line. Every term is exactly the lookback of the
         // function it comes from, so none of them is restated here -- which is also
         // what makes SMI inherit TA_FUNC_UNST_EMA from its callee.
-        return (((optInTimePeriod - 1) as usize) + self.EMA_Lookback(optInSlowPeriod) + self.EMA_Lookback(optInFastPeriod) + self.EMA_Lookback(optInSignalPeriod)) as usize;
+        return Ok((((optInTimePeriod - 1) as usize) + self.EMA_Lookback(optInSlowPeriod)? + self.EMA_Lookback(optInFastPeriod)? + self.EMA_Lookback(optInSignalPeriod)?) as usize);
     }
     /// C-shaped body behind [`Core::SMI`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -199,7 +201,7 @@ impl Core {
         if outSMI.as_ptr() == outSMISignal.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        let _assertLb = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -239,7 +241,7 @@ impl Core {
         let mut nBar: usize = 0_usize;
         let mut nFast: usize = 0_usize;
         let mut nSignal: usize = 0_usize;
-        lookbackTotal = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        lookbackTotal = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -271,8 +273,8 @@ impl Core {
         kSlow = 2.0 / ((optInSlowPeriod + 1) as f64);
         kFast = 2.0 / ((optInFastPeriod + 1) as f64);
         kSignal = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSlow = self.EMA_Lookback(optInSlowPeriod);
-        lookbackFast = self.EMA_Lookback(optInFastPeriod);
+        lookbackSlow = self.EMA_Lookback(optInSlowPeriod).unwrap_or(usize::MAX);
+        lookbackFast = self.EMA_Lookback(optInFastPeriod).unwrap_or(usize::MAX);
         emaSlowNum = 0.0;
         emaSlowDen = 0.0;
         emaFastNum = 0.0;
@@ -856,7 +858,7 @@ impl Core {
         let mut nBar: usize = 0_usize;
         let mut nFast: usize = 0_usize;
         let mut nSignal: usize = 0_usize;
-        lookbackTotal = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        lookbackTotal = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -888,8 +890,8 @@ impl Core {
         kSlow = 2.0 / ((optInSlowPeriod + 1) as f64);
         kFast = 2.0 / ((optInFastPeriod + 1) as f64);
         kSignal = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSlow = self.EMA_Lookback(optInSlowPeriod);
-        lookbackFast = self.EMA_Lookback(optInFastPeriod);
+        lookbackSlow = self.EMA_Lookback(optInSlowPeriod)?;
+        lookbackFast = self.EMA_Lookback(optInFastPeriod)?;
         emaSlowNum = 0.0;
         emaSlowDen = 0.0;
         emaFastNum = 0.0;

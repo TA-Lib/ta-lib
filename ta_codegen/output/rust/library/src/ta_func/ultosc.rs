@@ -81,30 +81,32 @@ impl Core {
     /// * `optInTimePeriod2` — Bars for another averaging window (default 14, range 1..=100000)
     /// * `optInTimePeriod3` — Bars for another averaging window (default 28, range 1..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn ULTOSC_Lookback(&self, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32) -> usize {
+    pub fn ULTOSC_Lookback(&self, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod1) as i32) == (i32::MIN) {
             optInTimePeriod1 = 7;
         } else if (((optInTimePeriod1) as i32) < 1) || (((optInTimePeriod1) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInTimePeriod2) as i32) == (i32::MIN) {
             optInTimePeriod2 = 14;
         } else if (((optInTimePeriod2) as i32) < 1) || (((optInTimePeriod2) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInTimePeriod3) as i32) == (i32::MIN) {
             optInTimePeriod3 = 28;
         } else if (((optInTimePeriod3) as i32) < 1) || (((optInTimePeriod3) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         let mut maxPeriod: usize = 0_usize;
         // Lookback for the Ultimate Oscillator is the lookback of the SMA with the longest
         // time period, plus 1 for the True Range.
         maxPeriod = (((optInTimePeriod1).max(optInTimePeriod2)).max(optInTimePeriod3)) as usize;
-        return (self.SMA_Lookback((maxPeriod) as i32) + 1) as usize;
+        return Ok((self.SMA_Lookback((maxPeriod) as i32)? + 1) as usize);
     }
     /// C-shaped body behind [`Core::ULTOSC`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -143,7 +145,7 @@ impl Core {
         } else if (((optInTimePeriod3) as i32) < 1) || (((optInTimePeriod3) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+        let _assertLb = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -223,7 +225,7 @@ impl Core {
         optInTimePeriod2 = sortedPeriods[1];
         optInTimePeriod3 = sortedPeriods[0];
         // Adjust startIdx for lookback period.
-        lookbackTotal = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+        lookbackTotal = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -820,7 +822,7 @@ impl Core {
         optInTimePeriod2 = sortedPeriods[1];
         optInTimePeriod3 = sortedPeriods[0];
         // Adjust startIdx for lookback period.
-        lookbackTotal = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+        lookbackTotal = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }

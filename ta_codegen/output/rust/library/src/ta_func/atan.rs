@@ -65,8 +65,8 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::ATAN`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn ATAN_Lookback(&self) -> usize {
-        return (0) as usize;
+    pub fn ATAN_Lookback(&self) -> Result<usize, RetCode> {
+        return Ok((0) as usize);
     }
     /// C-shaped body behind [`Core::ATAN`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -85,7 +85,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.ATAN_Lookback();
+        let _assertLb = self.ATAN_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());

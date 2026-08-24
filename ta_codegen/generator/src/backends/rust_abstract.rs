@@ -677,7 +677,7 @@ fn emit_binder(
          \x20   /// # Errors\n\
          \x20   /// [`RetCode::BadParam`] if a bound optional parameter is out of range.\n\
          \x20   pub fn lookback(&self) -> Result<usize, RetCode> {\n\
-         \x20       let lb = match self.func {\n",
+         \x20       match self.func {\n",
     );
     for f in sorted {
         let snake = f.name.clone();
@@ -689,9 +689,7 @@ fn emit_binder(
         );
     }
     o.push_str(
-        "        };\n\
-         \x20       // The generated lookbacks report a rejected parameter as usize::MAX.\n\
-         \x20       if lb == usize::MAX { Err(RetCode::BadParam) } else { Ok(lb) }\n\
+        "        }\n\
          \x20   }\n\n",
     );
 

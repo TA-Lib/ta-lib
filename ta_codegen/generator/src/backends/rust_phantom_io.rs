@@ -194,8 +194,7 @@ fn emit_func(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     let _ = writeln!(o, "fn sub_{name}(r: &mut Report) {{");
     let _ = writeln!(o, "    let core = Core::new();");
     let _ = writeln!(o, "    for &{destructure} in V_{name} {{");
-    let _ = writeln!(o, "        let lb = core.{name}_Lookback({lookback_args});");
-    let _ = writeln!(o, "        if lb == usize::MAX {{ continue; }}");
+    let _ = writeln!(o, "        let Ok(lb) = core.{name}_Lookback({lookback_args}) else {{ continue; }};");
     // Control arm: one bar longer than the quiet range produces exactly one
     // value, so it must index an array; with zero-length arrays that is a panic.
     let _ = writeln!(o, "        r.control(\"{name}\", label, run(|| {{");
@@ -222,8 +221,7 @@ fn emit_func(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     for (k, opt) in func.optional_inputs.iter().enumerate() {
         let _ = writeln!(o, "    let {} = {};", opt.name, first.values[k]);
     }
-    let _ = writeln!(o, "    let lb = core.{name}_Lookback({lookback_args});");
-    let _ = writeln!(o, "    if lb == usize::MAX {{ r.no_legs(\"{name}\"); return; }}");
+    let _ = writeln!(o, "    let Ok(lb) = core.{name}_Lookback({lookback_args}) else {{ r.no_legs(\"{name}\"); return; }};");
     let _ = writeln!(o, "    let (startIdx, endIdx) = (lb, lb + 4);");
     for (leg, input) in func.inputs.iter().enumerate() {
         let _ = writeln!(o, "    {{");

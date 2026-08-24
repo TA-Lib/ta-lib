@@ -66,7 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLHOMINGPIGEON`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn CDLHOMINGPIGEON_Lookback(&self) -> usize {
+    pub fn CDLHOMINGPIGEON_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -79,7 +79,7 @@ impl Core {
         let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
         #[allow(non_snake_case)]
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
-        return ((BodyShort_avgPeriod).max(BodyLong_avgPeriod) + 1) as usize;
+        return Ok(((BodyShort_avgPeriod).max(BodyLong_avgPeriod) + 1) as usize);
     }
     /// C-shaped body behind [`Core::CDLHOMINGPIGEON`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -101,7 +101,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDLHOMINGPIGEON_Lookback();
+        let _assertLb = self.CDLHOMINGPIGEON_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -130,7 +130,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLHOMINGPIGEON_Lookback();
+        lookbackTotal = self.CDLHOMINGPIGEON_Lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -634,7 +634,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLHOMINGPIGEON_Lookback();
+        lookbackTotal = self.CDLHOMINGPIGEON_Lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

@@ -81,58 +81,60 @@ impl Core {
     ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn MA_Lookback(&self, mut optInTimePeriod: i32, mut optInMAType: MAType) -> usize {
+    pub fn MA_Lookback(&self, mut optInTimePeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
         if optInTimePeriod <= 1 || optInMAType == MAType::DISABLED {
-            return (0) as usize;
+            return Ok((0) as usize);
         }
         match optInMAType {
             MAType::SMA => {
-                retValue = self.SMA_Lookback(optInTimePeriod);
+                retValue = self.SMA_Lookback(optInTimePeriod)?;
             }
             MAType::EMA => {
-                retValue = self.EMA_Lookback(optInTimePeriod);
+                retValue = self.EMA_Lookback(optInTimePeriod)?;
             }
             MAType::WMA => {
-                retValue = self.WMA_Lookback(optInTimePeriod);
+                retValue = self.WMA_Lookback(optInTimePeriod)?;
             }
             MAType::DEMA => {
-                retValue = self.DEMA_Lookback(optInTimePeriod);
+                retValue = self.DEMA_Lookback(optInTimePeriod)?;
             }
             MAType::TEMA => {
-                retValue = self.TEMA_Lookback(optInTimePeriod);
+                retValue = self.TEMA_Lookback(optInTimePeriod)?;
             }
             MAType::TRIMA => {
-                retValue = self.TRIMA_Lookback(optInTimePeriod);
+                retValue = self.TRIMA_Lookback(optInTimePeriod)?;
             }
             MAType::KAMA => {
-                retValue = self.KAMA_Lookback(optInTimePeriod);
+                retValue = self.KAMA_Lookback(optInTimePeriod)?;
             }
             MAType::MAMA => {
-                retValue = self.MAMA_Lookback(0.5, 0.05);
+                retValue = self.MAMA_Lookback(0.5, 0.05)?;
             }
             MAType::T3 => {
-                retValue = self.T3_Lookback(optInTimePeriod, 0.7);
+                retValue = self.T3_Lookback(optInTimePeriod, 0.7)?;
             }
             MAType::HMA => {
-                retValue = self.HMA_Lookback(optInTimePeriod);
+                retValue = self.HMA_Lookback(optInTimePeriod)?;
             }
             _ => {
                 retValue = 0;
             }
         }
-        return retValue;
+        return Ok(retValue);
     }
     /// C-shaped body behind [`Core::MA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -161,7 +163,7 @@ impl Core {
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::SMA;
         }
-        let _assertLb = self.MA_Lookback(optInTimePeriod, optInMAType);
+        let _assertLb = self.MA_Lookback(optInTimePeriod, optInMAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -487,10 +489,10 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
-            if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
+            if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType)? + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
+            let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
@@ -608,10 +610,10 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
-            if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
+            if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType)? + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
+            let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType)?;
             let mut fillIdx: usize = 0;
             while fillIdx < historyLen - fillLb {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
@@ -688,10 +690,10 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
-            if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
+            if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType)? + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
+            let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);

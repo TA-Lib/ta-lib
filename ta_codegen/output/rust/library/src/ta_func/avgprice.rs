@@ -68,9 +68,9 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::AVGPRICE`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn AVGPRICE_Lookback(&self) -> usize {
+    pub fn AVGPRICE_Lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
-        return (0) as usize;
+        return Ok((0) as usize);
     }
     /// C-shaped body behind [`Core::AVGPRICE`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -92,7 +92,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.AVGPRICE_Lookback();
+        let _assertLb = self.AVGPRICE_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());

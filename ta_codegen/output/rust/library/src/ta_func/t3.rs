@@ -84,22 +84,24 @@ impl Core {
     /// * `optInVFactor` — Volume factor weighting the coefficients (0 = plain triple EMA, higher
     ///   = more DEMA-like sharpening) (default 0.7, range 0..=1)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to select their
     /// default value.
     #[inline]
-    pub fn T3_Lookback(&self, mut optInTimePeriod: i32, mut optInVFactor: f64) -> usize {
+    pub fn T3_Lookback(&self, mut optInTimePeriod: i32, mut optInVFactor: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInVFactor == Self::REAL_DEFAULT {
             optInVFactor = 7e-1;
         } else if !((optInVFactor >= 0e0) && (optInVFactor <= 1e0)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
-        return (6 * (optInTimePeriod - 1) + self.unstable_period[FuncUnstId::T3 as usize]) as usize;
+        return Ok((6 * (optInTimePeriod - 1) + self.unstable_period[FuncUnstId::T3 as usize]) as usize);
     }
     /// C-shaped body behind [`Core::T3`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -162,7 +164,7 @@ impl Core {
         } else if !((optInVFactor >= 0e0) && (optInVFactor <= 1e0)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.T3_Lookback(optInTimePeriod, optInVFactor);
+        let _assertLb = self.T3_Lookback(optInTimePeriod, optInVFactor).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -561,7 +563,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            let fillLb: usize = self.T3_Lookback(optInTimePeriod, optInVFactor);
+            let fillLb: usize = self.T3_Lookback(optInTimePeriod, optInVFactor)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);

@@ -76,14 +76,16 @@ impl Core {
     /// * `optInTimePeriod` — Number of trailing price changes summed (default 14, range
     ///   2..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn CMOU_Lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn CMOU_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         // CMOU needs optInTimePeriod price changes -> optInTimePeriod+1 prices ->
         // the first output is at index optInTimePeriod.
@@ -91,7 +93,7 @@ impl Core {
         // Unlike the shipped CMO, there is NO unstable period and NO Metastock
         // "extra initial bar" adjustment: CMOU is a plain moving-window sum, so its
         // lookback is exactly the period.
-        return (optInTimePeriod) as usize;
+        return Ok((optInTimePeriod) as usize);
     }
     /// C-shaped body behind [`Core::CMOU`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -116,7 +118,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.CMOU_Lookback(optInTimePeriod);
+        let _assertLb = self.CMOU_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -146,7 +148,7 @@ impl Core {
         // change's older endpoint comes from the `trailingValue` cache, not a re-read.
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.CMOU_Lookback(optInTimePeriod);
+        lookbackTotal = self.CMOU_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -528,7 +530,7 @@ impl Core {
         // change's older endpoint comes from the `trailingValue` cache, not a re-read.
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.CMOU_Lookback(optInTimePeriod);
+        lookbackTotal = self.CMOU_Lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }

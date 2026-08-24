@@ -81,16 +81,18 @@ impl Core {
     /// * `optInTimePeriod` — Rolling window length for the up/down body sums (default 14, range
     ///   2..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn IMI_Lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn IMI_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
-        return (optInTimePeriod - 1) as usize;
+        return Ok((optInTimePeriod - 1) as usize);
     }
     /// C-shaped body behind [`Core::IMI`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -116,7 +118,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.IMI_Lookback(optInTimePeriod);
+        let _assertLb = self.IMI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
@@ -125,7 +127,7 @@ impl Core {
         let mut lookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         outIdx = 0;
-        lookback = self.IMI_Lookback(optInTimePeriod);
+        lookback = self.IMI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookback {
             startIdx = lookback;
         }
@@ -377,7 +379,7 @@ impl Core {
         let mut lookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         outIdx = 0;
-        lookback = self.IMI_Lookback(optInTimePeriod);
+        lookback = self.IMI_Lookback(optInTimePeriod)?;
         if startIdx < lookback {
             startIdx = lookback;
         }

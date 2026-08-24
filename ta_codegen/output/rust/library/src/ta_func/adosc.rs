@@ -73,19 +73,21 @@ impl Core {
     /// * `optInFastPeriod` — Period of the fast A/D EMA (default 3, range 2..=100000)
     /// * `optInSlowPeriod` — Period of the slow A/D EMA (default 10, range 2..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn ADOSC_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32) -> usize {
+    pub fn ADOSC_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 3;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 10;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         let mut slowestPeriod: usize = 0_usize;
         // Use the slowest EMA period to evaluate the total lookback.
@@ -95,7 +97,7 @@ impl Core {
             slowestPeriod = (optInFastPeriod) as usize;
         }
         // Adjust startIdx to account for the lookback period.
-        return self.EMA_Lookback((slowestPeriod) as i32);
+        return Ok(self.EMA_Lookback((slowestPeriod) as i32)?);
     }
     /// C-shaped body behind [`Core::ADOSC`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -167,7 +169,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
+        let _assertLb = self.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -220,7 +222,7 @@ impl Core {
             slowestPeriod = (optInFastPeriod) as usize;
         }
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.EMA_Lookback((slowestPeriod) as i32);
+        lookbackTotal = self.EMA_Lookback((slowestPeriod) as i32).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -565,7 +567,7 @@ impl Core {
             slowestPeriod = (optInFastPeriod) as usize;
         }
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.EMA_Lookback((slowestPeriod) as i32);
+        lookbackTotal = self.EMA_Lookback((slowestPeriod) as i32)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }

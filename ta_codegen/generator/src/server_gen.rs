@@ -5298,7 +5298,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 func.optional_inputs.iter().map(|o| o.name.clone()).collect();
             s.push_str(&doc_produced_extent("            ", "//"));
             s.push_str(&format!(
-                "            let _lb = core.{}_Lookback({});\n",
+                "            let _lb = core.{}_Lookback({}).unwrap_or(usize::MAX);\n",
                 func.name,
                 lb_args.join(", ")
             ));
@@ -5433,7 +5433,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // cannot reproduce it. Report the driver's "rejected" marker rather than
         // a fabricated number, which is also what the abstract tier returns.
         if enum_opts.is_empty() {
-            s.push_str(&format!("            let lookback = core.{fn_name}_Lookback("));
+            s.push_str(&format!("            let lookback: i64 = core.{fn_name}_Lookback("));
         } else {
             s.push_str(&format!(
                 "            let lookback: i64 = if _enum_bad {{ -1 }} else {{ core.{fn_name}_Lookback("
@@ -5445,10 +5445,14 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             .map(|o| o.name.clone())
             .collect();
         s.push_str(&lb_args.join(", "));
+        // Non-enum functions and the enum branch's callee both normalize the
+        // same way: Ok -> the real value, Err -> -1, matching C/Java/C#'s wire
+        // shape. `_enum_bad` stays a separate pre-condition -- an out-of-domain
+        // enum member can't be constructed to pass to `_Lookback` at all.
         if enum_opts.is_empty() {
-            s.push_str(");\n");
+            s.push_str(").map_or(-1, |v| v as i64);\n");
         } else {
-            s.push_str(") as i64 };\n");
+            s.push_str(").map_or(-1, |v| v as i64) };\n");
         }
 
         // Build the response string manually (not via serde_json) so non-finite
@@ -6294,7 +6298,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         s,
         "        let rc = match c2.{fname}(0, svN - 1, {full_ins}, {opts_lead}{bargs_head}) {{ Ok(r) => {{ beg = r.beg_idx; nb = r.count; RetCode::Success }} Err(e) => {{ beg = 0; nb = 0; e }} }};"
     );
-    let _ = writeln!(s, "        let lb = c2.{fname}_Lookback({opts});");
+    let _ = writeln!(s, "        let lb = c2.{fname}_Lookback({opts}).unwrap_or(usize::MAX);");
     s.push_str("        if rc != RetCode::Success || nb == 0 {\n");
     let _ = writeln!(
         s,

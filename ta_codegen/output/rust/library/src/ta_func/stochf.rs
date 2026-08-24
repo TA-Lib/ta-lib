@@ -87,19 +87,21 @@ impl Core {
     ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
     ///   10=DISABLED, 11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn STOCHF_Lookback(&self, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType) -> usize {
+    pub fn STOCHF_Lookback(&self, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
             optInFastK_Period = 5;
         } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInFastD_Period) as i32) == (i32::MIN) {
             optInFastD_Period = 3;
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInFastD_MAType == MAType::DEFAULT {
             optInFastD_MAType = MAType::SMA;
@@ -108,8 +110,8 @@ impl Core {
         // Account for the initial data needed for Fast-K.
         retValue = (optInFastK_Period - 1) as usize;
         // Add the smoothing being done for Fast-D
-        retValue += self.MA_Lookback(optInFastD_Period, optInFastD_MAType);
-        return retValue;
+        retValue += self.MA_Lookback(optInFastD_Period, optInFastD_MAType)?;
+        return Ok(retValue);
     }
     /// C-shaped body behind [`Core::STOCHF`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -150,7 +152,7 @@ impl Core {
         if outFastK.as_ptr() == outFastD.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        let _assertLb = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -205,7 +207,7 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackFastD = self.MA_Lookback(optInFastD_Period, optInFastD_MAType);
+        lookbackFastD = self.MA_Lookback(optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         lookbackTotal = lookbackK + lookbackFastD;
         // Move up the start index if there is not
         // enough initial data.
@@ -715,7 +717,7 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackFastD = self.MA_Lookback(optInFastD_Period, optInFastD_MAType);
+        lookbackFastD = self.MA_Lookback(optInFastD_Period, optInFastD_MAType)?;
         lookbackTotal = lookbackK + lookbackFastD;
         // Move up the start index if there is not
         // enough initial data.

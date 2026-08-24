@@ -82,25 +82,27 @@ impl Core {
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn APO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> usize {
+    pub fn APO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::EMA;
         }
         // The slow MA is the key factor determining the lookback period.
-        return self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
+        return Ok(self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)?);
     }
     /// C-shaped body behind [`Core::APO`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -135,7 +137,7 @@ impl Core {
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::EMA;
         }
-        let _assertLb = self.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        let _assertLb = self.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -158,7 +160,7 @@ impl Core {
         // being false: with a caller-supplied inReal that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType) > endIdx {
+        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::Success;
@@ -434,7 +436,7 @@ impl Core {
         // being false: with a caller-supplied inReal that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType) > endIdx {
+        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)? > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);

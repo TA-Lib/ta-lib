@@ -81,31 +81,33 @@ impl Core {
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
     ///   `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn STOCHRSI_Lookback(&self, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType) -> usize {
+    pub fn STOCHRSI_Lookback(&self, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInFastK_Period) as i32) == (i32::MIN) {
             optInFastK_Period = 5;
         } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInFastD_Period) as i32) == (i32::MIN) {
             optInFastD_Period = 3;
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInFastD_MAType == MAType::DEFAULT {
             optInFastD_MAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
-        retValue = self.RSI_Lookback(optInTimePeriod) + self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-        return retValue;
+        retValue = self.RSI_Lookback(optInTimePeriod)? + self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        return Ok(retValue);
     }
     /// C-shaped body behind [`Core::STOCHRSI`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -150,7 +152,7 @@ impl Core {
         if outFastK.as_ptr() == outFastD.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        let _assertLb = self.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outFastK.len());
@@ -190,8 +192,8 @@ impl Core {
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackSTOCHF = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-        lookbackTotal = self.RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
+        lookbackSTOCHF = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
+        lookbackTotal = self.RSI_Lookback(optInTimePeriod).unwrap_or(usize::MAX) + lookbackSTOCHF;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -496,8 +498,8 @@ impl Core {
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackSTOCHF = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-        lookbackTotal = self.RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
+        lookbackSTOCHF = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        lookbackTotal = self.RSI_Lookback(optInTimePeriod)? + lookbackSTOCHF;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }

@@ -66,7 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLSEPARATINGLINES`]: the number of leading input values
     /// consumed before the first output value can be produced.
-    pub fn CDLSEPARATINGLINES_Lookback(&self) -> usize {
+    pub fn CDLSEPARATINGLINES_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -85,7 +85,7 @@ impl Core {
         let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
         #[allow(non_snake_case)]
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
-        return (((ShadowVeryShort_avgPeriod).max(BodyLong_avgPeriod)).max(Equal_avgPeriod) + 1) as usize;
+        return Ok((((ShadowVeryShort_avgPeriod).max(BodyLong_avgPeriod)).max(Equal_avgPeriod) + 1) as usize);
     }
     /// C-shaped body behind [`Core::CDLSEPARATINGLINES`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -107,7 +107,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDLSEPARATINGLINES_Lookback();
+        let _assertLb = self.CDLSEPARATINGLINES_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -144,7 +144,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLSEPARATINGLINES_Lookback();
+        lookbackTotal = self.CDLSEPARATINGLINES_Lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -772,7 +772,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLSEPARATINGLINES_Lookback();
+        lookbackTotal = self.CDLSEPARATINGLINES_Lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

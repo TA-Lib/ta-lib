@@ -80,24 +80,26 @@ impl Core {
     /// * `optInSlowPeriod` — Period of the slow EMA (default 26, range 2..=100000)
     /// * `optInSignalPeriod` — Smoothing period of the signal line (default 9, range 1..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn MACD_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> usize {
+    pub fn MACD_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         let mut tempInteger: usize = 0_usize;
         // The lookback is driven by the signal line output.
@@ -112,7 +114,7 @@ impl Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = (tempInteger) as i32;
         }
-        return (self.EMA_Lookback(optInSlowPeriod) + self.EMA_Lookback(optInSignalPeriod)) as usize;
+        return Ok((self.EMA_Lookback(optInSlowPeriod)? + self.EMA_Lookback(optInSignalPeriod)?) as usize);
     }
     /// C-shaped body behind [`Core::MACD`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -192,7 +194,7 @@ impl Core {
         if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        let _assertLb = self.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
@@ -244,11 +246,11 @@ impl Core {
         // each other. The MACD line oscillates through zero, so it leaves that
         // window on ordinary data; hence the explicit arm at each step.
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
+        lookbackSignal = self.EMA_Lookback(optInSignalPeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         lookbackTotal = lookbackSignal;
-        lookbackTotal += self.EMA_Lookback(optInSlowPeriod);
+        lookbackTotal += self.EMA_Lookback(optInSlowPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -657,11 +659,11 @@ impl Core {
         // each other. The MACD line oscillates through zero, so it leaves that
         // window on ordinary data; hence the explicit arm at each step.
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
+        lookbackSignal = self.EMA_Lookback(optInSignalPeriod)?;
         // Move up the start index if there is not
         // enough initial data.
         lookbackTotal = lookbackSignal;
-        lookbackTotal += self.EMA_Lookback(optInSlowPeriod);
+        lookbackTotal += self.EMA_Lookback(optInSlowPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }

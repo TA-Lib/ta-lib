@@ -236,7 +236,7 @@ fn test_rust_identity_fast_path_t3() {
     // check via lookback, passthrough value, default state. The anchor is
     // max(startIdx, lookback), like the batch call this path stands in for —
     // a no-op for the public openers, which pass 0 (#241).
-    assert!(s.contains("let fillLb: usize = self.T3_Lookback(optInTimePeriod, optInVFactor);"));
+    assert!(s.contains("let fillLb: usize = self.T3_Lookback(optInTimePeriod, optInVFactor)?;"));
     assert!(s.contains("let fillLb = if startIdx > fillLb { startIdx } else { fillLb };"));
     assert!(s.contains("if historyLen < fillLb + 1 {"));
     // Stride 0 short-circuits to the last bar; only the fill arm loops. Letting

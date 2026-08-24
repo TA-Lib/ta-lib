@@ -6841,10 +6841,11 @@ static void xlang_build_lookback_request(char *buf, const TA_FuncInfo *fi,
 }
 
 /* Normalize a server's `lookback` reply to the C convention: >= 0 is a real
- * lookback, -1 means "parameters rejected". C and Java return -1 directly; the
- * Rust crate's `<fn>_lookback` returns `usize::MAX`, which prints as a value far
- * above any representable TA lookback — so "negative, or above INT_MAX" is the
- * usize-width-independent invalid test rather than a hardcoded 2^64-1.
+ * lookback, -1 means "parameters rejected". All four servers now emit that
+ * convention on the wire directly — the Rust crate's `<fn>_lookback` returns
+ * `Result<usize, RetCode>`, and its server maps `Err` to the JSON literal -1
+ * at the response boundary, same as C/Java/C# — so a plain signed parse is
+ * enough; no backend needs a width-dependent sentinel test here.
  * *present = 0 when the field is absent (server error / unknown method). */
 static long long xlang_lookback_norm(const char *resp, int *present)
 {
@@ -6853,9 +6854,7 @@ static long long xlang_lookback_norm(const char *resp, int *present)
     if( !v ) { if( present ) *present = 0; return -1; }
     if( present ) *present = 1;
     if( *v == '"' ) v++;
-    if( *v == '-' ) return -1;
-    unsigned long long u = strtoull(v, NULL, 10);
-    return (u > (unsigned long long)INT_MAX) ? -1 : (long long)u;
+    return strtoll(v, NULL, 10);
 }
 
 /* One lookback-tier sweep for a function: every parameter vector, every server. */

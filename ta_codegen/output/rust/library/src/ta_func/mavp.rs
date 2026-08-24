@@ -81,19 +81,21 @@ impl Core {
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
     ///   `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn MAVP_Lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType) -> usize {
+    pub fn MAVP_Lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
         } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if ((optInMaxPeriod) as i32) == (i32::MIN) {
             optInMaxPeriod = 30;
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::SMA;
@@ -102,9 +104,9 @@ impl Core {
         // range on its own, so no prologue check can catch it, and without this the
         // lookback answers a usable number for a call that cannot run.
         if optInMinPeriod > optInMaxPeriod {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
-        return self.MA_Lookback(optInMaxPeriod, optInMAType);
+        return Ok(self.MA_Lookback(optInMaxPeriod, optInMAType)?);
     }
     /// C-shaped body behind [`Core::MAVP`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -140,7 +142,7 @@ impl Core {
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::SMA;
         }
-        let _assertLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
+        let _assertLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx < inPeriods.len());
@@ -181,7 +183,7 @@ impl Core {
         }
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.MA_Lookback(optInMaxPeriod, optInMAType);
+        lookbackTotal = self.MA_Lookback(optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -635,7 +637,7 @@ impl Core {
         // OWN (smaller) lookback would seed the recurrence from a different bar
         // and diverge for every period < maxPeriod (order-1 for recursive MAs,
         // running-sum residue for stable ones).
-        let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType);
+        let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType)?;
         let subStart: usize = if startIdx < lookbackTotal { lookbackTotal } else { startIdx };
         if historyLen < subStart + 1 {
             return Err(RetCode::InsufficientHistory);
@@ -721,7 +723,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
-        let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType);
+        let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType)?;
         if historyLen < lookbackTotal + 1 {
             return Err(RetCode::InsufficientHistory);
         }

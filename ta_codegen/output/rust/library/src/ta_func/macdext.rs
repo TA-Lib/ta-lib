@@ -85,14 +85,16 @@ impl Core {
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn MACDEXT_Lookback(&self, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType) -> usize {
+    pub fn MACDEXT_Lookback(&self, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInFastMAType == MAType::DEFAULT {
             optInFastMAType = MAType::SMA;
@@ -100,7 +102,7 @@ impl Core {
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInSlowMAType == MAType::DEFAULT {
             optInSlowMAType = MAType::SMA;
@@ -108,7 +110,7 @@ impl Core {
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInSignalMAType == MAType::DEFAULT {
             optInSignalMAType = MAType::SMA;
@@ -116,13 +118,13 @@ impl Core {
         let mut tempInteger: usize = 0_usize;
         let mut lookbackLargest: usize = 0_usize;
         // Find the MA with the largest lookback
-        lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType);
-        tempInteger = self.MA_Lookback(optInSlowPeriod, optInSlowMAType);
+        lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType)?;
+        tempInteger = self.MA_Lookback(optInSlowPeriod, optInSlowMAType)?;
         if tempInteger > lookbackLargest {
             lookbackLargest = tempInteger;
         }
         // Add to the largest MA lookback the signal line lookback
-        return (lookbackLargest + self.MA_Lookback(optInSignalPeriod, optInSignalMAType)) as usize;
+        return Ok((lookbackLargest + self.MA_Lookback(optInSignalPeriod, optInSignalMAType)?) as usize);
     }
     /// C-shaped body behind [`Core::MACDEXT`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -176,7 +178,7 @@ impl Core {
         if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+        let _assertLb = self.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
@@ -223,13 +225,13 @@ impl Core {
             optInFastMAType = tempMAType;
         }
         // Find the MA with the largest lookback
-        lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType);
-        tempInteger = self.MA_Lookback(optInSlowPeriod, optInSlowMAType);
+        lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType).unwrap_or(usize::MAX);
+        tempInteger = self.MA_Lookback(optInSlowPeriod, optInSlowMAType).unwrap_or(usize::MAX);
         if tempInteger > lookbackLargest {
             lookbackLargest = tempInteger;
         }
         // Add the lookback needed for the signal line
-        lookbackSignal = self.MA_Lookback(optInSignalPeriod, optInSignalMAType);
+        lookbackSignal = self.MA_Lookback(optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
         lookbackTotal = lookbackSignal + lookbackLargest;
         // Move up the start index if there is not
         // enough initial data.
@@ -612,13 +614,13 @@ impl Core {
             optInFastMAType = tempMAType;
         }
         // Find the MA with the largest lookback
-        lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType);
-        tempInteger = self.MA_Lookback(optInSlowPeriod, optInSlowMAType);
+        lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType)?;
+        tempInteger = self.MA_Lookback(optInSlowPeriod, optInSlowMAType)?;
         if tempInteger > lookbackLargest {
             lookbackLargest = tempInteger;
         }
         // Add the lookback needed for the signal line
-        lookbackSignal = self.MA_Lookback(optInSignalPeriod, optInSignalMAType);
+        lookbackSignal = self.MA_Lookback(optInSignalPeriod, optInSignalMAType)?;
         lookbackTotal = lookbackSignal + lookbackLargest;
         // Move up the start index if there is not
         // enough initial data.

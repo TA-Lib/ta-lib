@@ -1000,7 +1000,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            let _lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1041,7 +1041,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            let lookback: i64 = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -1115,7 +1115,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ACCBANDS_Lookback(optInTimePeriod);
+            let _lb = core.ACCBANDS_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1159,7 +1159,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ACCBANDS_Lookback(optInTimePeriod);
+            let lookback: i64 = core.ACCBANDS_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -1220,7 +1220,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ACOS_Lookback();
+            let _lb = core.ACOS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1257,7 +1257,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ACOS_Lookback();
+            let lookback: i64 = core.ACOS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -1337,7 +1337,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.AD_Lookback();
+            let _lb = core.AD_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1377,7 +1377,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.AD_Lookback();
+            let lookback: i64 = core.AD_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -1443,7 +1443,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ADD_Lookback();
+            let _lb = core.ADD_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1481,7 +1481,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ADD_Lookback();
+            let lookback: i64 = core.ADD_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -1563,7 +1563,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
+            let _lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1605,7 +1605,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
+            let lookback: i64 = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -1682,7 +1682,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ADX_Lookback(optInTimePeriod);
+            let _lb = core.ADX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1722,7 +1722,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ADX_Lookback(optInTimePeriod);
+            let lookback: i64 = core.ADX_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -1796,7 +1796,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ADXR_Lookback(optInTimePeriod);
+            let _lb = core.ADXR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1836,7 +1836,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ADXR_Lookback(optInTimePeriod);
+            let lookback: i64 = core.ADXR_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -1904,7 +1904,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod);
+            let _lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1944,7 +1944,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.AO_Lookback(optInFastPeriod, optInSlowPeriod);
+            let lookback: i64 = core.AO_Lookback(optInFastPeriod, optInSlowPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -2008,7 +2008,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+            let _lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -2051,7 +2051,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -2118,7 +2118,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.AROON_Lookback(optInTimePeriod);
+            let _lb = core.AROON_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -2159,7 +2159,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.AROON_Lookback(optInTimePeriod);
+            let lookback: i64 = core.AROON_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -2227,7 +2227,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.AROONOSC_Lookback(optInTimePeriod);
+            let _lb = core.AROONOSC_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -2266,7 +2266,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.AROONOSC_Lookback(optInTimePeriod);
+            let lookback: i64 = core.AROONOSC_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -2325,7 +2325,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ASIN_Lookback();
+            let _lb = core.ASIN_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -2362,7 +2362,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ASIN_Lookback();
+            let lookback: i64 = core.ASIN_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -2421,7 +2421,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ATAN_Lookback();
+            let _lb = core.ATAN_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -2458,7 +2458,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ATAN_Lookback();
+            let lookback: i64 = core.ATAN_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -2535,7 +2535,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ATR_Lookback(optInTimePeriod);
+            let _lb = core.ATR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -2575,7 +2575,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ATR_Lookback(optInTimePeriod);
+            let lookback: i64 = core.ATR_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -2635,7 +2635,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.AVGDEV_Lookback(optInTimePeriod);
+            let _lb = core.AVGDEV_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -2673,7 +2673,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.AVGDEV_Lookback(optInTimePeriod);
+            let lookback: i64 = core.AVGDEV_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -2753,7 +2753,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.AVGPRICE_Lookback();
+            let _lb = core.AVGPRICE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -2793,7 +2793,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.AVGPRICE_Lookback();
+            let lookback: i64 = core.AVGPRICE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -2858,7 +2858,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+            let _lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -2906,7 +2906,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -2975,7 +2975,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.BETA_Lookback(optInTimePeriod);
+            let _lb = core.BETA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -3014,7 +3014,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.BETA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.BETA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -3094,7 +3094,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.BOP_Lookback();
+            let _lb = core.BOP_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -3134,7 +3134,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.BOP_Lookback();
+            let lookback: i64 = core.BOP_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -3208,7 +3208,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CCI_Lookback(optInTimePeriod);
+            let _lb = core.CCI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -3248,7 +3248,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CCI_Lookback(optInTimePeriod);
+            let lookback: i64 = core.CCI_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -3328,7 +3328,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDL2CROWS_Lookback();
+            let _lb = core.CDL2CROWS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -3368,7 +3368,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDL2CROWS_Lookback();
+            let lookback: i64 = core.CDL2CROWS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -3448,7 +3448,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDL3BLACKCROWS_Lookback();
+            let _lb = core.CDL3BLACKCROWS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -3488,7 +3488,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDL3BLACKCROWS_Lookback();
+            let lookback: i64 = core.CDL3BLACKCROWS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -3568,7 +3568,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDL3INSIDE_Lookback();
+            let _lb = core.CDL3INSIDE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -3608,7 +3608,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDL3INSIDE_Lookback();
+            let lookback: i64 = core.CDL3INSIDE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -3688,7 +3688,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDL3LINESTRIKE_Lookback();
+            let _lb = core.CDL3LINESTRIKE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -3728,7 +3728,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDL3LINESTRIKE_Lookback();
+            let lookback: i64 = core.CDL3LINESTRIKE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -3808,7 +3808,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDL3OUTSIDE_Lookback();
+            let _lb = core.CDL3OUTSIDE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -3848,7 +3848,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDL3OUTSIDE_Lookback();
+            let lookback: i64 = core.CDL3OUTSIDE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -3928,7 +3928,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDL3STARSINSOUTH_Lookback();
+            let _lb = core.CDL3STARSINSOUTH_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -3968,7 +3968,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDL3STARSINSOUTH_Lookback();
+            let lookback: i64 = core.CDL3STARSINSOUTH_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -4048,7 +4048,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDL3WHITESOLDIERS_Lookback();
+            let _lb = core.CDL3WHITESOLDIERS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -4088,7 +4088,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDL3WHITESOLDIERS_Lookback();
+            let lookback: i64 = core.CDL3WHITESOLDIERS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -4169,7 +4169,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLABANDONEDBABY_Lookback(optInPenetration);
+            let _lb = core.CDLABANDONEDBABY_Lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -4210,7 +4210,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLABANDONEDBABY_Lookback(optInPenetration);
+            let lookback: i64 = core.CDLABANDONEDBABY_Lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -4290,7 +4290,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLADVANCEBLOCK_Lookback();
+            let _lb = core.CDLADVANCEBLOCK_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -4330,7 +4330,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLADVANCEBLOCK_Lookback();
+            let lookback: i64 = core.CDLADVANCEBLOCK_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -4410,7 +4410,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLBELTHOLD_Lookback();
+            let _lb = core.CDLBELTHOLD_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -4450,7 +4450,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLBELTHOLD_Lookback();
+            let lookback: i64 = core.CDLBELTHOLD_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -4530,7 +4530,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLBREAKAWAY_Lookback();
+            let _lb = core.CDLBREAKAWAY_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -4570,7 +4570,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLBREAKAWAY_Lookback();
+            let lookback: i64 = core.CDLBREAKAWAY_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -4650,7 +4650,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLCLOSINGMARUBOZU_Lookback();
+            let _lb = core.CDLCLOSINGMARUBOZU_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -4690,7 +4690,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLCLOSINGMARUBOZU_Lookback();
+            let lookback: i64 = core.CDLCLOSINGMARUBOZU_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -4770,7 +4770,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLCONCEALBABYSWALL_Lookback();
+            let _lb = core.CDLCONCEALBABYSWALL_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -4810,7 +4810,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLCONCEALBABYSWALL_Lookback();
+            let lookback: i64 = core.CDLCONCEALBABYSWALL_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -4890,7 +4890,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLCOUNTERATTACK_Lookback();
+            let _lb = core.CDLCOUNTERATTACK_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -4930,7 +4930,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLCOUNTERATTACK_Lookback();
+            let lookback: i64 = core.CDLCOUNTERATTACK_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -5011,7 +5011,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
+            let _lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -5052,7 +5052,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
+            let lookback: i64 = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -5132,7 +5132,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLDOJI_Lookback();
+            let _lb = core.CDLDOJI_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -5172,7 +5172,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLDOJI_Lookback();
+            let lookback: i64 = core.CDLDOJI_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -5252,7 +5252,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLDOJISTAR_Lookback();
+            let _lb = core.CDLDOJISTAR_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -5292,7 +5292,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLDOJISTAR_Lookback();
+            let lookback: i64 = core.CDLDOJISTAR_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -5372,7 +5372,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLDRAGONFLYDOJI_Lookback();
+            let _lb = core.CDLDRAGONFLYDOJI_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -5412,7 +5412,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLDRAGONFLYDOJI_Lookback();
+            let lookback: i64 = core.CDLDRAGONFLYDOJI_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -5492,7 +5492,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLENGULFING_Lookback();
+            let _lb = core.CDLENGULFING_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -5532,7 +5532,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLENGULFING_Lookback();
+            let lookback: i64 = core.CDLENGULFING_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -5613,7 +5613,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
+            let _lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -5654,7 +5654,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
+            let lookback: i64 = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -5735,7 +5735,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLEVENINGSTAR_Lookback(optInPenetration);
+            let _lb = core.CDLEVENINGSTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -5776,7 +5776,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLEVENINGSTAR_Lookback(optInPenetration);
+            let lookback: i64 = core.CDLEVENINGSTAR_Lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -5856,7 +5856,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLGAPSIDESIDEWHITE_Lookback();
+            let _lb = core.CDLGAPSIDESIDEWHITE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -5896,7 +5896,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLGAPSIDESIDEWHITE_Lookback();
+            let lookback: i64 = core.CDLGAPSIDESIDEWHITE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -5976,7 +5976,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLGRAVESTONEDOJI_Lookback();
+            let _lb = core.CDLGRAVESTONEDOJI_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -6016,7 +6016,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLGRAVESTONEDOJI_Lookback();
+            let lookback: i64 = core.CDLGRAVESTONEDOJI_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -6096,7 +6096,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLHAMMER_Lookback();
+            let _lb = core.CDLHAMMER_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -6136,7 +6136,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLHAMMER_Lookback();
+            let lookback: i64 = core.CDLHAMMER_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -6216,7 +6216,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLHANGINGMAN_Lookback();
+            let _lb = core.CDLHANGINGMAN_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -6256,7 +6256,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLHANGINGMAN_Lookback();
+            let lookback: i64 = core.CDLHANGINGMAN_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -6336,7 +6336,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLHARAMI_Lookback();
+            let _lb = core.CDLHARAMI_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -6376,7 +6376,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLHARAMI_Lookback();
+            let lookback: i64 = core.CDLHARAMI_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -6456,7 +6456,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLHARAMICROSS_Lookback();
+            let _lb = core.CDLHARAMICROSS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -6496,7 +6496,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLHARAMICROSS_Lookback();
+            let lookback: i64 = core.CDLHARAMICROSS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -6576,7 +6576,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLHIGHWAVE_Lookback();
+            let _lb = core.CDLHIGHWAVE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -6616,7 +6616,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLHIGHWAVE_Lookback();
+            let lookback: i64 = core.CDLHIGHWAVE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -6696,7 +6696,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLHIKKAKE_Lookback();
+            let _lb = core.CDLHIKKAKE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -6736,7 +6736,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLHIKKAKE_Lookback();
+            let lookback: i64 = core.CDLHIKKAKE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -6816,7 +6816,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLHIKKAKEMOD_Lookback();
+            let _lb = core.CDLHIKKAKEMOD_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -6856,7 +6856,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLHIKKAKEMOD_Lookback();
+            let lookback: i64 = core.CDLHIKKAKEMOD_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -6936,7 +6936,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLHOMINGPIGEON_Lookback();
+            let _lb = core.CDLHOMINGPIGEON_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -6976,7 +6976,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLHOMINGPIGEON_Lookback();
+            let lookback: i64 = core.CDLHOMINGPIGEON_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -7056,7 +7056,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLIDENTICAL3CROWS_Lookback();
+            let _lb = core.CDLIDENTICAL3CROWS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -7096,7 +7096,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLIDENTICAL3CROWS_Lookback();
+            let lookback: i64 = core.CDLIDENTICAL3CROWS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -7176,7 +7176,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLINNECK_Lookback();
+            let _lb = core.CDLINNECK_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -7216,7 +7216,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLINNECK_Lookback();
+            let lookback: i64 = core.CDLINNECK_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -7296,7 +7296,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLINVERTEDHAMMER_Lookback();
+            let _lb = core.CDLINVERTEDHAMMER_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -7336,7 +7336,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLINVERTEDHAMMER_Lookback();
+            let lookback: i64 = core.CDLINVERTEDHAMMER_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -7416,7 +7416,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLKICKING_Lookback();
+            let _lb = core.CDLKICKING_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -7456,7 +7456,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLKICKING_Lookback();
+            let lookback: i64 = core.CDLKICKING_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -7536,7 +7536,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLKICKINGBYLENGTH_Lookback();
+            let _lb = core.CDLKICKINGBYLENGTH_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -7576,7 +7576,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLKICKINGBYLENGTH_Lookback();
+            let lookback: i64 = core.CDLKICKINGBYLENGTH_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -7656,7 +7656,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLLADDERBOTTOM_Lookback();
+            let _lb = core.CDLLADDERBOTTOM_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -7696,7 +7696,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLLADDERBOTTOM_Lookback();
+            let lookback: i64 = core.CDLLADDERBOTTOM_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -7776,7 +7776,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLLONGLEGGEDDOJI_Lookback();
+            let _lb = core.CDLLONGLEGGEDDOJI_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -7816,7 +7816,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLLONGLEGGEDDOJI_Lookback();
+            let lookback: i64 = core.CDLLONGLEGGEDDOJI_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -7896,7 +7896,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLLONGLINE_Lookback();
+            let _lb = core.CDLLONGLINE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -7936,7 +7936,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLLONGLINE_Lookback();
+            let lookback: i64 = core.CDLLONGLINE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -8016,7 +8016,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLMARUBOZU_Lookback();
+            let _lb = core.CDLMARUBOZU_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -8056,7 +8056,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLMARUBOZU_Lookback();
+            let lookback: i64 = core.CDLMARUBOZU_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -8136,7 +8136,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLMATCHINGLOW_Lookback();
+            let _lb = core.CDLMATCHINGLOW_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -8176,7 +8176,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLMATCHINGLOW_Lookback();
+            let lookback: i64 = core.CDLMATCHINGLOW_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -8257,7 +8257,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLMATHOLD_Lookback(optInPenetration);
+            let _lb = core.CDLMATHOLD_Lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -8298,7 +8298,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLMATHOLD_Lookback(optInPenetration);
+            let lookback: i64 = core.CDLMATHOLD_Lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -8379,7 +8379,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
+            let _lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -8420,7 +8420,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
+            let lookback: i64 = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -8501,7 +8501,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLMORNINGSTAR_Lookback(optInPenetration);
+            let _lb = core.CDLMORNINGSTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -8542,7 +8542,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLMORNINGSTAR_Lookback(optInPenetration);
+            let lookback: i64 = core.CDLMORNINGSTAR_Lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -8622,7 +8622,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLONNECK_Lookback();
+            let _lb = core.CDLONNECK_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -8662,7 +8662,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLONNECK_Lookback();
+            let lookback: i64 = core.CDLONNECK_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -8742,7 +8742,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLPIERCING_Lookback();
+            let _lb = core.CDLPIERCING_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -8782,7 +8782,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLPIERCING_Lookback();
+            let lookback: i64 = core.CDLPIERCING_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -8862,7 +8862,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLRICKSHAWMAN_Lookback();
+            let _lb = core.CDLRICKSHAWMAN_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -8902,7 +8902,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLRICKSHAWMAN_Lookback();
+            let lookback: i64 = core.CDLRICKSHAWMAN_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -8982,7 +8982,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLRISEFALL3METHODS_Lookback();
+            let _lb = core.CDLRISEFALL3METHODS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9022,7 +9022,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLRISEFALL3METHODS_Lookback();
+            let lookback: i64 = core.CDLRISEFALL3METHODS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -9102,7 +9102,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLSEPARATINGLINES_Lookback();
+            let _lb = core.CDLSEPARATINGLINES_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9142,7 +9142,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLSEPARATINGLINES_Lookback();
+            let lookback: i64 = core.CDLSEPARATINGLINES_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -9222,7 +9222,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLSHOOTINGSTAR_Lookback();
+            let _lb = core.CDLSHOOTINGSTAR_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9262,7 +9262,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLSHOOTINGSTAR_Lookback();
+            let lookback: i64 = core.CDLSHOOTINGSTAR_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -9342,7 +9342,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLSHORTLINE_Lookback();
+            let _lb = core.CDLSHORTLINE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9382,7 +9382,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLSHORTLINE_Lookback();
+            let lookback: i64 = core.CDLSHORTLINE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -9462,7 +9462,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLSPINNINGTOP_Lookback();
+            let _lb = core.CDLSPINNINGTOP_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9502,7 +9502,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLSPINNINGTOP_Lookback();
+            let lookback: i64 = core.CDLSPINNINGTOP_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -9582,7 +9582,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLSTALLEDPATTERN_Lookback();
+            let _lb = core.CDLSTALLEDPATTERN_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9622,7 +9622,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLSTALLEDPATTERN_Lookback();
+            let lookback: i64 = core.CDLSTALLEDPATTERN_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -9702,7 +9702,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLSTICKSANDWICH_Lookback();
+            let _lb = core.CDLSTICKSANDWICH_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9742,7 +9742,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLSTICKSANDWICH_Lookback();
+            let lookback: i64 = core.CDLSTICKSANDWICH_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -9822,7 +9822,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLTAKURI_Lookback();
+            let _lb = core.CDLTAKURI_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9862,7 +9862,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLTAKURI_Lookback();
+            let lookback: i64 = core.CDLTAKURI_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -9942,7 +9942,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLTASUKIGAP_Lookback();
+            let _lb = core.CDLTASUKIGAP_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9982,7 +9982,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLTASUKIGAP_Lookback();
+            let lookback: i64 = core.CDLTASUKIGAP_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -10062,7 +10062,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLTHRUSTING_Lookback();
+            let _lb = core.CDLTHRUSTING_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -10102,7 +10102,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLTHRUSTING_Lookback();
+            let lookback: i64 = core.CDLTHRUSTING_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -10182,7 +10182,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLTRISTAR_Lookback();
+            let _lb = core.CDLTRISTAR_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -10222,7 +10222,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLTRISTAR_Lookback();
+            let lookback: i64 = core.CDLTRISTAR_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -10302,7 +10302,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLUNIQUE3RIVER_Lookback();
+            let _lb = core.CDLUNIQUE3RIVER_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -10342,7 +10342,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLUNIQUE3RIVER_Lookback();
+            let lookback: i64 = core.CDLUNIQUE3RIVER_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -10422,7 +10422,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLUPSIDEGAP2CROWS_Lookback();
+            let _lb = core.CDLUPSIDEGAP2CROWS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -10462,7 +10462,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLUPSIDEGAP2CROWS_Lookback();
+            let lookback: i64 = core.CDLUPSIDEGAP2CROWS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -10542,7 +10542,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CDLXSIDEGAP3METHODS_Lookback();
+            let _lb = core.CDLXSIDEGAP3METHODS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -10582,7 +10582,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CDLXSIDEGAP3METHODS_Lookback();
+            let lookback: i64 = core.CDLXSIDEGAP3METHODS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -10641,7 +10641,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CEIL_Lookback();
+            let _lb = core.CEIL_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -10678,7 +10678,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CEIL_Lookback();
+            let lookback: i64 = core.CEIL_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -10759,7 +10759,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CMF_Lookback(optInTimePeriod);
+            let _lb = core.CMF_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -10800,7 +10800,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CMF_Lookback(optInTimePeriod);
+            let lookback: i64 = core.CMF_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -10863,7 +10863,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CMO_Lookback(optInTimePeriod);
+            let _lb = core.CMO_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -10901,7 +10901,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CMO_Lookback(optInTimePeriod);
+            let lookback: i64 = core.CMO_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -10961,7 +10961,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CMOU_Lookback(optInTimePeriod);
+            let _lb = core.CMOU_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -10999,7 +10999,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CMOU_Lookback(optInTimePeriod);
+            let lookback: i64 = core.CMOU_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11066,7 +11066,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.CORREL_Lookback(optInTimePeriod);
+            let _lb = core.CORREL_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11105,7 +11105,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.CORREL_Lookback(optInTimePeriod);
+            let lookback: i64 = core.CORREL_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11164,7 +11164,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.COS_Lookback();
+            let _lb = core.COS_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11201,7 +11201,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.COS_Lookback();
+            let lookback: i64 = core.COS_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11260,7 +11260,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.COSH_Lookback();
+            let _lb = core.COSH_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11297,7 +11297,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.COSH_Lookback();
+            let lookback: i64 = core.COSH_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11357,7 +11357,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.DEMA_Lookback(optInTimePeriod);
+            let _lb = core.DEMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11395,7 +11395,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.DEMA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.DEMA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11461,7 +11461,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.DIV_Lookback();
+            let _lb = core.DIV_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11499,7 +11499,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.DIV_Lookback();
+            let lookback: i64 = core.DIV_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11576,7 +11576,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.DX_Lookback(optInTimePeriod);
+            let _lb = core.DX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11616,7 +11616,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.DX_Lookback(optInTimePeriod);
+            let lookback: i64 = core.DX_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11683,7 +11683,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.EFI_Lookback(optInTimePeriod);
+            let _lb = core.EFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11722,7 +11722,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.EFI_Lookback(optInTimePeriod);
+            let lookback: i64 = core.EFI_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11785,7 +11785,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.EMA_Lookback(optInTimePeriod);
+            let _lb = core.EMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11823,7 +11823,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.EMA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.EMA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11882,7 +11882,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.EXP_Lookback();
+            let _lb = core.EXP_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11919,7 +11919,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.EXP_Lookback();
+            let lookback: i64 = core.EXP_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11978,7 +11978,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.FLOOR_Lookback();
+            let _lb = core.FLOOR_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12015,7 +12015,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.FLOOR_Lookback();
+            let lookback: i64 = core.FLOOR_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -12075,7 +12075,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.HMA_Lookback(optInTimePeriod);
+            let _lb = core.HMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12113,7 +12113,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.HMA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.HMA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -12175,7 +12175,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.HT_DCPERIOD_Lookback();
+            let _lb = core.HT_DCPERIOD_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12212,7 +12212,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.HT_DCPERIOD_Lookback();
+            let lookback: i64 = core.HT_DCPERIOD_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -12274,7 +12274,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.HT_DCPHASE_Lookback();
+            let _lb = core.HT_DCPHASE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12311,7 +12311,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.HT_DCPHASE_Lookback();
+            let lookback: i64 = core.HT_DCPHASE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -12373,7 +12373,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.HT_PHASOR_Lookback();
+            let _lb = core.HT_PHASOR_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12412,7 +12412,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.HT_PHASOR_Lookback();
+            let lookback: i64 = core.HT_PHASOR_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -12475,7 +12475,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.HT_SINE_Lookback();
+            let _lb = core.HT_SINE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12514,7 +12514,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.HT_SINE_Lookback();
+            let lookback: i64 = core.HT_SINE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -12577,7 +12577,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.HT_TRENDLINE_Lookback();
+            let _lb = core.HT_TRENDLINE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12614,7 +12614,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.HT_TRENDLINE_Lookback();
+            let lookback: i64 = core.HT_TRENDLINE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -12676,7 +12676,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.HT_TRENDMODE_Lookback();
+            let _lb = core.HT_TRENDMODE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -12713,7 +12713,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.HT_TRENDMODE_Lookback();
+            let lookback: i64 = core.HT_TRENDMODE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -12780,7 +12780,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.IMI_Lookback(optInTimePeriod);
+            let _lb = core.IMI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12819,7 +12819,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.IMI_Lookback(optInTimePeriod);
+            let lookback: i64 = core.IMI_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -12882,7 +12882,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.KAMA_Lookback(optInTimePeriod);
+            let _lb = core.KAMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12920,7 +12920,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.KAMA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.KAMA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -12980,7 +12980,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.LINEARREG_Lookback(optInTimePeriod);
+            let _lb = core.LINEARREG_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13018,7 +13018,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.LINEARREG_Lookback(optInTimePeriod);
+            let lookback: i64 = core.LINEARREG_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -13078,7 +13078,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod);
+            let _lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13116,7 +13116,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.LINEARREG_ANGLE_Lookback(optInTimePeriod);
+            let lookback: i64 = core.LINEARREG_ANGLE_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -13176,7 +13176,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
+            let _lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13214,7 +13214,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
+            let lookback: i64 = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -13274,7 +13274,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod);
+            let _lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13312,7 +13312,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.LINEARREG_SLOPE_Lookback(optInTimePeriod);
+            let lookback: i64 = core.LINEARREG_SLOPE_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -13371,7 +13371,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.LN_Lookback();
+            let _lb = core.LN_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13408,7 +13408,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.LN_Lookback();
+            let lookback: i64 = core.LN_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -13467,7 +13467,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.LOG10_Lookback();
+            let _lb = core.LOG10_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13504,7 +13504,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.LOG10_Lookback();
+            let lookback: i64 = core.LOG10_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -13567,7 +13567,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MA_Lookback(optInTimePeriod, optInMAType);
+            let _lb = core.MA_Lookback(optInTimePeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13609,7 +13609,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.MA_Lookback(optInTimePeriod, optInMAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.MA_Lookback(optInTimePeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -13671,7 +13671,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            let _lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13715,7 +13715,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            let lookback: i64 = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -13788,7 +13788,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+            let _lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13838,7 +13838,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -13900,7 +13900,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MACDFIX_Lookback(optInSignalPeriod);
+            let _lb = core.MACDFIX_Lookback(optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13942,7 +13942,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MACDFIX_Lookback(optInSignalPeriod);
+            let lookback: i64 = core.MACDFIX_Lookback(optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -14008,7 +14008,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit);
+            let _lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -14049,7 +14049,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MAMA_Lookback(optInFastLimit, optInSlowLimit);
+            let lookback: i64 = core.MAMA_Lookback(optInFastLimit, optInSlowLimit).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -14123,7 +14123,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MARKETFI_Lookback();
+            let _lb = core.MARKETFI_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -14162,7 +14162,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MARKETFI_Lookback();
+            let lookback: i64 = core.MARKETFI_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -14233,7 +14233,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
+            let _lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -14277,7 +14277,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -14337,7 +14337,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MAX_Lookback(optInTimePeriod);
+            let _lb = core.MAX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -14375,7 +14375,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MAX_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MAX_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -14435,7 +14435,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MAXINDEX_Lookback(optInTimePeriod);
+            let _lb = core.MAXINDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -14473,7 +14473,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MAXINDEX_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MAXINDEX_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -14539,7 +14539,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MEDPRICE_Lookback();
+            let _lb = core.MEDPRICE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -14577,7 +14577,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MEDPRICE_Lookback();
+            let lookback: i64 = core.MEDPRICE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -14658,7 +14658,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MFI_Lookback(optInTimePeriod);
+            let _lb = core.MFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -14699,7 +14699,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MFI_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MFI_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -14759,7 +14759,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MIDPOINT_Lookback(optInTimePeriod);
+            let _lb = core.MIDPOINT_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -14797,7 +14797,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MIDPOINT_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MIDPOINT_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -14864,7 +14864,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MIDPRICE_Lookback(optInTimePeriod);
+            let _lb = core.MIDPRICE_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -14903,7 +14903,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MIDPRICE_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MIDPRICE_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -14963,7 +14963,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MIN_Lookback(optInTimePeriod);
+            let _lb = core.MIN_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -15001,7 +15001,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MIN_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MIN_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -15061,7 +15061,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MININDEX_Lookback(optInTimePeriod);
+            let _lb = core.MININDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -15099,7 +15099,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MININDEX_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MININDEX_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push('}');
@@ -15159,7 +15159,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MINMAX_Lookback(optInTimePeriod);
+            let _lb = core.MINMAX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -15199,7 +15199,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MINMAX_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MINMAX_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -15260,7 +15260,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MINMAXINDEX_Lookback(optInTimePeriod);
+            let _lb = core.MINMAXINDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -15300,7 +15300,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MINMAXINDEX_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MINMAXINDEX_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push_str(",\"outInteger1\":"); resp.push_str(&json_i32_array(&outIntBuf1[..outNBElement]));
@@ -15378,7 +15378,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MINUS_DI_Lookback(optInTimePeriod);
+            let _lb = core.MINUS_DI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -15418,7 +15418,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MINUS_DI_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MINUS_DI_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -15488,7 +15488,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MINUS_DM_Lookback(optInTimePeriod);
+            let _lb = core.MINUS_DM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -15527,7 +15527,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MINUS_DM_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MINUS_DM_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -15587,7 +15587,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MOM_Lookback(optInTimePeriod);
+            let _lb = core.MOM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -15625,7 +15625,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MOM_Lookback(optInTimePeriod);
+            let lookback: i64 = core.MOM_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -15691,7 +15691,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.MULT_Lookback();
+            let _lb = core.MULT_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -15729,7 +15729,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MULT_Lookback();
+            let lookback: i64 = core.MULT_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -15806,7 +15806,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.NATR_Lookback(optInTimePeriod);
+            let _lb = core.NATR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -15846,7 +15846,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.NATR_Lookback(optInTimePeriod);
+            let lookback: i64 = core.NATR_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -15912,7 +15912,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.NVI_Lookback();
+            let _lb = core.NVI_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -15950,7 +15950,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.NVI_Lookback();
+            let lookback: i64 = core.NVI_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16016,7 +16016,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.OBV_Lookback();
+            let _lb = core.OBV_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16054,7 +16054,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.OBV_Lookback();
+            let lookback: i64 = core.OBV_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16131,7 +16131,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.PLUS_DI_Lookback(optInTimePeriod);
+            let _lb = core.PLUS_DI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16171,7 +16171,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.PLUS_DI_Lookback(optInTimePeriod);
+            let lookback: i64 = core.PLUS_DI_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16241,7 +16241,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.PLUS_DM_Lookback(optInTimePeriod);
+            let _lb = core.PLUS_DM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16280,7 +16280,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.PLUS_DM_Lookback(optInTimePeriod);
+            let lookback: i64 = core.PLUS_DM_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16344,7 +16344,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+            let _lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16387,7 +16387,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16453,7 +16453,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.PVI_Lookback();
+            let _lb = core.PVI_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16491,7 +16491,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.PVI_Lookback();
+            let lookback: i64 = core.PVI_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16555,7 +16555,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+            let _lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16598,7 +16598,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16665,7 +16665,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.QSTICK_Lookback(optInTimePeriod);
+            let _lb = core.QSTICK_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16704,7 +16704,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.QSTICK_Lookback(optInTimePeriod);
+            let lookback: i64 = core.QSTICK_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16764,7 +16764,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ROC_Lookback(optInTimePeriod);
+            let _lb = core.ROC_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16802,7 +16802,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ROC_Lookback(optInTimePeriod);
+            let lookback: i64 = core.ROC_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16862,7 +16862,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ROCP_Lookback(optInTimePeriod);
+            let _lb = core.ROCP_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16900,7 +16900,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ROCP_Lookback(optInTimePeriod);
+            let lookback: i64 = core.ROCP_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -16960,7 +16960,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ROCR_Lookback(optInTimePeriod);
+            let _lb = core.ROCR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -16998,7 +16998,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ROCR_Lookback(optInTimePeriod);
+            let lookback: i64 = core.ROCR_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -17058,7 +17058,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ROCR100_Lookback(optInTimePeriod);
+            let _lb = core.ROCR100_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -17096,7 +17096,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ROCR100_Lookback(optInTimePeriod);
+            let lookback: i64 = core.ROCR100_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -17159,7 +17159,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.RSI_Lookback(optInTimePeriod);
+            let _lb = core.RSI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -17197,7 +17197,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.RSI_Lookback(optInTimePeriod);
+            let lookback: i64 = core.RSI_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -17265,7 +17265,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.SAR_Lookback(optInAcceleration, optInMaximum);
+            let _lb = core.SAR_Lookback(optInAcceleration, optInMaximum).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -17305,7 +17305,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.SAR_Lookback(optInAcceleration, optInMaximum);
+            let lookback: i64 = core.SAR_Lookback(optInAcceleration, optInMaximum).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -17379,7 +17379,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+            let _lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -17425,7 +17425,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+            let lookback: i64 = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -17484,7 +17484,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.SIN_Lookback();
+            let _lb = core.SIN_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -17521,7 +17521,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.SIN_Lookback();
+            let lookback: i64 = core.SIN_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -17580,7 +17580,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.SINH_Lookback();
+            let _lb = core.SINH_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -17617,7 +17617,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.SINH_Lookback();
+            let lookback: i64 = core.SINH_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -17677,7 +17677,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.SMA_Lookback(optInTimePeriod);
+            let _lb = core.SMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -17715,7 +17715,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.SMA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.SMA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -17792,7 +17792,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            let _lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -17837,7 +17837,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            let lookback: i64 = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -17897,7 +17897,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.SQRT_Lookback();
+            let _lb = core.SQRT_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -17934,7 +17934,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.SQRT_Lookback();
+            let lookback: i64 = core.SQRT_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -17995,7 +17995,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev);
+            let _lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18034,7 +18034,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.STDDEV_Lookback(optInTimePeriod, optInNbDev);
+            let lookback: i64 = core.STDDEV_Lookback(optInTimePeriod, optInNbDev).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -18116,7 +18116,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+            let _lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18165,7 +18165,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -18244,7 +18244,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+            let _lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18291,7 +18291,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -18357,7 +18357,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+            let _lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18403,7 +18403,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = if _enum_bad { -1 } else { core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) as i64 };
+            let lookback: i64 = if _enum_bad { -1 } else { core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -18470,7 +18470,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.SUB_Lookback();
+            let _lb = core.SUB_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18508,7 +18508,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.SUB_Lookback();
+            let lookback: i64 = core.SUB_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -18568,7 +18568,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.SUM_Lookback(optInTimePeriod);
+            let _lb = core.SUM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18606,7 +18606,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.SUM_Lookback(optInTimePeriod);
+            let lookback: i64 = core.SUM_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -18670,7 +18670,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.T3_Lookback(optInTimePeriod, optInVFactor);
+            let _lb = core.T3_Lookback(optInTimePeriod, optInVFactor).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18709,7 +18709,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.T3_Lookback(optInTimePeriod, optInVFactor);
+            let lookback: i64 = core.T3_Lookback(optInTimePeriod, optInVFactor).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -18768,7 +18768,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.TAN_Lookback();
+            let _lb = core.TAN_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18805,7 +18805,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.TAN_Lookback();
+            let lookback: i64 = core.TAN_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -18864,7 +18864,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.TANH_Lookback();
+            let _lb = core.TANH_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18901,7 +18901,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.TANH_Lookback();
+            let lookback: i64 = core.TANH_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -18961,7 +18961,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.TEMA_Lookback(optInTimePeriod);
+            let _lb = core.TEMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -18999,7 +18999,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.TEMA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.TEMA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -19072,7 +19072,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.TRANGE_Lookback();
+            let _lb = core.TRANGE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19111,7 +19111,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.TRANGE_Lookback();
+            let lookback: i64 = core.TRANGE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -19171,7 +19171,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.TRIMA_Lookback(optInTimePeriod);
+            let _lb = core.TRIMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19209,7 +19209,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.TRIMA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.TRIMA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -19269,7 +19269,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.TRIX_Lookback(optInTimePeriod);
+            let _lb = core.TRIX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19307,7 +19307,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.TRIX_Lookback(optInTimePeriod);
+            let lookback: i64 = core.TRIX_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -19367,7 +19367,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.TSF_Lookback(optInTimePeriod);
+            let _lb = core.TSF_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19405,7 +19405,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.TSF_Lookback(optInTimePeriod);
+            let lookback: i64 = core.TSF_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -19478,7 +19478,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.TYPPRICE_Lookback();
+            let _lb = core.TYPPRICE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19517,7 +19517,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.TYPPRICE_Lookback();
+            let lookback: i64 = core.TYPPRICE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -19593,7 +19593,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+            let _lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19635,7 +19635,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+            let lookback: i64 = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -19696,7 +19696,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.VAR_Lookback(optInTimePeriod, optInNbDev);
+            let _lb = core.VAR_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19735,7 +19735,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.VAR_Lookback(optInTimePeriod, optInNbDev);
+            let lookback: i64 = core.VAR_Lookback(optInTimePeriod, optInNbDev).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -19815,7 +19815,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.VWAP_Lookback();
+            let _lb = core.VWAP_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19855,7 +19855,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.VWAP_Lookback();
+            let lookback: i64 = core.VWAP_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -19922,7 +19922,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.VWMA_Lookback(optInTimePeriod);
+            let _lb = core.VWMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19961,7 +19961,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.VWMA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.VWMA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -20034,7 +20034,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.WAD_Lookback();
+            let _lb = core.WAD_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -20073,7 +20073,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.WAD_Lookback();
+            let lookback: i64 = core.WAD_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -20146,7 +20146,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.WCLPRICE_Lookback();
+            let _lb = core.WCLPRICE_Lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -20185,7 +20185,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.WCLPRICE_Lookback();
+            let lookback: i64 = core.WCLPRICE_Lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -20259,7 +20259,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.WILLR_Lookback(optInTimePeriod);
+            let _lb = core.WILLR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -20299,7 +20299,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.WILLR_Lookback(optInTimePeriod);
+            let lookback: i64 = core.WILLR_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -20359,7 +20359,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.WMA_Lookback(optInTimePeriod);
+            let _lb = core.WMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -20397,7 +20397,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.WMA_Lookback(optInTimePeriod);
+            let lookback: i64 = core.WMA_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -21082,7 +21082,7 @@ fn sv_ac(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.AC(0, svN - 1, &fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        let lb = c2.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AC_Open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -21210,7 +21210,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ACCBANDS(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ACCBANDS_Lookback(optInTimePeriod);
+        let lb = c2.ACCBANDS_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ACCBANDS_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -21355,7 +21355,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ACOS(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ACOS_Lookback();
+        let lb = c2.ACOS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ACOS_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -21480,7 +21480,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.AD(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.AD_Lookback();
+        let lb = c2.AD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AD_Open(&fz_h, &fz_l, &fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -21605,7 +21605,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ADD(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ADD_Lookback();
+        let lb = c2.ADD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ADD_Open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -21733,7 +21733,7 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ADOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
+        let lb = c2.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ADOSC_Open(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -21860,7 +21860,7 @@ fn sv_adx(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ADX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ADX_Lookback(optInTimePeriod);
+        let lb = c2.ADX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ADX_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -21987,7 +21987,7 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ADXR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ADXR_Lookback(optInTimePeriod);
+        let lb = c2.ADXR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ADXR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -22114,7 +22114,7 @@ fn sv_ao(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.AO(0, svN - 1, &fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.AO_Lookback(optInFastPeriod, optInSlowPeriod);
+        let lb = c2.AO_Lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AO_Open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -22250,7 +22250,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.APO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        let lb = c2.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.APO_Open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -22377,7 +22377,7 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.AROON(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.AROON_Lookback(optInTimePeriod);
+        let lb = c2.AROON_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AROON_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -22513,7 +22513,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.AROONOSC(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.AROONOSC_Lookback(optInTimePeriod);
+        let lb = c2.AROONOSC_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AROONOSC_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -22638,7 +22638,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ASIN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ASIN_Lookback();
+        let lb = c2.ASIN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ASIN_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -22763,7 +22763,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ATAN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ATAN_Lookback();
+        let lb = c2.ATAN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ATAN_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -22890,7 +22890,7 @@ fn sv_atr(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ATR_Lookback(optInTimePeriod);
+        let lb = c2.ATR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ATR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -23016,7 +23016,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.AVGDEV(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.AVGDEV_Lookback(optInTimePeriod);
+        let lb = c2.AVGDEV_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AVGDEV_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -23141,7 +23141,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.AVGPRICE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.AVGPRICE_Lookback();
+        let lb = c2.AVGPRICE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AVGPRICE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -23280,7 +23280,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.BBANDS(0, svN - 1, &fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+        let lb = c2.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.BBANDS_Open(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -23426,7 +23426,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.BETA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.BETA_Lookback(optInTimePeriod);
+        let lb = c2.BETA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.BETA_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -23551,7 +23551,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.BOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.BOP_Lookback();
+        let lb = c2.BOP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.BOP_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -23677,7 +23677,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CCI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CCI_Lookback(optInTimePeriod);
+        let lb = c2.CCI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CCI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -23804,7 +23804,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDL2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDL2CROWS_Lookback();
+        let lb = c2.CDL2CROWS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL2CROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -23933,7 +23933,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDL3BLACKCROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDL3BLACKCROWS_Lookback();
+        let lb = c2.CDL3BLACKCROWS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3BLACKCROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -24062,7 +24062,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDL3INSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDL3INSIDE_Lookback();
+        let lb = c2.CDL3INSIDE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3INSIDE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -24191,7 +24191,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDL3LINESTRIKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDL3LINESTRIKE_Lookback();
+        let lb = c2.CDL3LINESTRIKE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3LINESTRIKE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -24320,7 +24320,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDL3OUTSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDL3OUTSIDE_Lookback();
+        let lb = c2.CDL3OUTSIDE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3OUTSIDE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -24449,7 +24449,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDL3STARSINSOUTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDL3STARSINSOUTH_Lookback();
+        let lb = c2.CDL3STARSINSOUTH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3STARSINSOUTH_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -24578,7 +24578,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDL3WHITESOLDIERS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDL3WHITESOLDIERS_Lookback();
+        let lb = c2.CDL3WHITESOLDIERS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3WHITESOLDIERS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -24708,7 +24708,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLABANDONEDBABY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLABANDONEDBABY_Lookback(optInPenetration);
+        let lb = c2.CDLABANDONEDBABY_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLABANDONEDBABY_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
@@ -24837,7 +24837,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLADVANCEBLOCK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLADVANCEBLOCK_Lookback();
+        let lb = c2.CDLADVANCEBLOCK_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLADVANCEBLOCK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -24966,7 +24966,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLBELTHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLBELTHOLD_Lookback();
+        let lb = c2.CDLBELTHOLD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLBELTHOLD_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -25095,7 +25095,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLBREAKAWAY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLBREAKAWAY_Lookback();
+        let lb = c2.CDLBREAKAWAY_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLBREAKAWAY_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -25224,7 +25224,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLCLOSINGMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLCLOSINGMARUBOZU_Lookback();
+        let lb = c2.CDLCLOSINGMARUBOZU_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLCLOSINGMARUBOZU_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -25353,7 +25353,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLCONCEALBABYSWALL(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLCONCEALBABYSWALL_Lookback();
+        let lb = c2.CDLCONCEALBABYSWALL_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLCONCEALBABYSWALL_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -25482,7 +25482,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLCOUNTERATTACK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLCOUNTERATTACK_Lookback();
+        let lb = c2.CDLCOUNTERATTACK_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLCOUNTERATTACK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -25612,7 +25612,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLDARKCLOUDCOVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
+        let lb = c2.CDLDARKCLOUDCOVER_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLDARKCLOUDCOVER_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
@@ -25741,7 +25741,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLDOJI_Lookback();
+        let lb = c2.CDLDOJI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -25870,7 +25870,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLDOJISTAR_Lookback();
+        let lb = c2.CDLDOJISTAR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLDOJISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -25999,7 +25999,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLDRAGONFLYDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLDRAGONFLYDOJI_Lookback();
+        let lb = c2.CDLDRAGONFLYDOJI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLDRAGONFLYDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -26128,7 +26128,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLENGULFING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLENGULFING_Lookback();
+        let lb = c2.CDLENGULFING_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLENGULFING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -26258,7 +26258,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLEVENINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
+        let lb = c2.CDLEVENINGDOJISTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLEVENINGDOJISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
@@ -26388,7 +26388,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLEVENINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLEVENINGSTAR_Lookback(optInPenetration);
+        let lb = c2.CDLEVENINGSTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLEVENINGSTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
@@ -26517,7 +26517,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLGAPSIDESIDEWHITE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLGAPSIDESIDEWHITE_Lookback();
+        let lb = c2.CDLGAPSIDESIDEWHITE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLGAPSIDESIDEWHITE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -26646,7 +26646,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLGRAVESTONEDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLGRAVESTONEDOJI_Lookback();
+        let lb = c2.CDLGRAVESTONEDOJI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLGRAVESTONEDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -26775,7 +26775,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLHAMMER_Lookback();
+        let lb = c2.CDLHAMMER_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHAMMER_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -26904,7 +26904,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLHANGINGMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLHANGINGMAN_Lookback();
+        let lb = c2.CDLHANGINGMAN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHANGINGMAN_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -27033,7 +27033,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLHARAMI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLHARAMI_Lookback();
+        let lb = c2.CDLHARAMI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHARAMI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -27162,7 +27162,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLHARAMICROSS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLHARAMICROSS_Lookback();
+        let lb = c2.CDLHARAMICROSS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHARAMICROSS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -27291,7 +27291,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLHIGHWAVE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLHIGHWAVE_Lookback();
+        let lb = c2.CDLHIGHWAVE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHIGHWAVE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -27420,7 +27420,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLHIKKAKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLHIKKAKE_Lookback();
+        let lb = c2.CDLHIKKAKE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHIKKAKE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -27549,7 +27549,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLHIKKAKEMOD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLHIKKAKEMOD_Lookback();
+        let lb = c2.CDLHIKKAKEMOD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHIKKAKEMOD_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -27678,7 +27678,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLHOMINGPIGEON(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLHOMINGPIGEON_Lookback();
+        let lb = c2.CDLHOMINGPIGEON_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHOMINGPIGEON_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -27807,7 +27807,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLIDENTICAL3CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLIDENTICAL3CROWS_Lookback();
+        let lb = c2.CDLIDENTICAL3CROWS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLIDENTICAL3CROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -27936,7 +27936,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLINNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLINNECK_Lookback();
+        let lb = c2.CDLINNECK_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLINNECK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -28065,7 +28065,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLINVERTEDHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLINVERTEDHAMMER_Lookback();
+        let lb = c2.CDLINVERTEDHAMMER_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLINVERTEDHAMMER_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -28194,7 +28194,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLKICKING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLKICKING_Lookback();
+        let lb = c2.CDLKICKING_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLKICKING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -28323,7 +28323,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLKICKINGBYLENGTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLKICKINGBYLENGTH_Lookback();
+        let lb = c2.CDLKICKINGBYLENGTH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLKICKINGBYLENGTH_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -28452,7 +28452,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLLADDERBOTTOM(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLLADDERBOTTOM_Lookback();
+        let lb = c2.CDLLADDERBOTTOM_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLLADDERBOTTOM_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -28581,7 +28581,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLLONGLEGGEDDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLLONGLEGGEDDOJI_Lookback();
+        let lb = c2.CDLLONGLEGGEDDOJI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLLONGLEGGEDDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -28710,7 +28710,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLLONGLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLLONGLINE_Lookback();
+        let lb = c2.CDLLONGLINE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLLONGLINE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -28839,7 +28839,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLMARUBOZU_Lookback();
+        let lb = c2.CDLMARUBOZU_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMARUBOZU_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -28968,7 +28968,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLMATCHINGLOW(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLMATCHINGLOW_Lookback();
+        let lb = c2.CDLMATCHINGLOW_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMATCHINGLOW_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -29098,7 +29098,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLMATHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLMATHOLD_Lookback(optInPenetration);
+        let lb = c2.CDLMATHOLD_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMATHOLD_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
@@ -29228,7 +29228,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLMORNINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
+        let lb = c2.CDLMORNINGDOJISTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMORNINGDOJISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
@@ -29358,7 +29358,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLMORNINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLMORNINGSTAR_Lookback(optInPenetration);
+        let lb = c2.CDLMORNINGSTAR_Lookback(optInPenetration).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMORNINGSTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
@@ -29487,7 +29487,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLONNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLONNECK_Lookback();
+        let lb = c2.CDLONNECK_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLONNECK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -29616,7 +29616,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLPIERCING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLPIERCING_Lookback();
+        let lb = c2.CDLPIERCING_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLPIERCING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -29745,7 +29745,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLRICKSHAWMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLRICKSHAWMAN_Lookback();
+        let lb = c2.CDLRICKSHAWMAN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLRICKSHAWMAN_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -29874,7 +29874,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLRISEFALL3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLRISEFALL3METHODS_Lookback();
+        let lb = c2.CDLRISEFALL3METHODS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLRISEFALL3METHODS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -30003,7 +30003,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLSEPARATINGLINES(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLSEPARATINGLINES_Lookback();
+        let lb = c2.CDLSEPARATINGLINES_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSEPARATINGLINES_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -30132,7 +30132,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLSHOOTINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLSHOOTINGSTAR_Lookback();
+        let lb = c2.CDLSHOOTINGSTAR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSHOOTINGSTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -30261,7 +30261,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLSHORTLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLSHORTLINE_Lookback();
+        let lb = c2.CDLSHORTLINE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSHORTLINE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -30390,7 +30390,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLSPINNINGTOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLSPINNINGTOP_Lookback();
+        let lb = c2.CDLSPINNINGTOP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSPINNINGTOP_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -30519,7 +30519,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLSTALLEDPATTERN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLSTALLEDPATTERN_Lookback();
+        let lb = c2.CDLSTALLEDPATTERN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSTALLEDPATTERN_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -30648,7 +30648,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLSTICKSANDWICH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLSTICKSANDWICH_Lookback();
+        let lb = c2.CDLSTICKSANDWICH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSTICKSANDWICH_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -30777,7 +30777,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLTAKURI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLTAKURI_Lookback();
+        let lb = c2.CDLTAKURI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLTAKURI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -30906,7 +30906,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLTASUKIGAP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLTASUKIGAP_Lookback();
+        let lb = c2.CDLTASUKIGAP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLTASUKIGAP_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -31035,7 +31035,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLTHRUSTING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLTHRUSTING_Lookback();
+        let lb = c2.CDLTHRUSTING_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLTHRUSTING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -31164,7 +31164,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLTRISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLTRISTAR_Lookback();
+        let lb = c2.CDLTRISTAR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLTRISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -31293,7 +31293,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLUNIQUE3RIVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLUNIQUE3RIVER_Lookback();
+        let lb = c2.CDLUNIQUE3RIVER_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLUNIQUE3RIVER_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -31422,7 +31422,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLUPSIDEGAP2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLUPSIDEGAP2CROWS_Lookback();
+        let lb = c2.CDLUPSIDEGAP2CROWS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLUPSIDEGAP2CROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -31551,7 +31551,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CDLXSIDEGAP3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CDLXSIDEGAP3METHODS_Lookback();
+        let lb = c2.CDLXSIDEGAP3METHODS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLXSIDEGAP3METHODS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
@@ -31678,7 +31678,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CEIL(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CEIL_Lookback();
+        let lb = c2.CEIL_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CEIL_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -31804,7 +31804,7 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CMF(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CMF_Lookback(optInTimePeriod);
+        let lb = c2.CMF_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CMF_Open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -31931,7 +31931,7 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CMO(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CMO_Lookback(optInTimePeriod);
+        let lb = c2.CMO_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CMO_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -32057,7 +32057,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CMOU(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CMOU_Lookback(optInTimePeriod);
+        let lb = c2.CMOU_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CMOU_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -32183,7 +32183,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.CORREL(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.CORREL_Lookback(optInTimePeriod);
+        let lb = c2.CORREL_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CORREL_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -32308,7 +32308,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.COS(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.COS_Lookback();
+        let lb = c2.COS_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.COS_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -32433,7 +32433,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.COSH(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.COSH_Lookback();
+        let lb = c2.COSH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.COSH_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -32560,7 +32560,7 @@ fn sv_dema(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.DEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.DEMA_Lookback(optInTimePeriod);
+        let lb = c2.DEMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.DEMA_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -32685,7 +32685,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.DIV(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.DIV_Lookback();
+        let lb = c2.DIV_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.DIV_Open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -32812,7 +32812,7 @@ fn sv_dx(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.DX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.DX_Lookback(optInTimePeriod);
+        let lb = c2.DX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.DX_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -32938,7 +32938,7 @@ fn sv_efi(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.EFI(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.EFI_Lookback(optInTimePeriod);
+        let lb = c2.EFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.EFI_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -33065,7 +33065,7 @@ fn sv_ema(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.EMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.EMA_Lookback(optInTimePeriod);
+        let lb = c2.EMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.EMA_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -33190,7 +33190,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.EXP(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.EXP_Lookback();
+        let lb = c2.EXP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.EXP_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -33315,7 +33315,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.FLOOR(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.FLOOR_Lookback();
+        let lb = c2.FLOOR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.FLOOR_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -33441,7 +33441,7 @@ fn sv_hma(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.HMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.HMA_Lookback(optInTimePeriod);
+        let lb = c2.HMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HMA_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -33567,7 +33567,7 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.HT_DCPERIOD(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.HT_DCPERIOD_Lookback();
+        let lb = c2.HT_DCPERIOD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_DCPERIOD_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -33693,7 +33693,7 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.HT_DCPHASE(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.HT_DCPHASE_Lookback();
+        let lb = c2.HT_DCPHASE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_DCPHASE_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -33820,7 +33820,7 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.HT_PHASOR(0, svN - 1, &fz_c, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.HT_PHASOR_Lookback();
+        let lb = c2.HT_PHASOR_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_PHASOR_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -33957,7 +33957,7 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.HT_SINE(0, svN - 1, &fz_c, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.HT_SINE_Lookback();
+        let lb = c2.HT_SINE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_SINE_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -34093,7 +34093,7 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.HT_TRENDLINE(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.HT_TRENDLINE_Lookback();
+        let lb = c2.HT_TRENDLINE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_TRENDLINE_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -34219,7 +34219,7 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.HT_TRENDMODE(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.HT_TRENDMODE_Lookback();
+        let lb = c2.HT_TRENDMODE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_TRENDMODE_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -34345,7 +34345,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.IMI(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.IMI_Lookback(optInTimePeriod);
+        let lb = c2.IMI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.IMI_Open(&fz_o, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -34472,7 +34472,7 @@ fn sv_kama(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.KAMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.KAMA_Lookback(optInTimePeriod);
+        let lb = c2.KAMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.KAMA_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -34598,7 +34598,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.LINEARREG(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.LINEARREG_Lookback(optInTimePeriod);
+        let lb = c2.LINEARREG_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LINEARREG_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -34724,7 +34724,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.LINEARREG_ANGLE(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.LINEARREG_ANGLE_Lookback(optInTimePeriod);
+        let lb = c2.LINEARREG_ANGLE_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LINEARREG_ANGLE_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -34850,7 +34850,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.LINEARREG_INTERCEPT(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
+        let lb = c2.LINEARREG_INTERCEPT_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LINEARREG_INTERCEPT_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -34976,7 +34976,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.LINEARREG_SLOPE(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.LINEARREG_SLOPE_Lookback(optInTimePeriod);
+        let lb = c2.LINEARREG_SLOPE_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LINEARREG_SLOPE_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -35101,7 +35101,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.LN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.LN_Lookback();
+        let lb = c2.LN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LN_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -35226,7 +35226,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.LOG10(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.LOG10_Lookback();
+        let lb = c2.LOG10_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LOG10_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -35361,7 +35361,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MA(0, svN - 1, &fz_c, optInTimePeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MA_Lookback(optInTimePeriod, optInMAType);
+        let lb = c2.MA_Lookback(optInTimePeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MA_Open(&fz_c, optInTimePeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -35492,7 +35492,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MACD(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        let lb = c2.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MACD_Open(&fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -35661,7 +35661,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MACDEXT(0, svN - 1, &fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+        let lb = c2.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MACDEXT_Open(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -35810,7 +35810,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MACDFIX(0, svN - 1, &fz_c, optInSignalPeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MACDFIX_Lookback(optInSignalPeriod);
+        let lb = c2.MACDFIX_Lookback(optInSignalPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MACDFIX_Open(&fz_c, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -35959,7 +35959,7 @@ fn sv_mama(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MAMA(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MAMA_Lookback(optInFastLimit, optInSlowLimit);
+        let lb = c2.MAMA_Lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MAMA_Open(&fz_c, optInFastLimit, optInSlowLimit).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -36094,7 +36094,7 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MARKETFI(0, svN - 1, &fz_h, &fz_l, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MARKETFI_Lookback();
+        let lb = c2.MARKETFI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MARKETFI_Open(&fz_h, &fz_l, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -36231,7 +36231,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MAVP(0, svN - 1, &fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
+        let lb = c2.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MAVP_Open(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -36357,7 +36357,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MAX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MAX_Lookback(optInTimePeriod);
+        let lb = c2.MAX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MAX_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -36483,7 +36483,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MAXINDEX_Lookback(optInTimePeriod);
+        let lb = c2.MAXINDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MAXINDEX_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -36608,7 +36608,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MEDPRICE(0, svN - 1, &fz_h, &fz_l, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MEDPRICE_Lookback();
+        let lb = c2.MEDPRICE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MEDPRICE_Open(&fz_h, &fz_l).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -36734,7 +36734,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MFI(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MFI_Lookback(optInTimePeriod);
+        let lb = c2.MFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MFI_Open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -36860,7 +36860,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MIDPOINT(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MIDPOINT_Lookback(optInTimePeriod);
+        let lb = c2.MIDPOINT_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MIDPOINT_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -36986,7 +36986,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MIDPRICE(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MIDPRICE_Lookback(optInTimePeriod);
+        let lb = c2.MIDPRICE_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MIDPRICE_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -37112,7 +37112,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MIN(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MIN_Lookback(optInTimePeriod);
+        let lb = c2.MIN_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MIN_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -37238,7 +37238,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MININDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MININDEX_Lookback(optInTimePeriod);
+        let lb = c2.MININDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MININDEX_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -37365,7 +37365,7 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MINMAX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MINMAX_Lookback(optInTimePeriod);
+        let lb = c2.MINMAX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MINMAX_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -37502,7 +37502,7 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MINMAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MINMAXINDEX_Lookback(optInTimePeriod);
+        let lb = c2.MINMAXINDEX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MINMAXINDEX_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -37639,7 +37639,7 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MINUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MINUS_DI_Lookback(optInTimePeriod);
+        let lb = c2.MINUS_DI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MINUS_DI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -37766,7 +37766,7 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MINUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MINUS_DM_Lookback(optInTimePeriod);
+        let lb = c2.MINUS_DM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MINUS_DM_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -37892,7 +37892,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MOM(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MOM_Lookback(optInTimePeriod);
+        let lb = c2.MOM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MOM_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -38017,7 +38017,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.MULT(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.MULT_Lookback();
+        let lb = c2.MULT_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MULT_Open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -38144,7 +38144,7 @@ fn sv_natr(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.NATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.NATR_Lookback(optInTimePeriod);
+        let lb = c2.NATR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.NATR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -38269,7 +38269,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.NVI(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.NVI_Lookback();
+        let lb = c2.NVI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.NVI_Open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -38394,7 +38394,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.OBV(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.OBV_Lookback();
+        let lb = c2.OBV_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.OBV_Open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -38521,7 +38521,7 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.PLUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.PLUS_DI_Lookback(optInTimePeriod);
+        let lb = c2.PLUS_DI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PLUS_DI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -38648,7 +38648,7 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.PLUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.PLUS_DM_Lookback(optInTimePeriod);
+        let lb = c2.PLUS_DM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PLUS_DM_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -38784,7 +38784,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.PPO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        let lb = c2.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PPO_Open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -38909,7 +38909,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.PVI(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.PVI_Lookback();
+        let lb = c2.PVI_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PVI_Open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -39045,7 +39045,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.PVO(0, svN - 1, &fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        let lb = c2.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PVO_Open(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -39171,7 +39171,7 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.QSTICK(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.QSTICK_Lookback(optInTimePeriod);
+        let lb = c2.QSTICK_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.QSTICK_Open(&fz_o, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -39297,7 +39297,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ROC(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ROC_Lookback(optInTimePeriod);
+        let lb = c2.ROC_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ROC_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -39423,7 +39423,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ROCP(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ROCP_Lookback(optInTimePeriod);
+        let lb = c2.ROCP_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ROCP_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -39549,7 +39549,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ROCR(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ROCR_Lookback(optInTimePeriod);
+        let lb = c2.ROCR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ROCR_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -39675,7 +39675,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ROCR100(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ROCR100_Lookback(optInTimePeriod);
+        let lb = c2.ROCR100_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ROCR100_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -39802,7 +39802,7 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.RSI(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.RSI_Lookback(optInTimePeriod);
+        let lb = c2.RSI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.RSI_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -39929,7 +39929,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.SAR(0, svN - 1, &fz_h, &fz_l, optInAcceleration, optInMaximum, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.SAR_Lookback(optInAcceleration, optInMaximum);
+        let lb = c2.SAR_Lookback(optInAcceleration, optInMaximum).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SAR_Open(&fz_h, &fz_l, optInAcceleration, optInMaximum).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -40062,7 +40062,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.SAREXT(0, svN - 1, &fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+        let lb = c2.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SAREXT_Open(&fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -40187,7 +40187,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.SIN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.SIN_Lookback();
+        let lb = c2.SIN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SIN_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -40312,7 +40312,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.SINH(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.SINH_Lookback();
+        let lb = c2.SINH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SINH_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -40438,7 +40438,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.SMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.SMA_Lookback(optInTimePeriod);
+        let lb = c2.SMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SMA_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -40569,7 +40569,7 @@ fn sv_smi(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.SMI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        let lb = c2.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SMI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -40704,7 +40704,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.SQRT(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.SQRT_Lookback();
+        let lb = c2.SQRT_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SQRT_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -40831,7 +40831,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.STDDEV(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.STDDEV_Lookback(optInTimePeriod, optInNbDev);
+        let lb = c2.STDDEV_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.STDDEV_Open(&fz_c, optInTimePeriod, optInNbDev).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -40974,7 +40974,7 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.STOCH(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+        let lb = c2.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.STOCH_Open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -41121,7 +41121,7 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.STOCHF(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        let lb = c2.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.STOCHF_Open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -41270,7 +41270,7 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.STOCHRSI(0, svN - 1, &fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        let lb = c2.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.STOCHRSI_Open(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -41405,7 +41405,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.SUB(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.SUB_Lookback();
+        let lb = c2.SUB_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SUB_Open(&fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -41531,7 +41531,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.SUM(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.SUM_Lookback(optInTimePeriod);
+        let lb = c2.SUM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SUM_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -41659,7 +41659,7 @@ fn sv_t3(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.T3(0, svN - 1, &fz_c, optInTimePeriod, optInVFactor, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.T3_Lookback(optInTimePeriod, optInVFactor);
+        let lb = c2.T3_Lookback(optInTimePeriod, optInVFactor).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.T3_Open(&fz_c, optInTimePeriod, optInVFactor).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -41784,7 +41784,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.TAN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.TAN_Lookback();
+        let lb = c2.TAN_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TAN_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -41909,7 +41909,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.TANH(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.TANH_Lookback();
+        let lb = c2.TANH_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TANH_Open(&fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -42036,7 +42036,7 @@ fn sv_tema(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.TEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.TEMA_Lookback(optInTimePeriod);
+        let lb = c2.TEMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TEMA_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -42161,7 +42161,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.TRANGE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.TRANGE_Lookback();
+        let lb = c2.TRANGE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TRANGE_Open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -42287,7 +42287,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.TRIMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.TRIMA_Lookback(optInTimePeriod);
+        let lb = c2.TRIMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TRIMA_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -42414,7 +42414,7 @@ fn sv_trix(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.TRIX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.TRIX_Lookback(optInTimePeriod);
+        let lb = c2.TRIX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TRIX_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -42540,7 +42540,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.TSF(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.TSF_Lookback(optInTimePeriod);
+        let lb = c2.TSF_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TSF_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -42665,7 +42665,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.TYPPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.TYPPRICE_Lookback();
+        let lb = c2.TYPPRICE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TYPPRICE_Open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -42793,7 +42793,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.ULTOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+        let lb = c2.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ULTOSC_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -42920,7 +42920,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.VAR(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.VAR_Lookback(optInTimePeriod, optInNbDev);
+        let lb = c2.VAR_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.VAR_Open(&fz_c, optInTimePeriod, optInNbDev).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -43045,7 +43045,7 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.VWAP(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.VWAP_Lookback();
+        let lb = c2.VWAP_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.VWAP_Open(&fz_h, &fz_l, &fz_c, &fz_v).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -43171,7 +43171,7 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.VWMA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.VWMA_Lookback(optInTimePeriod);
+        let lb = c2.VWMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.VWMA_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -43296,7 +43296,7 @@ fn sv_wad(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.WAD(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.WAD_Lookback();
+        let lb = c2.WAD_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.WAD_Open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -43421,7 +43421,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.WCLPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.WCLPRICE_Lookback();
+        let lb = c2.WCLPRICE_Lookback().unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.WCLPRICE_Open(&fz_h, &fz_l, &fz_c).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -43547,7 +43547,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.WILLR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.WILLR_Lookback(optInTimePeriod);
+        let lb = c2.WILLR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.WILLR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -43673,7 +43673,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
         let rc = match c2.WMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.WMA_Lookback(optInTimePeriod);
+        let lb = c2.WMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.WMA_Open(&fz_c, optInTimePeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));

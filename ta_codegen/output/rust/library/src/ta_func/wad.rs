@@ -65,13 +65,13 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::WAD`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn WAD_Lookback(&self) -> usize {
+    pub fn WAD_Lookback(&self) -> Result<usize, RetCode> {
         // The first bar has no previous close, so it accumulates nothing and the
         // line starts at 0.0 -- the same convention as the other four cumulative
         // lines in the tree: OBV, AD, NVI and PVI all return 0 here and emit a
         // seed value at startIdx. Tulip's ti_wad_start() returns 1 instead, so its
         // series is this one without the leading zero.
-        return (0) as usize;
+        return Ok((0) as usize);
     }
     /// C-shaped body behind [`Core::WAD`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -92,7 +92,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.WAD_Lookback();
+        let _assertLb = self.WAD_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());

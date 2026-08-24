@@ -76,23 +76,25 @@ impl Core {
     /// * `optInTimePeriod` — Window length (default 5, range 2..=100000)
     /// * `optInNbDev` — Multiplier applied to the standard deviation (default 1)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to select their
     /// default value.
     #[inline]
-    pub fn STDDEV_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> usize {
+    pub fn STDDEV_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInNbDev == Self::REAL_DEFAULT {
             optInNbDev = 1e0;
         } else if !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         // Lookback is driven by the variance.
-        return self.VAR_Lookback(optInTimePeriod, optInNbDev);
+        return Ok(self.VAR_Lookback(optInTimePeriod, optInNbDev)?);
     }
     /// C-shaped body behind [`Core::STDDEV`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -123,7 +125,7 @@ impl Core {
         } else if !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.STDDEV_Lookback(optInTimePeriod, optInNbDev);
+        let _assertLb = self.STDDEV_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -138,7 +140,7 @@ impl Core {
         // without reading. Observably identical, but it makes "a range shorter than
         // the lookback reads nothing" true of stddev itself rather than only of var.
         // Pinned by the zero-length no-I/O probe over every guarded core.
-        if self.STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx {
+        if self.STDDEV_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX) > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::Success;
@@ -391,7 +393,7 @@ impl Core {
         // without reading. Observably identical, but it makes "a range shorter than
         // the lookback reads nothing" true of stddev itself rather than only of var.
         // Pinned by the zero-length no-I/O probe over every guarded core.
-        if self.STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx {
+        if self.STDDEV_Lookback(optInTimePeriod, optInNbDev)? > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);

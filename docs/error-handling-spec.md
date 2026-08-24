@@ -123,16 +123,21 @@ the whole corpus, on every test run.
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| L1 | An optional parameter is outside its documented domain | the lookback out-of-range sentinel | ✅ | ⚠️ [1] | ✅ | ✅ |
+| L1 | An optional parameter is outside its documented domain | the lookback out-of-range sentinel | ✅ | ✅ [1] | ✅ | ✅ |
 | L1a | …and the sentinel is returned **exactly when** the batch tier would reject the same parameters under B4 | the lookback out-of-range sentinel | ✅ | | | |
 | L2 | Nothing else in this tier can fail | — | ✅ | ✅ | ✅ | ✅ |
 
-[1] The sentinel is `-1` in C, Java and C#. Rust's lookback returns an unsigned
-width in which `-1` is unrepresentable, so it answers the type's maximum;
-the generated rustdoc states it on every function. The consequence is real and
-worth knowing: a caller who writes `lookback + 1` wraps rather than receiving a
-small number. Deliberate — a signed return would put a negative into every
-downstream index computation.
+[1] The sentinel is `-1` in C, Java and C#. Rust's `<fn>_Lookback` returns
+`Result<usize, RetCode>` instead — `Ok(lookback)` on success,
+`Err(RetCode::BadParam)` on the same rejection C/Java/C# signal with `-1` — so
+the success value stays the `usize` every other index/count in the crate uses,
+while failure is a type the compiler forces a caller to handle rather than a
+magic number a caller could forget to check. Internal composition (one
+indicator's lookback calling another's, e.g. MACD summing two EMA lookbacks)
+propagates the same way with `?`. The JSON-RPC test server is the one place
+that still speaks the numeric convention: it maps `Err` to the wire literal
+`-1`, matching C/Java/C#'s response shape, so the sentinel-vs-`Result` choice
+never leaks past the crate's own API.
 
 **Why L1a is a rule and not a test detail.** A caller sizes its buffers from the
 lookback before it trusts the call, so a lookback that answers a plausible number

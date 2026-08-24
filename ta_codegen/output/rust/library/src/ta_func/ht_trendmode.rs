@@ -75,7 +75,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::HT_TRENDMODE`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn HT_TRENDMODE_Lookback(&self) -> usize {
+    pub fn HT_TRENDMODE_Lookback(&self) -> Result<usize, RetCode> {
         // 31 input are skip
         // +32 output are skip to account for misc lookback
         // ---
@@ -83,7 +83,7 @@ impl Core {
         //
         // 31 is for being compatible with Tradestation.
         // See mama_lookback for an explanation of the "32".
-        return (63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize;
+        return Ok((63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize);
     }
     /// C-shaped body behind [`Core::HT_TRENDMODE`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
@@ -130,7 +130,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.HT_TRENDMODE_Lookback();
+        let _assertLb = self.HT_TRENDMODE_Lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInteger.len());

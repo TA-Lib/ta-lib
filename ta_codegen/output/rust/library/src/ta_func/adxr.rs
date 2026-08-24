@@ -79,19 +79,21 @@ impl Core {
     /// * `optInTimePeriod` — Smoothing period, also the bar gap between the two averaged ADX
     ///   values (default 14, range 2..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
-    pub fn ADXR_Lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn ADXR_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return usize::MAX;
+            return Err(RetCode::BadParam);
         }
         if optInTimePeriod > 1 {
-            return (((optInTimePeriod) as usize) + self.ADX_Lookback(optInTimePeriod) - 1) as usize;
+            return Ok((((optInTimePeriod) as usize) + self.ADX_Lookback(optInTimePeriod)? - 1) as usize);
         } else {
-            return (3) as usize;
+            return Ok((3) as usize);
         }
     }
     /// C-shaped body behind [`Core::ADXR`]: a `RetCode` plus two out-params,
@@ -119,7 +121,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.ADXR_Lookback(optInTimePeriod);
+        let _assertLb = self.ADXR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -145,7 +147,7 @@ impl Core {
         // Move up the start index if there is not
         // enough initial data.
         // Always one price bar gets consumed.
-        adxrLookback = self.ADXR_Lookback(optInTimePeriod);
+        adxrLookback = self.ADXR_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < adxrLookback {
             startIdx = adxrLookback;
         }
@@ -405,7 +407,7 @@ impl Core {
         // Move up the start index if there is not
         // enough initial data.
         // Always one price bar gets consumed.
-        adxrLookback = self.ADXR_Lookback(optInTimePeriod);
+        adxrLookback = self.ADXR_Lookback(optInTimePeriod)?;
         if startIdx < adxrLookback {
             startIdx = adxrLookback;
         }
