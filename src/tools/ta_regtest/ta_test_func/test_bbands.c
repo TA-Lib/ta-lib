@@ -60,6 +60,7 @@
 #include "ta_utility.h"
 #include "ta_memory.h"
 #include "server_verify.h"
+#include "ta_test_reference.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -113,6 +114,7 @@ static ErrorNumber test_bbands_mama_alignment( const TA_History *history );
 static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *history );
 static ErrorNumber test_bbands_sma_stable_variance( void );
 static ErrorNumber test_bbands_small_scale( void );
+static ErrorNumber test_bbands_reference_datasets( void );
 
 /**** Local variables definitions.     ****/
 static TA_Test tableTest[] =
@@ -328,6 +330,15 @@ ErrorNumber test_func_bbands( TA_History *history )
    if( retValue != TA_TEST_PASS )
    {
       printf( "%s Failed BBANDS small-scale ladder (#243) (Code=%d)\n",
+              __FILE__, retValue );
+      return retValue;
+   }
+
+   /* External reference datasets, shared with VAR/CORREL/BETA (#251). */
+   retValue = test_bbands_reference_datasets();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "%s Failed BBANDS reference datasets (#251) (Code=%d)\n",
               __FILE__, retValue );
       return retValue;
    }
@@ -972,7 +983,7 @@ static ErrorNumber test_bbands_sma_stable_variance( void )
    const double nbDev  = 2.0;
    double in[NB];
    double up[1], mid[1], low[1];
-   double sum = 0.0, sumSq = 0.0, meanRef, varRef, stdRef, oldVar, dev;
+   double sumSq = 0.0, meanRef = 0.0, varRef, stdRef, oldVar, dev;
    TA_Integer begIdx = 0, nbElt = 0;
    TA_RetCode rc;
    int i;
@@ -980,13 +991,11 @@ static ErrorNumber test_bbands_sma_stable_variance( void )
    for( i = 0; i < NB; i++ )
       in[i] = base + (double)( ( i * 7 ) % 5 - 2 );   /* {-2..+2} around 1e6 */
 
-   /* Reference: stable mean-centered two-pass (the accurate variance). */
-   for( i = 0; i < NB; i++ ) sum += in[i];
-   meanRef = sum / (double)period;
-   varRef  = 0.0;
-   for( i = 0; i < NB; i++ ) { double d = in[i] - meanRef; varRef += d * d; }
-   varRef /= (double)period;
-   stdRef  = sqrt(varRef);
+   /* Reference: the shared two-pass (#251). It used to be a local plain-double
+    * one, which on a window this ill-conditioned is only a little better than
+    * the form it is meant to catch. */
+   varRef = ta_test_ref_var( in, 0, period, &meanRef );
+   stdRef = ta_test_ref_stddev( in, 0, period, NULL );
 
    /* The old cancelling form, for the non-vacuity check below. */
    for( i = 0; i < NB; i++ ) sumSq += in[i] * in[i];
@@ -1046,14 +1055,8 @@ static ErrorNumber test_bbands_sma_stable_variance( void )
       for( kk = 0; kk < (int)sNb; kk++ )
       {
          const int bar = (int)sBeg + kk;
-         double sm = 0.0, vr = 0.0, sd, d;
-         int jj;
-         for( jj = bar - p + 1; jj <= bar; jj++ ) sm += s[jj];
-         sm /= (double)p;
-         for( jj = bar - p + 1; jj <= bar; jj++ ) { double e = s[jj] - sm; vr += e * e; }
-         vr /= (double)p;
-         sd = ( vr > 0.0 ) ? sqrt( vr ) : 0.0;
-         d  = ( sUp[kk] - sMid[kk] ) / nbDev;
+         double sd = ta_test_ref_stddev( s, bar - p + 1, p, NULL );
+         double d  = ( sUp[kk] - sMid[kk] ) / nbDev;
          if( sd > 0.0 && fabs( d - sd ) / sd > 1e-9 )
          {
             printf( "BBANDS/SMA #118 stale-anchor: bar %d dev=%.17g stable=%.17g "
@@ -1075,20 +1078,14 @@ static ErrorNumber test_bbands_sma_stable_variance( void )
  * TA_EPSILON (1e-14), so a series quoted finely enough -- a $100.00 instrument on
  * a 1e-8 tick -- returned three identical bands and TA_SUCCESS.
  *
- * The deviation is refereed against a long-double two-pass sigma at both ends of
+ * The deviation is refereed against the shared two-pass sigma at both ends of
  * the ladder and on both paths. The tolerance model is the one documented in
  * test_stddev.c (test_stddev_small_scale); nbDevUp != nbDevDn so the asymmetric
  * combine loop is the one exercised.
  */
 static ErrorNumber test_bbands_small_scale( void )
 {
-   enum { N = 60 };
-   static const int ticks[N] = {
-     197, 200, 199, 197, 198, 196, 194, 192, 195, 193, 195, 193,
-     192, 194, 197, 194, 192, 189, 186, 183, 185, 186, 185, 182,
-     180, 182, 180, 179, 180, 180, 182, 182, 185, 188, 188, 189,
-     191, 193, 190, 192, 195, 193, 191, 190, 188, 185, 182, 182,
-     182, 179, 179, 179, 176, 173, 172, 170, 167, 166, 169, 170 };
+   enum { N = TA_TEST_REF_TICKS60_N };
    static const double bases[2] = { 0.0, 100.0 };
    static const TA_MAType maTypes[3] = { TA_MAType_SMA, TA_MAType_EMA, TA_MAType_WMA };
    static double x[N], up[N], mid[N], low[N];
@@ -1104,7 +1101,7 @@ static ErrorNumber test_bbands_small_scale( void )
       double tick = 1.0e-2;
       for( decade = 0; decade < 12; decade++, tick /= 10.0 )
       {
-         for( i = 0; i < N; i++ ) x[i] = bases[bi] + (double)ticks[i] * tick;
+         for( i = 0; i < N; i++ ) x[i] = bases[bi] + (double)ta_test_ref_ticks60[i] * tick;
 
          rc = TA_BBANDS( 0, N-1, x, period, devUp, devDn, maTypes[mi],
                          &b, &nb, up, mid, low );
@@ -1117,14 +1114,13 @@ static ErrorNumber test_bbands_small_scale( void )
          for( k = 0; k < (int)nb; k++ )
          {
             const int bar = (int)b + k;
-            long double sum = 0.0L, v = 0.0L, m;
-            double refSig, dev, kappa, tol, d;
-            int j;
-            for( j = bar - period + 1; j <= bar; j++ ) sum += (long double)x[j];
-            m = sum / (long double)period;
-            for( j = bar - period + 1; j <= bar; j++ )
-            { long double e = (long double)x[j] - m; v += e * e; }
-            refSig = (double)sqrtl( v / (long double)period );
+            /* The oracle moved to ta_test_reference.c (#251) and stopped using
+             * `long double`, which is 64 mantissa bits here and 53 on MSVC --
+             * so this bound used to mean something weaker on Windows than it
+             * says. The shared form carries ~106 bits on every ABI. */
+            double m = 0.0;
+            double refSig = ta_test_ref_stddev( x, bar - period + 1, period, &m );
+            double dev, kappa, tol, d;
 
             /* The width carries both deviations: (up-low) = (devUp+devDn)*sigma. */
             dev = ( up[k] - low[k] ) / ( devUp + devDn );
@@ -1153,7 +1149,7 @@ static ErrorNumber test_bbands_small_scale( void )
              * so -- a 1e-13 sigma is simply not recoverable from bands centred at
              * $100. It is the `dev == 0.0` branch above, not this bound, that
              * makes the rung non-vacuous: the collapse is exact zero, always. */
-            kappa = fabsl( m ) / refSig;
+            kappa = fabs( m ) / refSig;
             tol   = 1.0e-11 + 1.0e-6 * ( kappa * 2.2204460492503131e-16 )
                                      * ( kappa * 2.2204460492503131e-16 )
                             + 8.0 * fabs( mid[k] ) * 2.2204460492503131e-16
@@ -1164,6 +1160,171 @@ static ErrorNumber test_bbands_small_scale( void )
                printf( "BBANDS #243: base=%g tick=%g maType=%d bar=%d dev=%.17g "
                        "ref=%.17g (rel %.3g > %.3g, kappa %.2g)\n",
                        bases[bi], tick, (int)maTypes[mi], bar, dev, refSig, d, tol, kappa );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+/* Issue #251: BBANDS against the shared reference battery.
+ *
+ * Before this, every numerical probe BBANDS had was built from data invented in
+ * this file. It now also faces the same external datasets TA_VAR, TA_CORREL and
+ * TA_BETA are refereed by -- which matters because BBANDS does not call
+ * TA_STDDEV on its SMA path: it carries its own fused copy of the variance and
+ * the square root, so agreeing with TA_STDDEV is not the same claim as being
+ * right.
+ *
+ * Three references, in increasing order of independence:
+ *
+ *   R1  NIST StRD NumAcc1..4 -- the certified population variance of a
+ *       purpose-built cancellation stressor, so the band half-width IS a
+ *       certified number. NumAcc4's offset is 1e7 under a spread of 0.1.
+ *   R2  pandas' rolling-var adversarial arrays, against goldens computed in
+ *       exact rational arithmetic outside this binary.
+ *   R3  the sliding-sum ladder, likewise baked, at four periods.
+ *
+ * All three read the deviation back as (upper - lower) / (nbDevUp + nbDevDn),
+ * which is the only way a caller can see it. That subtraction cancels the middle
+ * band away, so recovering a deviation of sigma from two numbers of size |mid|
+ * costs |mid|*eps/width -- a real term, and the reason each bound below carries
+ * it explicitly rather than hiding it in a fudge factor.
+ */
+static ErrorNumber test_bbands_reference_datasets( void )
+{
+   const double devUp = 1.0, devDn = 1.0;
+   static double buf[1001], up[1001], mid[1001], low[1001];
+   TA_Integer b, nb;
+   TA_RetCode rc;
+   int i, k, t;
+
+   /* R1: NIST StRD NumAcc1..4. The certified value is the SAMPLE variance;
+    * TA-Lib is population, so the expected sigma is sqrt(s^2*(n-1)/n). The
+    * per-case tolerances are test_stddev.c's, for the same reason: NumAcc2/3/4
+    * carry decimal-representation error that grows with the offset. */
+   {
+      static const struct { const char *name; int n; double expVar; double tol; } cases[4] = {
+         { "NumAcc1",    3, 2.0/3.0,      1.0e-12 },
+         { "NumAcc2", 1001, 10.0/1001.0,  1.0e-12 },
+         { "NumAcc3", 1001, 10.0/1001.0,  1.0e-8  },
+         { "NumAcc4", 1001, 10.0/1001.0,  1.0e-6  } };
+      for( i = 0; i < 4; i++ )
+      {
+         double expSig = sqrt( cases[i].expVar );
+         double dev, tol, d;
+         int n = ta_test_ref_numacc( i+1, buf );
+         if( n != cases[i].n )
+         {
+            printf( "BBANDS #251 NIST %s: shared battery returned %d values, expected %d\n",
+                    cases[i].name, n, cases[i].n );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         rc = TA_BBANDS( 0, n-1, buf, n, devUp, devDn, TA_MAType_SMA, &b, &nb, up, mid, low );
+         if( rc != TA_SUCCESS || nb != 1 )
+         {
+            printf( "BBANDS #251 NIST %s: rc=%d nb=%d\n", cases[i].name, (int)rc, (int)nb );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         dev = ( up[0] - low[0] ) / ( devUp + devDn );
+         tol = cases[i].tol
+               + 8.0 * fabs( mid[0] ) * 2.2204460492503131e-16
+                 / ( ( devUp + devDn ) * expSig );
+         d   = fabs( dev - expSig ) / expSig;
+         if( d > tol )
+         {
+            printf( "BBANDS #251 NIST %s: half-width %.17g certified sigma %.17g "
+                    "(rel %.3g > %.3g)\n", cases[i].name, dev, expSig, d, tol );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   /* R2 and R3: baked goldens. The variance tables are compared as sigma, since
+    * that is what the bands carry. */
+   {
+      static const struct { const char *name; const double *x; int n; int period;
+                           const double *goldVar; const double *goldSig; int nbGold; } sets[] = {
+         { "pandas GH47721", ta_test_ref_pd_var47721, TA_TEST_REF_PD_VAR47721_N, 6,
+           ta_test_ref_golden_var47721, NULL, TA_TEST_REF_GOLDEN_VAR47721_N },
+         { "pandas GH52407", ta_test_ref_pd_var52407, TA_TEST_REF_PD_VAR52407_N, 3,
+           ta_test_ref_golden_var52407, NULL, TA_TEST_REF_GOLDEN_VAR52407_N },
+         { "ladder p2",  ta_test_ref_ladder, TA_TEST_REF_LADDER_N,  2, NULL,
+           ta_test_ref_golden_ladder_p2_sigma,  TA_TEST_REF_GOLDEN_LADDER_P2_SIGMA_N },
+         { "ladder p5",  ta_test_ref_ladder, TA_TEST_REF_LADDER_N,  5, NULL,
+           ta_test_ref_golden_ladder_p5_sigma,  TA_TEST_REF_GOLDEN_LADDER_P5_SIGMA_N },
+         { "ladder p14", ta_test_ref_ladder, TA_TEST_REF_LADDER_N, 14, NULL,
+           ta_test_ref_golden_ladder_p14_sigma, TA_TEST_REF_GOLDEN_LADDER_P14_SIGMA_N },
+         { "ladder p30", ta_test_ref_ladder, TA_TEST_REF_LADDER_N, 30, NULL,
+           ta_test_ref_golden_ladder_p30_sigma, TA_TEST_REF_GOLDEN_LADDER_P30_SIGMA_N } };
+
+      for( t = 0; t < (int)( sizeof(sets)/sizeof(sets[0]) ); t++ )
+      {
+         const int period = sets[t].period;
+         const int n = sets[t].n;
+         if( n - period + 1 != sets[t].nbGold )
+         {
+            printf( "BBANDS #251 [%s]: %d windows but %d baked values -- this test and "
+                    "scripts/gen_test_reference.py disagree about the corpus\n",
+                    sets[t].name, n - period + 1, sets[t].nbGold );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         rc = TA_BBANDS( 0, n-1, sets[t].x, period, devUp, devDn, TA_MAType_SMA,
+                         &b, &nb, up, mid, low );
+         if( rc != TA_SUCCESS || (int)nb != sets[t].nbGold )
+         {
+            printf( "BBANDS #251 [%s]: rc=%d nb=%d (expected SUCCESS,%d)\n",
+                    sets[t].name, (int)rc, (int)nb, sets[t].nbGold );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         for( k = 0; k < (int)nb; k++ )
+         {
+            const int bar = (int)b + k;
+            double refSig = sets[t].goldSig ? sets[t].goldSig[k] : sqrt( sets[t].goldVar[k] );
+            double mean = 0.0, dev, kappa, tol, d;
+
+            /* The bands must not be able to cross, whatever the data. */
+            if( !( up[k] >= mid[k] && mid[k] >= low[k] ) )
+            {
+               printf( "BBANDS #251 [%s]: bands out of order period=%d bar=%d "
+                       "up=%.17g mid=%.17g low=%.17g\n",
+                       sets[t].name, period, bar, up[k], mid[k], low[k] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+            dev = ( up[k] - low[k] ) / ( devUp + devDn );
+            if( refSig == 0.0 )
+            {
+               if( dev != 0.0 )
+               {
+                  printf( "BBANDS #251 [%s]: expected zero width period=%d bar=%d dev=%.17g\n",
+                          sets[t].name, period, bar, dev );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+               continue;
+            }
+            if( dev == 0.0 )
+            {
+               printf( "BBANDS #251 [%s]: bands COLLAPSED period=%d bar=%d (sigma %.17g)\n",
+                       sets[t].name, period, bar, refSig );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+            ta_test_ref_var( sets[t].x, bar - period + 1, period, &mean );
+            /* Two conditioning terms, the same pair test_bbands_small_scale
+             * documents: the variance's own kappa, and the price of reading
+             * sigma back out of two bands centred on |mid|. */
+            kappa = fabs( mean ) / refSig;
+            tol   = 1.0e-11
+                    + 1.0e-6 * ( kappa * 2.2204460492503131e-16 )
+                             * ( kappa * 2.2204460492503131e-16 )
+                    + 8.0 * fabs( mid[k] ) * 2.2204460492503131e-16
+                          / ( ( devUp + devDn ) * refSig );
+            d = fabs( dev - refSig ) / refSig;
+            if( d > tol )
+            {
+               printf( "BBANDS #251 [%s]: period=%d bar=%d half-width=%.17g golden sigma=%.17g "
+                       "(rel %.3g > %.3g, kappa %.2g)\n",
+                       sets[t].name, period, bar, dev, refSig, d, tol, kappa );
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
          }

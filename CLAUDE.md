@@ -130,7 +130,11 @@ scripts/build.py servers        # Generate + compile the JSON-RPC language serve
 scripts/build.py regen-check    # The PR gate: regenerating must change nothing
                                 # (cargo + Python only; the same command CI runs)
 scripts/build.py test           # C reference tests only (quick)
-scripts/build.py regtest        # Full pipeline: servers (cargo) + C tests + cross-language verification
+scripts/build.py regtest        # Servers (cargo) + C tests + cross-language verification.
+                                # Needs bin/ta_ref_serve to already exist; it does NOT build it,
+                                # so in a fresh worktree this aborts at the oracle. Use
+                                # scripts/regtest.py, which builds ta_ref_serve from the
+                                # pinned-tag reference worktree first.
 
 # ta_codegen (run from ta_codegen/generator/)
 cargo run -- generate                            # Generate everything, all backends

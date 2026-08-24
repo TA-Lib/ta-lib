@@ -761,11 +761,27 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_macd,     "MACD,MACDFIX,MACDEXT" );
    DO_TEST( test_func_mom_roc,  "MOM,ROC,ROCP,ROCR,ROCR100" );
    DO_TEST( test_func_trange,   "TRANGE,ATR" );
+   /* Not a TA function: the shared reference battery checking itself (#251).
+    * FIRST, deliberately. DO_TEST returns on the first failure, so registering
+    * this after the suites that consume its goldens meant a corrupted or stale
+    * table took test_func_stddev down first and the one diagnostic that would
+    * name the real cause never ran -- the leg would have been silent in exactly
+    * the case it exists for. */
+   DO_TEST( test_func_reference, "REFERENCE,GOLDEN,ORACLE,NUMERICS" );
    DO_TEST( test_func_stddev,   "STDDEV,VAR" );
    /* CORREL numerical robustness (#242). Separate from the per_hl group so the
     * probes can be reached on their own; --function=CORREL matches both. */
    DO_TEST( test_func_correl,   "CORREL/NUMERICS" );
    DO_TEST( test_func_beta,     "BETA/NUMERICS" );
+   /* The TA_LINEARREG family and TA_TSF had no DEDICATED reference file before
+    * #251. They were not uncovered: test_period_boundary.c's
+    * testLinearRegRampOverflowProbe (#142) checks all five against a closed form
+    * at period 1025, and the --codegen leg range-tests them via
+    * stability_class(). This file adds the reference datasets and the
+    * arbitrary-value goldens, and does NOT subsume either -- no leg here exceeds
+    * period 60. */
+   DO_TEST( test_func_linearreg,
+            "LINEARREG,LINEARREG_SLOPE,LINEARREG_ANGLE,LINEARREG_INTERCEPT,TSF" );
    DO_TEST( test_func_avgdev,   "AVGDEV" );
    DO_TEST( test_func_bbands,   "BBANDS" );
    DO_TEST( test_func_period_boundary, "PERIOD1/BOUNDARY" );
@@ -814,7 +830,7 @@ static ErrorNumber testTAFunction_ALL( void )
       printf( "        The filter is a substring match against the GROUP TAG in\n" );
       printf( "        ta_regtest.c's DO_TEST list, not against the function name.\n" );
       printf( "        Some functions have no hand-written group at all (the plain\n" );
-      printf( "        vector math, LINEARREG*, TSF, OBV, TYPPRICE, WCLPRICE); they\n" );
+      printf( "        vector math, OBV, TYPPRICE, WCLPRICE); they\n" );
       printf( "        are covered by the systematic sweeps, which enumerate every\n" );
       printf( "        function through ta_abstract -- reach those with --codegen or\n" );
       printf( "        --xlang-hash. Otherwise add the name to its group's tag.\n" );

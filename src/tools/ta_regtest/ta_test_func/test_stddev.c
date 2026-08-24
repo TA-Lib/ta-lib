@@ -59,6 +59,7 @@
 #include "ta_test_func.h"
 #include "ta_utility.h"
 #include "server_verify.h"
+#include "ta_test_reference.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -132,28 +133,15 @@ static TA_Test tableTest[] =
  * being co-wrong). All use population variance (divide by n), matching TA_VAR.
  * ==========================================================================*/
 
-/* Deterministic LCG so the data is reproducible across platforms. */
-static unsigned int sd_rng_state = 0u;
-static double sd_rand( void )   /* uniform [-1, 1) */
-{
-   sd_rng_state = sd_rng_state * 1103515245u + 12345u;
-   return ( (double)( ( sd_rng_state >> 8 ) & 0xffffffu ) / 8388608.0 ) - 1.0;
-}
-
-/* Trusted oracle: fresh two-pass population variance of the window [s, s+period),
- * accumulated in long double (~19 digits on x86; degrades gracefully to double on
- * ABIs where long double == double). Also returns the window mean for the
- * condition-number-aware tolerance below. */
-static double sd_twopass_var( const double *x, int s, int period, double *outMean )
-{
-   long double sum = 0.0L, v = 0.0L, mean;
-   int j;
-   for( j = 0; j < period; j++ ) sum += (long double)x[s+j];
-   mean = sum / (long double)period;
-   for( j = 0; j < period; j++ ) { long double d = (long double)x[s+j] - mean; v += d * d; }
-   if( outMean ) *outMean = (double)mean;
-   return (double)( v / (long double)period );
-}
+/* The RNG and the trusted oracle both moved to ta_test_reference.{h,c} (#251):
+ * this file, test_correl.c and test_beta.c had three copies of each, and the
+ * oracle accumulated in `long double`, which is 64 mantissa bits here and 53 on
+ * MSVC -- so every bound below was quietly weaker on Windows than the number it
+ * is written as. ta_test_ref_var() carries ~106 bits on every ABI.
+ *
+ * The stream is unchanged: ta_test_ref_lcg_sym() is bit-for-bit the local LCG
+ * the tolerances in this file were measured against.
+ */
 
 /* Compare TA_VAR over a whole series to the fresh per-window two-pass oracle.
  * The tolerance is scaled by the window's condition number kappa = |mean|/stddev:
@@ -180,7 +168,7 @@ static ErrorNumber sd_check_vs_twopass( const char *label, const double *x,
    for( k = 0; k < (int)nbElement; k++ )
    {
       double mean = 0.0;
-      double ref = sd_twopass_var( x, (int)begIdx + k - ( period - 1 ), period, &mean );
+      double ref = ta_test_ref_var( x, (int)begIdx + k - ( period - 1 ), period, &mean );
       double d, tol, kappa;
       if( out[k] < 0.0 )
       {
@@ -211,6 +199,82 @@ static ErrorNumber sd_check_vs_twopass( const char *label, const double *x,
    return TA_TEST_PASS;
 }
 
+/* The same comparison, but the reference VALUE is a baked constant rather than
+ * anything this binary computed (#251). The runtime oracle is still consulted,
+ * for the window's conditioning only -- kappa is a tolerance model, not a
+ * correctness claim, so it may share the binary's fate; the number the shipped
+ * function is judged against may not.
+ *
+ * The goldens come from scripts/gen_test_reference.py, which evaluates the
+ * population variance of these windows in EXACT RATIONAL arithmetic (every
+ * input is a double, so every sum and product is exact) and rounds once. There
+ * is no shared code with TA-Lib for it to be co-wrong with -- the #228 trap --
+ * and a constant does not change precision when the ABI does. */
+static ErrorNumber sd_check_vs_golden( const char *label, const double *x, int n,
+                                       int period, const double *golden, int nbGolden,
+                                       double baseTol )
+{
+   static double out[8192];
+   TA_Integer begIdx, nbElement;
+   TA_RetCode rc;
+   int k;
+
+   if( n > 8192 )
+   {
+      printf( "VAR #251 golden[%s]: series of %d exceeds the output buffer\n", label, n );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( n - period + 1 != nbGolden )
+   {
+      printf( "VAR #251 golden[%s]: %d windows but %d baked values -- the test and "
+              "scripts/gen_test_reference.py disagree about the corpus\n",
+              label, n - period + 1, nbGolden );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   rc = TA_VAR( 0, n-1, x, period, 1.0, &begIdx, &nbElement, out );
+   if( rc != TA_SUCCESS || (int)nbElement != nbGolden )
+   {
+      printf( "VAR #251 golden[%s]: rc=%d nb=%d (expected SUCCESS,%d)\n",
+              label, (int)rc, (int)nbElement, nbGolden );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   for( k = 0; k < nbGolden; k++ )
+   {
+      double mean = 0.0;
+      double ref  = golden[k];
+      double d, tol, kappa;
+
+      if( out[k] < 0.0 )
+      {
+         printf( "VAR #251 golden[%s]: NEGATIVE var period=%d bar=%d val=%.17g\n",
+                 label, period, (int)begIdx + k, out[k] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      if( ref == 0.0 )
+      {
+         if( out[k] != 0.0 )
+         {
+            printf( "VAR #251 golden[%s]: expected exact 0 period=%d bar=%d val=%.17g\n",
+                    label, period, (int)begIdx + k, out[k] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         continue;
+      }
+      ta_test_ref_var( x, (int)begIdx + k - ( period - 1 ), period, &mean );
+      kappa = fabs( mean ) / sqrt( ref );
+      tol   = baseTol + 100.0 * kappa * 2.2204460492503131e-16;
+      d = fabs( out[k] - ref ) / fabs( ref );
+      if( d > tol )
+      {
+         printf( "VAR #251 golden[%s]: period=%d bar=%d val=%.17g golden=%.17g "
+                 "(rel %.3g > %.3g, kappa %.2g)\n",
+                 label, period, (int)begIdx + k, out[k], ref, d, tol, kappa );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
 /* (P2) Metamorphic shift-invariance: var(x + c) == var(x). A large additive
  * offset is exactly what E[x^2]-mean^2 cannot survive (bug 90); the shifted-data
  * algorithm absorbs it. Non-vacuous on any input, no oracle needed. */
@@ -223,8 +287,8 @@ static ErrorNumber test_stddev_shift_invariance( void )
    TA_Integer b0, n0, b1, n1;
    int p, c, i, k;
 
-   sd_rng_state = 0x1BADCAFEu;
-   for( i = 0; i < N; i++ ) base[i] = 1000.0 * sd_rand();   /* spread ~577, mean ~0 */
+   ta_test_ref_lcg_seed( 0x1BADCAFEu );
+   for( i = 0; i < N; i++ ) base[i] = 1000.0 * ta_test_ref_lcg_sym();   /* spread ~577, mean ~0 */
 
    for( p = 0; p < 4; p++ )
    {
@@ -269,8 +333,8 @@ static ErrorNumber test_stddev_scale_invariance( void )
    TA_Integer b0, n0, b1, n1;
    int p, s, i, k;
 
-   sd_rng_state = 0x5EED1234u;
-   for( i = 0; i < N; i++ ) base[i] = 100.0 + 20.0 * sd_rand();
+   ta_test_ref_lcg_seed( 0x5EED1234u );
+   for( i = 0; i < N; i++ ) base[i] = 100.0 + 20.0 * ta_test_ref_lcg_sym();
 
    for( p = 0; p < 3; p++ )
    {
@@ -365,36 +429,35 @@ static ErrorNumber test_stddev_nist_strd( void )
    static double buf[1001];
    TA_Integer b, nb;
    TA_RetCode rc;
-   int i, idx;
+   int i;
    double gotVar, gotStd, expVar, expStd, dv, ds;
 
-   struct { const char *name; double base; int n; double expVar; double tol; } cases[4];
+   struct { const char *name; int n; double expVar; double tol; } cases[4];
 
-   /* NumAcc1: {1e7+1, 1e7+2, 1e7+3}, N=3. pop var = 2/3 exactly (integers). */
-   cases[0].name = "NumAcc1"; cases[0].base = 1.0e7; cases[0].n = 3;
+   /* The data lives in ta_test_ref_numacc(); what stays here is the certified
+    * answer and the tolerance each base earns.
+    * NumAcc1: {1e7+1, 1e7+2, 1e7+3}, N=3. pop var = 2/3 exactly (integers). */
+   cases[0].name = "NumAcc1"; cases[0].n = 3;
    cases[0].expVar = 2.0/3.0;             cases[0].tol = 1.0e-12;
    /* NumAcc2/3/4: 500x(base+1.1), 500x(base+1.3), 1x(base+1.2), N=1001.
     * pop var = 10/1001 for exact 0.1 deviations; decimals cost ~ulp(base)/0.1. */
-   cases[1].name = "NumAcc2"; cases[1].base = 0.0;       cases[1].n = 1001;
+   cases[1].name = "NumAcc2"; cases[1].n = 1001;
    cases[1].expVar = 10.0/1001.0;         cases[1].tol = 1.0e-12;
-   cases[2].name = "NumAcc3"; cases[2].base = 999999.0;  cases[2].n = 1001;
+   cases[2].name = "NumAcc3"; cases[2].n = 1001;
    cases[2].expVar = 10.0/1001.0;         cases[2].tol = 1.0e-8;
-   cases[3].name = "NumAcc4"; cases[3].base = 9999999.0; cases[3].n = 1001;
+   cases[3].name = "NumAcc4"; cases[3].n = 1001;
    cases[3].expVar = 10.0/1001.0;         cases[3].tol = 1.0e-6;
 
    for( i = 0; i < 4; i++ )
    {
-      int n = cases[i].n;
-      double base = cases[i].base;
-      if( n == 3 )
+      /* The series themselves come from the shared battery (#251); this file
+       * only keeps the certified variances and the tolerance each one earns. */
+      int n = ta_test_ref_numacc( i+1, buf );
+      if( n != cases[i].n )
       {
-         buf[0] = base + 1.0; buf[1] = base + 2.0; buf[2] = base + 3.0;
-      }
-      else
-      {
-         idx = 0;
-         buf[idx++] = base + 1.2;                       /* the single mid value */
-         while( idx < n ) { buf[idx++] = base + 1.1; buf[idx++] = base + 1.3; }  /* 500 each */
+         printf( "VAR #118 NIST %s: shared battery returned %d values, expected %d\n",
+                 cases[i].name, n, cases[i].n );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
       rc = TA_VAR( 0, n-1, buf, n, 1.0, &b, &nb, &gotVar );
       if( rc != TA_SUCCESS || nb != 1 )
@@ -425,20 +488,17 @@ static ErrorNumber test_stddev_pandas_oracle( void )
    ErrorNumber e;
    int i, m;
 
-   /* GH#47721: a 1e10 spike enters then leaves a window-6; std must snap back. */
-   {
-      static const double a[] = { 1,-1,0,1,3,2,-2,10000000000.0,1,2,0,-2,1,3,0,1 };
-      e = sd_check_vs_twopass( "GH47721", a, 16, 6, 1.0e-9 );
-      if( e != TA_TEST_PASS ) return e;
-   }
-   /* GH#52407: tiny mixed magnitudes that produced a negative variance. */
-   {
-      static const double a[] = { 0.0, 0.0, 3.16188252e-18, 2.95781651e-16,
-                                  2.23153542e-51, 0.0, 0.0, 5.39943432e-48,
-                                  1.38206260e-73, 0.0 };
-      e = sd_check_vs_twopass( "GH52407", a, 10, 3, 1.0e-9 );
-      if( e != TA_TEST_PASS ) return e;
-   }
+   /* GH#47721: a 1e10 spike enters then leaves a window-6; std must snap back.
+    * GH#52407: tiny mixed magnitudes that produced a NEGATIVE variance.
+    * Both arrays and both reference tables now come from the shared battery. */
+   e = sd_check_vs_golden( "GH47721", ta_test_ref_pd_var47721, TA_TEST_REF_PD_VAR47721_N,
+                           6, ta_test_ref_golden_var47721,
+                           TA_TEST_REF_GOLDEN_VAR47721_N, 1.0e-9 );
+   if( e != TA_TEST_PASS ) return e;
+   e = sd_check_vs_golden( "GH52407", ta_test_ref_pd_var52407, TA_TEST_REF_PD_VAR52407_N,
+                           3, ta_test_ref_golden_var52407,
+                           TA_TEST_REF_GOLDEN_VAR52407_N, 1.0e-9 );
+   if( e != TA_TEST_PASS ) return e;
    /* GH#42064: 1000 zeros with a 1000 spike at index 0; window-10 must be exact 0
     * once the spike leaves. */
    {
@@ -456,8 +516,8 @@ static ErrorNumber test_stddev_pandas_oracle( void )
       for( m = 0; m < 3; m++ )
       {
          int p;
-         sd_rng_state = 0xC0FFEEu + (unsigned)m;
-         for( i = 0; i < 2000; i++ ) a[i] = mag[m] * ( 1.0 + 1.0e-3 * sd_rand() );
+         ta_test_ref_lcg_seed( 0xC0FFEEu + (unsigned)m );
+         for( i = 0; i < 2000; i++ ) a[i] = mag[m] * ( 1.0 + 1.0e-3 * ta_test_ref_lcg_sym() );
          for( p = 0; p < 4; p++ )
          {
             e = sd_check_vs_twopass( "random", a, 2000, per[p], 1.0e-9 );
@@ -490,7 +550,7 @@ static ErrorNumber test_stddev_pandas_oracle( void )
 
 /* The issue's series: 60 integer ticks, walked down five decades past the cliff
  * at two price levels (the spread shrinking with the level, and the spread
- * shrinking alone), refereed bar by bar against the long-double two-pass sigma.
+ * shrinking alone), refereed bar by bar against the shared double-double two-pass sigma.
  *
  * Tolerance. The deviations x-mean are computed exactly (Sterbenz), so the
  * shifted-data form tracks the two-pass to ~1e-13 until the DATA quantizes: once
@@ -503,12 +563,6 @@ static ErrorNumber test_stddev_pandas_oracle( void )
  * ~5 / ~2.5e-5 / 70x, which describe a 13-decade version that was never
  * committed. The shipped bound is tighter than the prose used to claim.
  */
-static const int    sd243_ticks[60] = {
-  197, 200, 199, 197, 198, 196, 194, 192, 195, 193, 195, 193,
-  192, 194, 197, 194, 192, 189, 186, 183, 185, 186, 185, 182,
-  180, 182, 180, 179, 180, 180, 182, 182, 185, 188, 188, 189,
-  191, 193, 190, 192, 195, 193, 191, 190, 188, 185, 182, 182,
-  182, 179, 179, 179, 176, 173, 172, 170, 167, 166, 169, 170 };
 static const double sd243_bases[2]  = { 0.0, 100.0 };
 static const int    sd243_periods[4] = { 2, 5, 20, 30 };
 
@@ -533,7 +587,7 @@ static ErrorNumber test_stddev_small_scale( void )
       double tick = 1.0e-2;
       for( decade = 0; decade < 12; decade++, tick /= 10.0 )
       {
-         for( i = 0; i < N; i++ ) x[i] = sd243_bases[bi] + (double)sd243_ticks[i] * tick;
+         for( i = 0; i < N; i++ ) x[i] = sd243_bases[bi] + (double)ta_test_ref_ticks60[i] * tick;
 
          rc = TA_STDDEV( 0, N-1, x, period, 1.0, &b, &nb, sd );
          if( rc != TA_SUCCESS )
@@ -545,7 +599,7 @@ static ErrorNumber test_stddev_small_scale( void )
          for( k = 0; k < (int)nb; k++ )
          {
             double mean = 0.0;
-            double refVar = sd_twopass_var( x, (int)b + k - ( period - 1 ), period, &mean );
+            double refVar = ta_test_ref_var( x, (int)b + k - ( period - 1 ), period, &mean );
             double refSig, kappa, tol, d;
             if( refVar == 0.0 )
             {
@@ -616,9 +670,9 @@ static ErrorNumber test_stddev_flat_tail_exact_zero( void )
    for( li = 0; li < 5; li++ )
    {
       const double lvl = levels[li];
-      sd_rng_state = 0xF1A77A11u + (unsigned)li;
+      ta_test_ref_lcg_seed( 0xF1A77A11u + (unsigned)li );
       for( i = 0; i < N; i++ )
-         x[i] = ( i < NOISY ) ? lvl * ( 1.0 + 0.05 * sd_rand() ) : lvl;
+         x[i] = ( i < NOISY ) ? lvl * ( 1.0 + 0.05 * ta_test_ref_lcg_sym() ) : lvl;
 
       for( pi = 0; pi < 4; pi++ )
       {

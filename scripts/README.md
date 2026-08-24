@@ -10,6 +10,7 @@ See `README-DEVS.md` at the repo root for the build/test/release walkthroughs.
 |---|---|
 | `build.py` | The developer build entry point: C library + C tools (CMake), and `ta_codegen` / `generate` / `servers` (cargo). CMake never invokes cargo. |
 | `regtest.py` | Full pipeline: generate → build → correctness → benchmark. The nightly drives it three ways. |
+| `gen_test_reference.py` | Rebuilds `ta_regtest`'s baked numerical goldens (`src/tools/ta_regtest/ta_test_reference_golden.{h,c}`) from the datasets in `ta_test_reference.c`, in exact rational arithmetic. Run it when a dataset changes; `--check` verifies in place. Deliberately NOT on a gate — `ta_regtest --function=REFERENCE` catches a stale table at runtime, because the oracle stops reproducing it. |
 
 ## Verification gates
 

@@ -10,6 +10,8 @@ ta_regtest_SOURCES = ta_regtest.c \
 	codegen_pipe.c \
 	test_codegen.c \
 	server_verify.c \
+	ta_test_reference.c \
+	ta_test_reference_golden.c \
 	ta_test_func/test_adx.c \
 	ta_test_func/test_mom.c \
 	ta_test_func/test_sar.c \
@@ -29,6 +31,8 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_stddev.c \
 	ta_test_func/test_correl.c \
 	ta_test_func/test_beta.c \
+	ta_test_func/test_linearreg.c \
+	ta_test_func/test_reference.c \
 	ta_test_func/test_bbands.c \
 	ta_test_func/test_ma.c \
 	ta_test_func/test_po.c \

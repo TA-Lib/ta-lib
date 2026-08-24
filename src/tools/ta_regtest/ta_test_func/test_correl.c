@@ -75,6 +75,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "ta_test_reference.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -124,61 +125,18 @@ ErrorNumber test_func_correl( TA_History *history )
 
 /**** Local functions definitions.     ****/
 
-/* ============================================================================
- * Trusted oracle: a fresh two-pass Pearson r over one window, accumulated in
- * long double (~19 digits on x86; degrades gracefully to double on ABIs where
- * long double == double -- the probes' tolerances do not depend on the extra
- * digits, they only widen the margin).
+/* The trusted oracle, the constant-window helper and the RNG all moved to
+ * ta_test_reference.{h,c} (#251). The oracle also stopped accumulating in
+ * `long double` -- 64 mantissa bits here, 53 on MSVC -- for a compensated
+ * double-double form that carries ~106 bits on every ABI, so the bounds below
+ * mean the same thing on every platform this library builds on.
  *
- * The window is recentred on its own first element before anything is
- * accumulated. That is pandas' technique for this exact oracle (GH#65739):
- * r is translation-invariant, so recentring changes no true value, but without
- * it the ORACLE ITSELF loses ~1e-8 on the shared-offset arrays and can no
- * longer referee anything. A referee has to be better conditioned than the
- * thing it judges.
- *
- * Returns 0.0 for a window where either series is constant, matching the
- * documented CORREL contract for an undefined correlation.
- * ==========================================================================*/
-static double cr_twopass_r( const double *x, const double *y, int s, int period )
-{
-   long double ox = (long double)x[s], oy = (long double)y[s];
-   long double mx = 0.0L, my = 0.0L, sxx = 0.0L, syy = 0.0L, sxy = 0.0L;
-   long double dx, dy, r;
-   int j;
-
-   for( j = 0; j < period; j++ )
-   {
-      mx += (long double)x[s+j] - ox;
-      my += (long double)y[s+j] - oy;
-   }
-   mx /= (long double)period;
-   my /= (long double)period;
-
-   for( j = 0; j < period; j++ )
-   {
-      dx = ( (long double)x[s+j] - ox ) - mx;
-      dy = ( (long double)y[s+j] - oy ) - my;
-      sxx += dx * dx;
-      syy += dy * dy;
-      sxy += dx * dy;
-   }
-
-   if( sxx <= 0.0L || syy <= 0.0L ) return 0.0;
-   r = sxy / ( sqrtl( sxx ) * sqrtl( syy ) );
-   if( r >  1.0L ) r =  1.0L;
-   if( r < -1.0L ) r = -1.0L;
-   return (double)r;
-}
-
-/* Is every value of the window identical? Then r is undefined there and the
- * documented answer is 0.0 -- such windows are not evidence either way. */
-static int cr_window_is_constant( const double *v, int s, int period )
-{
-   int j;
-   for( j = 1; j < period; j++ ) if( v[s+j] != v[s] ) return 0;
-   return 1;
-}
+ * It keeps the property that made the old one usable: r is translation
+ * invariant, so the deviations are formed as n*x - sum(x) rather than
+ * x - mean(x), and a window that is constant in double gives an exact zero
+ * instead of a rounding residue. A referee has to be better conditioned than
+ * the thing it judges.
+ */
 
 /* Referee a whole series against the per-window oracle. */
 static ErrorNumber cr_check_vs_twopass( const char *label, const double *x, const double *y,
@@ -206,12 +164,79 @@ static ErrorNumber cr_check_vs_twopass( const char *label, const double *x, cons
                  label, period, (int)begIdx + k );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
-      ref = cr_twopass_r( x, y, s, period );
+      ref = ta_test_ref_corr( x, y, s, period );
       d = fabs( ref ) > 1.0e-12 ? fabs( cr_out[k] - ref ) / fabs( ref )
                                 : fabs( cr_out[k] - ref );
       if( d > rtol )
       {
          printf( "CORREL #242 oracle[%s]: period=%d bar=%d val=%.17g ref=%.17g (rel %.3g > %.3g)\n",
+                 label, period, (int)begIdx + k, cr_out[k], ref, d, rtol );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+/* The same sweep, refereed against BAKED constants instead (#251).
+ *
+ * The values come from scripts/gen_test_reference.py, which computes Sxx, Syy
+ * and Sxy in exact rational arithmetic -- every input is a double, so every sum
+ * and product is exact -- and takes ONE correctly-rounded square root of the
+ * exact r^2. Nothing in this binary contributed to them, which is the point: a
+ * runtime oracle shares the binary's fate and can be co-wrong with what it
+ * judges (#228), and `long double` is 53 bits on MSVC, so a pin measured here
+ * used to be weaker there. */
+static ErrorNumber cr_check_vs_golden( const char *label, const double *x, const double *y,
+                                       int n, int period, const double *golden,
+                                       int nbGolden, double rtol )
+{
+   TA_Integer begIdx, nbElement;
+   TA_RetCode rc;
+   int k;
+
+   if( n > 4096 )
+   {
+      /* NOT a silent pass: this function's whole body is the comparison, so
+       * returning PASS here would skip the corpus assertion and every value. */
+      printf( "CORREL #251 golden[%s]: series of %d exceeds cr_out\n", label, n );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( n - period + 1 != nbGolden )
+   {
+      printf( "CORREL #251 golden[%s]: %d windows but %d baked values -- this test and "
+              "scripts/gen_test_reference.py disagree about the corpus\n",
+              label, n - period + 1, nbGolden );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   rc = TA_CORREL( 0, n-1, x, y, period, &begIdx, &nbElement, cr_out );
+   if( rc != TA_SUCCESS || (int)nbElement != nbGolden )
+   {
+      printf( "CORREL #251 golden[%s]: rc=%d nb=%d (expected SUCCESS,%d)\n",
+              label, (int)rc, (int)nbElement, nbGolden );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   for( k = 0; k < nbGolden; k++ )
+   {
+      double ref = golden[k], d;
+
+      if( cr_out[k] != cr_out[k] )
+      {
+         printf( "CORREL #251 golden[%s]: NaN period=%d bar=%d\n",
+                 label, period, (int)begIdx + k );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      if( !( cr_out[k] >= -1.0 && cr_out[k] <= 1.0 ) )
+      {
+         printf( "CORREL #251 golden[%s]: period=%d bar=%d r=%.17g outside [-1,1]\n",
+                 label, period, (int)begIdx + k, cr_out[k] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      d = fabs( ref ) > 1.0e-12 ? fabs( cr_out[k] - ref ) / fabs( ref )
+                                : fabs( cr_out[k] - ref );
+      if( d > rtol )
+      {
+         printf( "CORREL #251 golden[%s]: period=%d bar=%d val=%.17g golden=%.17g "
+                 "(rel %.3g > %.3g)\n",
                  label, period, (int)begIdx + k, cr_out[k], ref, d, rtol );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
@@ -239,58 +264,67 @@ static ErrorNumber test_correl_pandas_oracle( void )
    ErrorNumber e;
    int i, k, w;
 
-   /* GH#65739 outlier_exit: a 3.8e12 value transits a window of 9. offset_y
-    * covers the case where the other operand is dominated by a shared offset;
-    * the swap covers the value landing in either operand. */
+   /* outlier_exit: a 3.8e12 value transits a window of 9. The y offset covers
+    * the case where the other operand is dominated by a shared offset; the swap
+    * covers the value landing in either operand, and judges both orders against
+    * the SAME table, so the implementation's own symmetry r(x,y) == r(y,x) is
+    * pinned rather than assumed. */
    {
-      static const double vx[18] = { 3,3,7,9,3,3,3.8e12,3,8,2,2,8,6,7,7,3,8,4 };
-      static const double vyb[18] = { 6,3,3,5,9,1,2,9,2,1,4,6,6,9,7,9,3,5 };
       static const double offs[2] = { 0.0, 1.0e13 };
-      static double vy[18];
+      static const double *const gold[2] = { ta_test_ref_golden_corr_outlier_off0,
+                                             ta_test_ref_golden_corr_outlier_off1e13 };
+      static double vy[TA_TEST_REF_PD_OUTLIER_N];
       for( k = 0; k < 2; k++ )
       {
-         for( i = 0; i < 18; i++ ) vy[i] = offs[k] + vyb[i];
+         for( i = 0; i < TA_TEST_REF_PD_OUTLIER_N; i++ )
+            vy[i] = offs[k] + ta_test_ref_pd_outlier_y[i];
          for( w = 0; w < 2; w++ )
          {
-            e = w ? cr_check_vs_twopass( "outlier_exit swapped", vy, vx, 18, 9, 1.0e-12 )
-                  : cr_check_vs_twopass( "outlier_exit",         vx, vy, 18, 9, 1.0e-12 );
+            e = w ? cr_check_vs_golden( "outlier_exit swapped", vy, ta_test_ref_pd_outlier_x,
+                                        TA_TEST_REF_PD_OUTLIER_N, 9, gold[k],
+                                        TA_TEST_REF_GOLDEN_CORR_OUTLIER_OFF0_N, 1.0e-12 )
+                  : cr_check_vs_golden( "outlier_exit", ta_test_ref_pd_outlier_x, vy,
+                                        TA_TEST_REF_PD_OUTLIER_N, 9, gold[k],
+                                        TA_TEST_REF_GOLDEN_CORR_OUTLIER_OFF0_N, 1.0e-12 );
             if( e != TA_TEST_PASS ) return e;
          }
       }
    }
 
-   /* GH#65739 shared_offset: an offset carried by the whole series leaves almost
-    * no significant digits in the deviations. This is issue #242's mechanism --
+   /* shared_offset: an offset carried by the whole series leaves almost no
+    * significant digits in the deviations. This is issue #242's mechanism --
     * "prices, or epoch timestamps around 1.7e18". */
    {
-      static const double bx[10] = { 1,2,4,7,3,5,9,2,6,8 };
-      static const double by[10] = { 2,1,5,3,8,4,7,9,1,6 };
       static const double offs[2] = { 1.0e10, 1.0e14 };
-      static double sx[10], sy[10];
+      static const double *const gold[2] = { ta_test_ref_golden_corr_shared_1e10,
+                                             ta_test_ref_golden_corr_shared_1e14 };
+      static double sx[TA_TEST_REF_PD_SHARED_N], sy[TA_TEST_REF_PD_SHARED_N];
       for( k = 0; k < 2; k++ )
       {
-         for( i = 0; i < 10; i++ ) { sx[i] = bx[i] + offs[k]; sy[i] = by[i] + offs[k]; }
-         e = cr_check_vs_twopass( "shared_offset", sx, sy, 10, 5, 1.0e-12 );
+         for( i = 0; i < TA_TEST_REF_PD_SHARED_N; i++ )
+         {
+            sx[i] = ta_test_ref_pd_shared_x[i] + offs[k];
+            sy[i] = ta_test_ref_pd_shared_y[i] + offs[k];
+         }
+         e = cr_check_vs_golden( "shared_offset", sx, sy, TA_TEST_REF_PD_SHARED_N, 5,
+                                 gold[k], TA_TEST_REF_GOLDEN_CORR_SHARED_1E10_N, 1.0e-12 );
          if( e != TA_TEST_PASS ) return e;
       }
    }
 
-   /* GH#65739 outlier_exit_no_nan: cancellation drove a sum of squares negative,
-    * so the divide took the square root of a negative number. */
-   {
-      static const double x[8] = { 1.0, 2.0, 1.0e12, 1.0e7, 6.0, 5.0, 8.0, 7.0 };
-      static const double y[8] = { 2.0, 1.0, 3.0, -1.0e12, 4.0, 7.0, 6.0, 9.0 };
-      e = cr_check_vs_twopass( "outlier_exit_no_nan", x, y, 8, 3, 1.0e-5 );
-      if( e != TA_TEST_PASS ) return e;
-   }
-
-   /* GH#65739 extreme_range, rescaled to TA_REAL_MAX (see the note above). */
-   {
-      static const double x[11] = { 3.0e37,1.0,2.0,3.0,-3.0e37,4.0,5.0,6.0,7.0,8.0,9.0 };
-      static const double y[11] = { 0.2,0.1,0.5,0.3,0.8,0.4,0.9,0.6,0.7,0.2,0.5 };
-      e = cr_check_vs_twopass( "extreme_range@TA_REAL_MAX", x, y, 11, 5, 1.0e-5 );
-      if( e != TA_TEST_PASS ) return e;
-   }
+   /* outlier_exit_no_nan: cancellation drove a sum of squares negative, so the
+    * divide took the square root of a negative number. extreme_range is the
+    * dynamic-range case, rescaled to TA_REAL_MAX as described above. */
+   e = cr_check_vs_golden( "outlier_exit_no_nan", ta_test_ref_pd_nonan_x,
+                           ta_test_ref_pd_nonan_y, TA_TEST_REF_PD_NONAN_N, 3,
+                           ta_test_ref_golden_corr_nonan,
+                           TA_TEST_REF_GOLDEN_CORR_NONAN_N, 1.0e-5 );
+   if( e != TA_TEST_PASS ) return e;
+   e = cr_check_vs_golden( "extreme_range@TA_REAL_MAX", ta_test_ref_pd_extreme_x,
+                           ta_test_ref_pd_extreme_y, TA_TEST_REF_PD_EXTREME_N, 5,
+                           ta_test_ref_golden_corr_extreme,
+                           TA_TEST_REF_GOLDEN_CORR_EXTREME_N, 1.0e-5 );
+   if( e != TA_TEST_PASS ) return e;
 
    return TA_TEST_PASS;
 }
@@ -304,19 +338,18 @@ static ErrorNumber test_correl_pandas_oracle( void )
  *   R-Squared  0.999993745883712   ->  r = 0.99999687293696671  */
 static ErrorNumber test_correl_nist_norris( void )
 {
-   static const double ny[36] = {
-      0.1,338.8,118.1,888.0,9.2,228.1,668.5,998.5,449.1,778.9,559.2,0.3,
-      0.1,778.1,668.8,339.3,448.9,10.8,557.7,228.3,998.0,888.8,119.6,0.3,
-      0.6,557.6,339.3,888.0,998.5,778.9,10.2,117.6,228.9,668.4,449.2,0.2 };
-   static const double nx[36] = {
-      0.2,337.4,118.2,884.6,10.1,226.5,666.3,996.3,448.6,777.0,558.2,0.4,
-      0.6,775.5,666.9,338.0,447.5,11.6,556.0,228.1,995.8,887.6,120.2,0.3,
-      0.3,556.8,339.1,887.2,999.0,779.0,11.1,118.3,229.2,669.1,448.9,0.5 };
-   const double certified = 0.99999687293696671;   /* +sqrt(0.999993745883712) */
+   const double *nx = ta_test_ref_norris_x;
+   const double *ny = ta_test_ref_norris_y;
+   const double certified = TA_TEST_REF_NORRIS_R;   /* +sqrt(0.999993745883712) */
    TA_Integer begIdx, nbElement;
    TA_RetCode rc;
    double d;
 
+   /* Second, sharper pin on the same call: the certified value is the fit of
+    * the exact DECIMALS, and what this library is handed is those decimals
+    * rounded to double. TA_TEST_REF_GOLDEN_NORRIS_R is the exact answer for the
+    * input the function actually sees, so it admits no representation slack --
+    * and the two agreeing to 1e-15 is what says the transcription is right. */
    rc = TA_CORREL( 0, 35, nx, ny, 36, &begIdx, &nbElement, cr_out );
    if( rc != TA_SUCCESS || nbElement != 1 )
    {
@@ -328,6 +361,13 @@ static ErrorNumber test_correl_nist_norris( void )
    {
       printf( "CORREL #242 NIST Norris: r=%.17g certified=%.17g (|diff| %.3g)\n",
               cr_out[0], certified, d );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   d = fabs( cr_out[0] - TA_TEST_REF_GOLDEN_NORRIS_R );
+   if( d > 1.0e-15 )
+   {
+      printf( "CORREL #242/#251 NIST Norris: r=%.17g exact-for-these-doubles=%.17g "
+              "(|diff| %.3g)\n", cr_out[0], TA_TEST_REF_GOLDEN_NORRIS_R, d );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
    return TA_TEST_PASS;
@@ -356,7 +396,7 @@ static ErrorNumber cr_identity( const char *label, const double *x, int n, int p
    for( k = 0; k < (int)nbElement; k++ )
    {
       int s = (int)begIdx + k - ( period - 1 );
-      if( cr_window_is_constant( x, s, period ) ) continue;
+      if( ta_test_ref_window_is_constant( x, s, period ) ) continue;
       if( fabs( cr_out[k] - want ) > 1.0e-12 )
       {
          printf( "CORREL #242 identity[%s]: period=%d bar=%d val=%.17g want %g\n",
@@ -378,10 +418,6 @@ static ErrorNumber cr_identity( const char *label, const double *x, int n, int p
 static ErrorNumber test_correl_exact_identity( void )
 {
    static double x[4096];
-   static const int T[60] = {
-      197,200,199,197,198,196,194,192,195,193,195,193,192,194,197,194,192,189,186,183,
-      185,186,185,182,180,182,180,179,180,180,182,182,185,188,188,189,191,193,190,192,
-      195,193,191,190,188,185,182,182,182,179,179,179,176,173,172,170,167,166,169,170 };
    static const double ticks[4] = { 1.0e-5, 1.0e-6, 1.0e-8, 1.0e-9 };
    static const double levels[3] = { 0.0, 100.0, 20000.0 };
    ErrorNumber e;
@@ -402,7 +438,7 @@ static ErrorNumber test_correl_exact_identity( void )
       {
          char label[160];
          snprintf( label, sizeof label, "#242 level=%g tick=%.0e", levels[L], ticks[k] );
-         for( i = 0; i < 60; i++ ) x[i] = levels[L] + T[i] * ticks[k];
+         for( i = 0; i < 60; i++ ) x[i] = levels[L] + ta_test_ref_ticks60[i] * ticks[k];
          e = cr_identity( label, x, 60, 30, 2.0, ticks[k] );
          if( e != TA_TEST_PASS ) return e;
       }
@@ -425,16 +461,14 @@ static ErrorNumber test_correl_affine_invariance( void )
    static const double bs[4] = {  2.0e4, 1.0e10, 0.0,    0.0 };
    static const double cs[4] = {  1.0,   1.0,   1.0e-6,  1.0 };
    static const double ds[4] = {  2.0e4, 1.0e10, 0.0,    0.0 };
-   unsigned int s = 2463534242u;
    ErrorNumber e;
    int i, k;
 
+   ta_test_ref_xorshift_seed( 2463534242u );
    for( i = 0; i < 300; i++ )
    {
-      s ^= s << 13; s ^= s >> 17; s ^= s << 5;
-      x[i] = 100.0 + (double)( ( s >> 8 ) & 0xffffu ) / 65535.0 * 4.0;
-      s ^= s << 13; s ^= s >> 17; s ^= s << 5;
-      y[i] =  50.0 + (double)( ( s >> 8 ) & 0xffffu ) / 65535.0 * 3.0;
+      x[i] = 100.0 + ta_test_ref_xorshift_unit() * 4.0;
+      y[i] =  50.0 + ta_test_ref_xorshift_unit() * 3.0;
    }
 
    for( k = 0; k < 4; k++ )
@@ -456,10 +490,6 @@ static ErrorNumber test_correl_affine_invariance( void )
  * a value outside it is a defect no tolerance argument can excuse. */
 static ErrorNumber test_correl_range_invariant( void )
 {
-   static const int T[60] = {
-      197,200,199,197,198,196,194,192,195,193,195,193,192,194,197,194,192,189,186,183,
-      185,186,185,182,180,182,180,179,180,180,182,182,185,188,188,189,191,193,190,192,
-      195,193,191,190,188,185,182,182,182,179,179,179,176,173,172,170,167,166,169,170 };
    static const double levels[3] = { 100.0, 20000.0, 1.0e6 };
    static const double ticks[4] = { 1.0e-2, 1.0e-4, 1.0e-6, 1.0e-8 };
    static double x[60], y[60];
@@ -472,7 +502,7 @@ static ErrorNumber test_correl_range_invariant( void )
       {
          for( i = 0; i < 60; i++ )
          {
-            x[i] = levels[L] + T[i] * ticks[k];
+            x[i] = levels[L] + ta_test_ref_ticks60[i] * ticks[k];
             y[i] = 2.0 * x[i] + ticks[k];
          }
          rc = TA_CORREL( 0, 59, x, y, 30, &begIdx, &nbElement, cr_out );

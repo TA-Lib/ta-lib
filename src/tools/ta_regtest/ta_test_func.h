@@ -11,6 +11,8 @@ ErrorNumber test_func_macd    ( TA_History *history );
 ErrorNumber test_func_stddev  ( TA_History *history );
 ErrorNumber test_func_correl  ( TA_History *history );
 ErrorNumber test_func_beta    ( TA_History *history );
+ErrorNumber test_func_linearreg( TA_History *history );
+ErrorNumber test_func_reference( TA_History *history );
 ErrorNumber test_func_bbands  ( TA_History *history );
 ErrorNumber test_func_mom_roc ( TA_History *history );
 ErrorNumber test_func_stoch   ( TA_History *history );

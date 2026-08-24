@@ -78,6 +78,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "ta_test_reference.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -103,19 +104,18 @@ static ErrorNumber test_beta_outlier_transit( void );
 /**** Local variables definitions.     ****/
 static double bt_out[4096];
 
-/* Wilkinson's "nasty.dat" arrays, as used by scipy's linregress tests. Read as
- * PRICE series here: BIG and LITTLE both carry a per-bar return of ~1e-8, which
- * is precisely the regime where an absolute 1e-14 band on n*S_xx - S_x*S_x
- * swallows a well-defined slope. */
-static const double W_X[9]      = { 1,2,3,4,5,6,7,8,9 };
-static const double W_ROUND[9]  = { 0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5 };
-static const double W_HUGE[9]   = { 1e12,2e12,3e12,4e12,5e12,6e12,7e12,8e12,9e12 };
-static const double W_TINY[9]   = { 1e-12,2e-12,3e-12,4e-12,5e-12,6e-12,7e-12,8e-12,9e-12 };
-static const double W_BIG[9]    = { 99999991,99999992,99999993,99999994,99999995,
-                                    99999996,99999997,99999998,99999999 };
-static const double W_LITTLE[9] = { 0.99999991,0.99999992,0.99999993,0.99999994,0.99999995,
-                                    0.99999996,0.99999997,0.99999998,0.99999999 };
-static const double W_ZERO[9]   = { 0,0,0,0,0,0,0,0,0 };
+/* Wilkinson's "nasty.dat" arrays now live in the shared battery (#251), where
+ * test_linearreg.c reads them too -- there they are regressed on the bar index,
+ * which is Wilkinson's own task IV.B. Read as PRICE series HERE: BIG and LITTLE
+ * both carry a per-bar return of ~1e-8, which is precisely the regime where an
+ * absolute 1e-14 band on n*S_xx - S_x*S_x swallows a well-defined slope. */
+#define W_X      ta_test_ref_wilkinson_x
+#define W_ROUND  ta_test_ref_wilkinson_round
+#define W_HUGE   ta_test_ref_wilkinson_huge
+#define W_TINY   ta_test_ref_wilkinson_tiny
+#define W_BIG    ta_test_ref_wilkinson_big
+#define W_LITTLE ta_test_ref_wilkinson_little
+#define W_ZERO   ta_test_ref_wilkinson_zero
 
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_beta( TA_History *history )
@@ -144,54 +144,54 @@ ErrorNumber test_func_beta( TA_History *history )
 
 /**** Local functions definitions.     ****/
 
-/* Deterministic LCG so the data is reproducible across platforms. */
-static unsigned int bt_rng = 0u;
-static double bt_rand( void )   /* uniform [-0.5, 0.5) */
-{
-   bt_rng = bt_rng * 1103515245u + 12345u;
-   return ( (double)( ( bt_rng >> 8 ) & 0xffffffu ) / 16777216.0 ) - 0.5;
-}
-
 /* BETA's own return, zero-price guard included. */
 static double bt_ret( const double *p, int i )
 {
    return ( p[i-1] != 0.0 ) ? ( p[i] - p[i-1] ) / p[i-1] : 0.0;
 }
 
-/* Trusted oracle: a mean-centred two-pass OLS slope over the `period` returns
- * ending at bar `end`, accumulated in long double. Verified to agree with the
- * shipped function to 1.7e-15 on well-conditioned data before being relied on. Also reports the
- * window conditioning, so the caller can widen its bound where the data itself
- * cannot resolve the slope.
+/* The window of returns TA_BETA actually regresses, materialised so the shared
+ * oracle -- which takes two arrays like every other regression -- can referee
+ * it (#251). This is the only BETA-specific step: everything downstream is the
+ * generic OLS slope, in compensated double-double rather than the `long double`
+ * this file used to carry (64 mantissa bits here, 53 on MSVC). */
+/* Sized past the longest series in this file (400 bars), so period > N is
+ * impossible and the guards below are unreachable by construction. They still
+ * poison rather than return 0.0: both callers read 0.0 as "skip this bar", so
+ * the original 256 turned a whole leg silently green the moment a corpus grew
+ * past it -- fail-open in the one place a test must not. */
+#define BT_MAX_PERIOD 512
+#define BT_POISON     (-1.0e300)
+static void bt_window_returns( const double *px, const double *py, int end, int period,
+                               double *rx, double *ry )
+{
+   int i;
+   for( i = 0; i < period; i++ )
+   {
+      const int bar = end - period + 1 + i;
+      rx[i] = bt_ret( px, bar );
+      ry[i] = bt_ret( py, bar );
+   }
+}
+
+/* Trusted oracle: the OLS slope of the security's returns on the index's, over
+ * the `period` returns ending at bar `end`. Also reports the window
+ * conditioning (max|return| against how much the returns actually vary), so the
+ * caller can widen its bound where the data itself cannot resolve the slope.
  * Returns 0.0 where the regressor has no variance, matching the contract. */
 static double bt_twopass_beta( const double *px, const double *py, int end, int period,
                                double *outKappa )
 {
-   long double mx = 0.0L, my = 0.0L, sxx = 0.0L, sxy = 0.0L, dx, dy, peak = 0.0L;
-   int i;
-
-   for( i = end-period+1; i <= end; i++ ) { mx += bt_ret(px,i); my += bt_ret(py,i); }
-   mx /= (long double)period;
-   my /= (long double)period;
-   for( i = end-period+1; i <= end; i++ )
+   static double rx[BT_MAX_PERIOD], ry[BT_MAX_PERIOD];
+   if( period > BT_MAX_PERIOD )
    {
-      long double rx = bt_ret(px,i);
-      dx = rx - mx;
-      dy = (long double)bt_ret(py,i) - my;
-      sxx += dx * dx;
-      sxy += dx * dy;
-      if( fabsl(rx) > peak ) peak = fabsl(rx);
+      printf( "BETA #251: period %d exceeds BT_MAX_PERIOD %d -- raise it; the "
+              "oracle cannot referee this window\n", period, BT_MAX_PERIOD );
+      if( outKappa ) *outKappa = 0.0;
+      return BT_POISON;   /* not 0.0: the callers read 0.0 as "skip" */
    }
-   /* Conditioning of the regression: how large the returns are next to how much
-    * they actually VARY. A window of near-identical returns has a well-defined
-    * slope that both this oracle and the shipped code can only resolve to
-    * ~kappa*eps -- the same reasoning test_stddev.c applies to variance. */
-   if( outKappa )
-      *outKappa = ( sxx > 0.0L )
-                  ? (double)( peak / sqrtl( sxx / (long double)period ) )
-                  : 0.0;
-   if( sxx <= 0.0L ) return 0.0;
-   return (double)( sxy / sxx );
+   bt_window_returns( px, py, end, period, rx, ry );
+   return ta_test_ref_slope( rx, ry, 0, period, outKappa );
 }
 
 /* (B1) Wilkinson W.IV.B: regressing a series on ITSELF must give a slope of
@@ -262,15 +262,9 @@ static ErrorNumber test_beta_wilkinson_zero( void )
  * r from consecutive prices costs a few ulp. Measured 4.4e-15 at s=1e-3. */
 static ErrorNumber test_beta_nist_norris( void )
 {
-   static const double nx[36] = {
-      0.2,337.4,118.2,884.6,10.1,226.5,666.3,996.3,448.6,777.0,558.2,0.4,
-      0.6,775.5,666.9,338.0,447.5,11.6,556.0,228.1,995.8,887.6,120.2,0.3,
-      0.3,556.8,339.1,887.2,999.0,779.0,11.1,118.3,229.2,669.1,448.9,0.5 };
-   static const double ny[36] = {
-      0.1,338.8,118.1,888.0,9.2,228.1,668.5,998.5,449.1,778.9,559.2,0.3,
-      0.1,778.1,668.8,339.3,448.9,10.8,557.7,228.3,998.0,888.8,119.6,0.3,
-      0.6,557.6,339.3,888.0,998.5,778.9,10.2,117.6,228.9,668.4,449.2,0.2 };
-   const double certified = 1.00211681802045;   /* NIST StRD Norris, B1 */
+   const double *nx = ta_test_ref_norris_x;
+   const double *ny = ta_test_ref_norris_y;
+   const double certified = TA_TEST_REF_NORRIS_B1;   /* NIST StRD Norris, B1 */
    const double s = 1.0e-3;
    static double px[37], py[37];
    TA_Integer begIdx, nbElement;
@@ -320,7 +314,7 @@ static ErrorNumber test_beta_scaling_identity( void )
    TA_RetCode rc;
    int v, kk, i, j;
 
-   bt_rng = 7u;
+   ta_test_ref_lcg_seed( 7u );
    for( v = 0; v < 6; v++ )
       for( kk = 0; kk < 3; kk++ )
       {
@@ -331,7 +325,7 @@ static ErrorNumber test_beta_scaling_identity( void )
          py[0] = 250.0;
          for( i = 1; i < 400; i++ )
          {
-            double r = vols[v] * bt_rand();
+            double r = vols[v] * ta_test_ref_lcg_half();
             px[i] = px[i-1] * ( 1.0 + r );
             py[i] = py[i-1] * ( 1.0 + k * r );
          }
@@ -367,7 +361,7 @@ static ErrorNumber test_beta_twopass_oracle( void )
    TA_RetCode rc;
    int v, p, i, j;
 
-   bt_rng = 991u;
+   ta_test_ref_lcg_seed( 991u );
    for( v = 0; v < 4; v++ )
       for( p = 0; p < 3; p++ )
       {
@@ -389,8 +383,8 @@ static ErrorNumber test_beta_twopass_oracle( void )
          py[0] = 250.0;
          for( i = 1; i < 400; i++ )
          {
-            double a = vols[v] * bt_rand();
-            double b = vols[v] * bt_rand();
+            double a = vols[v] * ta_test_ref_lcg_half();
+            double b = vols[v] * ta_test_ref_lcg_half();
             px[i] = px[i-1] * ( 1.0 + a );
             py[i] = py[i-1] * ( 1.0 + 0.7*a + 0.3*b );
          }
@@ -466,19 +460,17 @@ static ErrorNumber test_beta_degenerate( void )
  * so the scale an error in it should be measured against. */
 static double bt_beta_scale( const double *px, const double *py, int end, int period )
 {
-   long double mx = 0.0L, my = 0.0L, sxx = 0.0L, syy = 0.0L;
-   int i;
-   for( i = end-period+1; i <= end; i++ ) { mx += bt_ret(px,i); my += bt_ret(py,i); }
-   mx /= (long double)period;
-   my /= (long double)period;
-   for( i = end-period+1; i <= end; i++ )
+   static double rx[BT_MAX_PERIOD], ry[BT_MAX_PERIOD];
+   double sx;
+   if( period > BT_MAX_PERIOD )
    {
-      long double dx = (long double)bt_ret(px,i) - mx;
-      long double dy = (long double)bt_ret(py,i) - my;
-      sxx += dx*dx; syy += dy*dy;
+      printf( "BETA #251: period %d exceeds BT_MAX_PERIOD %d\n", period, BT_MAX_PERIOD );
+      return BT_POISON;
    }
-   if( sxx <= 0.0L ) return 0.0;
-   return (double)sqrtl( syy / sxx );
+   bt_window_returns( px, py, end, period, rx, ry );
+   sx = ta_test_ref_stddev( rx, 0, period, NULL );
+   if( sx <= 0.0 ) return 0.0;
+   return ta_test_ref_stddev( ry, 0, period, NULL ) / sx;
 }
 
 /* (B7) SYNTHETIC LIMIT CASE -- not a model of any input this library expects.
